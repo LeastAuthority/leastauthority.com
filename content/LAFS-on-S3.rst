@@ -3,9 +3,9 @@ LAFS-on-S3: reliable and secure storage
 
 **What is LAFS-on-S3?**
 
-  *LAFS-on-S3* is a storage service offered by Least Authority
-  Enterprises. It provides a reliable and scalable storage back-end
-  for use with the Tahoe-LAFS client software.
+  *LAFS-on-S3* is a service offered by Least Authority Enterprises. It
+  provides a reliable and scalable cloud storage back-end for use with
+  the Tahoe-LAFS client software.
 
 **What is Tahoe-LAFS?**
 
@@ -30,7 +30,7 @@ LAFS-on-S3: reliable and secure storage
   changed since the last time you ran it. It uploads each file that
   has changed and it creates a directory in Tahoe-LAFS to hold the
   current "snapshot"—the current version of each of the files. You can
-  browse or access old versions just by browsing the old "snapshot"
+  browse or access old versions just by browsing the old snapshot
   directories.
 
 **Where is the data stored?**
