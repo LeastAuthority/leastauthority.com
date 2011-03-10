@@ -1,13 +1,10 @@
 img {
     border-style: none;
 }
-/*img.Logo{
-    float: left;
-}*/
-#SelfLink:link {color:#000000;}
-#SelfLink:visited {color:#000000;}
-#SelfLink:hover {color:#000000;}
-#SelfLink:active {color:#000000;}
+#Logo{
+    margin-left:0em;
+    width:15%; 
+}
 
 div.banner {
 	margin-bottom: 2em;
