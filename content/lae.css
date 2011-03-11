@@ -17,11 +17,11 @@ div.banner h1 {
         position:relative;
 	font-size: 400%;
 	font-family: serif;
+	text-align:center;
 /*	margin-left:auto;
 	margin-right:auto;
 	width:70%;
 	right:15%;*/
-	text-align:center;
 }
 div.banner p.tagline {
 	margin: 0em;
@@ -76,7 +76,7 @@ div.nav a:hover {
 
 /* Main content div. */
 div.main {
-	top: 0em;
+	/*top: 0em;     This Declaration causes elements to "HOP" to the top. */
 	margin: 0em;
 	padding: 0em;
 	margin-left: 10em;	/* From div.nav width. */
