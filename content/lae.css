@@ -7,7 +7,8 @@ img {
 }*/
 
 div.banner {
-	margin-bottom: 2em;
+    width:100%;
+    height:100px;
 }
 div.banner a {
 /*	color: black;*/
@@ -244,22 +245,27 @@ label.disabled { color: #d7d7d7 }
 /* Header */
 #header hr { display: none }
 #header h1 { 
-						float:left;
-						padding: 0 ;
-						font-family: Tahoma, sans-serif;
-					  font-size: x-large;
-						margin-top: 1.0em;
-						}
-#header h2 { margin: -1.0em 6.0em 1.5em; 
-						padding: 0 ;
-						font-family: Tahoma, sans-serif;
-					  font-size: medium;
-						}
+    float:left;
+    text-align:left;
+    width:85%;
+    left-margin:0;
+    padding: 0 ;
+    font-family: Tahoma, sans-serif;
+    font-size: x-large;
+    margin-top: 1.0em;
+}
+#header h2 { 
+    float:left;
+    margin: 1.0em 1.0em 1.5em; 
+    padding: 0 ;
+    font-family: Tahoma, sans-serif;
+    font-size: medium;
+}
 #header img { 
-						float:left;
-						border: none; 
-						margin-top: 1.0em; 
-						}
+    float:left;
+    border: none; 
+    margin-top: 1.0em; 
+}
 #header :link, #header :visited, #header :link:hover, #header :visited:hover {
  background: transparent;
  color: #000;
