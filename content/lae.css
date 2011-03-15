@@ -8,21 +8,17 @@ img {
 
 div.banner {
     width:100%;
-    height:153px;
+    height:103px;
 }
 div.banner a {
 /*	color: black;*/
 	text-decoration: none;
 }
 div.banner h1 {
-		position:relative;
-		font-size: 400%;
-		font-family: serif;
-		text-align:center;
-/*	margin-left:auto;
-	margin-right:auto;
-	width:70%;
-	right:15%;*/
+    position:relative;
+    font-size: 400%;
+    font-family: serif;
+    text-align:center;
 }
 div.banner p.tagline {
 	margin: 0em;
@@ -294,6 +290,7 @@ label.disabled { color: #d7d7d7 }
  list-style: none;
  margin: 0;
  text-align: right;
+ margin-bottom: 1px;
 }
 .nav li {
  border-right: 1px solid #d7d7d7;
