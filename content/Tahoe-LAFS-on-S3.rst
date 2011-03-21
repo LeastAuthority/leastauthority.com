@@ -1,11 +1,10 @@
-LAFS-on-S3: reliable and secure storage
-=======================================
+Tahoe-LAFS-on-S3: reliable and secure storage
+=============================================
 
-**What is LAFS-on-S3?**
+**What is Tahoe-LAFS-on-S3?**
 
-  *LAFS-on-S3* is a service offered by Least Authority Enterprises. It
-  provides a reliable and scalable cloud storage back-end for use with
-  the Tahoe-LAFS client software.
+  *Tahoe-LAFS-on-S3* is a reliable and scalable cloud storage back-end
+   for use with the Tahoe-LAFS client software.
 
 **What is Tahoe-LAFS?**
 
@@ -17,11 +16,12 @@ LAFS-on-S3: reliable and secure storage
   Tahoe-LAFS.org_.
 
   The Tahoe-LAFS project comes with complete source code, including
-  client and server. If you use the *LAFS-on-S3* service then you need
-  to run only the Tahoe-LAFS client software—we provide the
-  cloud. However, the *LAFS-on-S3* service is completely open and
-  transparent so that you always have the option to migrate your data
-  from *LAFS-on-S3* to your own private Tahoe-LAFS cloud.
+  client and server. If you use the *Tahoe-LAFS-on-S3* service then
+  you need to run only the Tahoe-LAFS client software—we provide the
+  cloud. However, the *Tahoe-LAFS-on-S3* service is completely open
+  and transparent so that you always have the option to migrate your
+  data to another service provider or to your own private Tahoe-LAFS
+  cloud.
 
 **What is it good for?**
 
@@ -39,7 +39,7 @@ LAFS-on-S3: reliable and secure storage
   (S3_), which is a convenient, reliable, and widely understood
   platform for storage.
 
-**How much does LAFS-on-S3 cost?**
+**How much does Tahoe-LAFS-on-S3 cost?**
 
   $0.30 (USD) per gigabyte per month.
 

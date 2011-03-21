@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="Docutils 0.7: http://docutils.sourceforge.net/" />
-<title>LAFS-on-S3: reliable and secure storage</title>
+<title>Tahoe-LAFS-on-S3: reliable and secure storage</title>
 <style type="text/css">
 
 /*
@@ -310,14 +310,16 @@ ul.auto-toc {
 </style>
 </head>
 <body>
-<div class="document" id="lafs-on-s3-reliable-and-secure-storage">
-<h1 class="title">LAFS-on-S3: reliable and secure storage</h1>
+<div class="document" id="tahoe-lafs-on-s3-reliable-and-secure-storage">
+<h1 class="title">Tahoe-LAFS-on-S3: reliable and secure storage</h1>
 
-<p><strong>What is LAFS-on-S3?</strong></p>
+<p><strong>What is Tahoe-LAFS-on-S3?</strong></p>
 <blockquote>
-<em>LAFS-on-S3</em> is a storage service offered by Least Authority
-Enterprises. It provides a reliable and scalable storage back-end
-for use with the Tahoe-LAFS client software.</blockquote>
+<dl class="docutils">
+<dt><em>Tahoe-LAFS-on-S3</em> is a reliable and scalable cloud storage back-end</dt>
+<dd>for use with the Tahoe-LAFS client software.</dd>
+</dl>
+</blockquote>
 <p><strong>What is Tahoe-LAFS?</strong></p>
 <blockquote>
 <p>Tahoe-LAFS is a Free Software, Open Source cloud storage system. It
@@ -327,11 +329,12 @@ and integrity of your files cannot be violated by anyone—not even
 employees of the storage service provider. For more information see
 <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS.org</a>.</p>
 <p>The Tahoe-LAFS project comes with complete source code, including
-client and server. If you use the <em>LAFS-on-S3</em> service then you need
-to run only the Tahoe-LAFS client software—we provide the
-cloud. However, the <em>LAFS-on-S3</em> service is completely open and
-transparent so that you always have the option to migrate your data
-from <em>LAFS-on-S3</em> to your own private Tahoe-LAFS cloud.</p>
+client and server. If you use the <em>Tahoe-LAFS-on-S3</em> service then
+you need to run only the Tahoe-LAFS client software—we provide the
+cloud. However, the <em>Tahoe-LAFS-on-S3</em> service is completely open
+and transparent so that you always have the option to migrate your
+data to another service provider or to your own private Tahoe-LAFS
+cloud.</p>
 </blockquote>
 <p><strong>What is it good for?</strong></p>
 <blockquote>
@@ -340,14 +343,14 @@ backup&quot;</em> command inspects your local filesystem for files that have
 changed since the last time you ran it. It uploads each file that
 has changed and it creates a directory in Tahoe-LAFS to hold the
 current &quot;snapshot&quot;—the current version of each of the files. You can
-browse or access old versions just by browsing the old &quot;snapshot&quot;
+browse or access old versions just by browsing the old snapshot
 directories.</blockquote>
 <p><strong>Where is the data stored?</strong></p>
 <blockquote>
 Your data, encrypted, is stored on Amazon's Simple Storage Service
 (<a class="reference external" href="http://en.wikipedia.org/wiki/Amazon_S3">S3</a>), which is a convenient, reliable, and widely understood
 platform for storage.</blockquote>
-<p><strong>How much does LAFS-on-S3 cost?</strong></p>
+<p><strong>How much does Tahoe-LAFS-on-S3 cost?</strong></p>
 <blockquote>
 $0.30 (USD) per gigabyte per month.</blockquote>
 <p><strong>What is the relationship between Least Authority Enterprises and the Tahoe-LAFS open source project?</strong></p>
