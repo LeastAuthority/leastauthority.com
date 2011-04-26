@@ -5,6 +5,7 @@ import json
 
 from twisted.web.server import Site
 from twisted.web.static import File
+from twisted.web.resource import Resource
 from twisted.web.util import Redirect
 from twisted.internet import reactor
 
@@ -13,10 +14,29 @@ def main():
 
     resource = File('content')
     resource.putChild('signup', Redirect( config.purchase_url ))
+    resource.putChild('devpay-complete', DevPayPurchaseHandler())
 
     factory = Site(resource)
     reactor.listenTCP(80, factory)
     reactor.run()
+
+
+class DevPayPurchaseHandler (Resource):
+    def render(self, request):
+        print 'HACKY DEBUG render for a devpay-response:'
+        details = dict(
+            [ (k, getattr(request, k))
+              for k in ['method',
+                        'uri',
+                        'path',
+                        'args',
+                        'received_headers']
+              ])
+        details['client-ip'] = request.getClientIP()
+        import pprint; pprint.pprint(details)
+        request.setResponseCode(200)
+        request.setHeader('content-type', 'text/ascii')
+        return pprint.pformat(details)
 
 
 class Config (object):
