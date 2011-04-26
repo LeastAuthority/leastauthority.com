@@ -16,7 +16,7 @@ Configuring a correct deployment requires these steps:
 0. FIXME: This procedure will be changing rapidly as we develop the site.  Please remember to update this list.
 1. Sign up for Amazon devpay: http://aws.amazon.com/devpay/
 1a. Enter the configuration necessary for the LAE product line.  This directly affects customer facing details and revenue flow.
-1b. You will be asked for the "Product Redirect URL".  That will be "https://${deployment_hostname}/devpay_complete".  FIXME: URL handler is not implemented;  FIXME: https not yet configured.
+1b. You will be asked for the "Product Redirect URL".  That will be "https://${deployment_hostname}/devpay-complete".  FIXME: URL handler is not implemented;  FIXME: https not yet configured.
 1c. Enter the product code, product token, and purchase url in the configuration file as described below.  FIXME: Maybe all these do not need to be in the config file.  FIXME: only purchase url is currently implemented.
 2. Configure SSL certificates.  FIXME: This is not implemented.
 3. FIXME: Not implemented: configure the ec2 and s3 goo to auto-deploy tahoe services.
