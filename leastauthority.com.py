@@ -1,7 +1,10 @@
 #! /usr/bin/env python
 
 import os
+import sys
 import json
+import logging
+import pprint
 
 from twisted.web.server import Site
 from twisted.web.static import File
@@ -12,18 +15,29 @@ from twisted.internet import reactor
 def main():
     config = Config()
 
+    logging.basicConfig(
+        stream = sys.stdout,
+        level = logging.DEBUG,
+        format = '%(asctime)s %(levelname) 5s [%(module)s L%(lineno)d] %(message)s',
+        datefmt = '%Y-%m-%dT%H:%M:%S%z')
+
     resource = File('content')
     resource.putChild('signup', Redirect( config.purchase_url ))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())
 
     factory = Site(resource)
+    logging.info('Listening on port 80...')
     reactor.listenTCP(80, factory)
     reactor.run()
 
 
 class DevPayPurchaseHandler (Resource):
+    def __init__(self, *a, **kw):
+        Resource.__init__(self, *a, **kw)
+        self._log = logging.getLogger(self.__class__.__name__)
+        self._log.debug('Initialized.')
+
     def render(self, request):
-        print 'HACKY DEBUG render for a devpay-response:'
         details = dict(
             [ (k, getattr(request, k))
               for k in ['method',
@@ -33,7 +47,7 @@ class DevPayPurchaseHandler (Resource):
                         'received_headers']
               ])
         details['client-ip'] = request.getClientIP()
-        import pprint; pprint.pprint(details)
+        self._log.debug('Request details from %r:\n%s', request, pprint.pformat(details))
         request.setResponseCode(200)
         request.setHeader('content-type', 'text/ascii')
         return pprint.pformat(details)
