@@ -1,3 +1,3 @@
 #!/bin/sh
 cd /home/website/leastauthority.com/
-authbind --deep python leastauthority.com.py
+authbind --deep python ./lae_site/main.py
