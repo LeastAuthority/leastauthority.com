@@ -10,7 +10,7 @@ class MissingConfiguration (Exception):
 
 class Config (object):
 
-    __slots__ = ['purchase_url']
+    __slots__ = ['purchase_url', 'unknown_options']
 
     DEFAULT_CONFIG_PATH = os.path.expanduser('~/lae_website_config.json')
 
@@ -27,8 +27,7 @@ class Config (object):
         except KeyError:
             raise MissingConfiguration('purchase_url')
 
-        if d:
-            print 'Warning: Unknown config items: %r' % (d.keys(),)
+        self.unknown_options = d
 
     @staticmethod
     def _load_config_json(configFile):

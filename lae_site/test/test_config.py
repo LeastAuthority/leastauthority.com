@@ -8,7 +8,7 @@ from lae_site.config import Config, MissingConfiguration
 
 class ConfigTests (TestCase):
     def test_unexceptional_load(self):
-        config = self._load_from_string( VALID_CONFIG_TEXT )
+        config = self._load_from_string( VALID_CONFIG )
 
         self.assertEqual( VALID_PURCHASE_URL, config.purchase_url )
         
@@ -26,6 +26,13 @@ class ConfigTests (TestCase):
                     vector,
                     pprint.pformat(config),
                     )
+
+    def test_unknown_options(self):
+        config = self._load_from_string( UNKNOWN_OPTION_CONFIG )
+
+        expected = { UNKNOWN_OPTION_NAME: UNKNOWN_OPTION_VALUE }
+
+        self.assertEqual(expected, config.unknown_options)
     
     @staticmethod
     def _load_from_string(text):
@@ -35,11 +42,21 @@ class ConfigTests (TestCase):
 # Test vectors:
 VALID_PURCHASE_URL = 'http://fakey-site.crom/fnorp?id=1234'
 
-VALID_CONFIG_TEXT = """
+VALID_CONFIG = """
 {
     "purchase_url": "%s"
 }
 """ % (VALID_PURCHASE_URL,)
+
+UNKNOWN_OPTION_NAME = 'thingy'
+UNKNOWN_OPTION_VALUE = True
+
+UNKNOWN_OPTION_CONFIG = """
+{
+    "purchase_url": "%s",
+    "%s": true
+}
+""" % (VALID_PURCHASE_URL, UNKNOWN_OPTION_NAME)
 
 INVALID_EMPTY_CONFIG = '{}'
 
@@ -48,5 +65,4 @@ INVALID_WRONG_KEY_CONFIG = """
     "pruchase_rul": "%s"
 }
 """ % (VALID_PURCHASE_URL,)
-
 
