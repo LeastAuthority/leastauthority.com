@@ -19,6 +19,9 @@ def main():
         datefmt = '%Y-%m-%dT%H:%M:%S%z',
         )
 
+    if config.unknown_options:
+        logging.warn('Unknown options: %r', config.unknown_options.keys())
+
     startServer(config)
 
     reactor.run()
