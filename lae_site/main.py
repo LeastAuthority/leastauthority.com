@@ -15,7 +15,7 @@ def main():
     logging.basicConfig(
         stream = sys.stdout,
         level = logging.DEBUG,
-        format = '%(asctime)s %(levelname) 5s [%(module)s L%(lineno)d] %(message)s',
+        format = '%(asctime)s %(levelname) 7s [%(module) 8s L%(lineno)d] %(message)s',
         datefmt = '%Y-%m-%dT%H:%M:%S%z',
         )
 
