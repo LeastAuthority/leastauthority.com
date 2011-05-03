@@ -4,6 +4,10 @@ import os
 import json
 
 
+class MissingConfiguration (Exception):
+    pass
+
+
 class Config (object):
 
     __slots__ = ['purchase_url']
@@ -17,7 +21,12 @@ class Config (object):
         The configuration is available as attributes.
         """
         d = self._load_config_json(configFile)
-        self.purchase_url = str( d.pop('purchase_url') )
+
+        try:
+            self.purchase_url = str( d.pop('purchase_url') )
+        except KeyError:
+            raise MissingConfiguration('purchase_url')
+
         if d:
             print 'Warning: Unknown config items: %r' % (d.keys(),)
 
