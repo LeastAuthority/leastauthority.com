@@ -11,20 +11,9 @@ class LicenseServiceClientTests (TestCase):
 
         Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?LSAPI_Auth_REST.html
         """
-        input = [
-            ('Action', 'CreateQueue'),
-            ('QueueName', 'queue2'),
-            ('AWSAccessKeyId', '0A8BDF2G9KCB3ZNKFA82'),
-            ('SignatureVersion', '1'),
-            ('Expires', '2007-01-12T12:00:00Z'),
-            ('Version', '2006-04-01'),
-            ]
+        actual = LicenseServiceClient._collapse_params ( FAKE_PARAMS.items() )
 
-        expected = 'ActionCreateQueueAWSAccessKeyId0A8BDF2G9KCB3ZNKFA82Expires2007-01-12T12:00:00ZQueueNamequeue2SignatureVersion1Version2006-04-01'
-
-        actual = LicenseServiceClient._collapse_params ( input )
-
-        self.assertEqual ( expected, actual )
+        self.assertEqual ( EXPECTED_COLLAPSED_PARAMS, actual )
 
     def test__collapse_params_does_not_url_encode(self):
         """
@@ -129,3 +118,18 @@ INVALID_XMLS = [
 </ActivateHostedProductResponse>
 """.format ( pid=FAKE_PID, reqid=FAKE_REQ_ID ),
     ]
+
+FAKE_PARAMS = {
+    'Action':'CreateQueue',
+    'QueueName':'queue2',
+    'AWSAccessKeyId':'0A8BDF2G9KCB3ZNKFA82',
+    'SignatureVersion':'1',
+    'Expires':'2007-01-12T12:00:00Z',
+    'Version':'2006-04-01',
+    }
+
+EXPECTED_COLLAPSED_PARAMS = 'ActionCreateQueueAWSAccessKeyId0A8BDF2G9KCB3ZNKFA82Expires2007-01-12T12:00:00ZQueueNamequeue2SignatureVersion1Version2006-04-01'
+
+FAKE_HMAC_KEY = 'fake-secret-key'
+
+EXPECTED_BASE64_SIGNATURE = 'wlv84EOcHQk800Yq6QHgX4AdJfk='
