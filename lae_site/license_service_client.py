@@ -1,3 +1,9 @@
+"""
+*SECURITY*  We pass the Timestamp parameter rather than Expires.  In this
+case AWS calculates Expires = Timestamp + 15 minutes.
+"""
+
+
 import urllib
 from collections import namedtuple
 from xml.parsers.expat import ExpatError
