@@ -18,9 +18,9 @@ from lae_site import util
 
 class LicenseServiceClient (object):
 
-    __slots__ = ['_creds', '_endpoint', '_make_http_request']
+    __slots__ = ['_creds', '_endpoint', '_make_http_request', '_get_time']
 
-    def __init__(self, creds, endpoint, make_http_request=make_http_request):
+    def __init__(self, creds, endpoint, make_http_request=make_http_request, get_time=util.now):
 
         assert isinstance(creds, AWSCredentials), `creds`
         assert isinstance(endpoint, AWSServiceEndpoint), `creds`
@@ -28,6 +28,7 @@ class LicenseServiceClient (object):
         self._creds = creds
         self._endpoint = endpoint
         self._make_http_request = make_http_request
+        self._get_time = get_time
 
     def activate_hosted_product(self, activationKey, productToken):
         """
@@ -60,9 +61,9 @@ class LicenseServiceClient (object):
 
         util.update_by_keywords_without_overwrite(
             params,
-            AWSAccessKey = self._creds.access_key,
+            AWSAccessKeyId = self._creds.access_key,
             SignatureVersion = '1',
-            Timestamp = util.now(),
+            Expires = self._get_time(),
             Version = '2008-04-28',
             )
 

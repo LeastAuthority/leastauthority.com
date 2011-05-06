@@ -11,10 +11,27 @@ class LicenseServiceClientTests (TestCase):
     def setUp(self):
 
         self.lsc = LicenseServiceClient(
-            creds=AWSCredentials(access_key='<dummy access key>', secret_key=FAKE_HMAC_KEY),
-            endpoint=AWSServiceEndpoint(),
+            creds=AWSCredentials(access_key=FAKE_AWS_ACCESS_KEY_ID, secret_key=FAKE_HMAC_KEY),
+            endpoint=AWSServiceEndpoint(uri=FAKE_ENDPOINT_URI),
             make_http_request=None,
+            get_time=lambda : FAKE_TIME_STAMP,
             )
+
+    def test__build_request_url(self):
+
+        expected = FAKE_ENDPOINT_URI + '?Action=CreateQueue&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&QueueName=queue2&SignatureVersion=1&Version=2008-04-28&Signature=%2Bg091tUDDhl8KZmkstGb41D9Ui4%3D'
+
+        params = dict(FAKE_PARAMS)
+
+        # Remove these params which are automatically added in _build_request_uri:
+        del params['AWSAccessKeyId']
+        del params['Expires']
+        del params['SignatureVersion']
+        del params['Version']
+
+        actual = self.lsc._build_request_url ( params )
+
+        self.assertEqual ( expected, actual )
 
     def test__calc_signature(self):
 
@@ -136,13 +153,17 @@ INVALID_XMLS = [
 """.format ( pid=FAKE_PID, reqid=FAKE_REQ_ID ),
     ]
 
+FAKE_AWS_ACCESS_KEY_ID = '0A8BDF2G9KCB3ZNKFA82'
+FAKE_TIME_STAMP = '2007-01-12T12:00:00Z'
+FAKE_VERSION = '2006-04-01'
+
 FAKE_PARAMS = {
     'Action':'CreateQueue',
     'QueueName':'queue2',
-    'AWSAccessKeyId':'0A8BDF2G9KCB3ZNKFA82',
+    'AWSAccessKeyId':FAKE_AWS_ACCESS_KEY_ID,
     'SignatureVersion':'1',
-    'Expires':'2007-01-12T12:00:00Z',
-    'Version':'2006-04-01',
+    'Expires':FAKE_TIME_STAMP,
+    'Version':FAKE_VERSION,
     }
 
 EXPECTED_COLLAPSED_PARAMS = 'ActionCreateQueueAWSAccessKeyId0A8BDF2G9KCB3ZNKFA82Expires2007-01-12T12:00:00ZQueueNamequeue2SignatureVersion1Version2006-04-01'
@@ -150,3 +171,5 @@ EXPECTED_COLLAPSED_PARAMS = 'ActionCreateQueueAWSAccessKeyId0A8BDF2G9KCB3ZNKFA82
 FAKE_HMAC_KEY = 'fake-secret-key'
 
 EXPECTED_BASE64_SIGNATURE = 'wlv84EOcHQk800Yq6QHgX4AdJfk='
+
+FAKE_ENDPOINT_URI = 'http://fake-site.faketld/fake_path'
