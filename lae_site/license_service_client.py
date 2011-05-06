@@ -1,4 +1,6 @@
 import urllib
+from collections import namedtuple
+from xml.parsers.expat import ExpatError
 
 from twisted.internet import reactor, ssl
 from twisted.web.client import HTTPClientFactory
@@ -32,17 +34,7 @@ class LicenseServiceClient (object):
             ProductToken = productToken,
             )
 
-        def handle_successful_activation(body):
-            doc = util.etree_to_python(XML(body))
-
-            # FIXME: Handle KeyErrors here:
-            node = doc[u'ActivateHostedProductResult']
-            pid = node[u'PersistentIdentifier']
-            usertoken = node[u'UserToken']
-
-            return (pid, usertoken)
-
-        d.addCallback(handle_successful_activation)
+        d.addCallback ( ActivateHostedProductResponse.parse )
 
         return d
 
@@ -95,3 +87,31 @@ class LicenseServiceClient (object):
         return self._creds.sign(
             bytes=''.join( (k+v) for (k, v) in items ),
             hash_type='sha1')
+
+
+class ResponseParseError (Exception):
+    pass
+
+
+class ActivateHostedProductResponse (namedtuple('ActivateHostedProductResponse', ['usertoken', 'pid'])):
+
+    @classmethod
+    def parse(cls, body):
+        try:
+            doc = XML(body)
+        except ExpatError, e:
+            raise ResponseParseError(e)
+
+        node = _xml_find(doc, u'ActivateHostedProductResult')
+        usertoken = _xml_find(node, u'UserToken').text.strip()
+        pid = _xml_find(node, u'PersistentIdentifier').text.strip()
+
+        return cls(usertoken, pid)
+
+
+def _xml_find(node, key):
+    r = node.find(key)
+    if r is None:
+        raise ResponseParseError('Node not found: {0}'.format(key))
+    else:
+        return r
