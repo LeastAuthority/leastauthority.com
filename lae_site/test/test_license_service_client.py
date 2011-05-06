@@ -1,4 +1,6 @@
 from twisted.trial.unittest import TestCase
+from twisted.internet.defer import Deferred
+from twisted.internet import reactor
 
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
@@ -10,28 +12,44 @@ class LicenseServiceClientTests (TestCase):
 
     def setUp(self):
 
+        self._trimmed_fake_params = dict(FAKE_PARAMS)
+
+        # Remove these params which are automatically added in _build_request_uri:
+        del self._trimmed_fake_params['AWSAccessKeyId']
+        del self._trimmed_fake_params['Expires']
+        del self._trimmed_fake_params['SignatureVersion']
+        del self._trimmed_fake_params['Version']
+
+        def fake_http_request(uri, method='GET'):
+            self.assertEqual ( EXPECTED_BUILT_URL, uri )
+            self.assertEqual ( 'GET', method )
+
+            d = Deferred()
+            reactor.callLater(0, d.callback, SAMPLE_RESPONSE)
+            return d
+
         self.lsc = LicenseServiceClient(
             creds=AWSCredentials(access_key=FAKE_AWS_ACCESS_KEY_ID, secret_key=FAKE_HMAC_KEY),
             endpoint=AWSServiceEndpoint(uri=FAKE_ENDPOINT_URI),
-            make_http_request=None,
+            make_http_request=fake_http_request,
             get_time=lambda : FAKE_TIME_STAMP,
             )
 
+    def test__send_request(self):
+
+        d = self.lsc._send_request ( **self._trimmed_fake_params )
+
+        def check_response(actual):
+            self.assertEqual ( SAMPLE_RESPONSE, actual )
+
+        d.addCallback(check_response)
+        return d
+
     def test__build_request_url(self):
 
-        expected = FAKE_ENDPOINT_URI + '?Action=CreateQueue&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&QueueName=queue2&SignatureVersion=1&Version=2008-04-28&Signature=%2Bg091tUDDhl8KZmkstGb41D9Ui4%3D'
+        actual = self.lsc._build_request_url ( self._trimmed_fake_params )
 
-        params = dict(FAKE_PARAMS)
-
-        # Remove these params which are automatically added in _build_request_uri:
-        del params['AWSAccessKeyId']
-        del params['Expires']
-        del params['SignatureVersion']
-        del params['Version']
-
-        actual = self.lsc._build_request_url ( params )
-
-        self.assertEqual ( expected, actual )
+        self.assertEqual ( EXPECTED_BUILT_URL, actual )
 
     def test__calc_signature(self):
 
@@ -173,3 +191,6 @@ FAKE_HMAC_KEY = 'fake-secret-key'
 EXPECTED_BASE64_SIGNATURE = 'wlv84EOcHQk800Yq6QHgX4AdJfk='
 
 FAKE_ENDPOINT_URI = 'http://fake-site.faketld/fake_path'
+
+EXPECTED_BUILT_URL = FAKE_ENDPOINT_URI + '?Action=CreateQueue&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&QueueName=queue2&SignatureVersion=1&Version=2008-04-28&Signature=%2Bg091tUDDhl8KZmkstGb41D9Ui4%3D'
+

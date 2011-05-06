@@ -46,9 +46,7 @@ class LicenseServiceClient (object):
 
     # Private
     def _send_request(self, **params):
-        return self._make_http_request(
-            url=self._build_request_url(params),
-            method='POST')
+        return self._make_http_request(self._build_request_url(params))
         
     
     def _build_request_url(self, params):
