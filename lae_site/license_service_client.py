@@ -55,7 +55,7 @@ class LicenseServiceClient (object):
         util.update_by_keywords_without_overwrite(
             params,
             AWSAccessKey = self._creds.access_key,
-            SignatureVersion = 1,
+            SignatureVersion = '1',
             Timestamp = util.now(),
             Version = '2008-04-28',
             )
@@ -65,7 +65,7 @@ class LicenseServiceClient (object):
 
         items.append( ('Signature', signature) )
 
-        quote = lambda x: urllib.quote(str(x))
+        quote = lambda x: urllib.quote(x)
         querystr = '&'.join( '%s=%s' % (k, quote(v)) for (k, v) in items )
 
         return '%s?%s' % (self._endpoint.get_uri(), querystr)
