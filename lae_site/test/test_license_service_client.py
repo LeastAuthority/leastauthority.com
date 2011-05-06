@@ -8,15 +8,17 @@ from lae_site.license_service_client import LicenseServiceClient, ActivateHosted
 
 class LicenseServiceClientTests (TestCase):
 
-    def test__calc_signature(self):
+    def setUp(self):
 
-        lsc = LicenseServiceClient(
+        self.lsc = LicenseServiceClient(
             creds=AWSCredentials(access_key='<dummy access key>', secret_key=FAKE_HMAC_KEY),
             endpoint=AWSServiceEndpoint(),
             make_http_request=None,
             )
 
-        actual = lsc._calc_signature ( FAKE_PARAMS.items() )
+    def test__calc_signature(self):
+
+        actual = self.lsc._calc_signature ( FAKE_PARAMS.items() )
 
         self.assertEqual( EXPECTED_BASE64_SIGNATURE, actual )
 
