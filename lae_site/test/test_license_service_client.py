@@ -26,6 +26,17 @@ class LicenseServiceClientTests (TestCase):
 
         self.assertEqual ( expected, actual )
 
+    def test__collapse_params_does_not_url_encode(self):
+        """
+        From the reference: "Do not URL encode the parameter values."
+        """
+        name = 'foo'
+        value = 'I have characters urlencoding escaped characters: +*&?\n\0'
+        input = [ (name, value) ]
+        expected = name + value
+        actual = LicenseServiceClient._collapse_params ( input )
+
+        self.assertEqual ( expected, actual )
 
 
 class ActivateHostedProductResponseTests (TestCase):
