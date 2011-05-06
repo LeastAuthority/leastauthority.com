@@ -20,8 +20,10 @@ class LicenseServiceClientTests (TestCase):
         del self._trimmed_fake_params['SignatureVersion']
         del self._trimmed_fake_params['Version']
 
+        self._expected_request_uri = None
+
         def fake_http_request(uri, method='GET'):
-            self.assertEqual ( EXPECTED_BUILT_URL, uri )
+            self.assertEqual ( self._expected_request_uri, uri )
             self.assertEqual ( 'GET', method )
 
             d = Deferred()
@@ -35,7 +37,22 @@ class LicenseServiceClientTests (TestCase):
             get_time=lambda : FAKE_TIME_STAMP,
             )
 
+    def test_activate_hosted_product(self):
+
+        self._expected_request_uri = EXPECTED_ACTIVATE_HOSTED_PRODUCT_URL
+
+        d = self.lsc.activate_hosted_product(FAKE_ACTIVATION_KEY, FAKE_PRODUCT_TOKEN)
+
+        def check_response(r):
+            self.failUnless ( isinstance(r, ActivateHostedProductResponse) )
+            self.assertEqual ( (FAKE_USERTOKEN, FAKE_PID), r )
+
+        d.addCallback(check_response)
+        return d
+
     def test__send_request(self):
+
+        self._expected_request_uri = EXPECTED_BUILT_URL
 
         d = self.lsc._send_request ( **self._trimmed_fake_params )
 
@@ -194,3 +211,13 @@ FAKE_ENDPOINT_URI = 'http://fake-site.faketld/fake_path'
 
 EXPECTED_BUILT_URL = FAKE_ENDPOINT_URI + '?Action=CreateQueue&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&QueueName=queue2&SignatureVersion=1&Version=2008-04-28&Signature=%2Bg091tUDDhl8KZmkstGb41D9Ui4%3D'
 
+FAKE_ACTIVATION_KEY='__FAKE_ACTIVATION_KEY__'
+FAKE_PRODUCT_TOKEN='__FAKE_PRODUCT_TOKEN__'
+
+EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE='wgSq0K8Yfq2YXujHflXQE1B%2Bb1M%3D'
+
+EXPECTED_ACTIVATE_HOSTED_PRODUCT_URL = FAKE_ENDPOINT_URI + '?Action=ActivateHostedProduct&ActivationKey={__FAKE_ACTIVATION_KEY__}&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&ProductToken={__FAKE_PRODUCT_TOKEN__}&SignatureVersion=1&Version=2008-04-28&Signature={__EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE__}'.format(
+    __FAKE_ACTIVATION_KEY__=FAKE_ACTIVATION_KEY,
+    __FAKE_PRODUCT_TOKEN__=FAKE_PRODUCT_TOKEN,
+    __EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE__=EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE,
+    )
