@@ -18,6 +18,15 @@ class ActivateHostedProductResponseTests (TestCase):
             self.assertEqual ( FAKE_PID, ahpr.pid )
 
 
+    def test_parse_negative(self):
+        for invalid in INVALID_XMLS:
+            try:
+                t = ActivateHostedProductResponse.parse ( invalid )
+            except ResponseParseError:
+                continue
+            else:
+                self.fail('Incorrectly parsed {0!r} into: {1!r}'.format(invalid, t))
+
 
 FAKE_USERTOKEN = '{UserToken}AAAHVXNlclRrbgfOpSykBAXO7g/zG....[long encoded token]...'
 FAKE_PID = 'PMNGLKRRYHLOXDQKEMKLRTBAULA'
@@ -44,3 +53,41 @@ SAMPLE_RESPONSE = """
     pid=FAKE_PID,
     reqid=FAKE_REQ_ID,
     )
+
+INVALID_XMLS = [
+    "$BLORG!  I AM NOT XML SO NEENER NEENER!",
+    "<wrongShape1 />",
+    """
+<ActivateHostedProductResponse>
+  Invalid shape 2
+</ActivateHostedProductResponse>
+""",
+    """
+<ActivateHostedProductResponse>
+   <ActivateHostedProductResult>
+      <UserToken>
+         {usertoken}
+      </UserToken>
+   </ActivateHostedProductResult>
+   <ResponseMetadata>
+      <RequestId>
+         {reqid}
+      </RequestId>
+   </ResponseMetadata>
+</ActivateHostedProductResponse>
+""".format ( usertoken=FAKE_USERTOKEN, reqid=FAKE_REQ_ID ),
+    """
+<ActivateHostedProductResponse>
+   <ActivateHostedProductResult>
+      <PersistentIdentifier>
+         {pid}
+      </PersistentIdentifier>
+   </ActivateHostedProductResult>
+   <ResponseMetadata>
+      <RequestId>
+         {reqid}
+      </RequestId>
+   </ResponseMetadata>
+</ActivateHostedProductResponse>
+""".format ( pid=FAKE_PID, reqid=FAKE_REQ_ID ),
+    ]
