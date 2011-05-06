@@ -1,6 +1,31 @@
 from twisted.trial.unittest import TestCase
 
-from lae_site.license_service_client import ActivateHostedProductResponse, ResponseParseError
+from lae_site.license_service_client import LicenseServiceClient, ActivateHostedProductResponse, ResponseParseError
+
+
+class LicenseServiceClientTests (TestCase):
+
+    def test__collapse_params(self):
+        """
+        Test vectors cut'n'pasted from documented examples:
+
+        Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?LSAPI_Auth_REST.html
+        """
+        input = [
+            ('Action', 'CreateQueue'),
+            ('QueueName', 'queue2'),
+            ('AWSAccessKeyId', '0A8BDF2G9KCB3ZNKFA82'),
+            ('SignatureVersion', '1'),
+            ('Expires', '2007-01-12T12:00:00Z'),
+            ('Version', '2006-04-01'),
+            ]
+
+        expected = 'ActionCreateQueueAWSAccessKeyId0A8BDF2G9KCB3ZNKFA82Expires2007-01-12T12:00:00ZQueueNamequeue2SignatureVersion1Version2006-04-01'
+
+        actual = LicenseServiceClient._collapse_params ( input )
+
+        self.assertEqual ( expected, actual )
+
 
 
 class ActivateHostedProductResponseTests (TestCase):
@@ -28,6 +53,8 @@ class ActivateHostedProductResponseTests (TestCase):
                 self.fail('Incorrectly parsed {0!r} into: {1!r}'.format(invalid, t))
 
 
+# Test vectors cut'n'pasted from documented examples:
+# Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?LSAPI_Auth_REST.html
 FAKE_USERTOKEN = '{UserToken}AAAHVXNlclRrbgfOpSykBAXO7g/zG....[long encoded token]...'
 FAKE_PID = 'PMNGLKRRYHLOXDQKEMKLRTBAULA'
 FAKE_REQ_ID = 'cb919c0a-9bce-4afe-9b48-9bdf2412bb67'

@@ -45,6 +45,9 @@ class LicenseServiceClient (object):
         
     
     def _build_request_url(self, params):
+        """
+        Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?LSAPI_Auth_REST.html
+        """
 
         util.update_by_keywords_without_overwrite(
             params,
@@ -54,29 +57,25 @@ class LicenseServiceClient (object):
             Version = '2008-04-28',
             )
 
-        items = self._prep_params( params )
+        items = params.items()
         signature = self._calc_signature( items )
 
         items.append( ('Signature', signature) )
 
-        querystr = '&'.join( '%s=%s' % (k, v) for (k, v) in items )
+        quote = lambda x: urllib.quote(str(x))
+        querystr = '&'.join( '%s=%s' % (k, quote(v)) for (k, v) in items )
 
         return '%s?%s' % (self._endpoint.get_uri(), querystr)
 
-    @staticmethod
-    def _prep_params(params):
-        # url encode all item values:
-        items = [ (k, urllib.quote(str(params[k]))) for k in params ]
-
-        # Sort case-insensitive:
-        items.sort( cmp = lambda a, b: cmp(a.upper(), b.upper()) )
-
-        return items
-
     def _calc_signature(self, items):
-        return self._creds.sign(
-            bytes=''.join( (k+v) for (k, v) in items ),
-            hash_type='sha1')
+        return self._creds.sign(self._collapse_params(items), hash_type='sha1')
+
+    @staticmethod
+    def _collapse_params(items):
+        # Sort case-insensitive on the parameter key:
+        items.sort( cmp = lambda (a,_x), (b,_y): cmp(a.upper(), b.upper()) )
+
+        return ''.join( (k+v) for (k, v) in items )
 
 
 class ResponseParseError (Exception):
