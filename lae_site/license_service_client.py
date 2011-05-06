@@ -2,27 +2,26 @@ import urllib
 from collections import namedtuple
 from xml.parsers.expat import ExpatError
 
-from twisted.internet import reactor, ssl
-from twisted.web.client import HTTPClientFactory
-
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
 from txaws.util import XML
 
+from lae_site.http_client import make_http_request
 from lae_site import util
 
 
 class LicenseServiceClient (object):
 
-    __slots__ = ['_creds', '_endpoint']
+    __slots__ = ['_creds', '_endpoint', '_make_http_request']
 
-    def __init__(self, creds, endpoint):
+    def __init__(self, creds, endpoint, make_http_request=make_http_request):
 
         assert isinstance(creds, AWSCredentials), `creds`
         assert isinstance(endpoint, AWSServiceEndpoint), `creds`
 
         self._creds = creds
         self._endpoint = endpoint
+        self._make_http_request = make_http_request
 
     def activate_hosted_product(self, activationKey, productToken):
         """
@@ -40,18 +39,9 @@ class LicenseServiceClient (object):
 
     # Private
     def _send_request(self, **params):
-        url = self._build_request_url(params)
-        client = HTTPClientFactory(url, method='POST')
-
-        ep = self._endpoint
-
-        if ep.scheme == 'https':
-            contextFactory = ssl.ClientContextFactory()
-            reactor.connectSSL(ep.host, ep.port, self.client, contextFactory)
-        else:
-            reactor.connectTCP(ep.host, ep.port, self.client)
-
-        return client.deferred
+        return self._make_http_request(
+            url=self._build_request_url(params),
+            method='POST')
         
     
     def _build_request_url(self, params):
