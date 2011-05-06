@@ -49,6 +49,9 @@ class LicenseServiceClient (object):
         Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?LSAPI_Auth_REST.html
         """
 
+        # Make a copy because we will modify the result:
+        params = dict(params)
+
         util.update_by_keywords_without_overwrite(
             params,
             AWSAccessKey = self._creds.access_key,
