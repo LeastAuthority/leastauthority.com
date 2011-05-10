@@ -5,7 +5,8 @@ from twisted.internet import reactor
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
 
-from lae_site.license_service_client import LicenseServiceClient, ActivateHostedProductResponse, ResponseParseError
+from lae_site.aws.license_service_client import \
+    LicenseServiceClient, ActivateHostedProductResponse, ResponseParseError
 
 
 class LicenseServiceClientTests (TestCase):
