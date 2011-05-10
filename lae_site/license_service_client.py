@@ -16,11 +16,17 @@ from lae_site.http_client import make_http_request
 from lae_site import util
 
 
+PRODUCTION_LICENSE_SERVICE_ENDPOINT = 'https://ls.amazonaws.com/'
+
+
 class LicenseServiceClient (object):
 
     __slots__ = ['_creds', '_endpoint', '_make_http_request', '_get_time']
 
-    def __init__(self, creds, endpoint, make_http_request=make_http_request, get_time=util.now):
+    def __init__(self, creds, endpoint=None, make_http_request=make_http_request, get_time=util.now):
+
+        if endpoint is None:
+            endpoint = AWSServiceEndpoint(PRODUCTION_LICENSE_SERVICE_ENDPOINT)
 
         assert isinstance(creds, AWSCredentials), `creds`
         assert isinstance(endpoint, AWSServiceEndpoint), `creds`
