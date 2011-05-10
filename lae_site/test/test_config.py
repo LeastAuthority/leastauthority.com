@@ -10,7 +10,9 @@ class ConfigTests (TestCase):
     def test_unexceptional_load(self):
         config = self._load_from_string( VALID_CONFIG )
 
-        self.assertEqual( VALID_PURCHASE_URL, config.purchase_url )
+        self.assertEqual( VALID_PURCHASE_URL, config.devpay_purchase_url )
+        self.assertEqual( VALID_ACCESS_KEY, config.aws_creds.access_key )
+        self.assertEqual( VALID_SECRET_KEY, config.aws_creds.secret_key )
         
 
     def test_missing_required_key(self):
@@ -18,7 +20,7 @@ class ConfigTests (TestCase):
             try:
                 config = self._load_from_string( vector )
             except MissingConfiguration, e:
-                expected = ('purchase_url',)
+                expected = ('devpay_purchase_url',)
                 self.assertEqual( expected, e.args )
             else:
                 self.fail(
@@ -41,28 +43,34 @@ class ConfigTests (TestCase):
 
 # Test vectors:
 VALID_PURCHASE_URL = 'http://fakey-site.crom/fnorp?id=1234'
+VALID_ACCESS_KEY = '<{ FAKE ACCESS KEY }>'
+VALID_SECRET_KEY = '<{ FAKE SECRET KEY }>'
 
 VALID_CONFIG = """
 {
-    "purchase_url": "%s"
+    "devpay_purchase_url": "%s",
+    "aws_access_key": "%s",
+    "aws_secret_key": "%s"
 }
-""" % (VALID_PURCHASE_URL,)
+""" % (VALID_PURCHASE_URL, VALID_ACCESS_KEY, VALID_SECRET_KEY)
 
 UNKNOWN_OPTION_NAME = 'thingy'
 UNKNOWN_OPTION_VALUE = True
 
 UNKNOWN_OPTION_CONFIG = """
 {
-    "purchase_url": "%s",
+    "devpay_purchase_url": "%s",
+    "aws_access_key": "%s",
+    "aws_secret_key": "%s",
     "%s": true
 }
-""" % (VALID_PURCHASE_URL, UNKNOWN_OPTION_NAME)
+""" % (VALID_PURCHASE_URL, VALID_ACCESS_KEY, VALID_SECRET_KEY, UNKNOWN_OPTION_NAME)
 
 INVALID_EMPTY_CONFIG = '{}'
 
 INVALID_WRONG_KEY_CONFIG = """
 {
-    "pruchase_rul": "%s"
+    "evpayday_pruchase_rul": "%s"
 }
 """ % (VALID_PURCHASE_URL,)
 

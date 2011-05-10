@@ -4,13 +4,16 @@ import os
 import json
 
 
+from txaws.credentials import AWSCredentials
+
+
 class MissingConfiguration (Exception):
     pass
 
 
 class Config (object):
 
-    __slots__ = ['purchase_url', 'unknown_options']
+    __slots__ = ['aws_creds', 'devpay_purchase_url', 'unknown_options']
 
     DEFAULT_CONFIG_PATH = os.path.expanduser('~/lae_website_config.json')
 
@@ -22,10 +25,21 @@ class Config (object):
         """
         d = self._load_config_json(configFile)
 
-        try:
-            self.purchase_url = str( d.pop('purchase_url') )
-        except KeyError:
-            raise MissingConfiguration('purchase_url')
+        def pop_required(name):
+            try:
+                return str( d.pop(name) )
+            except KeyError:
+                raise MissingConfiguration(name)
+
+        self.devpay_purchase_url = pop_required('devpay_purchase_url')
+
+        accesskey = pop_required('aws_access_key')
+        secretkey = pop_required('aws_secret_key')
+
+        self.aws_creds = AWSCredentials(
+            access_key = accesskey,
+            secret_key = secretkey,
+            )
 
         self.unknown_options = d
 
