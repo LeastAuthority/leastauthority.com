@@ -36,14 +36,14 @@ class LicenseServiceClient (object):
         self._make_http_request = make_http_request
         self._get_time = get_time
 
-    def activate_hosted_product(self, activationKey, productToken):
+    def activate_hosted_product(self, activationkey, producttoken):
         """
         Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?ActivateHostedProduct.html
         """
         d = self._send_request(
             Action = 'ActivateHostedProduct',
-            ActivationKey = activationKey,
-            ProductToken = productToken,
+            ActivationKey = activationkey,
+            ProductToken = producttoken,
             )
 
         d.addCallback ( ActivateHostedProductResponse.parse )
