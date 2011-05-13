@@ -2,7 +2,7 @@ from StringIO import StringIO
 
 from twisted.trial.unittest import TestCase
 
-from lae_site.entropy import EntropicToken
+from lae_site.util.entropy import EntropicToken
 
 
 class EntropicTokenTests (TestCase):

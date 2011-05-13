@@ -2,13 +2,13 @@ from twisted.trial.unittest import TestCase
 
 import mock
 
-from lae_site.http_client import make_http_request
+from lae_site.util.http_client import make_http_request
 
 
 class HttpClientTests (TestCase):
 
-    @mock.patch('lae_site.http_client.HTTPClientFactory')
-    @mock.patch('lae_site.http_client.reactor')
+    @mock.patch('lae_site.util.http_client.HTTPClientFactory')
+    @mock.patch('lae_site.util.http_client.reactor')
     def test_make_http_request(self, mockreactor, mockcfac):
 
         d = make_http_request('http://foo.faketld/banana?wombat')
@@ -19,8 +19,8 @@ class HttpClientTests (TestCase):
             [('connectTCP', ('foo.faketld', 80, mockcfac.return_value))])
 
 
-    @mock.patch('lae_site.http_client.HTTPClientFactory')
-    @mock.patch('lae_site.http_client.reactor')
+    @mock.patch('lae_site.util.http_client.HTTPClientFactory')
+    @mock.patch('lae_site.util.http_client.reactor')
     def test_make_http_request_with_port(self, mockreactor, mockcfac):
 
         d = make_http_request('http://bar.faketld:1234/banana?wombat')
@@ -31,9 +31,9 @@ class HttpClientTests (TestCase):
             [('connectTCP', ('bar.faketld', 1234, mockcfac.return_value))])
 
 
-    @mock.patch('lae_site.http_client.ssl')
-    @mock.patch('lae_site.http_client.HTTPClientFactory')
-    @mock.patch('lae_site.http_client.reactor')
+    @mock.patch('lae_site.util.http_client.ssl')
+    @mock.patch('lae_site.util.http_client.HTTPClientFactory')
+    @mock.patch('lae_site.util.http_client.reactor')
     def test_make_https_request(self, mockreactor, mockcfac, mockssl):
 
         d = make_http_request('https://secure-foo.faketld/banana?wombat')
@@ -48,9 +48,9 @@ class HttpClientTests (TestCase):
                mockssl.ClientContextFactory.return_value))])
 
 
-    @mock.patch('lae_site.http_client.ssl')
-    @mock.patch('lae_site.http_client.HTTPClientFactory')
-    @mock.patch('lae_site.http_client.reactor')
+    @mock.patch('lae_site.util.http_client.ssl')
+    @mock.patch('lae_site.util.http_client.HTTPClientFactory')
+    @mock.patch('lae_site.util.http_client.reactor')
     def test_make_https_request_with_port(self, mockreactor, mockcfac, mockssl):
 
         d = make_http_request('https://secure-bar.faketld:1234/banana?wombat')

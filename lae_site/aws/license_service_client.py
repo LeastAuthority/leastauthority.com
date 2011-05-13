@@ -12,9 +12,9 @@ from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
 from txaws.util import XML
 
-from lae_site.http_client import make_http_request
-from lae_site import util
-
+from lae_site.util.http_client import make_http_request
+from lae_site.util.no_overwrite import update_by_keywords_without_overwrite
+from lae_site.util import timestamp
 
 PRODUCTION_LICENSE_SERVICE_ENDPOINT = 'https://ls.amazonaws.com/'
 
@@ -61,11 +61,11 @@ class LicenseServiceClient (object):
         # Make a copy because we will modify the result:
         params = dict(params)
 
-        util.update_by_keywords_without_overwrite(
+        update_by_keywords_without_overwrite(
             params,
             AWSAccessKeyId = self._creds.access_key,
             SignatureVersion = '1',
-            Expires = util.now(),
+            Expires = timestamp.now(),
             Version = '2008-04-28',
             )
 

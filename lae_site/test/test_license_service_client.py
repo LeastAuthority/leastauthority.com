@@ -16,7 +16,7 @@ class LicenseServiceClientTests (TestCase):
 
     def setUp(self):
 
-        self._time_patcher = mock.patch('lae_site.util.now')
+        self._time_patcher = mock.patch('lae_site.util.timestamp.now')
         nowfunc = self._time_patcher.start()
         nowfunc.return_value = FAKE_TIME_STAMP
 
