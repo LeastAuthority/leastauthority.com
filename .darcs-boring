@@ -1,5 +1,13 @@
 # Boring file regexps:
 
+
+# Specific to leastauthority.com:
+
+# Coverage output:
+^\.coverage
+^htmlcov
+
+
 # Standard darcs boring entries below:
 
 ### compiler and interpreter intermediate files
