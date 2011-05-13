@@ -9,7 +9,7 @@
 from txaws.s3.client import S3Client, Query
 
 
-class DevpayS3Client (S3Client):
+class DevPayS3Client (S3Client):
     """
     This wraps txaws.s3.client.S3Client to make it DevPay aware.
     """
@@ -25,7 +25,7 @@ class DevpayS3Client (S3Client):
     @staticmethod
     def _make_query_factory(devpayusertoken):
         """
-        Given a Devpay UserToken, return a Query factory.
+        Given a DevPay UserToken, return a Query factory.
         """
 
         def make_query(**kwargs):

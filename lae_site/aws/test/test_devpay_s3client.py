@@ -2,10 +2,10 @@ from twisted.trial.unittest import TestCase
 
 import mock
 
-from lae_site.aws.devpay_s3client import DevpayS3Client
+from lae_site.aws.devpay_s3client import DevPayS3Client
 
 
-class DevpayS3ClientTests (TestCase):
+class DevPayS3ClientTests (TestCase):
 
     @mock.patch('lae_site.aws.devpay_s3client.Query')
     def test_create_bucket_has_devpay_header(self, mockquery):
@@ -13,7 +13,7 @@ class DevpayS3ClientTests (TestCase):
         mockcreds = mock.Mock(name='MockCreds')
         devpayusertoken = mock.sentinel.DEVPAYUSERTOKEN
 
-        s3c = DevpayS3Client(mockcreds, devpayusertoken)
+        s3c = DevPayS3Client(mockcreds, devpayusertoken)
 
         bucketname = 'global_shared_namespaces_are_silly'
         s3c.create_bucket(bucketname)
