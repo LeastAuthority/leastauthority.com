@@ -20,7 +20,7 @@ class EntropicTokenTests (TestCase):
     def test_negative_wrapIncorrectSize(self):
         vector = 'I am too short.'
 
-        assert len(vector) < EntropicToken.BYTE_LENGTH
+        assert len(vector) < 2 * EntropicToken.BYTE_LENGTH
 
         try:
             et = EntropicToken( vector )
@@ -30,7 +30,21 @@ class EntropicTokenTests (TestCase):
         else:
             self.fail('Invalid length not detected: EntropicToken(%r) -> %r' % (vector, et))
 
-            
+
+    def test_negative_non_hex_digits(self):
+        vector = 'proper length with non hex chars'
+
+        assert len(vector) == 2 * EntropicToken.BYTE_LENGTH
+
+        try:
+            et = EntropicToken( vector )
+        except EntropicToken.InvalidContent, e:
+            expected = ( repr(vector), )
+            self.assertEqual( expected, e.args )
+        else:
+            self.fail('Invalid length not detected: EntropicToken(%r) -> %r' % (vector, et))
+
+
     def test_generate(self):
 
         expected = self._FIRST_TOKEN_HEX
