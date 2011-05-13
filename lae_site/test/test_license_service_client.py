@@ -5,6 +5,8 @@ from twisted.internet import reactor
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
 
+import mock
+
 from lae_site.aws.license_service_client import \
     LicenseServiceClient, ActivateHostedProductResponse, ResponseParseError
 
@@ -12,6 +14,20 @@ from lae_site.aws.license_service_client import \
 class LicenseServiceClientTests (TestCase):
 
     def setUp(self):
+
+        self._time_patcher = mock.patch('lae_site.util.now')
+        nowfunc = self._time_patcher.start()
+        nowfunc.return_value = FAKE_TIME_STAMP
+
+        self._http_patcher = mock.patch('lae_site.aws.license_service_client.make_http_request')
+        self._make_http_request = self._http_patcher.start()
+
+        def fire_mocked_http_response(*a, **kw):
+            d = Deferred()
+            reactor.callLater(0, d.callback, SAMPLE_RESPONSE)
+            return d
+
+        self._make_http_request.side_effect = fire_mocked_http_response
 
         self._trimmed_fake_params = dict(FAKE_PARAMS)
 
@@ -21,28 +37,20 @@ class LicenseServiceClientTests (TestCase):
         del self._trimmed_fake_params['SignatureVersion']
         del self._trimmed_fake_params['Version']
 
-        self._expected_request_uri = None
-
-        def fake_http_request(uri, method='GET'):
-            self.assertEqual ( self._expected_request_uri, uri )
-            self.assertEqual ( 'GET', method )
-
-            d = Deferred()
-            reactor.callLater(0, d.callback, SAMPLE_RESPONSE)
-            return d
-
         self.lsc = LicenseServiceClient(
             creds=AWSCredentials(access_key=FAKE_AWS_ACCESS_KEY_ID, secret_key=FAKE_HMAC_KEY),
             endpoint=AWSServiceEndpoint(uri=FAKE_ENDPOINT_URI),
-            make_http_request=fake_http_request,
-            get_time=lambda : FAKE_TIME_STAMP,
             )
+
+    def tearDown(self):
+        self._http_patcher.stop()
+        self._time_patcher.stop()
 
     def test_activate_hosted_product(self):
 
-        self._expected_request_uri = EXPECTED_ACTIVATE_HOSTED_PRODUCT_URL
-
         d = self.lsc.activate_hosted_product(FAKE_ACTIVATION_KEY, FAKE_PRODUCT_TOKEN)
+
+        self._make_http_request.assert_called_with(EXPECTED_ACTIVATE_HOSTED_PRODUCT_URL)
 
         def check_response(r):
             self.failUnless ( isinstance(r, ActivateHostedProductResponse) )
@@ -53,9 +61,9 @@ class LicenseServiceClientTests (TestCase):
 
     def test__send_request(self):
 
-        self._expected_request_uri = EXPECTED_BUILT_URL
-
         d = self.lsc._send_request ( **self._trimmed_fake_params )
+
+        self._make_http_request.assert_called_with(EXPECTED_BUILT_URL)
 
         def check_response(actual):
             self.assertEqual ( SAMPLE_RESPONSE, actual )

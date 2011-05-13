@@ -21,9 +21,9 @@ PRODUCTION_LICENSE_SERVICE_ENDPOINT = 'https://ls.amazonaws.com/'
 
 class LicenseServiceClient (object):
 
-    __slots__ = ['_creds', '_endpoint', '_make_http_request', '_get_time']
+    __slots__ = ['_creds', '_endpoint']
 
-    def __init__(self, creds, endpoint=None, make_http_request=make_http_request, get_time=util.now):
+    def __init__(self, creds, endpoint=None):
 
         if endpoint is None:
             endpoint = AWSServiceEndpoint(PRODUCTION_LICENSE_SERVICE_ENDPOINT)
@@ -33,8 +33,6 @@ class LicenseServiceClient (object):
 
         self._creds = creds
         self._endpoint = endpoint
-        self._make_http_request = make_http_request
-        self._get_time = get_time
 
     def activate_hosted_product(self, activationkey, producttoken):
         """
@@ -52,7 +50,7 @@ class LicenseServiceClient (object):
 
     # Private
     def _send_request(self, **params):
-        return self._make_http_request(self._build_request_url(params))
+        return make_http_request(self._build_request_url(params))
         
     
     def _build_request_url(self, params):
@@ -67,7 +65,7 @@ class LicenseServiceClient (object):
             params,
             AWSAccessKeyId = self._creds.access_key,
             SignatureVersion = '1',
-            Expires = self._get_time(),
+            Expires = util.now(),
             Version = '2008-04-28',
             )
 
