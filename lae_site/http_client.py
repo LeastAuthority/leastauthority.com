@@ -4,7 +4,7 @@ from twisted.internet import reactor, ssl
 from twisted.web.client import HTTPClientFactory
 
 
-def make_http_request(url, method='GET', reactor=reactor):
+def make_http_request(url, method='GET'):
     """
     This is a thin wrapper around twisted HTTPClientFactory and
     reactor.connect(TCP/SSL).
@@ -16,7 +16,6 @@ def make_http_request(url, method='GET', reactor=reactor):
 
     @param url: The url to request.
     @param method: The HTTP request method.
-    @param reactor: Anything providing the IReactorSSL interface.
 
     @return: A L{Deferred} which fires with the response body.
     """
