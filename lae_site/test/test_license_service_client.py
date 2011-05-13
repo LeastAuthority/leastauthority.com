@@ -8,7 +8,8 @@ from txaws.service import AWSServiceEndpoint
 import mock
 
 from lae_site.aws.license_service_client import \
-    LicenseServiceClient, ActivateHostedProductResponse, ResponseParseError
+    PRODUCTION_LICENSE_SERVICE_ENDPOINT, LicenseServiceClient, \
+    ActivateHostedProductResponse, ResponseParseError
 
 
 class LicenseServiceClientTests (TestCase):
@@ -39,7 +40,6 @@ class LicenseServiceClientTests (TestCase):
 
         self.lsc = LicenseServiceClient(
             creds=AWSCredentials(access_key=FAKE_AWS_ACCESS_KEY_ID, secret_key=FAKE_HMAC_KEY),
-            endpoint=AWSServiceEndpoint(uri=FAKE_ENDPOINT_URI),
             )
 
     def tearDown(self):
@@ -104,6 +104,14 @@ class LicenseServiceClientTests (TestCase):
         actual = LicenseServiceClient._collapse_params ( input )
 
         self.assertEqual ( expected, actual )
+
+    def test_nondefault_endpoint(self):
+        lsc = LicenseServiceClient(
+            creds=AWSCredentials(access_key=FAKE_AWS_ACCESS_KEY_ID, secret_key=FAKE_HMAC_KEY),
+            endpoint=AWSServiceEndpoint(uri=PRODUCTION_LICENSE_SERVICE_ENDPOINT),
+            )
+
+        self.assertEqual(vars(lsc._endpoint), vars(self.lsc._endpoint))
 
 
 class ActivateHostedProductResponseTests (TestCase):
@@ -216,16 +224,14 @@ FAKE_HMAC_KEY = 'fake-secret-key'
 
 EXPECTED_BASE64_SIGNATURE = 'wlv84EOcHQk800Yq6QHgX4AdJfk='
 
-FAKE_ENDPOINT_URI = 'http://fake-site.faketld/fake_path'
-
-EXPECTED_BUILT_URL = FAKE_ENDPOINT_URI + '?Action=CreateQueue&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&QueueName=queue2&SignatureVersion=1&Version=2008-04-28&Signature=%2Bg091tUDDhl8KZmkstGb41D9Ui4%3D'
+EXPECTED_BUILT_URL = PRODUCTION_LICENSE_SERVICE_ENDPOINT + '?Action=CreateQueue&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&QueueName=queue2&SignatureVersion=1&Version=2008-04-28&Signature=%2Bg091tUDDhl8KZmkstGb41D9Ui4%3D'
 
 FAKE_ACTIVATION_KEY='__FAKE_ACTIVATION_KEY__'
 FAKE_PRODUCT_TOKEN='__FAKE_PRODUCT_TOKEN__'
 
 EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE='wgSq0K8Yfq2YXujHflXQE1B%2Bb1M%3D'
 
-EXPECTED_ACTIVATE_HOSTED_PRODUCT_URL = FAKE_ENDPOINT_URI + '?Action=ActivateHostedProduct&ActivationKey={__FAKE_ACTIVATION_KEY__}&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&ProductToken={__FAKE_PRODUCT_TOKEN__}&SignatureVersion=1&Version=2008-04-28&Signature={__EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE__}'.format(
+EXPECTED_ACTIVATE_HOSTED_PRODUCT_URL = PRODUCTION_LICENSE_SERVICE_ENDPOINT + '?Action=ActivateHostedProduct&ActivationKey={__FAKE_ACTIVATION_KEY__}&AWSAccessKeyId=0A8BDF2G9KCB3ZNKFA82&Expires=2007-01-12T12%3A00%3A00Z&ProductToken={__FAKE_PRODUCT_TOKEN__}&SignatureVersion=1&Version=2008-04-28&Signature={__EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE__}'.format(
     __FAKE_ACTIVATION_KEY__=FAKE_ACTIVATION_KEY,
     __FAKE_PRODUCT_TOKEN__=FAKE_PRODUCT_TOKEN,
     __EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE__=EXPECTED_ACTIVATE_HOSTED_PRODUCT_SIGNATURE,
