@@ -6,7 +6,7 @@ import logging
 from twisted.internet import reactor
 
 from lae_site.config import Config
-from lae_site.server import startServer
+from lae_site.handlers import startServer
 
 
 def main():
