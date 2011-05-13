@@ -6,7 +6,7 @@ import logging
 from twisted.internet import reactor
 
 from lae_site.config import Config
-from lae_site.handlers import startServer
+from lae_site.handlers import make_site
 
 
 def main():
@@ -22,8 +22,10 @@ def main():
     if config.unknown_options:
         logging.warn('Unknown options: %r', config.unknown_options.keys())
 
-    startServer(config)
+    site = make_site(config)
 
+    logging.info('Listening on port 80...')
+    reactor.listenTCP(80, site)
     reactor.run()
 
 
