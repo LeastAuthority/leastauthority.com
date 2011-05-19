@@ -13,4 +13,4 @@ def make_site(config):
     resource.putChild('signup', Redirect( config.devpay_purchase_url ))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())
 
-    return Site(resource)
+    return Site(resource, logPath="sitelogs")
