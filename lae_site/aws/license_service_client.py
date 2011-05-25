@@ -7,6 +7,7 @@ case AWS calculates Expires = Timestamp + 15 minutes.
 import urllib
 from collections import namedtuple
 from xml.parsers.expat import ExpatError
+from xml.etree import ElementTree
 
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
@@ -100,7 +101,7 @@ class ActivateHostedProductResponse (namedtuple('ActivateHostedProductResponse',
     def parse(cls, body):
         try:
             doc = XML(body)
-        except ExpatError, e:
+        except (ExpatError, ElementTree.ParseError), e:
             raise ResponseParseError(e)
 
         node = _xml_find(doc, u'ActivateHostedProductResult')
