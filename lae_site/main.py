@@ -10,6 +10,11 @@ from lae_site.handlers import make_site
 
 
 def main():
+    port = 80
+    for arg in sys.argv:
+        if arg.startswith('--port='):
+            port = int(arg[len('--port='):])
+
     config = Config()
 
     logging.basicConfig(
@@ -24,8 +29,8 @@ def main():
 
     site = make_site(config)
 
-    logging.info('Listening on port 80...')
-    reactor.listenTCP(80, site)
+    logging.info('Listening on port %d...' % port)
+    reactor.listenTCP(port, site)
     reactor.run()
 
 
