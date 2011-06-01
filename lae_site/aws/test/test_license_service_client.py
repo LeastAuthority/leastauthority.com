@@ -17,11 +17,11 @@ class LicenseServiceClientTests (TestCase):
     def setUp(self):
 
         self._time_patcher = mock.patch('lae_site.util.timestamp.now')
-        nowfunc = self._time_patcher.start()
+        nowfunc = self._time_patcher.__enter__()
         nowfunc.return_value = FAKE_TIME_STAMP
 
         self._http_patcher = mock.patch('lae_site.aws.license_service_client.make_http_request')
-        self._make_http_request = self._http_patcher.start()
+        self._make_http_request = self._http_patcher.__enter__()
 
         def fire_mocked_http_response(*a, **kw):
             d = Deferred()
@@ -43,8 +43,8 @@ class LicenseServiceClientTests (TestCase):
             )
 
     def tearDown(self):
-        self._http_patcher.stop()
-        self._time_patcher.stop()
+        self._http_patcher.__exit__()
+        self._time_patcher.__exit__()
 
     def test_activate_hosted_product(self):
 

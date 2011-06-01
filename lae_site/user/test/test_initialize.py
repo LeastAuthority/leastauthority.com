@@ -14,14 +14,14 @@ class InitializationTests (TestCase):
         def start_patch(name):
             patcher = mock.patch(name)
             self._patchers.append(patcher)
-            return patcher.start()
+            return patcher.__enter__()
 
         self.mocklsc = start_patch('lae_site.user.initialize.LicenseServiceClient')
         self.mocks3c = start_patch('lae_site.user.initialize.DevPayS3Client')
         self.mocketok = start_patch('lae_site.user.initialize.EntropicToken')
 
     def tearDown(self):
-        [p.stop() for p in self._patchers]
+        [p.__exit__() for p in self._patchers]
 
     def test_initialize_user_account(self):
 
