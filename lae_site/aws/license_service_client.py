@@ -99,9 +99,13 @@ class ActivateHostedProductResponse (namedtuple('ActivateHostedProductResponse',
 
     @classmethod
     def parse(cls, body):
+        if hasattr(ElementTree, 'ParseError'):
+            exceptions = (ExpatError, ElementTree.ParseError)
+        else:
+            exceptions = (ExpatError)
         try:
             doc = XML(body)
-        except (ExpatError, ElementTree.ParseError), e:
+        except exceptions, e:
             raise ResponseParseError(e)
 
         node = _xml_find(doc, u'ActivateHostedProductResult')
