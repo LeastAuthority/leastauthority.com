@@ -41,7 +41,7 @@ Tahoe-LAFS-on-S3: reliable and secure storage
 
 **How much does Tahoe-LAFS-on-S3 cost?**
 
-  TBA
+  $1.00/GB/month
 
 **What is the relationship between Least Authority Enterprises and the Tahoe-LAFS open source project?**
 
