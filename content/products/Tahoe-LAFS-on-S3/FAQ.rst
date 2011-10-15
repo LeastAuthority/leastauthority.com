@@ -43,6 +43,9 @@ Tahoe-LAFS-on-S3: reliable and secure storage
 
   $1.00/GB/month
 
+  Discounts are available for full-time students, educational institutions,
+  libraries, non-profits, and open source projects.
+
 **What is the relationship between Least Authority Enterprises and the Tahoe-LAFS open source project?**
 
   Zooko Wilcox-O'Hearn, founder and CEO of Least Authority Enterprises, was
