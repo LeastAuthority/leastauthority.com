@@ -3,7 +3,8 @@ Tahoe-LAFS-on-S3: reliable and secure storage
 
 **What is Tahoe-LAFS-on-S3?**
 
-  *Tahoe-LAFS-on-S3* is a reliable and scalable cloud storage back-end for use with the Tahoe-LAFS client software.
+  *Tahoe-LAFS-on-S3* is a reliable and scalable cloud storage back-end for
+   use with the Tahoe-LAFS client software.
 
 **What is Tahoe-LAFS?**
 
