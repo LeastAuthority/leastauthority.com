@@ -45,11 +45,10 @@ Tahoe-LAFS-on-S3: reliable and secure storage
 
 **What is the relationship between Least Authority Enterprises and the Tahoe-LAFS open source project?**
 
-  Zooko Wilcox-O'Hearn, founder of Least Authority Enterprises, was
-  one of the inventors of Tahoe-LAFS and continues to actively
-  contribute to the project as an architect and coder. Least Authority
-  Enterprises intend to contribute all of our work to the open source
-  project.
+  Zooko Wilcox-O'Hearn, founder and CEO of Least Authority Enterprises, was
+  one of the inventors of Tahoe-LAFS and continues to contribute to the
+  project as an architect and coder. Least Authority Enterprises contribute
+  all of our code to the open source project.
 
 **How do I start?**
 
