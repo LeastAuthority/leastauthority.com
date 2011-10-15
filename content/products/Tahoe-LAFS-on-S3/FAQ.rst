@@ -57,7 +57,6 @@ Tahoe-LAFS-on-S3: reliable and secure storage
 
   Please write to info@leastauthority.com and we'll write back soon
   to invite you to try the alpha release.
-  
 
 .. _Tahoe-LAFS.org: http://tahoe-lafs.org
 .. _S3: http://en.wikipedia.org/wiki/Amazon_S3
