@@ -45,6 +45,7 @@ class InitializationTests (TestCase):
         return initialize_user_account(
             creds = mockcreds,
             activationkey = mock.sentinel.activationkey,
+            producttoken = mock.sentinel.producttoken,
             status_callback = mockstatus)
 
 

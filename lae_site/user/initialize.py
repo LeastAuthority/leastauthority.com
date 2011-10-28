@@ -5,7 +5,7 @@ from lae_site.aws.devpay_s3client import DevPayS3Client
 from lae_site.util.entropy import EntropicToken
 
 
-def initialize_user_account(creds, activationkey, status_callback):
+def initialize_user_account(creds, activationkey, producttoken, status_callback):
     """
     @param creds: AWSCredentials
 
@@ -33,7 +33,7 @@ def initialize_user_account(creds, activationkey, status_callback):
         public = 'Activating DevPay License...',
         activationkey = activationkey)
 
-    d = LicenseServiceClient(creds).activate_hosted_product(activationkey)
+    d = LicenseServiceClient(creds).activate_hosted_product(activationkey, producttoken)
 
     def activated(ahpr):
         update_status(

@@ -4,7 +4,9 @@ case AWS calculates Expires = Timestamp + 15 minutes.
 """
 
 
-import urllib
+import urllib, time
+from hashlib import sha1
+from base64 import b64encode
 from collections import namedtuple
 from xml.parsers.expat import ExpatError
 from xml.etree import ElementTree
@@ -18,6 +20,18 @@ from lae_site.util.no_overwrite import update_by_keywords_without_overwrite
 from lae_site.util import timestamp
 
 PRODUCTION_LICENSE_SERVICE_ENDPOINT = 'https://ls.amazonaws.com/'
+
+
+def _xor(a, b):
+    return "".join([chr(ord(c) ^ ord(b)) for c in a])
+
+def hmac_sha1(tag, data):
+    key = (tag + "\x00"*64)[:64]
+    ikey = _xor(key, "\x36")
+    okey = _xor(key, "\x5c")
+    h1 = sha1(ikey + data).digest()
+    h2 = sha1(okey + h1).digest()
+    return h2
 
 
 class LicenseServiceClient (object):
@@ -51,9 +65,10 @@ class LicenseServiceClient (object):
 
     # Private
     def _send_request(self, **params):
-        return make_http_request(self._build_request_url(params))
-        
-    
+        url = self._build_request_url(params)
+        print url
+        return make_http_request(url)
+
     def _build_request_url(self, params):
         """
         Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?LSAPI_Auth_REST.html
@@ -66,7 +81,7 @@ class LicenseServiceClient (object):
             params,
             AWSAccessKeyId = self._creds.access_key,
             SignatureVersion = '1',
-            Expires = timestamp.now(),
+            Expires = timestamp.format_iso_time(time.time() + 15*60),
             Version = '2008-04-28',
             )
 
@@ -75,20 +90,21 @@ class LicenseServiceClient (object):
 
         items.append( ('Signature', signature) )
 
-        quote = lambda x: urllib.quote(x)
-        querystr = '&'.join( '%s=%s' % (k, quote(v)) for (k, v) in items )
+        querystr = '&'.join( ['%s=%s' % (k, urllib.quote(v)) for (k, v) in items] )
 
         return '%s?%s' % (self._endpoint.get_uri(), querystr)
 
     def _calc_signature(self, items):
-        return self._creds.sign(self._collapse_params(items), hash_type='sha1')
+        collapsed = self._collapse_params(items)
+        print collapsed
+        return b64encode(hmac_sha1(self._creds.secret_key, collapsed))
 
     @staticmethod
     def _collapse_params(items):
         # Sort case-insensitive on the parameter key:
         items.sort( cmp = lambda (a,_x), (b,_y): cmp(a.upper(), b.upper()) )
 
-        return ''.join( (k+v) for (k, v) in items )
+        return ''.join( [(k+v) for (k, v) in items] )
 
 
 class ResponseParseError (Exception):
