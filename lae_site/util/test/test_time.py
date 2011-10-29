@@ -1,7 +1,5 @@
 from twisted.trial.unittest import TestCase
 
-import mock
-
 from lae_site.util import timestamp
 
 

@@ -18,7 +18,6 @@ class InitializationTests (TestCase):
 
         self.mocklsc = start_patch('lae_site.user.initialize.LicenseServiceClient')
         self.mocks3c = start_patch('lae_site.user.initialize.DevPayS3Client')
-        self.mocketok = start_patch('lae_site.user.initialize.EntropicToken')
 
     def tearDown(self):
         [p.__exit__() for p in self._patchers]
@@ -46,6 +45,7 @@ class InitializationTests (TestCase):
             creds = mockcreds,
             activationkey = mock.sentinel.activationkey,
             producttoken = mock.sentinel.producttoken,
+            bucketname = mock.sentinel.bucketname,
             status_callback = mockstatus)
 
 

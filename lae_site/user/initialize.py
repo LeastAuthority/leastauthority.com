@@ -2,10 +2,9 @@ import logging
 
 from lae_site.aws.license_service_client import LicenseServiceClient
 from lae_site.aws.devpay_s3client import DevPayS3Client
-from lae_site.util.entropy import EntropicToken
 
 
-def initialize_user_account(creds, activationkey, producttoken, status_callback):
+def initialize_user_account(creds, activationkey, producttoken, bucketname, status_callback):
     """
     @param creds: AWSCredentials
 
@@ -37,10 +36,11 @@ def initialize_user_account(creds, activationkey, producttoken, status_callback)
 
     def activated(ahpr):
         update_status(
-            public = 'DevPay License activated.',
+            public = ('DevPay License activated:\n'
+                      'usertoken=%s\n'
+                      'pid=%s\n' % (ahpr.usertoken, ahpr.pid)),
             activation_response = ahpr)
 
-        bucketname = EntropicToken.generate()
         update_status(
             public = 'Creating S3 Bucket...',
             bucketname = bucketname)
