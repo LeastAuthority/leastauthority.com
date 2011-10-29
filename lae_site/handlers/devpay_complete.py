@@ -1,8 +1,9 @@
 import logging
 import pprint
+import time
 
 from twisted.web.resource import Resource
-from twisted.web import http
+from lae_site.util.timestamp import format_iso_time
 
 
 class DevPayPurchaseHandler (Resource):
@@ -12,25 +13,28 @@ class DevPayPurchaseHandler (Resource):
         self._log.debug('Initialized.')
 
     def render_POST(self, request):
-        return self._render_bad_request(request)
+        return self.render_GET(self, request)
 
     def render_GET(self, request):
         try:
             [activationkey] = request.args['ActivationKey']
+        except (KeyError, ValueError):
+            activationkey = "unknown"
+
+        try:
             [productcode] = request.args['ProductCode']
         except (KeyError, ValueError):
-            return self._render_bad_request(request)
+            productcode = "unknown"
 
         else:
             return self._render_activate(request, activationkey, productcode)
 
-    @staticmethod
-    def _render_bad_request(request):
-        request.setResponseCode(http.BAD_REQUEST)
-        request.setHeader('content-type', 'text/ascii')
-        return 'Invalid request - POST not supported.'
-
     def _render_activate(self, request, activationkey, productcode):
+        f = open("activation_requests", "a+")
+        try:
+            f.write("%s %s %s\n" % (format_iso_time(time.time()), activationkey, productcode))
+        finally:
+            f.close()
         details = dict(
             [ (k, getattr(request, k))
               for k in ['method',
@@ -41,6 +45,6 @@ class DevPayPurchaseHandler (Resource):
               ])
         details['client-ip'] = request.getClientIP()
         self._log.debug('Request details from %r:\n%s', request, pprint.pformat(details))
-        request.setResponseCode(200)
-        request.setHeader('content-type', 'text/ascii')
-        return pprint.pformat(details)
+        request.setResponseCode(307)
+        request.setHeader('Location', '/products/%s.html' % (productcode,))
+        return ""
