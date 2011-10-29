@@ -13,12 +13,13 @@ from lae_site.aws.license_service_client import \
 
 
 class LicenseServiceClientTests (TestCase):
+    SOME_TIME = 1168602300
+    EXPIRES = "2007-01-12T12:00:00Z"  # 15 minutes later
 
     def setUp(self):
-
-        self._time_patcher = mock.patch('lae_site.util.timestamp.now')
+        self._time_patcher = mock.patch('time.time')
         nowfunc = self._time_patcher.__enter__()
-        nowfunc.return_value = FAKE_TIME_STAMP
+        nowfunc.return_value = self.SOME_TIME
 
         self._http_patcher = mock.patch('lae_site.aws.license_service_client.make_http_request')
         self._make_http_request = self._http_patcher.__enter__()

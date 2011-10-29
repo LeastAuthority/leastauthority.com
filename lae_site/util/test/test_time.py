@@ -2,19 +2,12 @@ from twisted.trial.unittest import TestCase
 
 import mock
 
-from lae_site.util.timestamp import ISO_TIME_FMT, now, format_iso_time
-
+from lae_site.util import timestamp
 
 
 class TimeTests (TestCase):
+    SOME_TIME = 1319843099
 
-    @mock.patch('time.strftime')
-    def test_time(self, strftime):
-
-        now()
-        strftime.assert_called_with(ISO_TIME_FMT)
-
-        t = mock.sentinel.FAKE_TIME
-        format_iso_time(t)
-        strftime.assert_called_with(ISO_TIME_FMT, t)
-
+    def test_format_iso_time(self):
+        t = timestamp.format_iso_time(self.SOME_TIME)
+        self.failUnlessEqual(t, "2011-10-28T23:04:59Z")
