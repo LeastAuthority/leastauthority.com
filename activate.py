@@ -9,6 +9,7 @@ if len(sys.argv) < 6:
     print "Happy activating!"
     sys.exit(1)
 
+# TODO: the access key, secret key and product token should probably be in files.
 access_key_id = sys.argv[1]
 secret_key = sys.argv[2]
 product_token = sys.argv[3]
