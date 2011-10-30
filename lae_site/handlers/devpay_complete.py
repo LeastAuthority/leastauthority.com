@@ -7,12 +7,13 @@ from lae_site.util.timestamp import format_iso_time
 
 # TODO: read this from a file specific to the product.
 DEVPAY_RESPONSE_HTML = """
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <title>Request activation for Tahoe-LAFS-on-S3 alpha</title>
 </head>
-<body bgcolor="#FFFFFF">
+<body style="background: #FFFFFF">
 <p>
 Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 </p>
@@ -32,30 +33,32 @@ provider-independent security means that you don't need to tell us any secrets a
 </p>
 <div style="width:45em">
 <form action="/activation-request" method="post" enctype="multipart/form-data">
+<div></div> <!-- work around old Netscape bug -->
+<!-- table nested in fieldset is strictly speaking invalid, but widely supported -->
 <fieldset><table>
   <tr>
     <td style="width:25em"><label for="Name">Name you would like us to call you by: </label></td>
-    <td><input type="text" name="Name" style="width:20em"/></td>
+    <td><input type="text" id="Name" name="Name" style="width:20em"></td>
   </tr>
   <tr>
     <td style="width:25em"><label for="Email">Email address: </label></td>
-    <td><input type="text" name="Email" style="width:20em"/><td>
+    <td><input type="text" id="Email" name="Email" style="width:20em"><td>
   </tr>
   <tr>
     <td style="width:25em"><label for="ActivationKey">Activation Key%(activationhint)s: </label></td>
-    <td><input type="text" name="ActivationKey" value="%(activationkey)s" style="width:20em"/></td>
+    <td><input type="text" id="ActivationKey" name="ActivationKey" value="%(activationkey)s" style="width:20em"></td>
   </tr>
   <tr>
     <td style="width:25em"><label for="ProductName">Product: </label></td>
-    <td><input type="text" name="ProductName" value="Tahoe-LAFS-on-S3 alpha" disabled style="width:20em"/></td>
+    <td><input type="text" id="ProductName" name="ProductName" value="Tahoe-LAFS-on-S3 alpha" disabled style="width:20em">
+        <input type="hidden" name="ProductCode" value="%(productcode)s"></td>
   </tr>
-  <input type="hidden" name="ProductCode" value="%(productcode)s" />
   <tr>
     <td style="width:25em"><label for="PublicKey">Your OpenPGP public key or fingerprint, optional: </label></td>
-    <td><input type="text" name="PublicKey" style="width:20em; height:12ex"/></td>
+    <td><input type="text" id="PublicKey" name="PublicKey" style="width:20em; height:12ex"></td>
   </tr>
   <tr>
-    <td><input type="submit" value="Request activation" /></td>
+    <td><input type="submit" value="Request activation"></td>
   </tr>
 </table></fieldset>
 </form>
@@ -83,6 +86,7 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 """
 
 ACTIVATIONREQ_RESPONSE_HTML = """
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
