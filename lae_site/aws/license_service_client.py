@@ -1,8 +1,3 @@
-"""
-*SECURITY*  We pass the Timestamp parameter rather than Expires.  In this
-case AWS calculates Expires = Timestamp + 15 minutes.
-"""
-
 
 import urllib, time
 from hashlib import sha1
