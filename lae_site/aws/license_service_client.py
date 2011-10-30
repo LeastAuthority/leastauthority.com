@@ -66,7 +66,7 @@ class LicenseServiceClient (object):
     # Private
     def _send_request(self, **params):
         url = self._build_request_url(params)
-        print url
+        #print url
         return make_http_request(url)
 
     def _build_request_url(self, params):
@@ -96,7 +96,7 @@ class LicenseServiceClient (object):
 
     def _calc_signature(self, items):
         collapsed = self._collapse_params(items)
-        print collapsed
+        #print collapsed
         return b64encode(hmac_sha1(self._creds.secret_key, collapsed))
 
     @staticmethod
@@ -115,6 +115,9 @@ class ActivateHostedProductResponse (namedtuple('ActivateHostedProductResponse',
 
     @classmethod
     def parse(cls, body):
+        #print "response body:"
+        #print body
+
         if hasattr(ElementTree, 'ParseError'):
             exceptions = (ExpatError, ElementTree.ParseError)
         else:
