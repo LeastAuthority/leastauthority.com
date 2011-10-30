@@ -7,7 +7,7 @@ from lae_site.util.timestamp import format_iso_time
 
 # TODO: read this from a file specific to the product.
 DEVPAY_RESPONSE_HTML = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
@@ -33,9 +33,7 @@ provider-independent security means that you don't need to tell us any secrets a
 </p>
 <div style="width:45em">
 <form action="/activation-request" method="post" enctype="multipart/form-data">
-<div></div> <!-- work around old Netscape bug -->
-<!-- table nested in fieldset is strictly speaking invalid, but widely supported -->
-<fieldset><table>
+<table>
   <tr>
     <td style="width:25em"><label for="Name">Name you would like us to call you by: </label></td>
     <td><input type="text" id="Name" name="Name" style="width:20em"></td>
@@ -60,7 +58,7 @@ provider-independent security means that you don't need to tell us any secrets a
   <tr>
     <td><input type="submit" value="Request activation"></td>
   </tr>
-</table></fieldset>
+</table>
 </form>
 </div>
 <p>
@@ -86,13 +84,13 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 """
 
 ACTIVATIONREQ_RESPONSE_HTML = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
 <title>Activation requested</title>
 </head>
-<body bgcolor="#FFFFFF">
+<body style="background: #FFFFFF">
 <p>
 Your activation request has been received.
 </p>
