@@ -25,16 +25,24 @@ class RedirectToHTTPS(Resource):
     """
     isLeaf = 0
 
+    def __init__(self, port, *args, **kwargs):
+        Resource.__init__(self, *args, **kwargs)
+        self.port = port
+
     def render(self, request):
         newpath = request.URLPath()
         assert newpath.scheme != "https", "https->https redirection loop: %r" % (request,)
         newpath.scheme = "https"
-        newpath.netloc = newpath.netloc.split(':')[0]  # strip port
+        host = newpath.netloc.split(':')[0]
+        if self.port == 443:
+            newpath.netloc = host
+        else:
+            newpath.netloc = "%s:%d" % (host, self.port)
         return redirectTo(newpath, request)
 
     def getChild(self, name, request):
         return self
 
 
-def make_redirector_site():
-    return Site(RedirectToHTTPS())
+def make_redirector_site(port):
+    return Site(RedirectToHTTPS(port))
