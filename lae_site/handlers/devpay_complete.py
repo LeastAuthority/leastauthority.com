@@ -20,8 +20,8 @@ Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 Your sign up is not quite finished; to complete it and activate your account,
 please tell us your name and the email address you want us to use to communicate
 with you. We will not resell or pass on this email address, and will only use it
-to send you occasional announcements of new products, features, offers and price
-changes, or in connection with your account.
+in connection with your account, and to send you occasional announcements of new
+products, features, offers and price changes.
 </p>
 <p>
 If you use PGP or GPG, you could also send us your public key, so that we
