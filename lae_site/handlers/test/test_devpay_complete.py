@@ -1,77 +1,43 @@
+
+from StringIO import StringIO
+
 from twisted.trial.unittest import TestCase
-from twisted.web.http import OK, BAD_REQUEST
+from twisted.web.http import OK
+from twisted.python.filepath import FilePath
 
 import mock
 
-from lae_site.handlers.devpay_complete import DevPayPurchaseHandler
+from lae_site.handlers.devpay_complete import DevPayPurchaseHandler, ActivationRequestHandler
 
 
-class DevPayPurchaseHandlerTests (TestCase):
+class Handlers(TestCase):
+    def test_devpaypurchasehandler(self):
+        out = StringIO()
+        for method in ('GET', 'POST'):
+            (req, resp) = self._mock_request(DevPayPurchaseHandler(out), method,
+                                             ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"])
 
-    def setUp(self):
-        self.dpph = DevPayPurchaseHandler()
+            req.setResponseCode.assert_called_with(OK)
+            self.failUnlessIn('name="ActivationKey" value="ACTIVATIONKEY"', resp)
+            self.failUnlessIn('name="ProductCode" value="PRODUCTCODE"', resp)
+            csv = FilePath("devpay_completions.csv").getContent()
+            self.failUnlessIn("ACTIVATIONKEY,PRODUCTCODE\n", csv)
 
+    def test_activationrequesthandler(self):
+        out = StringIO()
+        for method in ('GET', 'POST'):
+            (req, resp) = self._mock_request(ActivationRequestHandler(out), method,
+                                             ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
+                                             Name=["Joe"], Email=["joe!@example.org"], PublicKey=["===BEGIN BLAH==="])
 
-    def test_valid_request(self):
+            req.setResponseCode.assert_called_with(OK)
+            csv = FilePath("activation_requests.csv").getContent()
+            self.failUnlessIn("ACTIVATIONKEY,PRODUCTCODE,Joe,joe%21@example.org,===BEGIN BLAH===\n", csv)
 
-        akey = mock.sentinel.ActivationKey
-        pcode = mock.sentinel.ProductCode
-
-        (req, _) = self._mock_request('GET', ActivationKey = [akey], ProductCode = [pcode])
-
-        req.setResponseCode.assert_called_with(OK)
-
-
-    def test_POST(self):
-
-        (req, _) = self._mock_request('POST')
-
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-
-    def test_missing_required_params(self):
-
-        (req, _) = self._mock_request('GET')
-
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-
-    def test_malformed_params(self):
-
-        S = mock.sentinel
-
-        (req, _) = self._mock_request('GET', ActivationKey = [S.ActivationKey])
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-        (req, _) = self._mock_request('GET', ProductCode = [S.ProductCode])
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-        (req, _) = self._mock_request('GET', ActivationKey = [S.ActivationKey], ProductCode = [])
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-        (req, _) = self._mock_request('GET', ActivationKey = [], ProductCode = [S.ProductCode])
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-        (req, _) = self._mock_request(
-            'GET',
-            ActivationKey = [S.ActivationKey, S.OtherActivationKey],
-            ProductCode = [S.ProductCode])
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-        (req, _) = self._mock_request(
-            'GET',
-            ActivationKey = [S.ActivationKey],
-            ProductCode = [S.ProductCode, S.OtherProductCode])
-        req.setResponseCode.assert_called_with(BAD_REQUEST)
-
-
-    def _mock_request(self, method, **args):
-
+    def _mock_request(self, handler, method, **args):
         req = mock.Mock(name='HTTPRequest')
         req.method = method
         req.args = args
 
-        resp = self.dpph.render(req)
-
+        resp = handler.render(req)
         return (req, resp)
-

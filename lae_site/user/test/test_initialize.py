@@ -30,7 +30,8 @@ class InitializationTests (TestCase):
             return d
 
         mockahpr = mock.Mock(name='ActivateHostedProductResponse')
-        mockahpr.usertoken = mock.sentinel.UserToken
+        mockahpr.usertoken = "{UserToken}..."
+        mockahpr.pid = "PID"
 
         self.mocklsc.return_value.activate_hosted_product.return_value = make_deferred_fire_factory(mockahpr)
 
