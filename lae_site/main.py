@@ -6,19 +6,24 @@ import logging
 from twisted.internet import ssl, reactor
 
 from lae_site.config import Config
-from lae_site.handlers import make_site
+from lae_site.handlers import make_site, make_redirector_site
 
 # Test comment by sirvaliance, remove me
 def main():
     default_port = 443
     port = None
     ssl_enabled = True
+    redirect_to_https = True
+
     for arg in sys.argv:
         if arg.startswith('--port='):
             port = int(arg[len('--port='):])
-        if arg == '--nossl':
+        elif arg == '--nossl':
             ssl_enabled = False
+            redirect_to_https = False
             default_port = 80
+        elif arg == '--noredirect':
+            redirect_to_https = False
 
     if port is None:
         port = default_port
@@ -48,6 +53,9 @@ def main():
         # http://twistedmatrix.com/documents/current/core/howto/ssl.html
         sslcontext = ssl.DefaultOpenSSLContextFactory(KEYFILE, CERTFILE).getContext()
         reactor.listenSSL(port, site, sslcontext)
+
+        if redirect_to_https:
+            reactor.listenTCP(80, make_redirector_site())
     else:
         logging.info('SSL/TLS is disabled.')
         reactor.listenTCP(port, site)
