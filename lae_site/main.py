@@ -8,7 +8,6 @@ from twisted.internet import ssl, reactor
 from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
 
-# Test comment by sirvaliance, remove me
 def main():
     default_port = 443
     port = None
