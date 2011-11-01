@@ -15,7 +15,7 @@ class Config (object):
 
     __slots__ = ['aws_creds', 'devpay_purchase_url', 'unknown_options']
 
-    DEFAULT_CONFIG_PATH = os.path.expanduser('~/lae_website_config.json')
+    DEFAULT_CONFIG_PATH = os.path.expanduser('../lae_website_config.json')
 
     def __init__(self, configFile = DEFAULT_CONFIG_PATH):
         """
