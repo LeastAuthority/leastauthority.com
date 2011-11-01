@@ -116,5 +116,12 @@ p {
     background-image: url('/static/img/drop-shad.png');
 	background-repeat: repeat-x;
     background-color: #e3e3e3;
-    height: 80px;
+    height: 60px;
+}
+
+#copy {
+    font-size: 12px;
+    color: #aaa;
+    text-align: right;
+    padding: 20px 0;
 }
