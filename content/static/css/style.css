@@ -73,7 +73,7 @@ p {
  * Header
  */
 #header_wrap {
-    height: 100px;
+    height: 90px;
 
 }   
 
@@ -92,6 +92,9 @@ p {
 /*
  * Sidebar
  */
+#main_nav {
+    margin-top: 20px;
+}
 
 #main_nav ul {
     list-style-type: none;
@@ -113,6 +116,7 @@ p {
 
 #footer_wrap {
     margin-top: 50px;
+    border-top: #eee;
     background-image: url('/static/img/drop-shad.png');
 	background-repeat: repeat-x;
     background-color: #e3e3e3;
