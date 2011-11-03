@@ -5,7 +5,7 @@ from txaws.service import AWSCredentials
 from lae_site.user.initialize import create_user_bucket
 
 if len(sys.argv) < 6:
-    print "Usage: python create_bucket.py ACCESS_KEY_ID SECRET_KEY USER_TOKEN PRODUCT_TOKEN BUCKET_NAME"
+    print "Usage: python create_bucket.py ACCESS_KEY_ID SECRET_KEY USER_TOKEN PRODUCT_TOKEN BUCKET_NAME [LOCATION]"
     print "Happy bucket-creating!"
     sys.exit(1)
 
@@ -15,6 +15,11 @@ secretkey = sys.argv[2]
 usertoken = sys.argv[3]
 producttoken = sys.argv[4]
 bucketname = sys.argv[5]
+if len(sys.argv) > 6:
+    location = sys.argv[6]
+else:
+    location = None  # default
+
 creds = AWSCredentials(accesskeyid, secretkey)
 
 def cb(x):
@@ -22,7 +27,7 @@ def cb(x):
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
 
-d = create_user_bucket(creds, usertoken, bucketname, cb, producttoken=producttoken)
+d = create_user_bucket(creds, usertoken, bucketname, cb, producttoken=producttoken, location=location)
 d.addBoth(cb)
-d.addCallback(lambda ign: reactor.stop())
+d.addBoth(lambda ign: reactor.stop())
 reactor.run()

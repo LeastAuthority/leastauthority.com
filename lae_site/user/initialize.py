@@ -1,4 +1,4 @@
-import logging
+import logging, urllib
 
 from lae_site.aws.license_service_client import LicenseServiceClient
 from lae_site.aws.devpay_s3client import DevPayS3Client
@@ -85,7 +85,7 @@ def activate_user_account_hosted(creds, activationkey, producttoken, status_call
     return d
 
 
-def create_user_bucket(creds, usertoken, bucketname, status_callback, producttoken=None):
+def create_user_bucket(creds, usertoken, bucketname, status_callback, producttoken=None, location=None):
     log = logging.getLogger('create_user_bucket')
 
     def update_status(public, **private_details):
@@ -96,14 +96,24 @@ def create_user_bucket(creds, usertoken, bucketname, status_callback, producttok
     update_status(
         public = 'Creating S3 Bucket...',
         usertoken = usertoken,
-        bucketname = bucketname)
+        producttoken = producttoken,
+        bucketname = bucketname,
+        location = location)
 
-    s3c = DevPayS3Client(
+    client = DevPayS3Client(
         creds = creds,
         usertoken = usertoken,
         producttoken = producttoken)
 
-    d = s3c.create_bucket(str(bucketname))
+    if location:
+        object_name = "?LocationConstraint=" + urllib.quote(location)
+    else:
+        object_name = ""
+
+    query = client.query_factory(
+        action="PUT", creds=client.creds, endpoint=client.endpoint,
+        bucket=bucketname, object_name=object_name)
+    d = query.submit()
 
     def bucket_created(*args, **kw):
         update_status(
