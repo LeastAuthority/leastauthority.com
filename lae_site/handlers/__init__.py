@@ -22,6 +22,8 @@ def make_site(config):
 
     # Main handlers from lae_site.handlers.web
     resource.putChild('about_us', AboutPage())
+    resource.putChild('support', SupportPage())
+
 
     return Site(resource, logPath="sitelogs")
 
