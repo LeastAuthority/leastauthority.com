@@ -34,35 +34,7 @@
             </div>
         </div>
         <div id="main_content" class="grid_9 omega">
-            
-            <h3>What is Tahoe-LAFS-on-S3?</h3>
-            <p><em>Tahoe-LAFS-on-S3</em> is a reliable and scalable cloud storage back-end for use with the Tahoe-LAFS client software. Tahoe-LAFS is a Free Software, Open Source cloud storage system. It
-            encrypts and cryptographically integrity-checks your files for
-            <em>provider-independent security</em>. That means that the confidentiality
-            and integrity of your files cannot be violated by anyone—not even
-            employees of the storage service provider. For more information see
-            <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS.org</a>.</p>
-
-            <h3>What is it good for?</h3>
-            <p>It is good for securely backing up your data off-site. The <em>&quot;tahoe
-            backup&quot;</em> command inspects your local filesystem for files that have
-            changed since the last time you ran it. It uploads each file that
-            has changed and it creates a directory in Tahoe-LAFS to hold the
-            current &quot;snapshot&quot;—the current version of each of the files. You can
-            browse or access old versions just by browsing the old snapshot
-            directories.</p>
-
-            <h3>Where is the data stored?</h3>
-            <p>
-            Your data, encrypted, is stored on Amazon's Simple Storage Service
-            (<a class="reference external" href="http://en.wikipedia.org/wiki/Amazon_S3">S3</a>), which is a convenient, reliable, and widely understood
-            platform for storage.</p>
-
-            <h3>Tahoe-LAFS-on-S3 Pricing</h3>
-            <p>$1.00/GB/month*</p>
-            <p class="small_italic">*Discounts are available for full-time students, educational institutions,
-            libraries, non-profits, and open source projects.</p>
-
+            {% block content %}{% endblock %}
         </div>
     </div>
     <div id="footer_wrap">
