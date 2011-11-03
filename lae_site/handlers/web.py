@@ -16,112 +16,62 @@ def jinja_render(template_name):
     return tmpl.render().encode('ascii', 'ignore')
 
 
-class Index(Resource):
+class BaseResource(Resource):
 
     def __init__(self):
         Resource.__init__(self)
+
+    def render(self, request):
+        return self.render_GET(request)
+
+    def getChild(self, name, request):
+        return self
+
+
+class Index(BaseResource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('index.html')
 
 
-class IndexPage(Resource):
-    def getChild(self, name, request):
-        return Index()
-
-
-class AboutUs(Resource):
-
-    def __init__(self):
-        Resource.__init__(self)
+class AboutUs(BaseResource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('about_us.html')
 
 
-class AboutPage(Resource):
-
-    def getChild(self, name, request):
-        return AboutUs()
-
-
-class Support(Resource):
-
-    def __init__(self):
-        Resource.__init__(self)
+class Support(BaseResource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('support.html')
 
 
-class SupportPage(Resource):
-
-    def getChild(self, name, request):
-        return Support()
-
-
-class Downloads(Resource):
-
-    def __init__(self):
-        Resource.__init__(self)
+class Downloads(BaseResource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('downloads.html')
 
 
-class DownloadsPage(Resource):
-
-    def getChild(self, name, request):
-        return Downloads()
-
-
-class Design(Resource):
-
-    def __init__(self):
-        Resource.__init__(self)
+class Design(BaseResource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('design.html')
 
 
-class DesignPage(Resource):
-
-    def getChild(self, name, request):
-        return Design()
-
-
-class Security(Resource):
-
-    def __init__(self):
-        Resource.__init__(self)
+class Security(BaseResource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('security.html')
 
 
-class SecurityPage(Resource):
-
-    def getChild(self, name, request):
-        return Security()
-
-
-class Products(Resource):
-
-    def __init__(self):
-        Resource.__init__(self)
+class Products(BaseResource):
 
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('products.html')
-
-
-class ProductsPage(Resource):
-
-    def getChild(self, name, request):
-        return Products()

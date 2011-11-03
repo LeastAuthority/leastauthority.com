@@ -13,20 +13,24 @@ from lae_site.handlers.web import *
 
 def make_site(config):
 
-    resource = Index()
+    resource = IndexPage()
     resource.putChild('static', File('content/static'))
 
-    resource.putChild('signup', Redirect( config.devpay_purchase_url ))
+    resource.putChild('signup', SignupHandler(config.products))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())
     resource.putChild('activation-request', ActivationRequestHandler())
 
     # Main handlers from lae_site.handlers.web
-    resource.putChild('about_us', AboutUs())
-    resource.putChild('support', Support())
-    resource.putChild('downloads', Downloads())
-    resource.putChild('design', Design())
-    resource.putChild('security', Security())
-    resource.putChild('products', Products())
+    resource.putChild('about_us', AboutPage())
+    resource.putChild('support', SupportPage())
+    resource.putChild('downloads', DownloadsPage())
+    resource.putChild('design', DesignPage())
+    resource.putChild('security', SecurityPage())
+    resource.putChild('products', ProductsPage())
+
+
+
+
 
     return Site(resource, logPath="sitelogs")
 
