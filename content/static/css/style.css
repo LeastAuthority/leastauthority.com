@@ -98,6 +98,9 @@ p {
  * Main Body
  */
 
+#main_content {
+    min-height: 550px;
+}
 
 /*
  * Sidebar
