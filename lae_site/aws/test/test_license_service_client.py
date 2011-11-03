@@ -48,7 +48,6 @@ class LicenseServiceClientTests (TestCase):
         self._time_patcher.__exit__()
 
     def test_activate_hosted_product(self):
-
         d = self.lsc.activate_hosted_product(FAKE_ACTIVATION_KEY, FAKE_PRODUCT_TOKEN)
 
         self._make_http_request.assert_called_with(EXPECTED_ACTIVATE_HOSTED_PRODUCT_URL)
@@ -61,7 +60,6 @@ class LicenseServiceClientTests (TestCase):
         return d
 
     def test__send_request(self):
-
         d = self.lsc._send_request ( **self._trimmed_fake_params )
 
         self._make_http_request.assert_called_with(EXPECTED_BUILT_URL)
@@ -73,13 +71,11 @@ class LicenseServiceClientTests (TestCase):
         return d
 
     def test__build_request_url(self):
-
         actual = self.lsc._build_request_url ( self._trimmed_fake_params )
 
         self.assertEqual ( EXPECTED_BUILT_URL, actual )
 
     def test__calc_signature(self):
-
         actual = self.lsc._calc_signature ( FAKE_PARAMS.items() )
 
         self.assertEqual( EXPECTED_BASE64_SIGNATURE, actual )
@@ -118,7 +114,6 @@ class LicenseServiceClientTests (TestCase):
 class ActivateHostedProductResponseTests (TestCase):
 
     def test_parse_positive(self):
-
         try:
             ahpr = ActivateHostedProductResponse.parse ( SAMPLE_RESPONSE )
 
@@ -128,7 +123,6 @@ class ActivateHostedProductResponseTests (TestCase):
         else:
             self.assertEqual ( FAKE_USERTOKEN, ahpr.usertoken )
             self.assertEqual ( FAKE_PID, ahpr.pid )
-
 
     def test_parse_negative(self):
         for invalid in INVALID_XMLS:

@@ -13,17 +13,17 @@ class DevPayS3Client (S3Client):
     """
     This wraps txaws.s3.client.S3Client to make it DevPay aware.
     """
-    def __init__(self, creds, devpayusertoken, endpoint=None):
+    def __init__(self, creds, usertoken, producttoken=None, endpoint=None):
         S3Client.__init__(
             self,
             creds,
             endpoint,
-            query_factory = self._make_query_factory(devpayusertoken),
+            query_factory = self._make_query_factory(usertoken, producttoken),
             )
 
     # Private
     @staticmethod
-    def _make_query_factory(devpayusertoken):
+    def _make_query_factory(usertoken, producttoken):
         """
         Given a DevPay UserToken, return a Query factory.
         """
@@ -38,7 +38,10 @@ class DevPayS3Client (S3Client):
             amz_headers = kwargs.get('amz_headers', {})
 
             assert 'security-token' not in amz_headers, `amz_headers`
-            amz_headers['security-token'] = devpayusertoken
+            if producttoken:
+                amz_headers['security-token'] = (usertoken, producttoken)
+            else:
+                amz_headers['security-token'] = usertoken
 
             kwargs['amz_headers'] = amz_headers
 
