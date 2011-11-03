@@ -25,6 +25,8 @@ def make_site(config):
     resource.putChild('support', SupportPage())
     resource.putChild('downloads', DownloadsPage())
     resource.putChild('design', DesignPage())
+    resource.putChild('security', SecurityPage())
+
 
 
 
