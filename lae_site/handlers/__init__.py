@@ -8,9 +8,17 @@ from twisted.web.resource import Resource
 from lae_site.handlers.devpay_complete import DevPayPurchaseHandler, ActivationRequestHandler
 from lae_site.handlers.signup import SignupHandler
 
+from lae_site.handlers.web import Index
+
+
+class IndexPage(Resource):
+    def getChild(self, name, request):
+        return Index()
 
 def make_site(config):
-    resource = File('content')
+
+    resource = IndexPage()
+    resource.putChild('static', File('content/static'))
 
     resource.putChild('signup', SignupHandler(config.products))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())
