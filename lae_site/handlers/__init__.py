@@ -27,6 +27,7 @@ def make_site(config):
     resource.putChild('design', Design())
     resource.putChild('security', Security())
     resource.putChild('products', Products())
+    resource.putChild('sign_up_info', SignUpInfo())
 
     return Site(resource, logPath="sitelogs")
 

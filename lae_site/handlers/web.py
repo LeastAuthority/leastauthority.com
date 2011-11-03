@@ -75,3 +75,10 @@ class Products(BaseResource):
     def render_GET(self, request):
         request.setResponseCode(200)
         return jinja_render('products.html')
+
+
+class SignUpInfo(BaseResource):
+
+    def render_GET(self, request):
+        request.setResponseCode(200)
+        return jinja_render('sign_up_info.html')
