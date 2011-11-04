@@ -1,9 +1,9 @@
-import pprint
+
 from StringIO import StringIO
 
 from twisted.trial.unittest import TestCase
 
-from lae_site.config import Config, MissingConfiguration
+from lae_site.config import Config
 
 
 class ConfigTests (TestCase):
@@ -15,25 +15,13 @@ class ConfigTests (TestCase):
 
     def test_missing_required_key(self):
         for vector in [INVALID_EMPTY_CONFIG, INVALID_WRONG_KEY_CONFIG]:
-            try:
-                config = self._load_from_string( vector )
-            except MissingConfiguration, e:
-                expected = ('devpay_purchase_url',)
-                self.assertEqual( expected, e.args )
-            else:
-                self.fail(
-                    'Incorrectly loaded:\n-Invalid Configuration-\n%s-Result-\n%s',
-                    vector,
-                    pprint.pformat(config),
-                    )
+            self.failUnlessRaises(AssertionError, self._load_from_string, vector)
 
 
     def test_unknown_options(self):
         config = self._load_from_string( UNKNOWN_OPTION_CONFIG )
 
-        expected = { UNKNOWN_OPTION_NAME: UNKNOWN_OPTION_VALUE }
-
-        self.assertEqual(expected, config.unknown_options)
+        self.failUnlessEqual("xxx", config.unknown_options["unknown"])
 
 
     def test_load_file(self):
@@ -46,9 +34,7 @@ class ConfigTests (TestCase):
 
 
     def _assert_valid_config(self, config):
-        self.assertEqual( VALID_PURCHASE_URL, config.devpay_purchase_url )
-        self.assertEqual( VALID_ACCESS_KEY, config.aws_creds.access_key )
-        self.assertEqual( VALID_SECRET_KEY, config.aws_creds.secret_key )
+        self.failUnlessEqual(VALID_SIGNUP_URL, config.products[0]["signup_url"])
 
 
     @staticmethod
@@ -57,35 +43,38 @@ class ConfigTests (TestCase):
 
 
 # Test vectors:
-VALID_PURCHASE_URL = 'http://fakey-site.crom/fnorp?id=1234'
-VALID_ACCESS_KEY = '<{ FAKE ACCESS KEY }>'
-VALID_SECRET_KEY = '<{ FAKE SECRET KEY }>'
+VALID_SIGNUP_URL = 'http://fakey-site.crom/fnorp?id=1234'
+
+VALID_PRODUCTS = """
+  "products": [
+    { "short_name":    "goodness",
+      "full_name":     "Wonderous cloud storage goodness",
+      "signup_url":    "%s",
+      "product_code":  "12345678",
+      "product_token": "{ProductToken}blah",
+      "unknown":       "xxx"
+    }
+  ]
+""" % (VALID_SIGNUP_URL,)
 
 VALID_CONFIG = """
 {
-    "devpay_purchase_url": "%s",
-    "aws_access_key": "%s",
-    "aws_secret_key": "%s"
+%s
 }
-""" % (VALID_PURCHASE_URL, VALID_ACCESS_KEY, VALID_SECRET_KEY)
-
-UNKNOWN_OPTION_NAME = 'thingy'
-UNKNOWN_OPTION_VALUE = True
+""" % (VALID_PRODUCTS,)
 
 UNKNOWN_OPTION_CONFIG = """
 {
-    "devpay_purchase_url": "%s",
-    "aws_access_key": "%s",
-    "aws_secret_key": "%s",
-    "%s": true
+  "unknown": "xxx",
+%s
 }
-""" % (VALID_PURCHASE_URL, VALID_ACCESS_KEY, VALID_SECRET_KEY, UNKNOWN_OPTION_NAME)
+""" % (VALID_PRODUCTS,)
 
-INVALID_EMPTY_CONFIG = '{}'
+INVALID_EMPTY_CONFIG = "{}"
 
 INVALID_WRONG_KEY_CONFIG = """
 {
-    "evpayday_pruchase_rul": "%s"
+    "ropducts": []
 }
-""" % (VALID_PURCHASE_URL,)
+"""
 

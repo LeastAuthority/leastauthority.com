@@ -1,19 +1,11 @@
 #! /usr/bin/env python
 
-import os
-import json
-
-
-from txaws.credentials import AWSCredentials
-
-
-class MissingConfiguration (Exception):
-    pass
+import os, json
 
 
 class Config (object):
 
-    __slots__ = ['aws_creds', 'devpay_purchase_url', 'unknown_options']
+    __slots__ = ['products', 'unknown_options']
 
     DEFAULT_CONFIG_PATH = os.path.expanduser('../lae_website_config.json')
 
@@ -23,25 +15,26 @@ class Config (object):
 
         The configuration is available as attributes.
         """
-        d = self._load_config_json(configFile)
+        config = self._load_config_json(configFile)
 
-        def pop_required(name):
-            try:
-                return str( d.pop(name) )
-            except KeyError:
-                raise MissingConfiguration(name)
+        assert isinstance(config, dict)
+        assert "products" in config, config
+        self.products = config.pop("products")
+        assert isinstance(self.products, list)
+        for value in self.products:
+            assert isinstance(value, dict), value
+            assert "short_name" in value, value
+            assert "full_name" in value, value
+            assert "signup_url" in value, value
+            assert "product_code" in value, value
+            assert "product_token" in value, value
+            assert isinstance(value["short_name"], basestring), value
+            assert isinstance(value["full_name"], basestring), value
+            assert isinstance(value["signup_url"], basestring), value
+            assert isinstance(value["product_code"], basestring), value
+            assert isinstance(value["product_token"], basestring), value
 
-        self.devpay_purchase_url = pop_required('devpay_purchase_url')
-
-        accesskey = pop_required('aws_access_key')
-        secretkey = pop_required('aws_secret_key')
-
-        self.aws_creds = AWSCredentials(
-            access_key = accesskey,
-            secret_key = secretkey,
-            )
-
-        self.unknown_options = d
+        self.unknown_options = config
 
     @staticmethod
     def _load_config_json(configFile):
