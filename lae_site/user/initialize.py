@@ -108,7 +108,7 @@ def create_user_bucket(creds, usertoken, bucketname, status_callback, producttok
     if location:
         object_name = "?LocationConstraint=" + urllib.quote(location)
     else:
-        object_name = ""
+        object_name = None
 
     query = client.query_factory(
         action="PUT", creds=client.creds, endpoint=client.endpoint,
