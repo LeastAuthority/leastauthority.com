@@ -1,0 +1,113 @@
+diff --recursive '--context=2' txaws-0.2.1/txAWS-0.2.1/setup.py txaws-patched/txAWS-0.2.1/setup.py
+*** txaws-0.2.1/txAWS-0.2.1/setup.py	2011-10-11 07:45:27.000000000 -0700
+--- txaws-patched/txAWS-0.2.1/setup.py	2011-11-07 18:35:32.311036984 -0800
+***************
+*** 3,7 ****
+  import os
+  
+! from txaws import version
+  
+  # If setuptools is present, use it to find_packages(), and also
+--- 3,7 ----
+  import os
+  
+! 
+  
+  # If setuptools is present, use it to find_packages(), and also
+***************
+*** 35,39 ****
+  setup(
+      name="txAWS",
+!     version=version.txaws,
+      description="Async library for EC2 and Eucalyptus",
+      author="txAWS Developers",
+--- 35,39 ----
+  setup(
+      name="txAWS",
+!     version="0.2.1.post1",
+      description="Async library for EC2 and Eucalyptus",
+      author="txAWS Developers",
+diff --recursive '--context=2' txaws-0.2.1/txAWS-0.2.1/txaws/s3/client.py txaws-patched/txAWS-0.2.1/txaws/s3/client.py
+*** txaws-0.2.1/txAWS-0.2.1/txaws/s3/client.py	2011-10-11 07:45:27.000000000 -0700
+--- txaws-patched/txAWS-0.2.1/txaws/s3/client.py	2011-11-03 00:30:32.069811517 -0700
+***************
+*** 30,33 ****
+--- 30,34 ----
+      error_wrapper(error, S3Error)
+  
++ BUCKET_IN_HOST = True
+  
+  class URLContext(object):
+***************
+*** 45,52 ****
+  
+      def get_host(self):
+!         return self.endpoint.get_host()
+  
+      def get_path(self):
+          path = "/"
+          if self.bucket is not None:
+              path += self.bucket
+--- 46,61 ----
+  
+      def get_host(self):
+!         if BUCKET_IN_HOST:
+!             return "%s.%s" % (self.bucket, self.endpoint.get_host())
+!         else:
+!             return self.endpoint.get_host()
+  
+      def get_path(self):
+          path = "/"
++         if BUCKET_IN_HOST:
++             if self.object_name:
++                 path += self.object_name
++             return path
++ 
+          if self.bucket is not None:
+              path += self.bucket
+***************
+*** 366,371 ****
+          for key, value in self.metadata.iteritems():
+              headers["x-amz-meta-" + key] = value
+!         for key, value in self.amz_headers.iteritems():
+!             headers["x-amz-" + key] = value
+          # Before we check if the content type is set, let's see if we can set
+          # it by guessing the the mimetype.
+--- 375,383 ----
+          for key, value in self.metadata.iteritems():
+              headers["x-amz-meta-" + key] = value
+!         for key, values in self.amz_headers.iteritems():
+!             if isinstance(values, tuple):
+!                 headers["x-amz-" + key] = ",".join(values)
+!             else:
+!                 headers["x-amz-" + key] = values
+          # Before we check if the content type is set, let's see if we can set
+          # it by guessing the the mimetype.
+***************
+*** 388,394 ****
+          headers.sort()
+          # XXX missing spec implementation:
+!         # 1) txAWS doesn't currently combine headers with the same name
+!         # 2) txAWS doesn't currently unfold long headers
+!         return "".join("%s:%s\n" % (name, value) for name, value in headers)
+  
+      def get_canonicalized_resource(self):
+--- 400,411 ----
+          headers.sort()
+          # XXX missing spec implementation:
+!         # txAWS doesn't currently unfold long headers
+!         def represent(n, vs):
+!             if isinstance(vs, tuple):
+!                 return "".join(["%s:%s\n" % (n, vs) for v in vs])
+!             else:
+!                 return "%s:%s\n" % (n, vs)
+! 
+!         return "".join([represent(name, value) for name, value in headers])
+  
+      def get_canonicalized_resource(self):
+***************
+*** 429,430 ****
+--- 446,448 ----
+              headers=self.get_headers())
+          return d.addErrback(s3_error_wrapper)
++ 
