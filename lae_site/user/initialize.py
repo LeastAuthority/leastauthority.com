@@ -122,3 +122,26 @@ def create_user_bucket(creds, usertoken, bucketname, status_callback, producttok
 
     d.addCallback(bucket_created)
     return d
+
+
+def verify_user_account(creds, usertoken, producttoken, status_callback):
+    log = logging.getLogger('verify_user_account')
+
+    def update_status(public, **private_details):
+        log.info('Update Status: %r', public)
+        log.info('Private Details: %r', private_details)
+        status_callback(public)
+
+    update_status(
+        public = 'Verifying DevPay License for decentralized ("desktop") product...',
+        usertoken = usertoken,
+        producttoken = producttoken)
+
+    d = LicenseServiceClient(creds).verify_subscription_by_tokens(usertoken, producttoken)
+
+    def verified(active):
+        update_status(
+            public = 'DevPay License subscription active? %r\n' % (active,))
+        return active
+    d.addCallback(verified)
+    return d

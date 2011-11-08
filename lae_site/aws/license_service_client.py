@@ -70,6 +70,19 @@ class LicenseServiceClient (object):
         d.addCallback ( ActivateHostedProductResponse.parse )
         return d
 
+    def verify_subscription_by_tokens(self, usertoken, producttoken):
+        """
+        Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/VerifyProductSubscriptionByTokens.html
+        """
+        d = self._send_request(
+            Action = 'VerifyProductSubscriptionByTokens',
+            UserToken = usertoken,
+            ProductToken = producttoken,
+            )
+
+        d.addCallback ( VerifyProductSubscriptionByTokensResponse.parse )
+        return d
+
     # Private
     def _send_request(self, **params):
         url = self._build_request_url(params)
@@ -123,6 +136,12 @@ class ResponseParseError (Exception):
     pass
 
 
+if hasattr(ElementTree, 'ParseError'):
+    exceptions = (ExpatError, ElementTree.ParseError)
+else:
+    exceptions = (ExpatError)
+
+
 class ActivateDesktopProductResponse (namedtuple('ActivateDesktopProductResponse',
                                                  ['access_key_id', 'secret_key', 'usertoken'])):
 
@@ -131,10 +150,6 @@ class ActivateDesktopProductResponse (namedtuple('ActivateDesktopProductResponse
         #print "response body:"
         #print body
 
-        if hasattr(ElementTree, 'ParseError'):
-            exceptions = (ExpatError, ElementTree.ParseError)
-        else:
-            exceptions = (ExpatError)
         try:
             doc = XML(body)
         except exceptions, e:
@@ -155,10 +170,6 @@ class ActivateHostedProductResponse (namedtuple('ActivateHostedProductResponse',
         #print "response body:"
         #print body
 
-        if hasattr(ElementTree, 'ParseError'):
-            exceptions = (ExpatError, ElementTree.ParseError)
-        else:
-            exceptions = (ExpatError)
         try:
             doc = XML(body)
         except exceptions, e:
@@ -169,6 +180,23 @@ class ActivateHostedProductResponse (namedtuple('ActivateHostedProductResponse',
         pid = _xml_find(node, u'PersistentIdentifier').text.strip()
 
         return cls(usertoken, pid)
+
+
+class VerifyProductSubscriptionByTokensResponse:
+
+    @classmethod
+    def parse(cls, body):
+        #print "response body:"
+        #print body
+
+        try:
+            doc = XML(body)
+        except exceptions, e:
+            raise ResponseParseError(e)
+
+        node = _xml_find(doc, u'VerifyProductSubscriptionByTokensResult')
+        subscribed = _xml_find(node, u'Subscribed').text.strip()
+        return subscribed == "true"
 
 
 def _xml_find(node, key):
