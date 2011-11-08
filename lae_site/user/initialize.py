@@ -19,7 +19,7 @@ def activate_user_account_desktop(activationkey, producttoken, status_callback):
             successful user initialization.
     """
 
-    log = logging.getLogger('activate_user_account')
+    log = logging.getLogger('activate_user_account_desktop')
 
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
@@ -61,7 +61,7 @@ def activate_user_account_hosted(creds, activationkey, producttoken, status_call
             successful user initialization.
     """
 
-    log = logging.getLogger('activate_user_account')
+    log = logging.getLogger('activate_user_account_hosted')
 
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
