@@ -16,7 +16,7 @@ def make_site(config):
     resource = Index()
     resource.putChild('static', File('content/static'))
 
-    resource.putChild('signup', Redirect( config.devpay_purchase_url ))
+    resource.putChild('signup', SignupHandler(config.products))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())
     resource.putChild('activation-request', ActivationRequestHandler())
 

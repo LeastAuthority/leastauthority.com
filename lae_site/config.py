@@ -25,11 +25,14 @@ class Config (object):
             assert isinstance(value, dict), value
             assert "short_name" in value, value
             assert "full_name" in value, value
+            assert "listed" in value, value
             assert "signup_url" in value, value
             assert "product_code" in value, value
             assert "product_token" in value, value
+            value["listed"] = (value["listed"].lower() in ("true", "yes"))
             assert isinstance(value["short_name"], basestring), value
             assert isinstance(value["full_name"], basestring), value
+            assert isinstance(value["listed"], bool), value
             assert isinstance(value["signup_url"], basestring), value
             assert isinstance(value["product_code"], basestring), value
             assert isinstance(value["product_token"], basestring), value

@@ -15,4 +15,5 @@ class SignupHandler(Resource):
     def render_GET(self, request):
         # TODO: prettify and make valid HTML
         return str('<html><body>Please select a product:<ul>%s</ul></body></html>'
-                   % (''.join(['<li><a href="/signup/%s">%s</a>' % (p['short_name'], p['full_name']) for p in self.products]),))
+                   % (''.join(['<li><a href="/signup/%s">%s</a>'
+                      % (p['short_name'], p['full_name']) for p in self.products if p['listed']]),))

@@ -35,6 +35,7 @@ class ConfigTests (TestCase):
 
     def _assert_valid_config(self, config):
         self.failUnlessEqual(VALID_SIGNUP_URL, config.products[0]["signup_url"])
+        self.failUnlessEqual(True, config.products[0]["listed"])
 
 
     @staticmethod
@@ -49,6 +50,7 @@ VALID_PRODUCTS = """
   "products": [
     { "short_name":    "goodness",
       "full_name":     "Wonderous cloud storage goodness",
+      "listed":        "true",
       "signup_url":    "%s",
       "product_code":  "12345678",
       "product_token": "{ProductToken}blah",
