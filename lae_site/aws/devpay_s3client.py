@@ -6,6 +6,17 @@
 # values.  The latest API only appears to require one, but this needs
 # vetting.
 
+class DependencyError(Exception):
+    pass
+
+REQUIRED_TXAWS_VERSION="0.2.1.post1"
+REQUIRED_S3_API_VERSION="2006-03-01"
+
+from txaws import version as txaws_version
+if txaws_version.txaws != REQUIRED_TXAWS_VERSION:
+    raise DependencyError("We require version '%s' of txaws, but we imported version '%s'." % (REQUIRED_TXAWS_VERSION, txaws_version.txaws,))
+if txaws_version.s3_api != REQUIRED_S3_API_VERSION:
+    raise DependencyError("We require version '%s' of S3 support in txaws, but we imported a version of txaws which supports version '%s' of S3." % (REQUIRED_S3_API_VERSION, txaws_version.s3_api,))
 from txaws.s3.client import S3Client, Query
 
 
