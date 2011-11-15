@@ -1,4 +1,4 @@
 #!/bin/sh
-BASE=/home/website/leastauthority.com/
+BASE=/home/arc/pyvirtenvs/website/leastauthority.com/
 cd ${BASE}
-PYTHONPATH=${BASE} authbind --deep python ./lae_site/main.py
+PYTHONPATH=${BASE} authbind --deep python ./lae_site/main.py "$@"

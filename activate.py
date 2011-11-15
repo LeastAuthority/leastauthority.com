@@ -3,6 +3,7 @@ from twisted.internet import reactor
 from twisted.python.failure import Failure
 #from txaws.service import AWSCredentials
 from lae_site.user.initialize import activate_user_account_desktop
+#XXX  from lae_site.user.initialize import deploy_EC2_server <-- probably in module called deploy.py
 
 #if len(sys.argv) < 5:
 #    print "Usage: python activate.py ACCESS_KEY_ID SECRET_KEY ACTIVATION_KEY LONG_PRODUCT_TOKEN"
