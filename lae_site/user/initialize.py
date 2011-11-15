@@ -2,8 +2,8 @@ import logging, urllib
 
 from lae_site.aws.license_service_client import LicenseServiceClient
 from lae_site.aws.devpay_s3client import DevPayS3Client
-#XXX  Might need something like from lae_site.aws.ec2client import EC2Client
 from txaws.ec2.client import EC2Client
+from txaws.service import AWSServiceEndpoint
 
 def activate_user_account_desktop(activationkey, producttoken, status_callback):
     """
@@ -84,7 +84,7 @@ def activate_user_account_hosted(creds, activationkey, producttoken, status_call
     d.addCallback(activated)
     return d
 
-def deployEC2_instance(credentials, ami_image_id, customer_email_id, status_callback):
+def deployEC2_instance(credentials, enduri, ami_image_id, customer_email_id, status_callback):
     """
     @param credentials:  The return value of a call to txaws.service.AWSCredentials, whatever that is...  I'm currently plugging in the original credentials that worked for the demo with amiller...  or was it munga?
     @param ami_image_id: string id'ing ami instance, specifies region/architecture/OS etc.  This has potential to change.
@@ -103,17 +103,15 @@ def deployEC2_instance(credentials, ami_image_id, customer_email_id, status_call
     maxinstancecount = 1
     secgroups = ['CustomerDefault']
     EC2name = customer_email_id
-    update_status(public = 'Deploying EC2 instance to run ...', EC2name = customer_email_id)
-    print "About to instantiate an EC2Client!"
-    client = EC2Client(creds = credentials)
-    print "Do I get here?"
+    update_status(public = 'Deploying EC2 instance...', EC2name = customer_email_id)
+    AWSendpoint = AWSServiceEndpoint(uri=enduri)
+    client = EC2Client(creds = credentials, endpoint=AWSendpoint)
     d = client.run_instances(ami_image_id
                        , mininstancecount
                        , maxinstancecount
                        , secgroups
                        , EC2name
                        )
-    print "client.run_instances has returned a deferred."
     def EC2_deployed(*args, **kw):
         update_status(
             public = 'EC2_deployed.',
