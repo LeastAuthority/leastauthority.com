@@ -1,9 +1,10 @@
-import logging, urllib
+import logging, urllib, sys
 
 from lae_site.aws.license_service_client import LicenseServiceClient
 from lae_site.aws.devpay_s3client import DevPayS3Client
 from txaws.ec2.client import EC2Client
 from txaws.service import AWSServiceEndpoint
+from twisted.python.filepath import FilePath
 
 def activate_user_account_desktop(activationkey, producttoken, status_callback):
     """
@@ -91,7 +92,7 @@ def deployEC2_instance(credentials, enduri, ami_image_id, customer_email_id, sta
     @param customer_email_id: identifier that is unique to a specific customer account, the keypair is named with it. See e.g. howto setup instance.
     
     """
-    
+    #logging.basicConfig(stream = sys.stdout, level = logging.DEBUG)
     log = logging.getLogger('deployEC2_instance')
 
     def update_status(public, **private_details):
@@ -102,7 +103,8 @@ def deployEC2_instance(credentials, enduri, ami_image_id, customer_email_id, sta
     mininstancecount = 1
     maxinstancecount = 1
     secgroups = ['CustomerDefault']
-    EC2name = customer_email_id
+    keyname = 'EC2adminkeys'
+    instance_size = 't1.micro'
     update_status(public = 'Deploying EC2 instance...', EC2name = customer_email_id)
     AWSendpoint = AWSServiceEndpoint(uri=enduri)
     client = EC2Client(creds = credentials, endpoint=AWSendpoint)
@@ -110,12 +112,17 @@ def deployEC2_instance(credentials, enduri, ami_image_id, customer_email_id, sta
                        , mininstancecount
                        , maxinstancecount
                        , secgroups
-                       , EC2name
+                       , keyname
+                       , instance_type=instance_size
                        )
+
     def EC2_deployed(*args, **kw):
         update_status(
             public = 'EC2_deployed.',
             UNKNOWNS = (args, kw))
+        print args[0]
+        #addressfp = FilePath(customer_email_id+'_EC2')
+        
 
     d.addCallback(EC2_deployed)
     return d
