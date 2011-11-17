@@ -1,10 +1,12 @@
-import logging, urllib, sys
+import logging, urllib
 
 from lae_site.aws.license_service_client import LicenseServiceClient
 from lae_site.aws.devpay_s3client import DevPayS3Client
+
 from txaws.ec2.client import EC2Client
+from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint
-from twisted.python.filepath import FilePath
+
 
 def activate_user_account_desktop(activationkey, producttoken, status_callback):
     """
@@ -44,6 +46,7 @@ def activate_user_account_desktop(activationkey, producttoken, status_callback):
         return adpr
     d.addCallback(activated)
     return d
+
 
 def activate_user_account_hosted(creds, activationkey, producttoken, status_callback):
     """
@@ -85,15 +88,16 @@ def activate_user_account_hosted(creds, activationkey, producttoken, status_call
     d.addCallback(activated)
     return d
 
-def deployEC2_instance(credentials, enduri, ami_image_id, customer_email_id, status_callback):
+
+def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, customer_email_id, keypair_name, status_callback):
     """
-    @param credentials:  The return value of a call to txaws.service.AWSCredentials, whatever that is...  I'm currently plugging in the original credentials that worked for the demo with amiller...  or was it munga?
-    @param ami_image_id: string id'ing ami instance, specifies region/architecture/OS etc.  This has potential to change.
-    @param customer_email_id: identifier that is unique to a specific customer account, the keypair is named with it. See e.g. howto setup instance.
-    
+    @param creds: a txaws.service.AWSCredentials object
+    @param ami_image_id: string identifying the AMI
+    @param customer_email_id: identifier that is unique to a specific customer account. See e.g. howto setup instance.
+    @param keypair_name: the name of the SSH keypair to be used
     """
     #logging.basicConfig(stream = sys.stdout, level = logging.DEBUG)
-    log = logging.getLogger('deployEC2_instance')
+    log = logging.getLogger('deploy_EC2_instance')
 
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
@@ -103,29 +107,38 @@ def deployEC2_instance(credentials, enduri, ami_image_id, customer_email_id, sta
     mininstancecount = 1
     maxinstancecount = 1
     secgroups = ['CustomerDefault']
-    keyname = 'EC2adminkeys'
-    instance_size = 't1.micro'
     update_status(public = 'Deploying EC2 instance...', EC2name = customer_email_id)
-    AWSendpoint = AWSServiceEndpoint(uri=enduri)
-    client = EC2Client(creds = credentials, endpoint=AWSendpoint)
-    d = client.run_instances(ami_image_id
-                       , mininstancecount
-                       , maxinstancecount
-                       , secgroups
-                       , keyname
-                       , instance_type=instance_size
-                       )
+    endpoint = AWSServiceEndpoint(uri=endpoint_uri)
+    client = EC2Client(creds=creds, endpoint=endpoint)
+    d = client.run_instances(ami_image_id,
+                             mininstancecount,
+                             maxinstancecount,
+                             secgroups,
+                             keypair_name,
+                             instance_type=instance_size)
 
-    def EC2_deployed(*args, **kw):
+    def deployed(instance, *args, **kw):
+        info = dump_instance_information(instance)
         update_status(
             public = 'EC2_deployed.',
-            UNKNOWNS = (args, kw))
-        print args[0]
+            info = info)
+        #self.instance_id = instance.instance_id
         #addressfp = FilePath(customer_email_id+'_EC2')
-        
+    d.addCallback(deployed)
 
-    d.addCallback(EC2_deployed)
     return d
+
+
+def dump_instance_information(instance):
+    if not isinstance(instance, Instance):
+        return "<not an instance: %r>" % (instance,)
+    desc = {}
+    for attr in ('instance_id', 'instance_state', 'instance_type', 'image_id', 'private_dns_name',
+                 'dns_name', 'key_name', 'ami_launch_index', 'launch_time', 'placement',
+                 'product_codes', 'kernel_id', 'ramdisk_id', 'reservation'):
+        if hasattr(instance, attr):
+            desc[attr] = getattr(instance, attr)
+    return "<%r %r>" % (instance, desc)
 
 
 def create_user_bucket(creds, usertoken, bucketname, status_callback, producttoken=None, location=None):
