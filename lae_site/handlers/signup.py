@@ -2,6 +2,8 @@
 from twisted.web.util import Redirect
 from twisted.web.resource import Resource
 
+from lae_site.handlers.web import env
+
 
 class SignupHandler(Resource):
     isLeaf = 0
@@ -13,7 +15,10 @@ class SignupHandler(Resource):
             self.putChild(str(product['short_name']), Redirect(str(product['signup_url'])))
 
     def render_GET(self, request):
-        # TODO: prettify and make valid HTML
-        return str('<html><body>Please select a product:<ul>%s</ul></body></html>'
-                   % (''.join(['<li><a href="/signup/%s">%s</a>'
-                      % (p['short_name'], p['full_name']) for p in self.products if p['listed']]),))
+        # FIXME: escape the short and full names
+        productlist = ''.join(['<li><a href="/signup/%s">%s</a>' % (p['short_name'], p['full_name'])
+                               for p in self.products if p['listed']])
+
+        tmpl = env.get_template('signup.html')
+        request.setResponseCode(200)
+        return tmpl.render(productlist=productlist).encode('ascii', 'ignore')
