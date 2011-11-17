@@ -4,7 +4,7 @@
 class DependencyError(Exception):
     pass
 
-REQUIRED_TXAWS_VERSION="0.2.1.post1"
+REQUIRED_TXAWS_VERSION="0.2.1.post2"
 REQUIRED_S3_API_VERSION="2006-03-01"
 
 class PreconditionViolation(Exception):
