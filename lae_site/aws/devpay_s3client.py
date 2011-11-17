@@ -1,24 +1,32 @@
 # Reference:
 # http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?WebAWSCalls.html
 
-# *POTENTIAL BUG*: txaws only supports a single value for each header, but
-# the legacy API for license service required multiple x-amz-security-token
-# values.  The latest API only appears to require one, but this needs
-# vetting.
-
 class DependencyError(Exception):
     pass
 
 REQUIRED_TXAWS_VERSION="0.2.1.post1"
 REQUIRED_S3_API_VERSION="2006-03-01"
 
-from txaws import version as txaws_version
-if txaws_version.txaws != REQUIRED_TXAWS_VERSION:
-    raise DependencyError("We require version '%s' of txaws, but we imported version '%s'." % (REQUIRED_TXAWS_VERSION, txaws_version.txaws,))
-if txaws_version.s3_api != REQUIRED_S3_API_VERSION:
-    raise DependencyError("We require version '%s' of S3 support in txaws, but we imported a version of txaws which supports version '%s' of S3." % (REQUIRED_S3_API_VERSION, txaws_version.s3_api,))
-from txaws.s3.client import S3Client, Query
+class PreconditionViolation(Exception):
+    pass
 
+import txaws
+from txaws import version as txaws_version
+
+def compare_to_ascii(a, b):
+    # b is always ASCII, a may not be.
+    if isinstance(a, unicode):
+        b = b.decode('ascii')
+    return a == b
+
+if not compare_to_ascii(txaws_version.txaws, REQUIRED_TXAWS_VERSION):
+    raise DependencyError("We require version %r of txaws, but we imported version %r from %r."
+                          % (REQUIRED_TXAWS_VERSION, txaws_version.txaws, txaws) )
+if not compare_to_ascii(txaws_version.s3_api, REQUIRED_S3_API_VERSION):
+    raise DependencyError("We require version %r of S3 support in txaws, but we imported txaws version %r from %r, which supports version %r of S3."
+                          % (REQUIRED_S3_API_VERSION, txaws_version.txaws, txaws, txaws_version.s3_api) )
+
+from txaws.s3.client import S3Client, Query
 
 class DevPayS3Client (S3Client):
     """
