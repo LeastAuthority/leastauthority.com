@@ -6,7 +6,7 @@ from lae_site.user.initialize import deploy_EC2_instance
 
 
 if len(sys.argv) < 7:
-    print "Usage: python deploy.py ACCESS_KEY_ID SECRET_KEY AMI_IMAGE_ID INSTANCE_SIZE CUSTOMER_EMAIL KEYPAIR_NAME"
+    print "Usage: python deploy.py ACCESS_KEY_ID SECRET_KEY AMI_IMAGE_ID INSTANCE_SIZE CUSTOMER_EMAIL KEYPAIR_NAME [--associate-new-ip]"
     print "Happy deploying!"
     sys.exit(1)
 
@@ -16,12 +16,11 @@ ami_image_id = sys.argv[3]
 instance_size = sys.argv[4]
 customer_email = sys.argv[5]
 keypair_name = sys.argv[6]
+associate_new_ip = "--associate-new-ip" in sys.argv
 creds = AWSCredentials(access_key_id, secret_key)
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
-
-associate_new_ip = True
 
 def cb(x):
     print str(x)
