@@ -5,8 +5,8 @@ from urllib import quote
 from twisted.web.resource import Resource
 from lae_site.util.timestamp import format_iso_time
 
-# TODO: read this from a file specific to the product.
-DEVPAY_RESPONSE_HTML = """
+# TODO: allow customizing the text per-product.
+DEVPAY_RESPONSE_HAVE_CODES_HTML = """
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
@@ -43,7 +43,7 @@ provider-independent security means that you don't need to tell us any secrets a
     <td><input type="text" id="Email" name="Email" style="width:20em"><td>
   </tr>
   <tr>
-    <td style="width:25em"><label for="ActivationKey">Activation Key%(activationhint)s: </label></td>
+    <td style="width:25em"><label for="ActivationKey">Activation Key: </label></td>
     <td><input type="text" id="ActivationKey" name="ActivationKey" value="%(activationkey)s" style="width:20em"></td>
   </tr>
   <tr>
@@ -72,6 +72,42 @@ log in to your Amazon account, and click the Go to Application link.
 <p>
 If this form does not work for any reason, you can also send the same information
 by email to <a href="mailto:info@leastauthority.com">&lt;info@leastauthority.com&gt</a>.
+<p>
+Happy Cloud Storing!
+</p>
+<p>
+The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
+</p>
+<hr>
+</body>
+</html>
+"""
+
+# Amazon sometimes doesn't tell us the product code and/or activation code.
+# In that case, the easiest way to get those codes is for the user to click on
+# the 'Go to Application' link, so tell them to do that, rather than requiring
+# them to paste in the code(s).
+DEVPAY_RESPONSE_MISSING_CODE_HTML = """
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Request activation for Tahoe-LAFS-on-S3 alpha</title>
+</head>
+<body style="background: #FFFFFF">
+<p>
+Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
+</p>
+<p>
+Amazon Payments has not yet told us the activation code needed to activate your
+subscription. To obtain this code, go to
+<a href="https://www.amazon.com/dp-activate">https://www.amazon.com/dp-activate</a>,
+log in to your Amazon account, and click the Go to Application link for this
+subscription.
+</p>
+<p>
+If you have any problem completing the sign-up, please contact
+<a href="mailto:info@leastauthority.com">&lt;info@leastauthority.com&gt</a>.
 <p>
 Happy Cloud Storing!
 </p>
@@ -165,22 +201,22 @@ class DevPayPurchaseHandler(HandlerBase):
         print >>self.out, "Ooh, possible signup coming:", request.args
         activationkey = self.get_arg(request, 'ActivationKey')
         productcode = self.get_arg(request, 'ProductCode')
-        activationhint = ""
-        if activationkey == "":
-            activationhint = " (please paste this in)"
 
         self.append_record("devpay_completions.csv", activationkey, productcode)
 
         request.setResponseCode(200)
-        return DEVPAY_RESPONSE_HTML % {"activationhint": activationhint,
-                                       "activationkey": activationkey,
-                                       "productcode": productcode}
+        if activationkey and productcode:
+            return DEVPAY_RESPONSE_HAVE_CODES_HTML % {"activationkey": activationkey,
+                                                      "productcode": productcode}
+        else:
+            return DEVPAY_RESPONSE_MISSING_CODE_HTML
 
 
 class ActivationRequestHandler(HandlerBase):
     def render(self, request):
         print >>self.out, "Yay! Someone signed up :-)  ", request.args
-        # TODO: check whether the customer was already signed up to this product.
+        # TODO: check whether this is a known product for which signups are currently
+        # enabled, and handle the case where the customer was already signed up.
 
         name = self.get_arg(request, 'Name')
         email = self.get_arg(request, 'Email')
