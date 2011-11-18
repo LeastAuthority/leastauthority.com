@@ -21,12 +21,14 @@ creds = AWSCredentials(access_key_id, secret_key)
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
+associate_new_ip = True
+
 def cb(x):
     print str(x)
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
 
-d = deploy_EC2_instance(creds, EC2_ENDPOINT, ami_image_id, instance_size, customer_email, keypair_name, cb)
+d = deploy_EC2_instance(creds, EC2_ENDPOINT, ami_image_id, instance_size, customer_email, keypair_name, associate_new_ip, cb)
 d.addBoth(cb)
 d.addBoth(lambda ign: reactor.stop())
 reactor.run()

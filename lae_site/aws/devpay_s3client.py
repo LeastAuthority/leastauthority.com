@@ -7,9 +7,6 @@ class DependencyError(Exception):
 REQUIRED_TXAWS_VERSION="0.2.1.post2"
 REQUIRED_S3_API_VERSION="2006-03-01"
 
-class PreconditionViolation(Exception):
-    pass
-
 import txaws
 from txaws import version as txaws_version
 
@@ -28,7 +25,7 @@ if not compare_to_ascii(txaws_version.s3_api, REQUIRED_S3_API_VERSION):
 
 from txaws.s3.client import S3Client, Query
 
-class DevPayS3Client (S3Client):
+class DevPayS3Client(S3Client):
     """
     This wraps txaws.s3.client.S3Client to make it DevPay aware.
     """

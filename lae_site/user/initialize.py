@@ -1,9 +1,10 @@
 import logging, urllib
+from twisted.internet import defer, task, reactor
 
 from lae_site.aws.license_service_client import LicenseServiceClient
 from lae_site.aws.devpay_s3client import DevPayS3Client
+from lae_site.aws.ec2_client import SoupedUpEC2Client
 
-from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint
 
@@ -28,7 +29,7 @@ def activate_user_account_desktop(activationkey, producttoken, status_callback):
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
         log.info('Private Details: %r', private_details)
-        status_callback(public)
+        status_callback("%r\n%r" % (public, private_details))
 
     update_status(
         public = 'Activating DevPay License for decentralized ("desktop") product...',
@@ -70,7 +71,7 @@ def activate_user_account_hosted(creds, activationkey, producttoken, status_call
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
         log.info('Private Details: %r', private_details)
-        status_callback(public)
+        status_callback("%r\n%r" % (public, private_details))
 
     update_status(
         public = 'Activating DevPay License for centralized ("hosted") product...',
@@ -89,12 +90,13 @@ def activate_user_account_hosted(creds, activationkey, producttoken, status_call
     return d
 
 
-def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, customer_email_id, keypair_name, status_callback):
+def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, customer_email_id, keypair_name, associate_new_ip, status_callback):
     """
     @param creds: a txaws.service.AWSCredentials object
     @param ami_image_id: string identifying the AMI
     @param customer_email_id: identifier that is unique to a specific customer account. See e.g. howto setup instance.
     @param keypair_name: the name of the SSH keypair to be used
+    @param associate_new_ip: True if a new Elastic IP should be associated with the instance
     """
     #logging.basicConfig(stream = sys.stdout, level = logging.DEBUG)
     log = logging.getLogger('deploy_EC2_instance')
@@ -102,14 +104,15 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
         log.info('Private Details: %r', private_details)
-        status_callback(public)
+        status_callback("%r\n%r" % (public, private_details))
 
     mininstancecount = 1
     maxinstancecount = 1
     secgroups = ['CustomerDefault']
     update_status(public = 'Deploying EC2 instance...', EC2name = customer_email_id)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
-    client = EC2Client(creds=creds, endpoint=endpoint)
+    client = SoupedUpEC2Client(creds=creds, endpoint=endpoint)
+
     d = client.run_instances(ami_image_id,
                              mininstancecount,
                              maxinstancecount,
@@ -117,15 +120,36 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
                              keypair_name,
                              instance_type=instance_size)
 
-    def deployed(instance, *args, **kw):
-        info = dump_instance_information(instance)
+    def started(instances, *args, **kw):
+        info = [dump_instance_information(i) for i in instances]
         update_status(
-            public = 'EC2_deployed.',
+            public = 'EC2 instance started.',
             info = info)
-        #self.instance_id = instance.instance_id
         #addressfp = FilePath(customer_email_id+'_EC2')
-    d.addCallback(deployed)
 
+        if not associate_new_ip:
+            return
+
+        d2 = client.allocate_address()
+
+        def allocated(ipaddress):
+            update_status(
+                public = 'Allocated Elastic IP address.',
+                ipaddress = ipaddress)
+            return ipaddress
+        d2.addCallback(allocated)
+
+        d2.addCallback(lambda x: task.deferLater(reactor, 20.0, defer.passthru, x))
+        d2.addCallback(lambda ipaddress: client.associate_address(instances[0].instance_id, ipaddress))
+
+        def associated(succeeded):
+            if succeeded:
+                update_status(public = 'Associated Elastic IP address.')
+            else:
+                update_status(public = 'Failed to associate IP.')
+        d2.addCallback(associated)
+        return d2
+    d.addCallback(started)
     return d
 
 
@@ -147,7 +171,7 @@ def create_user_bucket(creds, usertoken, bucketname, status_callback, producttok
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
         log.info('Private Details: %r', private_details)
-        status_callback(public)
+        status_callback("%r\n%r" % (public, private_details))
 
     update_status(
         public = 'Creating S3 Bucket...',
@@ -186,7 +210,7 @@ def verify_user_account(creds, usertoken, producttoken, status_callback):
     def update_status(public, **private_details):
         log.info('Update Status: %r', public)
         log.info('Private Details: %r', private_details)
-        status_callback(public)
+        status_callback("%r\n%r" % (public, private_details))
 
     update_status(
         public = 'Verifying DevPay License for decentralized ("desktop") product...',
