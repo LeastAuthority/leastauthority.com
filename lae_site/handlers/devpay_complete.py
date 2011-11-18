@@ -83,7 +83,7 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 </html>
 """
 
-# Amazon sometimes doesn't tell us the product code and/or activation code.
+# Amazon sometimes doesn't tell us the product code and/or activation key.
 # In that case, the easiest way to get those codes is for the user to click on
 # the 'Go to Application' link, so tell them to do that, rather than requiring
 # them to paste in the code(s).
@@ -99,8 +99,8 @@ DEVPAY_RESPONSE_MISSING_CODE_HTML = """
 Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 </p>
 <p>
-Amazon Payments has not yet told us the activation code needed to activate your
-subscription. To obtain this code, go to
+Amazon Payments has not yet told us the activation key needed to activate your
+subscription. To obtain this key, go to
 <a href="https://www.amazon.com/dp-activate">https://www.amazon.com/dp-activate</a>,
 log in to your Amazon account, and click the Go to Application link for this
 subscription.
