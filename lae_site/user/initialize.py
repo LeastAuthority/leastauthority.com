@@ -98,7 +98,6 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
     @param keypair_name: the name of the SSH keypair to be used
     @param associate_new_ip: True if a new Elastic IP should be associated with the instance
     """
-    #logging.basicConfig(stream = sys.stdout, level = logging.DEBUG)
     log = logging.getLogger('deploy_EC2_instance')
 
     def update_status(public, **private_details):
@@ -125,7 +124,6 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
         update_status(
             public = 'EC2 instance started.',
             info = info)
-        #addressfp = FilePath(customer_email_id+'_EC2')
 
         if not associate_new_ip:
             return
