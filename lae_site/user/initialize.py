@@ -12,7 +12,7 @@ from txaws.service import AWSServiceEndpoint
 def activate_user_account_desktop(activationkey, producttoken, status_callback):
     """
     @param activationkey:
-            The activationkey sent from the users browser upon completion
+            The activationkey sent from the user's browser upon completion
             of the DevPay signup process.
 
     @param status_callback(status):
