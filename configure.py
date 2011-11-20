@@ -120,7 +120,7 @@ def bounce_server(public_ip, key_filename, nickname, private_ip, access_key_id, 
                                       'access_key_id': access_key_id,
                                       'bucket_name': bucket_name}
     write('/home/customer/storageserver/tahoe.cfg', tahoe_cfg)
-    run('chmod u+w /home/customer/storageserver/private/s3*')
+    run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
     write('/home/customer/storageserver/private/s3secret', secret_key, mode=0440)
     write('/home/customer/storageserver/private/s3usertoken', user_token, mode=0440)
     write('/home/customer/storageserver/private/s3producttoken', product_token, mode=0440)
