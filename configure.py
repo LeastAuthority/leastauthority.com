@@ -47,9 +47,6 @@ upload.dircap =
 local.directory =
 """
 
-def set_key_file_permissions(key_filename):
-    local("chmod go-r %s" % key_filename)
-
 def set_ip_and_key(public_ip, key_filename, username="ubuntu"):
     env.host_string = '%s@%s' % (username, public_ip)
     env.reject_unknown_hosts = False  # FIXME allows MITM attacks
@@ -147,8 +144,6 @@ secret_key = sys.argv[6]
 user_token = sys.argv[7]
 product_token = sys.argv[8]
 bucket_name = sys.argv[9]
-
-set_key_file_permissions(key_filename)
 
 if "--no-install" not in sys.argv:
     install_server(public_ip, key_filename)
