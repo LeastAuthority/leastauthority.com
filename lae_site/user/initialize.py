@@ -1,4 +1,4 @@
-import logging, urllib
+import logging, urllib, time
 from twisted.internet import defer, task, reactor
 
 from lae_site.aws.license_service_client import LicenseServiceClient
@@ -120,7 +120,10 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
                              instance_type=instance_size)
 
     def started(instances, *args, **kw):
-        info = [dump_instance_information(i) for i in instances]
+        time.sleep(15)# Wait a bit
+        instance_ids = [x.instance_id for x in instances]
+        updated_instances = client.describe_instances(instance_ids)# Get updated description which hopefully includes public_ip.
+        info = [dump_instance_information(i) for i in updated_instances]
         update_status(
             public = 'EC2 instance started.',
             info = info)
