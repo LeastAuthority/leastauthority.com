@@ -9,7 +9,7 @@ config = Config()
 
 
 if len(sys.argv) < 4:
-    print "Usage: python signup.py ACTIVATION_KEY PRODUCT_CODE CUSTOMER_EMAIL"
+    print "Usage: python full_signup.py ACTIVATION_KEY PRODUCT_CODE CUSTOMER_EMAIL"
     sys.exit(1)
 
 def signup(activation_key, product_code, customer_email):
@@ -18,10 +18,10 @@ def signup(activation_key, product_code, customer_email):
         raise AssertionError("Product code %r matches %d products." % (product_code, len(ps)))
 
     product = ps[0]
-    full_name = ps['full_name']
-    product_token = ps['product_token']
-    ami_image_id = ps['ami_image_id']
-    instance_size = ps['instance_size']
+    full_name = product['full_name']
+    product_token = product['product_token']
+    ami_image_id = product['ami_image_id']
+    instance_size = product['instance_size']
 
 def cb(x):
     print str(x)
