@@ -3,10 +3,11 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-import sys, time
-from fabric import operations
-from fabric.api import local, sudo, env, reboot, run
+import sys
 from cStringIO import StringIO
+
+from fabric.api import local, sudo, env, reboot, run, put
+
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
@@ -46,11 +47,14 @@ upload.dircap =
 local.directory =
 """
 
-def set_ip_and_key(public_ip, key_filename):
-    env.host_string = 'ubuntu@' + public_ip
-    env.reject_unknown_hosts = False  # FIXME allows MITM attacks
+def set_key_file_permissions(key_filename):
     local("chmod go-r %s" % key_filename)
+
+def set_ip_and_key(public_ip, key_filename, username="ubuntu"):
+    env.host_string = '%s@%s' % (username, public_ip)
+    env.reject_unknown_hosts = False  # FIXME allows MITM attacks
     env.key_filename = key_filename
+    assert run('whoami').strip() == username
 
 def sudo_apt_get(argstring):
     sudo('apt-get %s' % argstring)
@@ -58,60 +62,59 @@ def sudo_apt_get(argstring):
 def sudo_easy_install(argstring):
     sudo('easy_install %s' % argstring)
 
-def as_customer(argstring):
-    sudo(argstring, user='customer')
+def write(remote_path, value, mode=None):
+    return put(StringIO(value), remote_path, mode=mode)
 
-def write_as_customer(remote_path, value, mode=None):
-    # remote_path must not require quoting
-    r = operations.put(StringIO(value), remote_path, mode=mode, use_sudo=True)
-    return str(r) + '\n' + sudo('chown customer:customer ' + remote_path)
-
-def read_as_customer(remote_path):
-    # remote_path must not require quoting
-    return sudo('cat ' + remote_path, user='customer')
 
 def delete_customer(public_ip, key_filename):
     set_ip_and_key(public_ip, key_filename)
-    print sudo('deluser customer')
-    print sudo('rm -rf /home/customer*')
+
+    sudo('deluser customer')
+    sudo('rm -rf /home/customer*')
+
 
 def install_server(public_ip, key_filename):
     set_ip_and_key(public_ip, key_filename)
-    print sudo_apt_get('update')
-    print sudo_apt_get('upgrade -y')
-    print sudo_apt_get('install -y linux-ec2 linux-image-ec2')
+
+    sudo_apt_get('update')
+    sudo_apt_get('upgrade -y')
+    sudo_apt_get('install -y linux-ec2 linux-image-ec2')
     reboot(60)
-    print sudo_apt_get('install -y python-dev')
-    print sudo_apt_get('install -y python-setuptools')
-    print sudo_apt_get('install -y exim4-base')
-    print sudo_apt_get('install -y darcs')
-    print sudo_easy_install('foolscap')
-    print run('wget https://leastauthority.com/content/static/patches/txAWS-0.2.1.post2.tar.gz')
-    print run('tar -xzvf txAWS-0.2.1.post2.tar.gz')
-    print sudo("/bin/sh -c 'cd /home/ubuntu/txAWS-0.2.1.post2 && python ./setup.py install'")
-    print sudo('adduser --disabled-password --gecos "" customer || echo Assuming that user already exists.')
-    print sudo('mkdir -p /home/customer/.ssh/')
-    print sudo('chown customer:customer /home/customer/.ssh')
-    print sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
-    print sudo('chown customer:customer /home/customer/.ssh/authorized_keys')
-    print sudo('chmod 400 /home/customer/.ssh/authorized_keys')
-    print sudo('chmod 700 /home/customer/.ssh/')
-    print as_customer('whoami')
-    print as_customer('rm -rf /home/customer/LAFS_source')
-    print as_customer("/bin/sh -c 'cd /home/customer && darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source'")
-    print as_customer("/bin/sh -c 'cd /home/customer/LAFS_source && python ./setup.py build'")
-    print as_customer('mkdir -p /home/customer/introducer /home/customer/storageserver')
-    print as_customer("/bin/sh -c 'cd /home/customer/LAFS_source && ./bin/tahoe create-introducer ../introducer || echo Assuming that introducer already exists.'")
-    print as_customer("/bin/sh -c 'cd /home/customer/LAFS_source && ./bin/tahoe create-node ../storageserver || echo Assuming that storage server already exists.'")
+    sudo_apt_get('install -y python-dev')
+    sudo_apt_get('install -y python-setuptools')
+    sudo_apt_get('install -y exim4-base')
+    sudo_apt_get('install -y darcs')
+    sudo_easy_install('foolscap')
+    run('wget https://leastauthority.com/content/static/patches/txAWS-0.2.1.post2.tar.gz')
+    run('tar -xzvf txAWS-0.2.1.post2.tar.gz')
+    sudo("/bin/sh -c 'cd /home/ubuntu/txAWS-0.2.1.post2 && python ./setup.py install'")
+    sudo('adduser --disabled-password --gecos "" customer || echo Assuming that user already exists.')
+    sudo('mkdir -p /home/customer/.ssh/')
+    sudo('chown customer:customer /home/customer/.ssh')
+    sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
+    sudo('chown customer:customer /home/customer/.ssh/authorized_keys')
+    sudo('chmod 400 /home/customer/.ssh/authorized_keys')
+    sudo('chmod 700 /home/customer/.ssh/')
+
+    set_ip_and_key(public_ip, key_filename, username="customer")
+
+    run('rm -rf /home/customer/LAFS_source')
+    run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
+    run("/bin/sh -c 'cd LAFS_source && python ./setup.py build'")
+    run('mkdir -p introducer storageserver')
+    run('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
+    run('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
+
 
 def bounce_server(public_ip, key_filename, nickname, private_ip, access_key_id, secret_key, user_token, product_token, bucket_name):
-    set_ip_and_key(public_ip, key_filename)
+    set_ip_and_key(public_ip, key_filename, username="customer")
 
-    print write_as_customer('/home/customer/introducer/introducer.port', '12345\n')
-    print write_as_customer('/home/customer/storageserver/client.port', '12346\n')
-    print as_customer("/bin/sh -c 'cd /home/customer/LAFS_source && ./bin/tahoe restart ../introducer'")
-    time.sleep(2.0)
-    introducer_furl = read_as_customer('/home/customer/introducer/introducer.furl')
+    run('rm -f /home/customer/introducer/introducer.furl')
+    write('/home/customer/introducer/introducer.port', '12345\n')
+    write('/home/customer/storageserver/client.port', '12346\n')
+    run('LAFS_source/bin/tahoe restart introducer && sleep 5')
+    introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
+    assert '\n' not in introducer_furl, introducer_furl
 
     tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
                                       'public_ip': public_ip,
@@ -119,16 +122,19 @@ def bounce_server(public_ip, key_filename, nickname, private_ip, access_key_id, 
                                       'introducer_furl': introducer_furl,
                                       'access_key_id': access_key_id,
                                       'bucket_name': bucket_name}
-    print write_as_customer('/home/customer/storageserver/tahoe.cfg', tahoe_cfg)
-    print write_as_customer('/home/customer/storageserver/private/s3secret', secret_key, mode=0440)
-    print write_as_customer('/home/customer/storageserver/private/s3usertoken', user_token, mode=0440)
-    print write_as_customer('/home/customer/storageserver/private/s3producttoken', product_token, mode=0440)
+    write('/home/customer/storageserver/tahoe.cfg', tahoe_cfg)
+    run('chmod u+w /home/customer/storageserver/private/s3*')
+    write('/home/customer/storageserver/private/s3secret', secret_key, mode=0440)
+    write('/home/customer/storageserver/private/s3usertoken', user_token, mode=0440)
+    write('/home/customer/storageserver/private/s3producttoken', product_token, mode=0440)
 
-    print as_customer("/bin/sh -c 'cd /home/customer/LAFS_source && ./bin/tahoe restart ../storageserver'")
+    run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
+    run('ps -fC tahoe')
+    run('netstat -at')
 
 
 if len(sys.argv) < 10:
-    print "Usage: python configure.py PUBLIC_IP KEY_FILE NICKNAME PRIVATE_IP ACCESS_KEY_ID SECRET_KEY USER_TOKEN LONG_PRODUCT_TOKEN BUCKET_NAME"
+    print "Usage: python configure.py PUBLIC_IP KEY_FILE NICKNAME PRIVATE_IP ACCESS_KEY_ID SECRET_KEY USER_TOKEN LONG_PRODUCT_TOKEN BUCKET_NAME [--no-install]"
     print "Happy configuring!"
     sys.exit(1)
 
@@ -142,5 +148,9 @@ user_token = sys.argv[7]
 product_token = sys.argv[8]
 bucket_name = sys.argv[9]
 
-install_server(public_ip, key_filename)
+set_key_file_permissions(key_filename)
+
+if "--no-install" not in sys.argv:
+    install_server(public_ip, key_filename)
+
 bounce_server(public_ip, key_filename, nickname, private_ip, access_key_id, secret_key, user_token, product_token, bucket_name)
