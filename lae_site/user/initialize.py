@@ -120,16 +120,22 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
                              instance_type=instance_size)
 
     def started(instances, *args, **kw):
-        time.sleep(15)# Wait a bit
+        time.sleep(0)# Wait a bit
         instance_ids = [x.instance_id for x in instances]
-        updated_instances = client.describe_instances(instance_ids)# Get updated description which hopefully includes public_ip.
-        info = [dump_instance_information(i) for i in updated_instances]
-        update_status(
-            public = 'EC2 instance started.',
-            info = info)
+        print "instance_ids: %s"%instance_ids
+        d2 = client.describe_instances(*instance_ids)# Get updated description which hopefully includes public_ip.
+
+        def description_dumper(descriptions):
+            print "Inside description_dumper descriptions: %s"%descriptions
+            info = [dump_instance_information(i) for i in descriptions]
+            update_status(
+                public = 'EC2 instance started.',
+                info = info)
+
+        d2.addCallback(description_dumper)
 
         if not associate_new_ip:
-            return
+            return d2
 
         d2 = client.allocate_address()
 
@@ -158,10 +164,13 @@ def dump_instance_information(instance):
     if not isinstance(instance, Instance):
         return "<not an instance: %r>" % (instance,)
     desc = {}
-    for attr in ('instance_id', 'instance_state', 'instance_type', 'image_id', 'private_dns_name',
-                 'dns_name', 'key_name', 'ami_launch_index', 'launch_time', 'placement',
-                 'product_codes', 'kernel_id', 'ramdisk_id', 'reservation'):
-        if hasattr(instance, attr):
+    #for attr in ('instance_id', 'instance_state', 'instance_type', 'image_id', 'private_dns_name',
+    #             'dns_name', 'key_name', 'ami_launch_index', 'launch_time', 'placement',
+    #             'product_codes', 'kernel_id', 'ramdisk_id', 'reservation'):
+    #    if hasattr(instance, attr):
+    #        desc[attr] = getattr(instance, attr)
+    for attr in dir(instance):
+        if 'ip' in attr:
             desc[attr] = getattr(instance, attr)
     return "<%r %r>" % (instance, desc)
 
