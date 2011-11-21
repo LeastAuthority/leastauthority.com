@@ -11,6 +11,7 @@ class SignupHandler(Resource):
     def __init__(self, products):
         self.products = products
         self.children = {}
+        self.putChild('', self)
         for product in self.products:
             self.putChild(str(product['short_name']), Redirect(str(product['signup_url'])))
 

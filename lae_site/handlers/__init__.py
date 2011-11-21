@@ -2,7 +2,7 @@
 
 from twisted.web.server import Site
 from twisted.web.static import File
-from twisted.web.util import redirectTo
+from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
 
 from lae_site.handlers.devpay_complete import DevPayPurchaseHandler, ActivationRequestHandler
@@ -15,14 +15,14 @@ PAGES = ('about_us',
          'downloads',
          'design',
          'security',
-         'products',
-         'sign_up_info')
+         'products')
 
 def make_site(config):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
 
     resource.putChild('signup', SignupHandler(config.products))
+    resource.putChild('sign_up_info', Redirect('/signup'))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())
     resource.putChild('activation-request', ActivationRequestHandler())
 
