@@ -9,7 +9,8 @@ import mock
 
 from lae_site.aws.license_service_client import \
     PRODUCTION_LICENSE_SERVICE_ENDPOINT, LicenseServiceClient, \
-    ActivateHostedProductResponse, ResponseParseError
+    ActivateHostedProductResponse
+from lae_site.aws.queryapi import ResponseParseError
 
 
 class LicenseServiceClientTests (TestCase):
@@ -21,7 +22,7 @@ class LicenseServiceClientTests (TestCase):
         nowfunc = self._time_patcher.__enter__()
         nowfunc.return_value = self.SOME_TIME
 
-        self._http_patcher = mock.patch('lae_site.aws.license_service_client.make_http_request')
+        self._http_patcher = mock.patch('lae_site.aws.queryapi.make_http_request')
         self._make_http_request = self._http_patcher.__enter__()
 
         def fire_mocked_http_response(*a, **kw):
