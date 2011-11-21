@@ -6,7 +6,7 @@
 import sys
 from cStringIO import StringIO
 
-from fabric.api import local, sudo, env, reboot, run, put
+from fabric.api import sudo, env, reboot, run, put
 
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
