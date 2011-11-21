@@ -164,11 +164,11 @@ def dump_instance_information(instance):
     if not isinstance(instance, Instance):
         return "<not an instance: %r>" % (instance,)
     desc = {}
-    #for attr in ('instance_id', 'instance_state', 'instance_type', 'image_id', 'private_dns_name',
-    #             'dns_name', 'key_name', 'ami_launch_index', 'launch_time', 'placement',
-    #             'product_codes', 'kernel_id', 'ramdisk_id', 'reservation'):
-    #    if hasattr(instance, attr):
-    #        desc[attr] = getattr(instance, attr)
+    for attr in ('instance_id', 'instance_state', 'instance_type', 'image_id', 'private_dns_name',
+                 'dns_name', 'key_name', 'ami_launch_index', 'launch_time', 'placement',
+                 'product_codes', 'kernel_id', 'ramdisk_id', 'reservation'):
+        if hasattr(instance, attr):
+            desc[attr] = getattr(instance, attr)
     for attr in dir(instance):
         if 'ip' in attr:
             desc[attr] = getattr(instance, attr)
