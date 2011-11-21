@@ -23,7 +23,7 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
 def cb(x):
-    print str(x)
+    print "The string representation of x str(x): %s"%str(x)
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
 

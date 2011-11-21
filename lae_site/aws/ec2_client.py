@@ -27,6 +27,16 @@ class SoupedUpEC2Client(EC2Client):
         d.addCallback(AssociateAddressResponse.parse)
         return d
 
+    def getpubip(self):
+        """Describe current instances."""
+        query = self.query_factory(
+            action="DescribeInstances", creds=self.creds,
+            endpoint=self.endpoint, other_params={})
+        print "query: %s"%query
+        d = query.submit()
+        d.addCallback(AllocateAddressResponse)
+        return d
+
 
 class AllocateAddressResponse:
     @classmethod
