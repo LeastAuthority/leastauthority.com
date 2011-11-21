@@ -18,10 +18,10 @@ class ConfigTests (TestCase):
             self.failUnlessRaises(AssertionError, self._load_from_string, vector)
 
 
-    def test_unknown_options(self):
+    def test_other(self):
         config = self._load_from_string( UNKNOWN_OPTION_CONFIG )
 
-        self.failUnlessEqual("xxx", config.unknown_options["unknown"])
+        self.failUnlessEqual("xxx", config.other["unknown"])
 
 
     def test_load_file(self):

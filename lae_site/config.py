@@ -3,9 +3,8 @@
 import os, json
 
 
-class Config (object):
-
-    __slots__ = ['products', 'unknown_options']
+class Config(object):
+    __slots__ = ['products', 'other']
 
     DEFAULT_CONFIG_PATH = os.path.expanduser('../lae_website_config.json')
 
@@ -37,7 +36,7 @@ class Config (object):
             assert isinstance(value["product_code"], basestring), value
             assert isinstance(value["product_token"], basestring), value
 
-        self.unknown_options = config
+        self.other = config
 
     @staticmethod
     def _load_config_json(configFile):

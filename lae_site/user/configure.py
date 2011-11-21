@@ -3,7 +3,6 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-import sys
 from cStringIO import StringIO
 
 from fabric.api import sudo, env, reboot, run, put
@@ -103,7 +102,11 @@ def install_server(public_ip, key_filename):
     run('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
 
 
-def bounce_server(public_ip, key_filename, nickname, private_ip, access_key_id, secret_key, user_token, product_token, bucket_name):
+def bounce_server(public_ip, key_filename, private_ip, creds, user_token, product_token, bucket_name):
+    access_key_id = creds.access_key
+    secret_key = creds.secret_key
+    nickname = bucket_name
+
     set_ip_and_key(public_ip, key_filename, username="customer")
 
     run('rm -f /home/customer/introducer/introducer.furl')
@@ -128,24 +131,3 @@ def bounce_server(public_ip, key_filename, nickname, private_ip, access_key_id, 
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
     run('ps -fC tahoe')
     run('netstat -at')
-
-
-if len(sys.argv) < 10:
-    print "Usage: python configure.py PUBLIC_IP KEY_FILE NICKNAME PRIVATE_IP ACCESS_KEY_ID SECRET_KEY USER_TOKEN LONG_PRODUCT_TOKEN BUCKET_NAME [--no-install]"
-    print "Happy configuring!"
-    sys.exit(1)
-
-public_ip = sys.argv[1]
-key_filename = sys.argv[2]
-nickname = sys.argv[3]
-private_ip = sys.argv[4]
-access_key_id = sys.argv[5]
-secret_key = sys.argv[6]
-user_token = sys.argv[7]
-product_token = sys.argv[8]
-bucket_name = sys.argv[9]
-
-if "--no-install" not in sys.argv:
-    install_server(public_ip, key_filename)
-
-bounce_server(public_ip, key_filename, nickname, private_ip, access_key_id, secret_key, user_token, product_token, bucket_name)
