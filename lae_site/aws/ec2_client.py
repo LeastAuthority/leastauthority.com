@@ -41,8 +41,6 @@ class GetPubIPResponse:
     @classmethod
     def parse(cls, body):
         doc = xml_parse(body)
-        print "Finished call to xml_parse."
-        print doc
         dnsName = xml_find(doc, u'dnsName')[0].text.strip()
         prefix_plus_public_ip = dnsName[:dnsName.find('.')]
         public_ip_without_prefix = prefix_plus_public_ip[prefix_plus_public_ip.find('-')+1:]
@@ -53,8 +51,6 @@ class AllocateAddressResponse:
     @classmethod
     def parse(cls, body):
         doc = xml_parse(body)
-        print "Finished call to xml_parse."
-        print doc
         public_ip = xml_find(doc, u'publicIp').text.strip()
         return public_ip
 
