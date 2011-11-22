@@ -34,16 +34,31 @@ class SoupedUpEC2Client(EC2Client):
             endpoint=self.endpoint, other_params={})
         print "query: %s"%query
         d = query.submit()
-        d.addCallback(AllocateAddressResponse.parse)
+        d.addCallback(GetPubIPResponse.parse)
         return d
 
+class GetPubIPResponse:
+    @classmethod
+    def parse(cls, body):
+        doc = xml_parse(body)
+        print "Finished call to xml_parse."
+        print doc
+        dnsName = xml_find(doc, u'dnsName')[0].text.strip()
+        prefix_plus_public_ip = dnsName[:dnsName.find('.')]
+        public_ip_without_prefix = prefix_plus_public_ip[prefix_plus_public_ip.find('-')+1:]
+        public_ip = public_ip_without_prefix.replace('-','.')
+        return public_ip
 
 class AllocateAddressResponse:
     @classmethod
     def parse(cls, body):
         doc = xml_parse(body)
-        public_ip = xml_find(doc, u'publicIp').text.strip()
-        return public_ip
+        print "Finished call to xml_parse."
+        print doc
+        dns_name = xml_find(doc, u'dnsName').text.strip()
+        return dns_name
+        #public_ip = xml_find(doc, u'publicIp').text.strip()
+        #return public_ip
 
 
 class AssociateAddressResponse:
