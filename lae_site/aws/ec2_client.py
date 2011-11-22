@@ -32,7 +32,7 @@ class SoupedUpEC2Client(EC2Client):
         query = self.query_factory(
             action="DescribeInstances", creds=self.creds,
             endpoint=self.endpoint, other_params={})
-        print "query: %s"%query
+        #print "query: %s"%query
         d = query.submit()
         d.addCallback(GetPubIPResponse.parse)
         return d
@@ -55,10 +55,8 @@ class AllocateAddressResponse:
         doc = xml_parse(body)
         print "Finished call to xml_parse."
         print doc
-        dns_name = xml_find(doc, u'dnsName').text.strip()
-        return dns_name
-        #public_ip = xml_find(doc, u'publicIp').text.strip()
-        #return public_ip
+        public_ip = xml_find(doc, u'publicIp').text.strip()
+        return public_ip
 
 
 class AssociateAddressResponse:

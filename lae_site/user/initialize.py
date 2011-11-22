@@ -122,11 +122,11 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
     def started(instances, *args, **kw):
         time.sleep(0)# Wait a bit
         instance_ids = [x.instance_id for x in instances]
-        print "instance_ids: %s"%instance_ids
+        print "instance_ids[0]: %s"%instance_ids[0]
         d2 = client.describe_instances(*instance_ids)# Get updated description which hopefully includes public_ip.
 
         def description_dumper(descriptions):
-            print "Inside description_dumper descriptions: %s"%descriptions
+            #print "Inside description_dumper descriptions: %s"%descriptions
             info = [dump_instance_information(i) for i in descriptions]
             update_status(
                 public = 'EC2 instance started.',
