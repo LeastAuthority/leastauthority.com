@@ -34,7 +34,7 @@ class SoupedUpEC2Client(EC2Client):
             endpoint=self.endpoint, other_params={})
         print "query: %s"%query
         d = query.submit()
-        d.addCallback(AllocateAddressResponse)
+        d.addCallback(AllocateAddressResponse.parse)
         return d
 
 
