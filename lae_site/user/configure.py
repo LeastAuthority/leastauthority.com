@@ -21,7 +21,7 @@ TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname = %(nickname)s
 web.port =
 web.static = public_html
-tub.location = %(public_ip)s:12346,%(private_ip)s:12346
+tub.location = %(public_host)s:12346,%(private_host)s:12346
 
 [client]
 # Which services should this client connect to?
@@ -46,11 +46,22 @@ upload.dircap =
 local.directory =
 """
 
-def set_ip_and_key(public_ip, key_filename, username="ubuntu"):
-    env.host_string = '%s@%s' % (username, public_ip)
+class NotListeningError(Exception):
+    pass
+
+
+def set_host_and_key(public_host, key_filename, username="ubuntu"):
+    env.host_string = '%s@%s' % (username, public_host)
     env.reject_unknown_hosts = False  # FIXME allows MITM attacks
     env.key_filename = key_filename
-    assert run('whoami').strip() == username
+    try:
+        actual_username = run('whoami').strip()
+    except SystemExit:
+        # fabric stupidly aborts if the host is not listening for ssh connections
+        # zooko: and this is why SystemExit needs to be catchable ;-)
+        raise NotListeningError()
+
+    assert actual_username == username, (actual_username, username)
 
 def sudo_apt_get(argstring):
     sudo('apt-get %s' % argstring)
@@ -62,15 +73,15 @@ def write(remote_path, value, mode=None):
     return put(StringIO(value), remote_path, mode=mode)
 
 
-def delete_customer(public_ip, key_filename):
-    set_ip_and_key(public_ip, key_filename)
+def delete_customer(public_host, key_filename):
+    set_host_and_key(public_host, key_filename)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
 
 
-def install_server(public_ip, key_filename):
-    set_ip_and_key(public_ip, key_filename)
+def install_server(public_host, key_filename):
+    set_host_and_key(public_host, key_filename)
 
     sudo_apt_get('update')
     sudo_apt_get('upgrade -y')
@@ -92,7 +103,7 @@ def install_server(public_ip, key_filename):
     sudo('chmod 400 /home/customer/.ssh/authorized_keys')
     sudo('chmod 700 /home/customer/.ssh/')
 
-    set_ip_and_key(public_ip, key_filename, username="customer")
+    set_host_and_key(public_host, key_filename, username="customer")
 
     run('rm -rf /home/customer/LAFS_source')
     run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
@@ -102,12 +113,12 @@ def install_server(public_ip, key_filename):
     run('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
 
 
-def bounce_server(public_ip, key_filename, private_ip, creds, user_token, product_token, bucket_name):
+def bounce_server(public_host, key_filename, private_host, creds, user_token, product_token, bucket_name):
     access_key_id = creds.access_key
     secret_key = creds.secret_key
     nickname = bucket_name
 
-    set_ip_and_key(public_ip, key_filename, username="customer")
+    set_host_and_key(public_host, key_filename, username="customer")
 
     run('rm -f /home/customer/introducer/introducer.furl')
     write('/home/customer/introducer/introducer.port', '12345\n')
@@ -117,8 +128,8 @@ def bounce_server(public_ip, key_filename, private_ip, creds, user_token, produc
     assert '\n' not in introducer_furl, introducer_furl
 
     tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
-                                      'public_ip': public_ip,
-                                      'private_ip': private_ip,
+                                      'public_host': public_host,
+                                      'private_host': private_host,
                                       'introducer_furl': introducer_furl,
                                       'access_key_id': access_key_id,
                                       'bucket_name': bucket_name}

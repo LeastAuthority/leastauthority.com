@@ -1,12 +1,14 @@
-import logging, urllib, time
-from twisted.internet import defer, task, reactor
+
+import logging, urllib, re
 
 from lae_site.aws.license_service_client import LicenseServiceClient
 from lae_site.aws.devpay_s3client import DevPayS3Client
-from lae_site.aws.ec2_client import SoupedUpEC2Client
+from lae_site.aws.queryapi import xml_parse, xml_find, ResponseParseError
 
+from txaws.ec2.client import EC2Client, Parser as txaws_ec2_Parser
 from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint
+
 
 
 def activate_user_account_desktop(activationkey, producttoken, status_callback):
@@ -49,54 +51,12 @@ def activate_user_account_desktop(activationkey, producttoken, status_callback):
     return d
 
 
-def activate_user_account_hosted(creds, activationkey, producttoken, status_callback):
-    """
-    @param creds: AWSCredentials
-
-    @param activationkey:
-            The activationkey sent from the users browser upon completion
-            of the DevPay signup process.
-
-    @param status_callback(status):
-            A function which will be called multiple times with a status
-            string for user feedback.
-
-    @return:
-            A Deferred which fires with an ActivateHostedProductResponse upon
-            successful user initialization.
-    """
-
-    log = logging.getLogger('activate_user_account_hosted')
-
-    def update_status(public, **private_details):
-        log.info('Update Status: %r', public)
-        log.info('Private Details: %r', private_details)
-        status_callback("%r\n%r" % (public, private_details))
-
-    update_status(
-        public = 'Activating DevPay License for centralized ("hosted") product...',
-        activationkey = activationkey)
-
-    d = LicenseServiceClient(creds).activate_hosted_product(activationkey, producttoken)
-
-    def activated(ahpr):
-        update_status(
-            public = ('DevPay License activated:\n'
-                      'usertoken=%s\n'
-                      'pid=%s\n' % (ahpr.usertoken, ahpr.pid)),
-            activation_response = ahpr)
-        return ahpr
-    d.addCallback(activated)
-    return d
-
-
-def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, customer_email_id, keypair_name, associate_new_ip, status_callback):
+def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name, status_callback):
     """
     @param creds: a txaws.service.AWSCredentials object
     @param ami_image_id: string identifying the AMI
-    @param customer_email_id: identifier that is unique to a specific customer account. See e.g. howto setup instance.
+    @param bucket_name: identifier that is unique to a specific customer account
     @param keypair_name: the name of the SSH keypair to be used
-    @param associate_new_ip: True if a new Elastic IP should be associated with the instance
     """
     log = logging.getLogger('deploy_EC2_instance')
 
@@ -108,9 +68,11 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
     mininstancecount = 1
     maxinstancecount = 1
     secgroups = ['CustomerDefault']
-    update_status(public = 'Deploying EC2 instance...', EC2name = customer_email_id)
+    update_status(public = 'Deploying EC2 instance...', bucket_name = bucket_name)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
-    client = SoupedUpEC2Client(creds=creds, endpoint=endpoint)
+    client = EC2Client(creds=creds, endpoint=endpoint)
+
+    status_callback(repr((creds.access_key, creds.secret_key, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name)))
 
     d = client.run_instances(ami_image_id,
                              mininstancecount,
@@ -120,44 +82,53 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, custom
                              instance_type=instance_size)
 
     def started(instances, *args, **kw):
-        time.sleep(0)# Wait a bit
-        instance_ids = [x.instance_id for x in instances]
-        print instance_ids[0]
-        d2 = client.describe_instances(*instance_ids)# Get updated description which hopefully includes public_ip.
+        info = [dump_instance_information(i) for i in instances]
+        update_status(
+            public = 'EC2 instance started.',
+            info = info)
 
-        def description_dumper(descriptions):
-            #print "Inside description_dumper descriptions: %s"%descriptions
-            info = [dump_instance_information(i) for i in descriptions]
-            update_status(
-                public = 'EC2 instance started.',
-                info = info)
-
-        d2.addCallback(description_dumper)
-
-        if not associate_new_ip:
-            return d2
-
-        d2 = client.allocate_address()
-
-        def allocated(ipaddress):
-            update_status(
-                public = 'Allocated Elastic IP address.',
-                ipaddress = ipaddress)
-            return ipaddress
-        d2.addCallback(allocated)
-
-        d2.addCallback(lambda x: task.deferLater(reactor, 20.0, defer.passthru, x))
-        d2.addCallback(lambda ipaddress: client.associate_address(instances[0].instance_id, ipaddress))
-
-        def associated(succeeded):
-            if succeeded:
-                update_status(public = 'Associated Elastic IP address.')
-            else:
-                update_status(public = 'Failed to associate IP.')
-        d2.addCallback(associated)
-        return d2
+        assert len(instances) == 1, len(instances)
+        return instances[0]
     d.addCallback(started)
     return d
+
+
+def get_EC2_addresses(creds, endpoint_uri, instance_id):
+    """
+    Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
+    """
+    endpoint = AWSServiceEndpoint(uri=endpoint_uri)
+    client = EC2Client(creds=creds, endpoint=endpoint, parser=AddressParser())
+    return client.describe_instances(instance_id)
+
+
+EC2_PUBLIC_DNS = re.compile(r'^ec2(-(0|([1-9][0-9]{0,2}))){4}\.')
+
+class AddressParser(txaws_ec2_Parser):
+    def describe_instances(self, xml_bytes):
+        doc = xml_parse(xml_bytes)
+        node = xml_find(doc, u'reservationSet')
+        node = xml_find(node, u'item')
+        node = xml_find(node, u'instancesSet')
+        node = xml_find(node, u'item')
+        try:
+            publichost = xml_find(node, u'dnsName').text
+            privatehost = xml_find(node, u'privateDnsName').text
+        except ResponseParseError:
+            return None
+
+        if not publichost or not privatehost:
+            return None
+
+        publichost = publichost.strip()
+        privatehost = privatehost.strip()
+        m = EC2_PUBLIC_DNS.match(publichost)
+        if m:
+            # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
+            # to eliminate the DNS point of failure.
+            publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
+
+        return (publichost, privatehost)
 
 
 def dump_instance_information(instance):
@@ -168,9 +139,6 @@ def dump_instance_information(instance):
                  'dns_name', 'key_name', 'ami_launch_index', 'launch_time', 'placement',
                  'product_codes', 'kernel_id', 'ramdisk_id', 'reservation'):
         if hasattr(instance, attr):
-            desc[attr] = getattr(instance, attr)
-    for attr in dir(instance):
-        if 'ip' in attr:
             desc[attr] = getattr(instance, attr)
     return "<%r %r>" % (instance, desc)
 

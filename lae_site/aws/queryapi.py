@@ -91,8 +91,8 @@ def xml_parse(text):
 
 
 def xml_find(node, key):
-    r = node.getiterator(key)
+    r = node.find(key)
     if r is None:
-        raise ResponseParseError('Node not found: {0}'.format(key))
+        raise ResponseParseError('Node not found: %r' % (key,))
     else:
         return r

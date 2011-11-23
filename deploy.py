@@ -6,28 +6,27 @@ from lae_site.user.initialize import deploy_EC2_instance
 
 
 if len(sys.argv) < 7:
-    print "Usage: python deploy.py ACCESS_KEY_ID SECRET_KEY AMI_IMAGE_ID INSTANCE_SIZE CUSTOMER_EMAIL KEYPAIR_NAME [--associate-new-ip]"
+    print "Usage: python deploy.py ACCESS_KEY_ID SECRET_KEY AMI_IMAGE_ID INSTANCE_SIZE BUCKET_NAME KEYPAIR_NAME"
     print "Happy deploying!"
     sys.exit(1)
 
-access_key_id = sys.argv[1]
-secret_key = sys.argv[2]
-ami_image_id = sys.argv[3]
-instance_size = sys.argv[4]
-customer_email = sys.argv[5]
-keypair_name = sys.argv[6]
-associate_new_ip = "--associate-new-ip" in sys.argv
-creds = AWSCredentials(access_key_id, secret_key)
+accesskeyid = sys.argv[1]
+secretkey = sys.argv[2]
+amiimageid = sys.argv[3]
+instancesize = sys.argv[4]
+bucketname = sys.argv[5]
+keypairname = sys.argv[6]
+creds = AWSCredentials(accesskeyid, secretkey)
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
 def cb(x):
-    #print "The string representation of x str(x): %s"%str(x)
+    print str(x)
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
 
-d = deploy_EC2_instance(creds, EC2_ENDPOINT, ami_image_id, instance_size, customer_email, keypair_name, associate_new_ip, cb)
+d = deploy_EC2_instance(creds, EC2_ENDPOINT, amiimageid, instancesize, bucketname, keypairname, cb)
 d.addBoth(cb)
 d.addBoth(lambda ign: reactor.stop())
 reactor.run()

@@ -22,19 +22,17 @@ class Config(object):
         assert isinstance(self.products, list)
         for value in self.products:
             assert isinstance(value, dict), value
-            assert "short_name" in value, value
-            assert "full_name" in value, value
-            assert "listed" in value, value
-            assert "signup_url" in value, value
-            assert "product_code" in value, value
-            assert "product_token" in value, value
+            for field in ("short_name", "full_name", "listed", "signup_url", "product_code", "product_token"):
+                assert field in value, value
+                value[field] = str(value[field])
             value["listed"] = (value["listed"].lower() in ("true", "yes"))
-            assert isinstance(value["short_name"], basestring), value
-            assert isinstance(value["full_name"], basestring), value
+
+            assert isinstance(value["short_name"], str), value
+            assert isinstance(value["full_name"], str), value
             assert isinstance(value["listed"], bool), value
-            assert isinstance(value["signup_url"], basestring), value
-            assert isinstance(value["product_code"], basestring), value
-            assert isinstance(value["product_token"], basestring), value
+            assert isinstance(value["signup_url"], str), value
+            assert isinstance(value["product_code"], str), value
+            assert isinstance(value["product_token"], str), value
 
         self.other = config
 
