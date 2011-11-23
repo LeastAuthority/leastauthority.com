@@ -1,0 +1,3 @@
+  Once AWS devpay has successfully processed an activation request it informs
+  the webserver by passing it an activation key.  Automatic storage service
+  set up then proceeds to execute several 
