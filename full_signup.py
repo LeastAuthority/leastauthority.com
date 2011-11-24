@@ -22,14 +22,15 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 POLL_TIME = 30
 
 
-def cb(x):
-    print str(x)
-    if isinstance(x, Failure) and hasattr(x.value, 'response'):
-        print x.value.response
+def signup(name, email, activationkey, productcode, keyinfo, stdout, stderr, clock=None):
+    def cb(x):
+        print >>stdout, str(x)
+        if isinstance(x, Failure) and hasattr(x.value, 'response'):
+            print >>stdout, x.value.response
 
-
-def signup(activationkey, productcode, bucketname, location=None, clock=None):
     myclock = clock or reactor
+    bucketname = "lae-%s-%s" % (productcode.lower(), activationkey.lower())
+    location = None  # default location for now
 
     ps = [p for p in config.products if p['product_code'] == productcode]
     if len(ps) != 1:
@@ -49,7 +50,7 @@ def signup(activationkey, productcode, bucketname, location=None, clock=None):
     ec2keypairname = str(config.other['keypair_name'])
     ec2keyfilename = str(config.other['key_filename'])
 
-    print "Signing up user for %s..." % (fullname,)
+    print >>stdout, "Signing up user for %s..." % (fullname,)
 
     d = activate_user_account_desktop(activationkey, producttoken, cb)
     def _activated(adpr):
@@ -115,24 +116,28 @@ def signup(activationkey, productcode, bucketname, location=None, clock=None):
     return d
 
 
-def main(argv):
-    activationkey = argv[1]
-    productcode = argv[2]
-    bucketname = argv[3]
-    if len(argv) > 4:
-        location = argv[4]
-    else:
-        location = None  # default
+def main(stdin, stdout, stderr):
+    print >>stderr, "On separate lines: Name, Email, Activation key, Product code, Key info"
+    name = stdin.readline()
+    email = stdin.readline()
+    activationkey = stdin.readline()
+    productcode = stdin.readline()
+    keyinfo = stdin.readline()
 
-    return signup(activationkey, productcode, bucketname, location=location)
+    if keyinfo is None:
+        # EOF reached before 5 lines (including blank lines) were input
+        print >>stdout, "full_signup.py: some information was not received. Please report this to <info@leastauthority.com>."
+        return 1
 
+    return signup(name, email, activationkey, productcode, keyinfo, stdout, stderr)
 
-if len(sys.argv) < 4:
-    print "Usage: python full_signup.py ACTIVATION_KEY PRODUCT_CODE BUCKET_NAME [LOCATION]"
-    sys.exit(1)
+def cb(x):
+    print str(x)
+    if isinstance(x, Failure) and hasattr(x.value, 'response'):
+        print x.value.response
 
-d = defer.succeed(sys.argv)
-d.addCallback(main)
+d = defer.succeed(None)
+d.addCallback(lambda ign: main(sys.stdin, sys.stdout, sys.stderr))
 d.addBoth(cb)
 d.addBoth(lambda ign: reactor.stop())
 reactor.run()

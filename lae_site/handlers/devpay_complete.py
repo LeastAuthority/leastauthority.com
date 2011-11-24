@@ -1,9 +1,16 @@
 
 import logging, pprint, time, sys
+from cStringIO import StringIO
 from urllib import quote
+from cgi import escape as htmlEscape
 
+from twisted.internet import defer
+from foolscap.tub import Tub
+from foolscap.appserver.client import RunCommand, ClientOptions
 from twisted.web.resource import Resource
+from twisted.web.server import NOT_DONE_YET
 from lae_site.util.timestamp import format_iso_time
+
 
 # TODO: allow customizing the text per-product.
 DEVPAY_RESPONSE_HAVE_CODES_HTML = """
@@ -144,8 +151,12 @@ Thanks again for signing up, and especially with your help for the alpha test.
 The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 </p>
 <hr>
-</body>
-</html>
+<p>
+The progress of your sign-up is shown below. Don't worry if errors occur here;
+if they do then a human being will intervene and clean them up. We just thought
+you might be interested in the workings of our sign-up automation:
+</p>
+<pre>
 """
 
 
@@ -212,6 +223,62 @@ class DevPayPurchaseHandler(HandlerBase):
             return DEVPAY_RESPONSE_MISSING_CODE_HTML
 
 
+class RequestOutputStream(object):
+    def __init__(self, request, trailer):
+        self.request = request
+        self.trailer = trailer
+
+    def write(self, s):
+        # reject non-shortest-form encodings, which might defeat the escaping
+        s.decode('utf-8', 'strict')
+        self.request.write(htmlEscape(s))
+
+    def writelines(self, seq):
+        for s in seq:
+            self.write(s)
+
+    def flush(self):
+        pass
+
+    def isatty(self):
+        return False
+
+    def close(self):
+        self.request.write(self.trailer)
+        self.request.finish()
+
+class NullOutputStream(object):
+    def write(self, s):
+        pass
+
+    def writelines(self,s):
+        pass
+
+    def flush(self):
+        pass
+
+    def isatty(self):
+        return False
+
+    def close(self):
+        pass
+
+
+def no_newlines(s):
+    return s.replace('\n', '|').replace('\r', '')
+
+
+FLAPPCLIENT_ARGS = ["-f", "../signup.furl", "run-command"]
+options = ClientOptions()
+options.parseOptions(FLAPPCLIENT_ARGS)
+furl = options.furl
+tub = Tub()
+
+global_d = defer.succeed(None)
+global_d.addCallback(lambda ign: tub.startService())
+global_d.addCallback(lambda ign: tub.getReference(furl))
+
+
 class ActivationRequestHandler(HandlerBase):
     def render(self, request):
         print >>self.out, "Yay! Someone signed up :-)  ", request.args
@@ -227,4 +294,25 @@ class ActivationRequestHandler(HandlerBase):
         self.append_record("activation_requests.csv", activationkey, productcode, name, email, publickey)
 
         request.setResponseCode(200)
-        return ACTIVATIONREQ_RESPONSE_HTML
+        request.write(ACTIVATIONREQ_RESPONSE_HTML)
+
+        options = ClientOptions()
+        options.stdout = RequestOutputStream(request, "</pre><p>Done.</p></body></html>")
+        options.stderr = NullOutputStream()
+        options.parseOptions(FLAPPCLIENT_ARGS)
+        options.subOptions.stdio = StringIO(("%s\n"*5) % (no_newlines(activationkey),
+                                                          no_newlines(productcode),
+                                                          no_newlines(name),
+                                                          no_newlines(email),
+                                                          no_newlines(publickey),
+                                                         ))
+        options.subOptions.stdout = options.stdout
+        options.subOptions.stderr = options.stderr
+
+        def _flapp_signup(rref):
+            RunCommand.run(rref, options.subOptions)
+            return rref
+        global_d.addCallback(_flapp_signup)
+
+        # http://twistedmatrix.com/documents/10.1.0/web/howto/web-in-60/asynchronous.html
+        return NOT_DONE_YET
