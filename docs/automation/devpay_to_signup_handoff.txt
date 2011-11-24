@@ -1,6 +1,23 @@
     Once AWS devpay has successfully processed an activation request it informs
-  the webserver by passing it an activation key.  Storage service
-  setup,then proceeds to execute several ordered modular tasks.  
+  the webserver by passing it an activation key.
+
+    Storage service setup, then proceeds to execute several ordered modular tasks.  
+
+    To limit the scope of server failure we (will) run the automation for the
+    tasks on a separate EC2 instance.  The flappserver client server model is
+    used for communication between the machines. *Flappserver (stands for
+    "The Foolscap Application Server":
+    http://foolscap.lothar.com/docs/flappserver.html) 
+
+    The flappserver runs on the "automation" EC2 server instance. It provides
+    the storage-setup service.  This service is used by the corresponding
+    flappclient which runs on the webserver.  The client knows about this
+    service (and only this service because it has subscribed to it using the
+    flappserver's storage-setup service's furl: A FURL THAT I SUPPOSE WE
+    SHOULD KEEP SECRET?).
+
+
+
   These are:
 
   (1) Activate an AWS devpay "desktop product":
