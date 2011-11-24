@@ -1,3 +1,21 @@
-  Once AWS devpay has successfully processed an activation request it informs
-  the webserver by passing it an activation key.  Automatic storage service
-  set up then proceeds to execute several 
+    Once AWS devpay has successfully processed an activation request it informs
+  the webserver by passing it an activation key.  Storage service
+  setup,then proceeds to execute several ordered modular tasks.  
+  These are:
+
+  (1) Activate an AWS devpay "desktop product":
+      * This associates the customer's payment credentials with a
+  particular product.
+      -- Receives:
+          1. Activation Key, a short lived token associated with the
+  customer's payment credential.
+          2. The long form of the product name, a unique reference to the
+  devpay product the customer has selected.
+
+      -- Returns: 
+          1. A secret key
+          2. The key's ID
+          3. A user token, that is specific to the customer-product-payment credentials.
+   
+  (2) Verify that the customer's payment credentials have satisfied devpay's
+  legitimacy criteria. 
