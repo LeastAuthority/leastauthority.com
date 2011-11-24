@@ -1,8 +1,12 @@
+#!/usr/bin/python
+
 import sys
+
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 from txaws.service import AWSCredentials
-from lae_site.user.initialize import deploy_EC2_instance
+
+from lae_automation.initialize import deploy_EC2_instance
 
 
 if len(sys.argv) < 7:

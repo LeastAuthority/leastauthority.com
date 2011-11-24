@@ -2,12 +2,12 @@ from twisted.trial.unittest import TestCase
 
 import mock
 
-from lae_site.aws.devpay_s3client import DevPayS3Client
+from lae_automation.aws.devpay_s3client import DevPayS3Client
 
 
 class DevPayS3ClientTests (TestCase):
 
-    @mock.patch('lae_site.aws.devpay_s3client.Query')
+    @mock.patch('lae_automation.aws.devpay_s3client.Query')
     def test_create_bucket_has_devpay_header(self, mockquery):
 
         mockcreds = mock.Mock(name='MockCreds')
@@ -26,11 +26,3 @@ class DevPayS3ClientTests (TestCase):
 
         sectoken = amz_headers['security-token']
         self.failUnless(sectoken is devpayusertoken)
-        
-        
-
-
-
-
-        
-

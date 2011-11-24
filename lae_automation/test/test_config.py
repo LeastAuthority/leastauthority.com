@@ -3,7 +3,7 @@ from StringIO import StringIO
 
 from twisted.trial.unittest import TestCase
 
-from lae_site.config import Config
+from lae_automation.config import Config
 
 
 class ConfigTests (TestCase):
@@ -34,8 +34,7 @@ class ConfigTests (TestCase):
 
 
     def _assert_valid_config(self, config):
-        self.failUnlessEqual(VALID_SIGNUP_URL, config.products[0]["signup_url"])
-        self.failUnlessEqual(True, config.products[0]["listed"])
+        self.failUnlessEqual(VALID_PRODUCT_TOKEN, config.products[0]["product_token"])
 
 
     @staticmethod
@@ -44,19 +43,19 @@ class ConfigTests (TestCase):
 
 
 # Test vectors:
-VALID_SIGNUP_URL = 'http://fakey-site.crom/fnorp?id=1234'
+VALID_PRODUCT_TOKEN = '{ProductToken}blah'
 
 VALID_PRODUCTS = """
   "products": [
-    { "short_name":    "goodness",
-      "full_name":     "Wonderous cloud storage goodness",
-      "listed":        "true",
-      "signup_url":    "%s",
+    { "full_name":     "Wonderous cloud storage goodness",
       "product_code":  "12345678",
+      "product_token": "%s",
+      "ami_image_id":  "ami-abcd1234",
+      "instance_size": "t1.micro",
       "unknown":       "xxx"
     }
   ]
-""" % (VALID_SIGNUP_URL,)
+""" % (VALID_PRODUCT_TOKEN,)
 
 VALID_CONFIG = """
 {

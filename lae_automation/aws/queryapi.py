@@ -7,9 +7,9 @@ from xml.parsers.expat import ExpatError
 from xml.etree import ElementTree
 from txaws.util import XML
 
-from lae_site.util.http_client import make_http_request
-from lae_site.util.no_overwrite import update_by_keywords_without_overwrite
-from lae_site.util import timestamp
+from lae_util.http_client import make_http_request
+from lae_util.no_overwrite import update_by_keywords_without_overwrite
+from lae_util import timestamp
 
 
 def _xor(a, b):

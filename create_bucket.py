@@ -1,10 +1,12 @@
+#!/usr/bin/python
 
 import sys
+
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 from txaws.service import AWSCredentials
 
-from lae_site.user.initialize import create_user_bucket
+from lae_automation.initialize import create_user_bucket
 
 
 if len(sys.argv) < 6:

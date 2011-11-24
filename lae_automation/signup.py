@@ -1,15 +1,15 @@
 #!/usr/bin/python
 
-import sys, time
+import sys, time, os, base64
 from twisted.internet import defer, reactor, task
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
 from txaws.service import AWSCredentials
 
-from lae_site.config import Config
-from lae_site.user.initialize import activate_user_account_desktop, verify_user_account, \
+from lae_automation.config import Config
+from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
     create_user_bucket, deploy_EC2_instance, get_EC2_addresses
-from lae_site.user.configure import install_server, bounce_server, NotListeningError
+from lae_automation.server import install_server, bounce_server, NotListeningError
 
 
 config = Config()
@@ -115,30 +115,3 @@ def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, clo
         return d2
     d.addCallback(_activated)
     return d
-
-
-def main(stdin, stdout, stderr):
-    print >>stderr, "On separate lines: Activation key, Product code, Name, Email, Key info"
-    activationkey = stdin.readline()
-    productcode = stdin.readline()
-    name = stdin.readline()
-    email = stdin.readline()
-    keyinfo = stdin.readline()
-
-    if keyinfo is None:
-        # EOF reached before 5 lines (including blank lines) were input
-        print >>stdout, "full_signup.py: some information was not received. Please report this to <info@leastauthority.com>."
-        return 1
-
-    return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr)
-
-def cb(x):
-    print str(x)
-    if isinstance(x, Failure) and hasattr(x.value, 'response'):
-        print x.value.response
-
-d = defer.succeed(None)
-d.addCallback(lambda ign: main(sys.stdin, sys.stdout, sys.stderr))
-d.addBoth(cb)
-d.addBoth(lambda ign: reactor.stop())
-reactor.run()

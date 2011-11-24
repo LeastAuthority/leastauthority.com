@@ -6,7 +6,7 @@ import os, json
 class Config(object):
     __slots__ = ['products', 'other']
 
-    DEFAULT_CONFIG_PATH = os.path.expanduser('../lae_website_config.json')
+    DEFAULT_CONFIG_PATH = os.path.expanduser('../lae_site_config.json')
 
     def __init__(self, configFile = DEFAULT_CONFIG_PATH):
         """
@@ -22,17 +22,12 @@ class Config(object):
         assert isinstance(self.products, list)
         for value in self.products:
             assert isinstance(value, dict), value
-            for field in ("short_name", "full_name", "listed", "signup_url", "product_code", "product_token"):
+            for field in ("short_name", "full_name", "listed", "signup_url", "product_code"):
                 assert field in value, value
                 value[field] = str(value[field])
-            value["listed"] = (value["listed"].lower() in ("true", "yes"))
+                assert isinstance(value[field], str), value
 
-            assert isinstance(value["short_name"], str), value
-            assert isinstance(value["full_name"], str), value
-            assert isinstance(value["listed"], bool), value
-            assert isinstance(value["signup_url"], str), value
-            assert isinstance(value["product_code"], str), value
-            assert isinstance(value["product_token"], str), value
+            value["listed"] = (value["listed"].lower() in ("true", "yes"))
 
         self.other = config
 

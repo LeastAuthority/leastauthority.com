@@ -4,7 +4,7 @@ from twisted.internet import reactor
 
 import mock
 
-from lae_site.user.initialize import activate_user_account_desktop, activate_user_account_hosted
+from lae_automation.initialize import activate_user_account_desktop
 
 
 class InitializationTests (TestCase):
@@ -16,8 +16,8 @@ class InitializationTests (TestCase):
             self._patchers.append(patcher)
             return patcher.__enter__()
 
-        self.mocklsc = start_patch('lae_site.user.initialize.LicenseServiceClient')
-        self.mocks3c = start_patch('lae_site.user.initialize.DevPayS3Client')
+        self.mocklsc = start_patch('lae_automation.initialize.LicenseServiceClient')
+        self.mocks3c = start_patch('lae_automation.initialize.DevPayS3Client')
 
     def tearDown(self):
         [p.__exit__() for p in self._patchers]
@@ -41,30 +41,3 @@ class InitializationTests (TestCase):
             activationkey = mock.sentinel.activationkey,
             producttoken = mock.sentinel.producttoken,
             status_callback = mockstatus)
-
-    def test_activate_user_account_hosted(self):
-        def make_deferred_fire_factory(value):
-            d = Deferred()
-            reactor.callLater(0, d.callback, value)
-            return d
-
-        mockahpr = mock.Mock(name='ActivateHostedProductResponse')
-        mockahpr.usertoken = "{UserToken}..."
-        mockahpr.pid = "PID"
-
-        self.mocklsc.return_value.activate_hosted_product.return_value = make_deferred_fire_factory(mockahpr)
-
-        self.mocks3c.return_value.create_bucket.return_value = make_deferred_fire_factory(mock.sentinel.UNKNOWN)
-
-        mockcreds = mock.Mock(name='Credentials')
-        mockcreds.sign.return_value = mock.sentinel.SIGNED_CREDS
-
-        mockstatus = mock.Mock(name='StatusCallback')
-
-        return activate_user_account_hosted(
-            creds = mockcreds,
-            activationkey = mock.sentinel.activationkey,
-            producttoken = mock.sentinel.producttoken,
-            status_callback = mockstatus)
-
-

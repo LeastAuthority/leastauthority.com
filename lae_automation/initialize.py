@@ -1,9 +1,9 @@
 
 import logging, urllib, re
 
-from lae_site.aws.license_service_client import LicenseServiceClient
-from lae_site.aws.devpay_s3client import DevPayS3Client
-from lae_site.aws.queryapi import xml_parse, xml_find, ResponseParseError
+from lae_automation.aws.license_service_client import LicenseServiceClient
+from lae_automation.aws.devpay_s3client import DevPayS3Client
+from lae_automation.aws.queryapi import xml_parse, xml_find, ResponseParseError
 
 from txaws.ec2.client import EC2Client, Parser as txaws_ec2_Parser
 from txaws.ec2.model import Instance

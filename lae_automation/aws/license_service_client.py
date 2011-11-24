@@ -4,7 +4,7 @@ from collections import namedtuple
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
 
-from lae_site.aws.queryapi import QueryAPIMixin, xml_parse, xml_find
+from lae_automation.aws.queryapi import QueryAPIMixin, xml_parse, xml_find
 
 
 PRODUCTION_LICENSE_SERVICE_ENDPOINT = 'https://ls.amazonaws.com/'

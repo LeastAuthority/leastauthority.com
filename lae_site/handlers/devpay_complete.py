@@ -9,7 +9,7 @@ from foolscap.api import Tub
 from foolscap.appserver.client import RunCommand, ClientOptions
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
-from lae_site.util.timestamp import format_iso_time
+from lae_util.timestamp import format_iso_time
 
 
 # TODO: allow customizing the text per-product.

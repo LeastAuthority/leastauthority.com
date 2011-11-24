@@ -1,6 +1,6 @@
 from twisted.trial.unittest import TestCase
 
-from lae_site.util import timestamp
+from lae_util import timestamp
 
 
 class TimeTests (TestCase):
