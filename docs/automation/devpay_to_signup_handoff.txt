@@ -25,14 +25,17 @@
   client is set up it uses the furl to pass messages to the server.
 
     The flappclient then passes the activation_key, product_code and
-  bucket_name in a formatted file to the flappserver.
+  bucket_name in a formatted file to the flappserver's storage-setup service.
 
   The parameter file the flappclient transmits to the flappserver has the
   following format:
 
     ACTIVATION_KEY\nPRODUCT_CODE\nBUCKET_NAME
 
-  The service registered on the flappserver is 
+  The service registered on the flappserver has its core functionality in "full_signup.py".
+
+  full_signup.py is a pipeline that runs several modular tasks in a strict
+  (except for steps 3 and 4) order.
 
   These are:
 
