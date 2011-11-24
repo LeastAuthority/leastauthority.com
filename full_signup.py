@@ -23,7 +23,7 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 POLL_TIME = 30
 
 
-def signup(name, email, activationkey, productcode, keyinfo, stdout, stderr, clock=None):
+def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, clock=None):
     def cb(x):
         print >>stdout, str(x)
         if isinstance(x, Failure) and hasattr(x.value, 'response'):
@@ -118,11 +118,11 @@ def signup(name, email, activationkey, productcode, keyinfo, stdout, stderr, clo
 
 
 def main(stdin, stdout, stderr):
-    print >>stderr, "On separate lines: Name, Email, Activation key, Product code, Key info"
-    name = stdin.readline()
-    email = stdin.readline()
+    print >>stderr, "On separate lines: Activation key, Product code, Name, Email, Key info"
     activationkey = stdin.readline()
     productcode = stdin.readline()
+    name = stdin.readline()
+    email = stdin.readline()
     keyinfo = stdin.readline()
 
     if keyinfo is None:
@@ -130,7 +130,7 @@ def main(stdin, stdout, stderr):
         print >>stdout, "full_signup.py: some information was not received. Please report this to <info@leastauthority.com>."
         return 1
 
-    return signup(name, email, activationkey, productcode, keyinfo, stdout, stderr)
+    return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr)
 
 def cb(x):
     print str(x)
