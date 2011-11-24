@@ -13,9 +13,22 @@
   devpay product the customer has selected.
 
       -- Returns: 
-          1. A secret key
-          2. The key's ID
+          1. A secret access key
+          2. The access key's ID, XXXwhy both this and the last?  I don't know yet.
           3. A user token, that is specific to the customer-product-payment credentials.
    
-  (2) Verify that the customer's payment credentials have satisfied devpay's
-  legitimacy criteria. 
+  (2) Verify the Access Key and ID:
+      * This checks that the customer's payment credentials have satisfied devpay's
+  legitimacy criteria.  We only proceed further upon success.
+      -- Receives:
+          1. Access Key ID
+          2. Secret Access Key
+          3. User Token
+          4. Product Token.
+    
+  (3) Create DevPay associated S3 bucket:
+  (4) Create EC2 Server
+  (5) Build and configure tahoe storage server and introducer on EC2
+  (6) Notify (optionally with encryption) customer via email of introducer furl.         
+
+
