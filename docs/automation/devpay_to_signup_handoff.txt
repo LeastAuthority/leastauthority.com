@@ -1,6 +1,6 @@
     Once AWS DevPay has successfully processed an activation request it informs
   the webserver by passing it an activation key.  The webserver passes the
-  necessary information to an automation server, which provides a "setup" service.
+  necessary information to an automation server, which provides a "signup" service.
 
     To limit the scope of server failure we will run the automation server
   on a separate EC2 instance.  A flappserver client/server pair is
@@ -8,27 +8,27 @@
 
 *Flappserver: "The Foolscap Application Server": http://foolscap.lothar.com/docs/flappserver.html
 
-    The flappserver runs on the "automation" EC2 server instance. It provides
-  the storage-setup service.  This service is used by the corresponding
-  flappclient which runs on the webserver.  The client knows about this
-  service (and only this service) because it has subscribed to it using the
-  flappserver's storage-setup service's furl:
+    The flappserver runs on the "automation" EC2 server instance. It provides the
+  signup service, used by the corresponding flappclient which runs on the webserver.
+  The client knows about this service because it knows the service's furl; it does
+  not have any other credentials to log in to the automation instance.
 
-  A FURL THAT I SUPPOSE WE SHOULD KEEP SECRET?.
+    The flappserver has been configured to run the signup service with the following
+  invocation::
 
-    The flappserver is configured to run the setup service with the following
-  invocation:
+    flappserver add BASEDIR run-command --accept-stdin --send-stdout full_signup.py
 
-    'flappserver add BASEDIR run-command --accept-stdin --send-stdout python full_signup.py'
+    This invocation generates a furl that references the service, which is stored in
+  the file signup.furl (in the same directory as the web server's JSON config file).
+  Once the client is set up it uses the furl to pass messages to the server.
 
-    This invocation generates a furl that references the service.  Once the
-  client is set up it uses the furl to pass messages to the server.
+    When it receives an activation request, the web server does the programmatic
+  equivalent of invoking flappclient like this::
 
-    The flappclient then passes the activation_key, product_code and
-  bucket_name in a formatted file to the flappserver's storage-setup service.
+    flappclient -f <path to signup.furl> run-command
 
-  The parameter file the flappclient transmits to the flappserver has the
-  following format:
+  with the command's stdin giving the fields from the signup request form. These
+  fields are transmitted in the following format:
 
     ACTIVATION_KEY\nPRODUCT_CODE\nNAME\nEMAIL\nPUBLIC_KEY_OR_FINGERPRINT\n
 
@@ -38,11 +38,12 @@
     RANDOMSTRING = b32encode(os.urandom(16)).rstrip('=')  
     BUCKET_NAME = lae-PRODUCTCODE-RANDOMSTRING
 
+  This information will eventually go into a database on the automation server;
+  for now it will be logged to a file [more details needed].
 
   The service registered on the flappserver has its core functionality in "full_signup.py".
 
-  full_signup.py is a pipeline that runs several modular tasks in a strict
-  (except for steps 3 and 4) order.
+  full_signup.py is a pipeline that runs several modular tasks sequentially.
 
   These are:
 
@@ -51,17 +52,17 @@
   particular product.
       -- Receives:
           1. Activation Key, a short lived token associated with the
-  customer's payment credential.
-          2. The long form of the product name, a unique reference to the
-  devpay product the customer has selected.
+             customer's payment credential.
+          2. Product Token, a long secret that uniquely references the DevPay
+             product the customer has selected.
 
       -- Returns: 
-          1. A secret access key
-          2. The access key's ID, XXXwhy both this and the last?  I don't know yet.
-          3. A user token, that is specific to the customer-product-payment credentials.
-   
-  (2) Verify the Access Key and ID:
-      * This checks that the customer's payment credentials have satisfied devpay's
+          1. Access Key ID
+          2. Secret Access key
+          3. A User Token, that is specific to the customer-product-payment credentials.
+
+  (2) Verify the access key and user token:
+      * This checks that the customer's payment credentials have satisfied DevPay's
   legitimacy criteria.  We only proceed further upon success.
       -- Receives:
           1. Access Key ID
@@ -71,7 +72,8 @@
 
   (3) Create DevPay S3 bucket associated with the credentials from the previous step.
   (4) Create EC2 Server
-  (5) Build and configure tahoe storage server and introducer on EC2
-  (6) Notify (optionally with encryption) customer via email of introducer furl.         
+  (5) Apply software updates to EC2 Server and reboot
+  (6) Build and configure tahoe storage server and introducer on EC2
+  (7) Notify (optionally with encryption) customer via email of introducer furl.
 
 
