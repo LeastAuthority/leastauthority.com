@@ -30,7 +30,14 @@
   The parameter file the flappclient transmits to the flappserver has the
   following format:
 
-    ACTIVATION_KEY\nPRODUCT_CODE\nBUCKET_NAME
+    ACTIVATION_KEY\nPRODUCT_CODE\nNAME\nEMAIL\nPUBLIC_KEY_OR_FINGERPRINT\n
+
+    The PRODUCT_CODE will be combined with a RANDOMSTRING to make the
+    BUCKET_NAME as follows:
+
+    RANDOMSTRING = b32encode(os.urandom(16)).rstrip('=')  
+    BUCKET_NAME = "lae-"PRODUCTCODE"-"RANDOMSTRING
+
 
   The service registered on the flappserver has its core functionality in "full_signup.py".
 
