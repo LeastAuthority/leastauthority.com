@@ -1,19 +1,20 @@
     Once AWS devpay has successfully processed an activation request it informs
-  the webserver by passing it an activation key.
+  the webserver by passing it an activation key.  The webserver passes the
+  necessary information to an automation server, which provides a "setup" service.
 
-    Storage service setup, then proceeds to execute several ordered modular tasks.  
+    To limit the scope of server failure we (will) run the automation server
+  on a separate EC2 instance.  A flappserver client/server pair is
+  used for communication between the machines. 
 
-    To limit the scope of server failure we (will) run the automation for these
-  tasks on a separate EC2 instance.  The flappserver client/server is
-  used for communication between the machines. *Flappserver (stands for
-  "The Foolscap Application Server": http://foolscap.lothar.com/docs/flappserver.html) 
+*Flappserver: "The Foolscap Application Server": http://foolscap.lothar.com/docs/flappserver.html
 
     The flappserver runs on the "automation" EC2 server instance. It provides
   the storage-setup service.  This service is used by the corresponding
   flappclient which runs on the webserver.  The client knows about this
-  service (and only this service because it has subscribed to it using the
-  flappserver's storage-setup service's furl: A FURL THAT I SUPPOSE WE
-  SHOULD KEEP SECRET?).
+  service (and only this service) because it has subscribed to it using the
+  flappserver's storage-setup service's furl:
+
+  A FURL THAT I SUPPOSE WE SHOULD KEEP SECRET?.
 
     The flappserver is configured to run the setup service with the following
   invocation:
@@ -24,12 +25,14 @@
   client is set up it uses the furl to pass messages to the server.
 
     The flappclient then passes the activation_key, product_code and
-    bucket_name in a formatted file to the flappserver.
+  bucket_name in a formatted file to the flappserver.
 
   The parameter file the flappclient transmits to the flappserver has the
   following format:
 
     ACTIVATION_KEY\nPRODUCT_CODE\nBUCKET_NAME
+
+  The service registered on the flappserver is 
 
   These are:
 
