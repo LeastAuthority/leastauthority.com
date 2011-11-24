@@ -1,8 +1,8 @@
-    Once AWS devpay has successfully processed an activation request it informs
+    Once AWS DevPay has successfully processed an activation request it informs
   the webserver by passing it an activation key.  The webserver passes the
   necessary information to an automation server, which provides a "setup" service.
 
-    To limit the scope of server failure we (will) run the automation server
+    To limit the scope of server failure we will run the automation server
   on a separate EC2 instance.  A flappserver client/server pair is
   used for communication between the machines. 
 
@@ -33,10 +33,10 @@
     ACTIVATION_KEY\nPRODUCT_CODE\nNAME\nEMAIL\nPUBLIC_KEY_OR_FINGERPRINT\n
 
     The PRODUCT_CODE will be combined with a RANDOMSTRING to make the
-    BUCKET_NAME as follows:
+  BUCKET_NAME as follows::
 
     RANDOMSTRING = b32encode(os.urandom(16)).rstrip('=')  
-    BUCKET_NAME = "lae-"PRODUCTCODE"-"RANDOMSTRING
+    BUCKET_NAME = lae-PRODUCTCODE-RANDOMSTRING
 
 
   The service registered on the flappserver has its core functionality in "full_signup.py".
@@ -46,7 +46,7 @@
 
   These are:
 
-  (1) Activate an AWS devpay "desktop product":
+  (1) Activate an AWS DevPay "desktop product":
       * This associates the customer's payment credentials with a
   particular product.
       -- Receives:
@@ -68,8 +68,8 @@
           2. Secret Access Key
           3. User Token
           4. Product Token.
-    
-  (3) Create DevPay associated S3 bucket:
+
+  (3) Create DevPay S3 bucket associated with the credentials from the previous step.
   (4) Create EC2 Server
   (5) Build and configure tahoe storage server and introducer on EC2
   (6) Notify (optionally with encryption) customer via email of introducer furl.         
