@@ -5,7 +5,7 @@ from urllib import quote
 from cgi import escape as htmlEscape
 
 from twisted.internet import defer
-from foolscap.tub import Tub
+from foolscap.api import Tub
 from foolscap.appserver.client import RunCommand, ClientOptions
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
