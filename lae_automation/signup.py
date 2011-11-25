@@ -42,7 +42,6 @@ def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, see
 
     ec2accesskeyid = str(config.other['ec2_access_key_id'])
     ec2secretkey = FilePath('../ec2secret').getContent().strip()
-    print "%r %r" % (ec2accesskeyid, ec2secretkey)
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
 
     ec2keypairname = str(config.other['keypair_name'])
