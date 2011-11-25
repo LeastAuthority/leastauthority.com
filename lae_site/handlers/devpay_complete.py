@@ -1,14 +1,12 @@
 
 import logging, pprint, time, sys
-from cStringIO import StringIO
 from urllib import quote
 from cgi import escape as htmlEscape
 
-from twisted.internet import defer
-from foolscap.api import Tub
-from foolscap.appserver.client import RunCommand, ClientOptions
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
+
+from lae_util.flapp import FlappCommand
 from lae_util.timestamp import format_iso_time
 
 
@@ -224,14 +222,16 @@ class DevPayPurchaseHandler(HandlerBase):
 
 
 class RequestOutputStream(object):
-    def __init__(self, request, trailer):
+    def __init__(self, request, tee=None):
         self.request = request
-        self.trailer = trailer
+        self.tee = tee
 
     def write(self, s):
         # reject non-shortest-form encodings, which might defeat the escaping
         s.decode('utf-8', 'strict')
         self.request.write(htmlEscape(s))
+        if self.tee:
+            self.tee.write(s)
 
     def writelines(self, seq):
         for s in seq:
@@ -244,14 +244,14 @@ class RequestOutputStream(object):
         return False
 
     def close(self):
-        self.request.write(self.trailer)
-        self.request.finish()
+        pass
+
 
 class NullOutputStream(object):
     def write(self, s):
         pass
 
-    def writelines(self,s):
+    def writelines(self, seq):
         pass
 
     def flush(self):
@@ -268,16 +268,10 @@ def no_newlines(s):
     return s.replace('\n', '|').replace('\r', '')
 
 
-FLAPPCLIENT_ARGS = ["-f", "../signup.furl", "run-command"]
-options = ClientOptions()
-options.parseOptions(FLAPPCLIENT_ARGS)
-furl = options.furl
-tub = Tub()
+flappcommand = FlappCommand("../signup.furl")
 
-global_d = defer.succeed(None)
-global_d.addCallback(lambda ign: tub.startService())
-global_d.addCallback(lambda ign: tub.getReference(furl))
-
+def start():
+    return flappcommand.start()
 
 class ActivationRequestHandler(HandlerBase):
     def render(self, request):
@@ -296,23 +290,21 @@ class ActivationRequestHandler(HandlerBase):
         request.setResponseCode(200)
         request.write(ACTIVATIONREQ_RESPONSE_HTML)
 
-        options = ClientOptions()
-        options.stdout = RequestOutputStream(request, "</pre><p>Done.</p></body></html>")
-        options.stderr = NullOutputStream()
-        options.parseOptions(FLAPPCLIENT_ARGS)
-        options.subOptions.stdio = StringIO(("%s\n"*5) % (no_newlines(activationkey),
-                                                          no_newlines(productcode),
-                                                          no_newlines(name),
-                                                          no_newlines(email),
-                                                          no_newlines(publickey),
-                                                         ))
-        options.subOptions.stdout = options.stdout
-        options.subOptions.stderr = options.stderr
-
-        def _flapp_signup(rref):
-            RunCommand.run(rref, options.subOptions)
-            return rref
-        global_d.addCallback(_flapp_signup)
+        stdin = ("%s\n"*5) % (no_newlines(activationkey),
+                              no_newlines(productcode),
+                              no_newlines(name),
+                              no_newlines(email),
+                              no_newlines(publickey),
+                             )
+        stdout = RequestOutputStream(request, tee=self.out)
+        stderr = NullOutputStream()
+        def when_done():
+            request.write("</pre><p>Done.<hr></p></body></html>")
+            request.finish()
+        def when_failed():
+            request.write("</pre><p>Failed.<hr></p></body></html>")
+            request.finish()
+        flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
 
         # http://twistedmatrix.com/documents/10.1.0/web/howto/web-in-60/asynchronous.html
         return NOT_DONE_YET

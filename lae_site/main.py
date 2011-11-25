@@ -7,6 +7,7 @@ from twisted.internet import ssl, reactor
 
 from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
+from lae_site.handlers.devpay_complete import start
 
 def main():
     default_port = 443
@@ -58,8 +59,9 @@ def main():
     else:
         logging.info('SSL/TLS is disabled.')
         reactor.listenTCP(port, site)
-    reactor.run()
 
 
 if __name__ == '__main__':
-    main()
+    d = start()
+    d.addCallback(lambda ign: main())
+    reactor.run()
