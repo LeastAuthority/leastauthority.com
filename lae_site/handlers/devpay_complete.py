@@ -317,12 +317,19 @@ class ActivationRequestHandler(HandlerBase):
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = NullOutputStream()
         def when_done():
+            self.append_record("signups.csv", 'success', activationkey, productcode, name, email, publickey)
             request.write(SUCCEEDED_HTML)
             request.finish()
         def when_failed():
+            self.append_record("signups.csv", 'failure', activationkey, productcode, name, email, publickey)
             request.write(FAILED_HTML)
             request.finish()
-        flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
+        try:
+            flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
+        except Exception, e:
+            import traceback
+            traceback.print_exc(100, self.out)
+            when_failed()
 
         # http://twistedmatrix.com/documents/10.1.0/web/howto/web-in-60/asynchronous.html
         return NOT_DONE_YET
