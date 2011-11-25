@@ -16,7 +16,7 @@
     The flappserver has been configured to run the signup service with the following
   invocation::
 
-    flappserver add BASEDIR run-command --accept-stdin --send-stdout full_signup.py
+    flappserver add BASEDIR run-command --accept-stdin --send-stdout PWD PWD/full_signup.py
 
     This invocation generates a furl that references the service, which is stored in
   the file signup.furl (in the same directory as the web server's JSON config file).
@@ -35,7 +35,7 @@
     The PRODUCT_CODE will be combined with a RANDOMSTRING to make the
   BUCKET_NAME as follows::
 
-    RANDOMSTRING = b32encode(os.urandom(16)).rstrip('=')  
+    RANDOMSTRING = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     BUCKET_NAME = lae-PRODUCTCODE-RANDOMSTRING
 
   This information will eventually go into a database on the automation server;
