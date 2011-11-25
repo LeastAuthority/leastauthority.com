@@ -80,13 +80,18 @@ def delete_customer(public_host, key_filename):
     sudo('rm -rf /home/customer*')
 
 
-def install_server(public_host, key_filename):
+def install_server(public_host, key_filename, stdout, stderr):
     set_host_and_key(public_host, key_filename)
 
+    print >>stdout, "Updating server..."
     sudo_apt_get('update')
     sudo_apt_get('upgrade -y')
     sudo_apt_get('install -y linux-ec2 linux-image-ec2')
+
+    print >>stdout, "Rebooting server..."
     reboot(60)
+
+    print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev')
     sudo_apt_get('install -y python-setuptools')
     sudo_apt_get('install -y exim4-base')
@@ -95,6 +100,8 @@ def install_server(public_host, key_filename):
     run('wget https://leastauthority.com/content/static/patches/txAWS-0.2.1.post2.tar.gz')
     run('tar -xzvf txAWS-0.2.1.post2.tar.gz')
     sudo("/bin/sh -c 'cd /home/ubuntu/txAWS-0.2.1.post2 && python ./setup.py install'")
+
+    print >>stdout, "Setting up customer account..."
     sudo('adduser --disabled-password --gecos "" customer || echo Assuming that user already exists.')
     sudo('mkdir -p /home/customer/.ssh/')
     sudo('chown customer:customer /home/customer/.ssh')
@@ -105,24 +112,36 @@ def install_server(public_host, key_filename):
 
     set_host_and_key(public_host, key_filename, username="customer")
 
+    print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
     run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
+
+    print >>stdout, "Building Tahoe-LAFS..."
     run("/bin/sh -c 'cd LAFS_source && python ./setup.py build'")
+
+    print >>stdout, "Creating introducer and storage server..."
     run('mkdir -p introducer storageserver')
     run('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
     run('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
 
+    print >>stdout, "Finished server installation."
 
-def bounce_server(public_host, key_filename, private_host, creds, user_token, product_token, bucket_name):
+
+INTRODUCER_PORT = '12345'
+SERVER_PORT = '12346'
+
+def bounce_server(public_host, key_filename, private_host, creds, user_token, product_token, bucket_name,
+                  stdout, stderr):
     access_key_id = creds.access_key
     secret_key = creds.secret_key
     nickname = bucket_name
 
     set_host_and_key(public_host, key_filename, username="customer")
 
+    print >>stdout, "Starting introducer..."
     run('rm -f /home/customer/introducer/introducer.furl')
-    write('/home/customer/introducer/introducer.port', '12345\n')
-    write('/home/customer/storageserver/client.port', '12346\n')
+    write('/home/customer/introducer/introducer.port', INTRODUCER_PORT + '\n')
+    write('/home/customer/storageserver/client.port', SERVER_PORT + '\n')
     run('LAFS_source/bin/tahoe restart introducer && sleep 5')
     introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
     assert '\n' not in introducer_furl, introducer_furl
@@ -139,6 +158,17 @@ def bounce_server(public_host, key_filename, private_host, creds, user_token, pr
     write('/home/customer/storageserver/private/s3usertoken', user_token, mode=0440)
     write('/home/customer/storageserver/private/s3producttoken', product_token, mode=0440)
 
+    print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
     run('ps -fC tahoe')
     run('netstat -at')
+
+    print >>stdout, "The introducer and storage server are running."
+
+    (prefix, atsign, suffix) = introducer_furl.partition('@')
+    assert atsign, introducer_furl
+    (location, slash, swissnum) = suffix.partition('/')
+    assert slash, introducer_furl
+    public_furl = "%s@%s:%s/%s" % (prefix, public_host, INTRODUCER_PORT, swissnum)
+
+    print >>stdout, "\nThe introducer furl is %r" % (public_furl,)

@@ -31,7 +31,8 @@ def cb(x):
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
 
-d = create_user_bucket(usercreds, usertoken, bucketname, cb, producttoken=producttoken, location=location)
+d = create_user_bucket(usercreds, usertoken, bucketname, sys.stdout, sys.stderr,
+                       producttoken=producttoken, location=location)
 d.addBoth(cb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()

@@ -25,7 +25,7 @@ def cb(x):
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
 
-d = verify_user_account(creds, user_token, product_token, cb)
+d = verify_user_account(creds, user_token, product_token, sys.stdout, sys.stderr)
 d.addBoth(cb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()

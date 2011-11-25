@@ -24,6 +24,7 @@ bucketname = sys.argv[8]
 usercreds = AWSCredentials(accesskeyid, secretkey)
 
 if "--no-install" not in sys.argv:
-    install_server(publicip, ec2keyfilename)
+    install_server(publicip, ec2keyfilename, sys.stdout, sys.stderr)
 
-bounce_server(publicip, ec2keyfilename, privateip, usercreds, usertoken, producttoken, bucketname)
+bounce_server(publicip, ec2keyfilename, privateip, usercreds, usertoken, producttoken, bucketname,
+              sys.stdout, sys.stderr)

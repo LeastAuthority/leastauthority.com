@@ -1,5 +1,5 @@
 
-import logging, urllib, re
+import urllib, re
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
@@ -11,68 +11,59 @@ from txaws.service import AWSServiceEndpoint
 
 
 
-def activate_user_account_desktop(activationkey, producttoken, status_callback):
+def activate_user_account_desktop(activationkey, producttoken, stdout, stderr):
     """
     @param activationkey:
             The activationkey sent from the user's browser upon completion
             of the DevPay signup process.
-
-    @param status_callback(status):
-            A function which will be called multiple times with a status
-            string for user feedback.
+    @param stdout, stderr:
+            Standard output (for user feedback) and error (for debugging) streams.
 
     @return:
             A Deferred which fires with an ActivateDesktopProductResponse upon
             successful user initialization.
     """
 
-    log = logging.getLogger('activate_user_account_desktop')
-
-    def update_status(public, **private_details):
-        log.info('Update Status: %r', public)
-        log.info('Private Details: %r', private_details)
-        status_callback("%r\n%r" % (public, private_details))
-
-    update_status(
-        public = 'Activating DevPay License for decentralized ("desktop") product...',
-        activationkey = activationkey)
+    print >>stdout, "Activating license..."
+    print >>stderr, 'activationkey = %r' % (activationkey,)
 
     d = LicenseServiceClient().activate_desktop_product(activationkey, producttoken)
 
     def activated(adpr):
-        update_status(
-            public = ('DevPay License activated:\n'
-                      'access_key_id=%s\n'
-                      'secret_key=%s\n'
-                      'usertoken=%s\n' % (adpr.access_key_id, adpr.secret_key, adpr.usertoken)),
-            activation_response = adpr)
+        print >>stdout, 'License activated.'
+        print >>stderr, ('access_key_id = %r\n'
+                         'secret_key = %r\n'
+                         'usertoken = %r'
+                         % (adpr.access_key_id, adpr.secret_key, adpr.usertoken))
         return adpr
     d.addCallback(activated)
     return d
 
 
-def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name, status_callback):
+def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name,
+                        stdout, stderr):
     """
     @param creds: a txaws.service.AWSCredentials object
     @param ami_image_id: string identifying the AMI
     @param bucket_name: identifier that is unique to a specific customer account
     @param keypair_name: the name of the SSH keypair to be used
     """
-    log = logging.getLogger('deploy_EC2_instance')
 
-    def update_status(public, **private_details):
-        log.info('Update Status: %r', public)
-        log.info('Private Details: %r', private_details)
-        status_callback("%r\n%r" % (public, private_details))
+    print >>stdout, "Deploying EC2 instance..."
 
     mininstancecount = 1
     maxinstancecount = 1
     secgroups = ['CustomerDefault']
-    update_status(public = 'Deploying EC2 instance...', bucket_name = bucket_name)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=creds, endpoint=endpoint)
 
-    status_callback(repr((creds.access_key, creds.secret_key, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name)))
+    # Don't log credentials that are non-customer-specific secrets.
+    print >>stderr, ('endpoint_uri = %r\n'
+                     'ami_image_id = %r\n'
+                     'instance_size = %r\n'
+                     'bucket_name = %r\n'
+                     'keypair_name = %r'
+                     % (endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name))
 
     d = client.run_instances(ami_image_id,
                              mininstancecount,
@@ -82,10 +73,9 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                              instance_type=instance_size)
 
     def started(instances, *args, **kw):
-        info = [dump_instance_information(i) for i in instances]
-        update_status(
-            public = 'EC2 instance started.',
-            info = info)
+        print >>stdout, "EC2 instance started."
+        for i in instances:
+            dump_instance_information(i, stderr)
 
         assert len(instances) == 1, len(instances)
         return instances[0]
@@ -131,32 +121,24 @@ class AddressParser(txaws_ec2_Parser):
         return (publichost, privatehost)
 
 
-def dump_instance_information(instance):
+def dump_instance_information(instance, stderr):
     if not isinstance(instance, Instance):
-        return "<not an instance: %r>" % (instance,)
-    desc = {}
+        print >>stderr, "not an instance: %r" % (instance,)
+    else:
+        print >>stderr, repr(instance)
     for attr in ('instance_id', 'instance_state', 'instance_type', 'image_id', 'private_dns_name',
                  'dns_name', 'key_name', 'ami_launch_index', 'launch_time', 'placement',
                  'product_codes', 'kernel_id', 'ramdisk_id', 'reservation'):
         if hasattr(instance, attr):
-            desc[attr] = getattr(instance, attr)
-    return "<%r %r>" % (instance, desc)
+            print >>stderr, '  %s = %r' % (attr, getattr(instance, attr))
 
 
-def create_user_bucket(creds, usertoken, bucketname, status_callback, producttoken=None, location=None):
-    log = logging.getLogger('create_user_bucket')
-
-    def update_status(public, **private_details):
-        log.info('Update Status: %r', public)
-        log.info('Private Details: %r', private_details)
-        status_callback("%r\n%r" % (public, private_details))
-
-    update_status(
-        public = 'Creating S3 Bucket...',
-        usertoken = usertoken,
-        producttoken = producttoken,
-        bucketname = bucketname,
-        location = location)
+def create_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoken=None, location=None):
+    print >>stdout, "Creating S3 bucket..."
+    print >>stderr, ('usertoken = %r\n'
+                     'bucketname = %r\n'
+                     'location = %r\n'
+                     % (usertoken, bucketname, location))
 
     client = DevPayS3Client(
         creds = creds,
@@ -173,33 +155,22 @@ def create_user_bucket(creds, usertoken, bucketname, status_callback, producttok
         bucket=bucketname, object_name=object_name)
     d = query.submit()
 
-    def bucket_created(*args, **kw):
-        update_status(
-            public = 'S3 Bucket created.',
-            UNKNOWNS = (args, kw))
+    def bucket_created(res):
+        print >>stdout, "S3 bucket created."
+        print >>stderr, repr(res)
 
     d.addCallback(bucket_created)
     return d
 
 
-def verify_user_account(creds, usertoken, producttoken, status_callback):
-    log = logging.getLogger('verify_user_account')
-
-    def update_status(public, **private_details):
-        log.info('Update Status: %r', public)
-        log.info('Private Details: %r', private_details)
-        status_callback("%r\n%r" % (public, private_details))
-
-    update_status(
-        public = 'Verifying DevPay License for decentralized ("desktop") product...',
-        usertoken = usertoken,
-        producttoken = producttoken)
+def verify_user_account(creds, usertoken, producttoken, stdout, stderr):
+    print >>stdout, "Verifying subscription..."
+    print >>stderr, 'usertoken = %r' % (usertoken,)
 
     d = LicenseServiceClient(creds).verify_subscription_by_tokens(usertoken, producttoken)
 
     def verified(active):
-        update_status(
-            public = 'DevPay License subscription active? %r\n' % (active,))
+        print >>stderr, 'DevPay License subscription active? %r' % (active,)
         return active
     d.addCallback(verified)
     return d
