@@ -1,3 +1,6 @@
+
+from cStringIO import StringIO
+
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor
@@ -35,9 +38,8 @@ class InitializationTests (TestCase):
 
         self.mocks3c.return_value.create_bucket.return_value = make_deferred_fire_factory(mock.sentinel.UNKNOWN)
 
-        mockstatus = mock.Mock(name='StatusCallback')
-
         return activate_user_account_desktop(
             activationkey = mock.sentinel.activationkey,
             producttoken = mock.sentinel.producttoken,
-            status_callback = mockstatus)
+            stdout = StringIO(),
+            stderr = StringIO())
