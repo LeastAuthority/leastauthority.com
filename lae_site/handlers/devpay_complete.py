@@ -150,11 +150,29 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 </p>
 <hr>
 <p>
-The progress of your sign-up is shown below. Don't worry if errors occur here;
-if they do then a human being will intervene and clean them up. We just thought
-you might be interested in the workings of our sign-up automation:
+The progress of your sign-up is shown below.
 </p>
 <pre>
+"""
+
+SUCCEEDED_HTML = """</pre>
+<p>
+Your activation is complete. You will shortly get a confirmation email at the address
+you provided.
+</p>
+<hr>
+</body>
+</html>
+"""
+
+FAILED_HTML = """</pre>
+<p>
+We weren't able to complete your activation automatically, but don't worry, we'll finish
+it manually, and email you when that is done.
+</p>
+<hr>
+</body>
+</html>
 """
 
 
@@ -299,10 +317,10 @@ class ActivationRequestHandler(HandlerBase):
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = NullOutputStream()
         def when_done():
-            request.write("</pre><p>Done.<hr></p></body></html>")
+            request.write(SUCCEEDED_HTML)
             request.finish()
         def when_failed():
-            request.write("</pre><p>Failed.<hr></p></body></html>")
+            request.write(FAILED_HTML)
             request.finish()
         flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
 
