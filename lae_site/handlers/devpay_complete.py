@@ -168,7 +168,7 @@ you provided.
 FAILED_HTML = """</pre>
 <p>
 We weren't able to complete your activation automatically, but don't worry, we'll finish
-it manually, and email you when that is done.
+it manually if possible, and email you when that is done or if we need more information.
 </p>
 <hr>
 </body>
