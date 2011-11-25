@@ -1,5 +1,5 @@
 
-import urllib, time
+import urllib, time, sys
 from hashlib import sha1
 from base64 import b64encode
 
@@ -83,7 +83,7 @@ else:
 
 
 def xml_parse(text):
-    print text
+    print >>sys.stderr, text
     try:
         return XML(text)
     except xml_exceptions, e:
