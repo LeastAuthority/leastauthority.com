@@ -1,8 +1,13 @@
-import sys
+#!/usr/bin/python
+
+import os, sys
+
 from twisted.internet import reactor
 from twisted.python.failure import Failure
 from txaws.service import AWSCredentials
+
 from lae_site.user.initialize import verify_user_account
+
 
 if len(sys.argv) < 5:
     print "Usage: python verify.py ACCESS_KEY_ID SECRET_KEY USER_TOKEN LONG_PRODUCT_TOKEN"
@@ -23,5 +28,5 @@ def cb(x):
 
 d = verify_user_account(creds, user_token, product_token, cb)
 d.addBoth(cb)
-d.addBoth(lambda ign: reactor.stop())
+d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()

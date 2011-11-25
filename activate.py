@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys
+import os, sys
 
 from twisted.internet import reactor
 from twisted.python.failure import Failure
@@ -24,5 +24,5 @@ def cb(x):
 
 d = activate_user_account_desktop(activation_key, product_token, cb)
 d.addBoth(cb)
-d.addBoth(lambda ign: reactor.stop())
+d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()

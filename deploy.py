@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys
+import os, sys
 
 from twisted.internet import reactor
 from twisted.python.failure import Failure
@@ -32,5 +32,5 @@ def cb(x):
 
 d = deploy_EC2_instance(creds, EC2_ENDPOINT, amiimageid, instancesize, bucketname, keypairname, cb)
 d.addBoth(cb)
-d.addBoth(lambda ign: reactor.stop())
+d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()
