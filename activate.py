@@ -13,7 +13,6 @@ if len(sys.argv) < 3:
     print "Happy activating!"
     sys.exit(1)
 
-# TODO: the product token should probably be in a file.
 activation_key = sys.argv[1]
 product_token = sys.argv[2]
 

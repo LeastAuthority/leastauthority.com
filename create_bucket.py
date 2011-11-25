@@ -14,7 +14,6 @@ if len(sys.argv) < 6:
     print "Happy bucket-creating!"
     sys.exit(1)
 
-# TODO: the access key, secret key, user token and product token should probably be in files.
 accesskeyid = sys.argv[1]
 secretkey = sys.argv[2]
 usertoken = sys.argv[3]

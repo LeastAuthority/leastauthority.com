@@ -14,7 +14,6 @@ if len(sys.argv) < 5:
     print "Trust, but verify!"
     sys.exit(1)
 
-# TODO: these tokens should probably be in files.
 access_key_id = sys.argv[1]
 secret_key = sys.argv[2]
 user_token = sys.argv[3]
