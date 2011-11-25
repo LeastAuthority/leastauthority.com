@@ -24,7 +24,7 @@ Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 </p>
 <p>
 Your sign up is not quite finished; to complete it and activate your account,
-please tell us your name and the email address you want us to use to communicate
+please tell us the name and email address you want us to use to communicate
 with you. We will not resell or pass on this email address, and will only use it
 in connection with your account, and to send you occasional announcements of new
 products, features, offers and price changes.
