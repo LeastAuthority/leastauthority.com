@@ -1,8 +1,7 @@
 #!/usr/bin/python
 
-import sys, time, os, base64
-from twisted.internet import defer, reactor, task
-from twisted.python.failure import Failure
+import time, os, base64
+from twisted.internet import reactor, task
 from twisted.python.filepath import FilePath
 from txaws.service import AWSCredentials
 
@@ -25,7 +24,10 @@ POLL_TIME = 30
 
 def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed=None, clock=None):
     myclock = clock or reactor
-    bucketname = "lae-%s-%s" % (productcode.lower(), activationkey.lower())
+    if seed is None:
+        seed = base64.b32encode(os.urandom(16)).rstrip('=').lower()
+
+    bucketname = "lae-%s-%s" % (productcode.lower(), seed)
     location = None  # default location for now
 
     ps = [p for p in config.products if p['product_code'] == productcode]
