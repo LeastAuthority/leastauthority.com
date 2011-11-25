@@ -36,19 +36,6 @@ class LicenseServiceClient(QueryAPIMixin):
         d.addCallback(ActivateDesktopProductResponse.parse)
         return d
 
-    def activate_hosted_product(self, activationkey, producttoken):
-        """
-        Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?ActivateHostedProduct.html
-        """
-        d = self._send_request(
-            Action = 'ActivateHostedProduct',
-            ActivationKey = activationkey,
-            ProductToken = producttoken,
-            )
-
-        d.addCallback(ActivateHostedProductResponse.parse)
-        return d
-
     def verify_subscription_by_tokens(self, usertoken, producttoken):
         """
         Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/VerifyProductSubscriptionByTokens.html
@@ -74,17 +61,6 @@ class ActivateDesktopProductResponse (namedtuple('ActivateDesktopProductResponse
         usertoken = xml_find(node, u'UserToken').text.strip()
 
         return cls(access_key_id, secret_key, usertoken)
-
-
-class ActivateHostedProductResponse (namedtuple('ActivateHostedProductResponse', ['usertoken', 'pid'])):
-    @classmethod
-    def parse(cls, body):
-        doc = xml_parse(body)
-        node = xml_find(doc, u'ActivateHostedProductResult')
-        usertoken = xml_find(node, u'UserToken').text.strip()
-        pid = xml_find(node, u'PersistentIdentifier').text.strip()
-
-        return cls(usertoken, pid)
 
 
 class VerifyProductSubscriptionByTokensResponse:
