@@ -173,7 +173,7 @@ def bounce_server(public_host, key_filename, private_host, creds, user_token, pr
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
     run('ps -fC tahoe')
-    run('netstat -at')
+    run('netstat -atW')
 
     print >>stdout, "The introducer and storage server are running."
 
