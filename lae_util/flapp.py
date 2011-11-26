@@ -22,7 +22,7 @@ class FlappCommand(object):
         def _got_rref(rref):
             self.rref = rref
             done.callback(None)
-        self.d.addCallback(_got_rref)
+        self.d.addCallbacks(_got_rref, done.errback)
         return done
 
     def run(self, content, stdout, stderr, when_done, when_failed):
