@@ -55,10 +55,10 @@ class NotListeningError(Exception):
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
 # pty=False will cause fabric to echo stdin, but that's fine.
 
-def run(argstring, kwargs):
+def run(argstring, **kwargs):
     return api.run(argstring, pty=False, **kwargs)
 
-def sudo(argstring, kwargs):
+def sudo(argstring, **kwargs):
     return api.sudo(argstring, pty=False, **kwargs)
 
 def set_host_and_key(public_host, key_filename, username="ubuntu"):
