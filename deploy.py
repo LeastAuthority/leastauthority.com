@@ -10,17 +10,17 @@ from lae_automation.initialize import deploy_EC2_instance
 
 
 if len(sys.argv) < 7:
-    print "Usage: python deploy.py ACCESS_KEY_ID SECRET_KEY AMI_IMAGE_ID INSTANCE_SIZE BUCKET_NAME KEYPAIR_NAME"
+    print "Usage: python deploy.py EC2_ACCESS_KEY_ID EC2_SECRET_KEY AMI_IMAGE_ID INSTANCE_SIZE BUCKET_NAME KEYPAIR_NAME"
     print "Happy deploying!"
     sys.exit(1)
 
-accesskeyid = sys.argv[1]
-secretkey = sys.argv[2]
+ec2accesskeyid = sys.argv[1]
+ec2secretkey = sys.argv[2]
 amiimageid = sys.argv[3]
 instancesize = sys.argv[4]
 bucketname = sys.argv[5]
 keypairname = sys.argv[6]
-creds = AWSCredentials(accesskeyid, secretkey)
+creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
