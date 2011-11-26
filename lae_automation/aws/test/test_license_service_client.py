@@ -1,6 +1,4 @@
 
-from cStringIO import StringIO
-
 from twisted.trial.unittest import TestCase
 from twisted.internet.defer import Deferred
 from twisted.internet import reactor

@@ -326,7 +326,7 @@ class ActivationRequestHandler(HandlerBase):
             request.finish()
         try:
             flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
-        except Exception, e:
+        except Exception:
             import traceback
             traceback.print_exc(100, self.out)
             when_failed()
