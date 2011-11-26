@@ -9,6 +9,7 @@ from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
 from lae_site.handlers.devpay_complete import start
 
+
 def main():
     default_port = 443
     port = None
@@ -62,6 +63,13 @@ def main():
 
 
 if __name__ == '__main__':
+    def _err(f):
+        import traceback
+        traceback.print_exc()
+        return f
+
     d = start()
     d.addCallback(lambda ign: main())
+    d.addErrback(_err)
+    d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
     reactor.run()
