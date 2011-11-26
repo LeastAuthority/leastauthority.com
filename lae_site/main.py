@@ -71,5 +71,5 @@ if __name__ == '__main__':
     d = start()
     d.addCallback(lambda ign: main())
     d.addErrback(_err)
-    d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
+    d.addErrback(lambda ign: os._exit(1))
     reactor.run()
