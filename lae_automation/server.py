@@ -5,7 +5,8 @@
 
 from cStringIO import StringIO
 
-from fabric.api import sudo, env, reboot, run, put
+from fabric import api
+from fabric.context_managers import cd, settings
 
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
@@ -50,18 +51,27 @@ class NotListeningError(Exception):
     pass
 
 
-def set_host_and_key(public_host, key_filename, username="ubuntu"):
-    env.host_string = '%s@%s' % (username, public_host)
-    env.reject_unknown_hosts = False  # FIXME allows MITM attacks
-    env.key_filename = key_filename
-    try:
-        actual_username = run('whoami').strip()
-    except SystemExit:
-        # fabric stupidly aborts if the host is not listening for ssh connections
-        # zooko: and this is why SystemExit needs to be catchable ;-)
-        raise NotListeningError()
+# The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
+# we don't want the flapp client to be able to influence the ssh remote command's stdin.
+# pty=False will cause fabric to echo stdin, but that's fine.
 
-    assert actual_username == username, (actual_username, username)
+def run(argstring, kwargs):
+    return api.run(argstring, pty=False, **kwargs)
+
+def sudo(argstring, kwargs):
+    return api.sudo(argstring, pty=False, **kwargs)
+
+def set_host_and_key(public_host, key_filename, username="ubuntu"):
+    api.env.host_string = '%s@%s' % (username, public_host)
+    api.env.reject_unknown_hosts = False  # FIXME allows MITM attacks
+    api.env.key_filename = key_filename
+    api.env.abort_on_prompts = True
+
+    with settings(warn_only=True):
+        whoami = run('whoami')
+    if whoami.failed:
+        raise NotListeningError()
+    assert whoami.strip() == username, (whoami, username)
 
 def sudo_apt_get(argstring):
     sudo('apt-get %s' % argstring)
@@ -70,7 +80,7 @@ def sudo_easy_install(argstring):
     sudo('easy_install %s' % argstring)
 
 def write(remote_path, value, mode=None):
-    return put(StringIO(value), remote_path, mode=mode)
+    return api.put(StringIO(value), remote_path, mode=mode)
 
 
 def delete_customer(public_host, key_filename):
@@ -89,7 +99,7 @@ def install_server(public_host, key_filename, stdout, stderr):
     sudo_apt_get('install -y linux-ec2 linux-image-ec2')
 
     print >>stdout, "Rebooting server..."
-    reboot(60)
+    api.reboot(60)
 
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev')
@@ -99,7 +109,8 @@ def install_server(public_host, key_filename, stdout, stderr):
     sudo_easy_install('foolscap')
     run('wget https://leastauthority.com/content/static/patches/txAWS-0.2.1.post2.tar.gz')
     run('tar -xzvf txAWS-0.2.1.post2.tar.gz')
-    sudo("/bin/sh -c 'cd /home/ubuntu/txAWS-0.2.1.post2 && python ./setup.py install'")
+    with cd('/home/ubuntu/txAWS-0.2.1.post2'):
+        sudo('python ./setup.py install')
 
     print >>stdout, "Setting up customer account..."
     sudo('adduser --disabled-password --gecos "" customer || echo Assuming that user already exists.')
@@ -117,7 +128,8 @@ def install_server(public_host, key_filename, stdout, stderr):
     run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
 
     print >>stdout, "Building Tahoe-LAFS..."
-    run("/bin/sh -c 'cd LAFS_source && python ./setup.py build'")
+    with cd('/home/customer/LAFS_source'):
+        run('python ./setup.py build')
 
     print >>stdout, "Creating introducer and storage server..."
     run('mkdir -p introducer storageserver')
