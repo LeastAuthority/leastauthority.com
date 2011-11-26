@@ -7,7 +7,7 @@ from txaws.service import AWSCredentials
 from lae_automation.server import install_server, bounce_server
 
 
-if len(sys.argv) < 10:
+if len(sys.argv) < 9:
     print "Usage: python setup_server.py PUBLIC_IP KEY_FILE PRIVATE_IP ACCESS_KEY_ID SECRET_KEY USER_TOKEN LONG_PRODUCT_TOKEN BUCKET_NAME [--no-install]"
     print "Happy set-upping!"
     sys.exit(1)
