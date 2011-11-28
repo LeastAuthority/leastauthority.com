@@ -6,7 +6,7 @@
 from cStringIO import StringIO
 
 from fabric import api
-from fabric.context_managers import cd, settings
+from fabric.context_managers import cd
 
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
