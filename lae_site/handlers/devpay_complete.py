@@ -321,7 +321,7 @@ class ActivationRequestHandler(HandlerBase):
             flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
         except Exception:
             import traceback
-            traceback.print_exc(100, self.out)
+            traceback.print_exc(100, stdout)
             when_failed()
 
         # http://twistedmatrix.com/documents/10.1.0/web/howto/web-in-60/asynchronous.html
