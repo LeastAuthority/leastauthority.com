@@ -47,6 +47,7 @@ class FlappCommand(object):
             if rc == 0:
                 when_done()
             else:
+                print >>stdout, "Command failed with exit code %r." % (rc,)
                 when_failed()
         def _error(f):
             print >>stdout, str(f)
