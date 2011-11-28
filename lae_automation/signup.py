@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import time, os, base64
+import time
 from twisted.internet import reactor, task
 from twisted.python.filepath import FilePath
 from txaws.service import AWSCredentials
@@ -22,10 +22,8 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 POLL_TIME = 30
 
 
-def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed=None, clock=None):
+def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, clock=None):
     myclock = clock or reactor
-    if seed is None:
-        seed = base64.b32encode(os.urandom(16)).rstrip('=').lower()
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
     location = None  # default location for now

@@ -67,14 +67,6 @@ provider-independent security means that you don't need to tell us any secrets a
 </form>
 </div>
 <p>
-Activation keys are valid for one hour. For the alpha test, the activation is
-not fully automated, so the activation key may expire if we do not get to processing
-it in time (which is more likely if it is outside business hours in the U.S.)
-In that case, please wait until business hours, then go to
-<a href="https://www.amazon.com/dp-activate">https://www.amazon.com/dp-activate</a>,
-log in to your Amazon account, and click the Go to Application link.
-</p>
-<p>
 If this form does not work for any reason, you can also send the same information
 by email to <a href="mailto:info@leastauthority.com">&lt;info@leastauthority.com&gt</a>.
 <p>
@@ -150,7 +142,8 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 </p>
 <hr>
 <p>
-The progress of your sign-up is shown below.
+The progress of your sign-up is shown below. Please don't reload this page,
+since the activation key is only valid once.
 </p>
 <pre>
 """

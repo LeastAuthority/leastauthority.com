@@ -1,34 +1,15 @@
 #!/usr/bin/python
 
-import os, sys
+import time, os, sys, base64
 
 from twisted.internet import defer, reactor
+from twisted.python.filepath import FilePath
+
+from lae_util.streams import LoggingTeeStream
+from lae_util.timestamp import format_iso_time
 
 
-class UnbufferedOutputStream:
-    def __init__(self, stream):
-        self.stream = stream
-
-    def write(self, s):
-        self.stream.write(s)
-        self.stream.flush()
-
-    def writelines(self, seq):
-        for s in seq:
-            self.stream.write(s)
-        self.stream.flush()
-
-    def flush(self):
-        self.stream.flush()
-
-    def isatty(self):
-        return self.stream.isatty()
-
-    def close(self):
-        self.stream.close()
-
-
-def main(stdin, stdout, stderr):
+def main(stdin, stdout, stderr, seed):
     print >>stdout, "Automation script started."
     print >>stderr, "On separate lines: Activation key, Product code, Name, Email, Key info"
     activationkey = stdin.readline().strip()
@@ -44,20 +25,24 @@ def main(stdin, stdout, stderr):
     print >>stderr, "Received all fields, thanks."
     try:
         from lae_automation.signup import signup
-        return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr)
+        return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed)
     except Exception:
         import traceback
         traceback.print_exc(100, stdout)
         raise
 
 if __name__ == '__main__':
+    seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
+    logfilename = "%s-%s" % (format_iso_time(time.time()).replace(':', ''), seed)
+
+    logfile = FilePath('signup_logs').child(logfilename).open('a+')
     stdin = sys.stdin
-    stdout = UnbufferedOutputStream(sys.stdout)
-    stderr = sys.stderr
+    stdout = LoggingTeeStream(sys.stdout, logfile, '>')
+    stderr = LoggingTeeStream(sys.stderr, logfile, '-')
 
     # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
     # It does have a way to disable that, but not (easily) to redirect it.
-    sys.stdout = sys.stderr
+    sys.stdout = stderr
 
     def _err(f):
         print >>stderr, str(f)
@@ -67,7 +52,7 @@ if __name__ == '__main__':
         return f
 
     d = defer.succeed(None)
-    d.addCallback(lambda ign: main(stdin, stdout, stderr))
+    d.addCallback(lambda ign: main(stdin, stdout, stderr, seed))
     d.addErrback(_err)
     d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
     reactor.run()
