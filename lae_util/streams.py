@@ -11,10 +11,12 @@ class LoggingTeeStream(object):
 
     def write(self, s):
         self.f.write(s)
-        self.f.flush()
-        self.log.write(self.prefix)
+        if self.prefix:
+            self.log.write(self.prefix)
         self.log.write(s)
-        self.log.flush()
+        if '\n' in s:
+            self.f.flush()
+            self.log.flush()
 
     def writelines(self, seq):
         for s in seq:
@@ -28,4 +30,4 @@ class LoggingTeeStream(object):
         return False
 
     def close(self):
-        pass
+        self.flush()

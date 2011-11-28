@@ -38,7 +38,7 @@ if __name__ == '__main__':
     logfile = FilePath('signup_logs').child(logfilename).open('a+')
     stdin = sys.stdin
     stdout = LoggingTeeStream(sys.stdout, logfile, '>')
-    stderr = LoggingTeeStream(sys.stderr, logfile, '-')
+    stderr = LoggingTeeStream(sys.stderr, logfile, '')
 
     # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
     # It does have a way to disable that, but not (easily) to redirect it.
