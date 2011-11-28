@@ -67,9 +67,11 @@ def set_host_and_key(public_host, key_filename, username="ubuntu"):
     api.env.key_filename = key_filename
     api.env.abort_on_prompts = True
 
-    with settings(warn_only=True):
+    try:
         whoami = run('whoami')
-    if whoami.failed:
+    except SystemExit:
+        # fabric stupidly aborts if the host is not listening for ssh connections
+        # zooko: and this is why SystemExit needs to be catchable ;-)
         raise NotListeningError()
     assert whoami.strip() == username, (whoami, username)
 
