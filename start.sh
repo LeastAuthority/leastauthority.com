@@ -1,4 +1,4 @@
 #!/bin/sh
-#BASE=/home/arc/pyvirtenvs/website/leastauthority.com/
-#cd ${BASE}
+flappserver restart flapp
+sleep 2
 PYTHONPATH=. authbind --deep python ./lae_site/main.py "$@"
