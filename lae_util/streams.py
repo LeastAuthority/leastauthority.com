@@ -1,7 +1,7 @@
 
 class LoggingTeeStream(object):
     """
-    I perform unbuffered output to a stream f, and also output to a log with a given
+    I perform unbuffered output to a stream f, and also to a log with a given
     prefix on each write.
     """
     def __init__(self, f, log, prefix):
@@ -14,6 +14,7 @@ class LoggingTeeStream(object):
         self.f.flush()
         self.log.write(self.prefix)
         self.log.write(s)
+        self.log.flush()
 
     def writelines(self, seq):
         for s in seq:
@@ -27,5 +28,4 @@ class LoggingTeeStream(object):
         return False
 
     def close(self):
-        # don't close self.f
-        self.log.close()
+        pass

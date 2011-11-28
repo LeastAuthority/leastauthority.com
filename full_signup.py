@@ -44,6 +44,9 @@ if __name__ == '__main__':
     # It does have a way to disable that, but not (easily) to redirect it.
     sys.stdout = stderr
 
+    def _close(res):
+        logfile.close()
+        return res
     def _err(f):
         print >>stderr, str(f)
         if hasattr(f.value, 'response'):
@@ -53,6 +56,7 @@ if __name__ == '__main__':
 
     d = defer.succeed(None)
     d.addCallback(lambda ign: main(stdin, stdout, stderr, seed))
+    d.addBoth(_close)
     d.addErrback(_err)
     d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
     reactor.run()
