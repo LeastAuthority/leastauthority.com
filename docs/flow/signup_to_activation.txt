@@ -1,0 +1,3 @@
+  The user selects from among the products with "listed":"true:  specified in
+  lae_site_config.json.  When the site is configured each product is stored
+  as a dictionary with a boolean value in its "listed" entry.
