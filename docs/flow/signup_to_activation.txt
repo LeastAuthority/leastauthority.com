@@ -1,3 +1,24 @@
   The user selects from among the products with "listed":"true:  specified in
   lae_site_config.json.  When the site is configured each product is stored
   as a dictionary with a boolean value in its "listed" entry.
+
+  XXXHandlers... question:  Under what circumstances will
+  'os.path.dirname(__file__)' _NOT_ return the empty string?
+
+  A SignupHandler is created at (XXXwhen?) the SignupHandler is passed a
+  "products" object as specified (no doubt) in 
+
+  JinjaHandler is a twisted.web.resource.Resource.  It is passed a
+  template_name at instantiation.  
+
+  (At least some, "render type"?!) Requests are handled by
+  the JinjaHandler.  The handler first sets the request's response code to
+  200 (received?).  The JinjaHandler then uses the jinja_render helper
+  function to render and encode the JinjaHandler's template.
+
+  So when a particular JinjaHandler receives a request it renders, encodes,
+  (according to the specification in a jinja2 environment instantiated with a
+  jinja2 FileSystemLoader with '../templates' as its instantiating argument).
+  and returns the template.
+
+  (Probably one JinjaHandler per template in lae_site/templates.)
