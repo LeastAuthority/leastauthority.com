@@ -6,7 +6,7 @@ from twisted.internet import reactor
 from twisted.python.failure import Failure
 from txaws.service import AWSCredentials
 
-from lae_site.user.initialize import verify_user_account
+from lae_automation.initialize import verify_user_account
 
 
 if len(sys.argv) < 5:
