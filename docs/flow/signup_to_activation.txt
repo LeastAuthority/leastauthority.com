@@ -1,3 +1,13 @@
+  The module 'leastauthority.com/lae_site/main.py' is the module python
+  interprets to launch the lae_site webserver.
+
+
+Configuration:
+
+  The Config class in lae_site/config.py sets up the current product line as
+  a dictionary "products" attribute of the config instance.  The products are
+  passed to the Config constructor from the '<leastauthority.com>/lae_site_config.json'
+  
   The user selects from among the products with "listed":"true:  specified in
   lae_site_config.json.  When the site is configured each product is stored
   as a dictionary with a boolean value in its "listed" entry.
