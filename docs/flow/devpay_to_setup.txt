@@ -1,7 +1,9 @@
     Once AWS DevPay has successfully processed an activation request it informs
   the user.  The user's browser then informs the LAE-webserver by passing it an "activation key". FOOTNOTE?--> The "activation key" is a
   one-hour-lifespan expiring token, that uniquely identifies a payment
-  application. Upon receipt of an activation request, DevPay begins a "vetting" process to determine if the
+  application.
+
+  Upon receipt of an activation request, DevPay begins a "vetting" process to determine if the
   applicant's payment credentials are valid. If
   the   The webserver passes the
   necessary information to an automation server, which provides a "signup" service.

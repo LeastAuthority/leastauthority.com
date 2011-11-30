@@ -1,2 +1,14 @@
-The user's browser sends its activation key to the webserver, the webserver
-sends a request to the flappserver hosted signup service.
+    Once AWS DevPay has successfully received an activation request it does
+  two things:
+   (1) It sends the user an "activation key". FOOTNOTE?--> The "activation key" is a
+  one-hour-lifespan expiring token, that uniquely identifies a payment
+  application.
+   (2) It begins a "vetting" process to determine if the applicant's payment credentials are valid.
+
+    Without reference to devpay's vetting process, the user's browser then
+    informs the LAE-webserver by passing it the "activation key". The
+    webserver sends a(n http?) request to the flappserver hosted signup
+    service.
+
+      This request has FOO BAR BAM SPAZM in its headers and SUCH AND FORTH IN ITS body.
+
