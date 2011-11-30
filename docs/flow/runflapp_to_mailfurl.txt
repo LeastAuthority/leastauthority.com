@@ -1,0 +1,1 @@
+The flapp service sets up the product and send the furl somewhere.

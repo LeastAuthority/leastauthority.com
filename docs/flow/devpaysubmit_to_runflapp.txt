@@ -1,0 +1,2 @@
+The user's browser sends its activation key to the webserver, the webserver
+sends a request to the flappserver hosted signup service.

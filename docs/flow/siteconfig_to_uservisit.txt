@@ -1,0 +1,1 @@
+The site loads a configuration.  A user visits the site.
