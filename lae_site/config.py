@@ -1,5 +1,5 @@
 
-import os, json
+import os, simplejson
 
 
 class Config(object):
@@ -36,6 +36,6 @@ class Config(object):
             configFile = open(configFile, 'r')
 
         try:
-            return json.load( configFile )
+            return simplejson.load(configFile)
         finally:
             configFile.close()
