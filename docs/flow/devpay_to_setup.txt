@@ -20,7 +20,7 @@
     The flappserver has been configured to run the signup service with the following
   invocation::
 
-    flappserver add BASEDIR run-command --accept-stdin --send-stdout PWD PWD/full_signup.py
+    flappserver add BASEDIR run-command --accept-stdin --send-stdout PWD PWD/full_signup.sh
 
     This invocation generates a furl that references the service, which is stored in
   the file signup.furl (in the same directory as the web server's JSON config file).
