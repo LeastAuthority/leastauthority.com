@@ -4,6 +4,7 @@
 """
 
 from cStringIO import StringIO
+import simplejson
 
 from fabric import api
 from fabric.context_managers import cd
@@ -145,7 +146,7 @@ INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
 def bounce_server(public_host, key_filename, private_host, creds, user_token, product_token, bucket_name,
-                  stdout, stderr):
+                  stdout, stderr, secretsfile):
     access_key_id = creds.access_key
     secret_key = creds.secret_key
     nickname = bucket_name
@@ -157,13 +158,13 @@ def bounce_server(public_host, key_filename, private_host, creds, user_token, pr
     write('/home/customer/introducer/introducer.port', INTRODUCER_PORT + '\n')
     write('/home/customer/storageserver/client.port', SERVER_PORT + '\n')
     run('LAFS_source/bin/tahoe restart introducer && sleep 5')
-    introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
-    assert '\n' not in introducer_furl, introducer_furl
+    internal_introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
+    assert '\n' not in internal_introducer_furl, internal_introducer_furl
 
     tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
                                       'public_host': public_host,
                                       'private_host': private_host,
-                                      'introducer_furl': introducer_furl,
+                                      'introducer_furl': internal_introducer_furl,
                                       'access_key_id': access_key_id,
                                       'bucket_name': bucket_name}
     write('/home/customer/storageserver/tahoe.cfg', tahoe_cfg)
@@ -177,12 +178,34 @@ def bounce_server(public_host, key_filename, private_host, creds, user_token, pr
     run('ps -fC tahoe')
     run('netstat -atW')
 
+    introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
+    introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
+    server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
+    server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
+
     print >>stdout, "The introducer and storage server are running."
 
-    (prefix, atsign, suffix) = introducer_furl.partition('@')
-    assert atsign, introducer_furl
+    (prefix, atsign, suffix) = internal_introducer_furl.partition('@')
+    assert atsign, internal_introducer_furl
     (location, slash, swissnum) = suffix.partition('/')
-    assert slash, introducer_furl
-    public_furl = "%s@%s:%s/%s" % (prefix, public_host, INTRODUCER_PORT, swissnum)
+    assert slash, internal_introducer_furl
+    external_introducer_furl = "%s@%s:%s/%s" % (prefix, public_host, INTRODUCER_PORT, swissnum)
 
-    print >>stdout, "\nThe introducer furl is %r" % (public_furl,)
+    print >>stdout, "\nThe introducer furl is %r" % (external_introducer_furl,)
+
+    print >>secretsfile, simplejson.dumps({
+        'public_host':              public_host,
+        'private_host':             private_host,
+        'access_key_id':            access_key_id,
+        'secret_key':               secret_key,
+        'user_token':               user_token,
+        'product_token':            product_token,
+        'bucket_name':              bucket_name,
+        'introducer_node_pem':      introducer_node_pem,
+        'introducer_nodeid':        introducer_nodeid,
+        'server_node_pem':          server_node_pem,
+        'server_nodeid':            server_nodeid,
+        'internal_introducer_furl': internal_introducer_furl,
+        'external_introducer_furl': external_introducer_furl,
+    })
+    secretsfile.flush()
