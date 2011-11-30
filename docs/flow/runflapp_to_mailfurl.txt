@@ -1,1 +1,34 @@
-The flapp service sets up the product and send the furl somewhere.
+  The service registered on the flappserver has its core functionality in "full_signup.py".
+
+  full_signup.py is a pipeline that runs several modular tasks sequentially.
+
+  These are:
+
+  (1) Activate an AWS DevPay "desktop product":
+      * This associates the customer's payment credentials with a
+  particular product.
+      -- Receives:
+          1. Activation Key, a short lived token associated with the
+             customer's payment credential.
+          2. Product Token, a long secret that uniquely references the DevPay
+             product the customer has selected.
+
+      -- Returns: 
+          1. Access Key ID
+          2. Secret Access key
+          3. A User Token, that is specific to the customer-product-payment credentials.
+
+  (2) Verify the access key and user token:
+      * This checks that the customer's payment credentials have satisfied DevPay's
+  legitimacy criteria.  We only proceed further upon success.
+      -- Receives:
+          1. Access Key ID
+          2. Secret Access Key
+          3. User Token
+          4. Product Token.
+
+  (3) Create DevPay S3 bucket associated with the credentials from the previous step.
+  (4) Create EC2 Server
+  (5) Apply software updates to EC2 Server and reboot
+  (6) Build and configure tahoe storage server and introducer on EC2
+  (7) Notify (optionally with encryption) customer via email of introducer furl.

@@ -12,3 +12,45 @@
 
       This request has FOO BAR BAM SPAZM in its headers and SUCH AND FORTH IN ITS body.
 
+    To limit the scope of server failure we will run the automation server
+  on a separate EC2 instance.  A flappserver client/server pair is
+  used for communication between the machines. 
+
+*Flappserver: "The Foolscap Application Server": http://foolscap.lothar.com/docs/flappserver.html
+
+    The flappserver runs on the "automation" EC2 server instance. It provides the
+  signup service, used by the corresponding flappclient which runs on the webserver.
+  The client knows about this service because it knows the service's furl; it does
+  not have any other credentials to log in to the automation instance.
+
+    The flappserver has been configured to run the signup service with the following
+  invocation::
+
+    flappserver add BASEDIR run-command --accept-stdin --send-stdout PWD PWD/full_signup.py
+
+    This invocation generates a furl that references the service, which is stored in
+  the file signup.furl (in the same directory as the web server's JSON config file).
+  Once the client is set up it uses the furl to pass messages to the server.
+
+    When it receives an activation request, the web server does the programmatic
+  equivalent of invoking flappclient like this::
+
+    flappclient -f <path to signup.furl> run-command
+
+  with the command's stdin giving the fields from the signup request form. These
+  fields are transmitted in the following format:
+
+    ACTIVATION_KEY\nPRODUCT_CODE\nNAME\nEMAIL\nPUBLIC_KEY_OR_FINGERPRINT\n
+
+    The PRODUCT_CODE will be combined with a RANDOMSTRING to make the
+  BUCKET_NAME as follows::
+
+    RANDOMSTRING = base64.b32encode(os.urandom(20)).rstrip('=').lower()
+    BUCKET_NAME = lae-PRODUCTCODE-RANDOMSTRING
+
+  This information will eventually go into a database on the automation server;
+  for now it will be logged to a file [more details needed].
+
+  The service registered on the flappserver has its core functionality in "full_signup.py".
+
+

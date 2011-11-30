@@ -1,5 +1,5 @@
   The module 'leastauthority.com/lae_site/main.py' is the module python
-  interprets to launch the lae_site webserver.
+  interprets to launch the lae_site webserver.  This module is invoked by start.sh.
 
 
 Configuration:
