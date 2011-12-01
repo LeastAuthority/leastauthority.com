@@ -1,3 +1,27 @@
 If you discover that the user's storage server cannot use the user's S3 bucket, here are
 some things you can check for:
 
+  There're a taxonomy of errors that could be causal:
+
+   (1) Access Denied
+
+   (2) Not Found
+
+   (3) Malformed Token:
+
+      * If you receive this error there is something wrong with the http
+        request headers in the XXXGET?!?!XXX being submitted to the S3
+        bucket.  Unfortunately this error provides no more specific
+        information, so you could be missing necessary elements of the
+        header, you could have all necessary elements but 1 or more are
+        mangled, you have all the necessary elements but 1 or more have the
+        incorrect value.
+
+      What to do:
+         ssh into the EC2.
+            Check the credentials in the storage server in
+         storageserver/tahoe.cfg and storageserver/private/.
+	 
+       From some location other than the EC2:
+	 Use txaws-get-bucket or list-buckets or some other programmatic
+	 interface to isolate the source of the error from the EC2.
