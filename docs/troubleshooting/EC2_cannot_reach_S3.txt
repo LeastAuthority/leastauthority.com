@@ -1,0 +1,3 @@
+If you discover that the user's storage server cannot use the user's S3 bucket, here are
+some things you can check for:
+
