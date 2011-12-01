@@ -1,0 +1,18 @@
+Welcome to the alpha programme!
+
+In your Tahoe-LAFS gateway's tahoe.cfg, please use these settings:
+
+[client]
+introducer.furl =
+
+shares.needed = 1
+shares.happy = 1
+shares.total = 1
+
+[storage]
+enabled = false
+
+(The introducer furl is on one line.)
+
+PS. I wasn't able to send you this encrypted because the key you submitted
+was an ssh key. That shouldn't matter for the time being.
