@@ -163,6 +163,30 @@ def create_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoke
     return d
 
 
+def delete_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoken=None):
+    print >>stdout, "Deleting S3 bucket..."
+    print >>stderr, ('usertoken = %r\n'
+                     'bucketname = %r\n'
+                     % (usertoken, bucketname))
+
+    client = DevPayS3Client(
+        creds = creds,
+        usertoken = usertoken,
+        producttoken = producttoken)
+
+    query = client.query_factory(
+        action="DELETE", creds=client.creds, endpoint=client.endpoint,
+        bucket=bucketname)
+    d = query.submit()
+
+    def bucket_deleted(res):
+        print >>stdout, "S3 bucket deleted."
+        print >>stderr, repr(res)
+
+    d.addCallback(bucket_deleted)
+    return d
+
+
 def verify_user_account(creds, usertoken, producttoken, stdout, stderr):
     print >>stdout, "Verifying subscription..."
     print >>stderr, 'usertoken = %r' % (usertoken,)
