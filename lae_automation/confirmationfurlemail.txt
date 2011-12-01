@@ -1,4 +1,13 @@
-Welcome to the alpha programme!
+Welcome to the alpha programme!  We assume you're either familar with the
+basics of setting up, and interfacing with, a Tahoe-LAFS gateway, or willing
+to learn.
+
+If you do not already have the Tahoe-LAFS software on your trusted machine
+you can obtain it here: 
+
+  https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/quickstart.rst
+
+Once your gateway has been created please configure it as follows.
 
 In your Tahoe-LAFS gateway's tahoe.cfg, please use these settings:
 
