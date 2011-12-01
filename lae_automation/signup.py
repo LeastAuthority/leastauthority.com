@@ -22,7 +22,7 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 POLL_TIME = 30
 
 
-def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, clock=None):
+def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, secretsfile, clock=None):
     myclock = clock or reactor
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
@@ -104,7 +104,7 @@ def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, see
                         continue
 
                 bounce_server(publichost, ec2keyfilename, privatehost, usercreds, usertoken,
-                              producttoken, bucketname, stdout, stderr)
+                              producttoken, bucketname, stdout, stderr, secretsfile)
             d3.addCallback(_got_addresses)
             return d3
         d2.addCallback(_deployed)
