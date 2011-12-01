@@ -1,12 +1,11 @@
-#! /usr/bin/env python
 
-import os, simplejson
+import simplejson
 
 
 class Config(object):
     __slots__ = ['products', 'other']
 
-    DEFAULT_CONFIG_PATH = os.path.expanduser('../lae_automation_config.json')
+    DEFAULT_CONFIG_PATH = '../lae_automation_config.json'
 
     def __init__(self, configFile = DEFAULT_CONFIG_PATH):
         """
