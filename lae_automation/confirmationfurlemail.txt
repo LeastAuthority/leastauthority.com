@@ -1,18 +1,17 @@
-Welcome to the alpha programme!  We assume you're either familar with the
-basics of setting up, and interfacing with, a Tahoe-LAFS gateway, or willing
-to learn.
+Sign-up email (subject "Your Tahoe-LAFS subscription is complete"):
 
-If you do not already have the Tahoe-LAFS software on your trusted machine
-you can obtain it here: 
 
-  https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/quickstart.rst
+Welcome to the alpha programme!  We assume you're either familiar with
+the basics of setting up and using a Tahoe-LAFS gateway, or willing to
+learn.
 
-Once your gateway has been created please configure it as follows.
+Please go to https://leastauthority.com/howtoconfigure for instructions
+on how to set up and configure your gateway and start using the service.
+The settings for your gateway's tahoe.cfg are:
 
-In your Tahoe-LAFS gateway's tahoe.cfg, please use these settings:
 
 [client]
-introducer.furl =
+introducer.furl = %(external_introducer_furl)s
 
 shares.needed = 1
 shares.happy = 1
@@ -21,7 +20,10 @@ shares.total = 1
 [storage]
 enabled = false
 
-(The introducer furl is on one line.)
 
-PS. I wasn't able to send you this encrypted because the key you submitted
-was an ssh key. That shouldn't matter for the time being.
+(The introducer.furl setting should be on one line.)
+
+We hope you enjoy using our service and find it useful.
+
+-- 
+The Least Authority Enterprises team
