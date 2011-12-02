@@ -1,9 +1,14 @@
-Sign-up email (subject "Your Tahoe-LAFS subscription is complete"):
 
-Welcome to the alpha programme! 
+CONFIRMATION_EMAIL_SUBJECT = "Your sign-up to Tahoe-LAFS-on-S3 is complete"
 
-Please go to https://leastauthority.com/howtoconfigure for instructions
-on how to set up and configure your gateway and start using the service.
+CONFIRMATION_EMAIL_TEXT = """
+Welcome to the alpha programme!  Please go to
+
+  https://leastauthority.com/howtoconfigure
+
+for instructions on how to set up and configure your Tahoe-LAFS gateway
+and start using the service.
+
 The settings for your gateway's tahoe.cfg are:
 
 
@@ -22,5 +27,6 @@ enabled = false
 
 We hope you enjoy using our service and find it useful.
 
--- 
+--\x20
 The Least Authority Enterprises team
+"""
