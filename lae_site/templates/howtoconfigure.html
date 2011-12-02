@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>How to configure</title>
+</head>
+<body>
+{% extends 'base.html' %}
+
+{% block content %}
+
+
+<h3>Configuration</h3>
+<p>If you do not already have the Tahoe-LAFS software on your trusted machine
+you can obtain it <a href=https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/quickstart.rst>here</a>.</p>
+
+<p>Or if you have a recent Debian- or Ubuntu-based Linux distribution and
+prefer to use the version packaged with it, run:</p>
+
+  sudo apt-get install tahoe-lafs
+
+<p>(If using an OS package, replace 'bin/tahoe' with just 'tahoe' below.)</p>
+
+<p>Once you've built or installed Tahoe-LAFS, run 'bin/tahoe --help' to check
+that it is working. If you have any problems up to this point,
+<a href=https://tahoe-lafs.org/cgi-bin/mailman/listinfo/tahoe-dev>the tahoe-dev mailing list</a> or the #tahoe-dev IRC channel on irc.freenode.net are the best places to seek help.</p>
+
+<p>To create a Tahoe-LAFS gateway on your trusted machine (in the default
+location, which is the '<tt>.tahoe</tt>' subdirectory of your home directory), run:</p>
+<pre>
+  bin/tahoe create-client
+</pre>
+<p>Then to configure the gateway for use with your LAE account, edit
+<tt>YOUR_HOME_DIRECTORY/.tahoe/tahoe.cfg</tt> to use the following settings (the
+<tt>introducer.furl</tt> will have been sent to you in your sign-up confirmation
+email):</p>
+
+<pre>
+[client]
+introducer.furl = &ltspecific to each customer&gt
+shares.needed = 1
+shares.happy = 1
+shares.total = 1
+<br>
+[storage]
+enabled = false
+</pre>
+
+<p>Now start your gateway using:</p>
+<pre>
+  bin/tahoe start
+</pre>
+<p>On Windows, you'll need to leave that command running; on other platforms
+it will run in the background. Next, in your web browser go to:</p>
+<pre>
+  http://127.0.0.1:3456
+</pre>
+<p>to see the gateway's Welcome page. If everything is set up correctly, you
+should see a green box starting with "Yes" in the list of connected servers.</p>
+
+<p>We recommend that you begin by creating a directory and making the alias
+'<tt>lae:</tt>' point to it:</p>
+<pre>
+  bin/tahoe create-alias lae
+</pre>
+<p>then to see that directory in your browser:</p>
+<pre>
+  bin/tahoe webopen lae:
+</pre>
+<p>You can use the 'tahoe backup' command to back up your files to this
+directory, for example:</p>
+<pre>
+  bin/tahoe backup DIRECTORY_TO_BACKUP lae:
+</pre>
+
+{% endblock %}
+
+</body>
+</html>
