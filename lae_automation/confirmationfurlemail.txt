@@ -1,9 +1,6 @@
 Sign-up email (subject "Your Tahoe-LAFS subscription is complete"):
 
-
-Welcome to the alpha programme!  We assume you're either familiar with
-the basics of setting up and using a Tahoe-LAFS gateway, or willing to
-learn.
+Welcome to the alpha programme! 
 
 Please go to https://leastauthority.com/howtoconfigure for instructions
 on how to set up and configure your gateway and start using the service.
