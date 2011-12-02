@@ -88,6 +88,15 @@ p {
     font-size: 15px;
 }
 
+pre {
+    font-size: 12px;
+}
+
+tt {
+    font-family: monospace;
+    font-size: 12px;
+}
+
 /*
  * Style Classes
  */
