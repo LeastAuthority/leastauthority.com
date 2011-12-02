@@ -191,7 +191,21 @@ def bounce_server(public_host, key_filename, private_host, creds, user_token, pr
     assert slash, internal_introducer_furl
     external_introducer_furl = "%s@%s:%s/%s" % (prefix, public_host, INTRODUCER_PORT, swissnum)
 
-    print >>stdout, "\nThe introducer furl is %r" % (external_introducer_furl,)
+    # The webserver will HTML-escape the FURL in its output, so no need to escape here.
+    print >>stdout, """
+The settings for your gateway's tahoe.cfg are:
+
+[client]
+introducer.furl = %s
+
+shares.needed = 1
+shares.happy = 1
+shares.total = 1
+
+[storage]
+enabled = false
+
+""" % (external_introducer_furl,)
 
     print >>secretsfile, simplejson.dumps({
         'public_host':              public_host,

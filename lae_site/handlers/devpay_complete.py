@@ -150,8 +150,16 @@ since the activation key is only valid once.
 
 SUCCEEDED_HTML = """</pre>
 <p>
-Your activation is complete. You will shortly get a confirmation email at the address
-you provided.
+Your sign-up is complete. Welcome to the alpha programme!
+</p>
+<p>
+Please go to
+<a href="https://leastauthority.com/howtoconfigure" target="_blank">https://leastauthority.com/howtoconfigure</a>
+for instructions on how to set up and configure your Tahoe-LAFS gateway
+(using the <tt>introducer.furl</tt> printed above) and start using the service.
+</p>
+<p>
+You will also shortly get a confirmation email at the address you provided.
 </p>
 <hr>
 </body>
@@ -160,7 +168,7 @@ you provided.
 
 FAILED_HTML = """</pre>
 <p>
-We weren't able to complete your activation automatically, but don't worry, we'll finish
+We weren't able to complete your sign-up automatically, but don't worry, we'll finish
 it manually if possible, and email you when that is done or if we need more information.
 </p>
 <hr>
