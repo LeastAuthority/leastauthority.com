@@ -10,20 +10,20 @@
 body {
     font-family:'Helvetica Neue Light', HelveticaNeue-Light, 'Helvetica Neue', Helvetica, Arial, sans-serif;
     background-image: url('/static/img/back-tile.png');
-	background-repeat: repeat;
+    background-repeat: repeat;
     background-color: #f5f5f5;
-	margin: 0;
-	padding: 0;
-	height: 100%;
+    margin: 0;
+    padding: 0;
+    height: 100%;
     color: #333333;
 }
 
 h1 {
-	text-shadow: 0 3px 0 #f5f5f5;
-	font-size: 28px;
+    text-shadow: 0 3px 0 #f5f5f5;
+    font-size: 28px;
     letter-spacing: -1px;
     font-weight: bold;
-	margin: 0px;
+    margin: 0px;
     padding: 0;
     text-transform: uppercase;
     text-align: right;
@@ -69,8 +69,8 @@ a > h1 {
 }
 
 h2, h3, h4, h5 {
-	text-shadow: 0 1px 0 #f5f5f5;
-	color: #333;
+    text-shadow: 0 1px 0 #f5f5f5;
+    color: #333;
     margin-top: 0;
 }
 
@@ -102,20 +102,18 @@ p {
  */
 #header_wrap {
     height: 90px;
-
-}   
+}
 
 #header_block {
     height: 9px;
     background-color: #d1d1d1;
     background-image: url('/static/img/top-border.png');
-	background-repeat: repeat-x;
-
+    background-repeat: repeat-x;
 }
+
 /*
  * Main Body
  */
-
 #main_content {
     min-height: 550px;
 }
@@ -132,6 +130,7 @@ p {
     margin: 0;
     padding: 0;
 }
+
 #main_nav li {
     text-align: right;
     line-height: 1.5em;
@@ -144,12 +143,11 @@ p {
 /*
  * Footer
  */
-
 #footer_wrap {
     margin-top: 50px;
     border-top: #eee;
     background-image: url('/static/img/drop-shad.png');
-	background-repeat: repeat-x;
+    background-repeat: repeat-x;
     background-color: #e3e3e3;
     height: 60px;
 }
