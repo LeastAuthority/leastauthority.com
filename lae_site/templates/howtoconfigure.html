@@ -1,29 +1,23 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<title>How to configure</title>
-</head>
-<body>
 {% extends 'base.html' %}
 
 {% block content %}
 
-
 <h3>Configuration</h3>
 <p>If you do not already have the Tahoe-LAFS software on your trusted machine
-you can obtain it <a href=https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/quickstart.rst>here</a>.</p>
+you can obtain it
+<a href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/quickstart.rst">here</a>.</p>
 
 <p>Or if you have a recent Debian- or Ubuntu-based Linux distribution and
 prefer to use the version packaged with it, run:</p>
-
+<pre>
   sudo apt-get install tahoe-lafs
+</pre>
+<p>(If using an OS package, replace '<tt>bin/tahoe</tt>' with just '<tt>tahoe</tt>' below.)</p>
 
-<p>(If using an OS package, replace 'bin/tahoe' with just 'tahoe' below.)</p>
-
-<p>Once you've built or installed Tahoe-LAFS, run 'bin/tahoe --help' to check
+<p>Once you've built or installed Tahoe-LAFS, run '<tt>bin/tahoe --help</tt>' to check
 that it is working. If you have any problems up to this point,
-<a href=https://tahoe-lafs.org/cgi-bin/mailman/listinfo/tahoe-dev>the tahoe-dev mailing list</a> or the #tahoe-dev IRC channel on irc.freenode.net are the best places to seek help.</p>
+<a href="https://tahoe-lafs.org/cgi-bin/mailman/listinfo/tahoe-dev">the tahoe-dev mailing list</a>
+or the <tt>#tahoe-dev</tt> IRC channel on irc.freenode.net are the best places to seek help.</p>
 
 <p>To create a Tahoe-LAFS gateway on your trusted machine (in the default
 location, which is the '<tt>.tahoe</tt>' subdirectory of your home directory), run:</p>
@@ -33,11 +27,11 @@ location, which is the '<tt>.tahoe</tt>' subdirectory of your home directory), r
 <p>Then to configure the gateway for use with your LAE account, edit
 <tt>YOUR_HOME_DIRECTORY/.tahoe/tahoe.cfg</tt> to use the following settings (the
 <tt>introducer.furl</tt> will have been sent to you in your sign-up confirmation
-email):</p>
+e-mail):</p>
 
 <pre>
 [client]
-introducer.furl = &ltspecific to each customer&gt
+introducer.furl = <i>specific to each customer</i>
 shares.needed = 1
 shares.happy = 1
 shares.total = 1
@@ -74,6 +68,3 @@ directory, for example:</p>
 </pre>
 
 {% endblock %}
-
-</body>
-</html>

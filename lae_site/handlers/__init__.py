@@ -14,7 +14,10 @@ PAGES = ('about_us',
          'downloads',
          'design',
          'security',
-         'products')
+         'products',
+         'howtoconfigure',
+        )
+
 
 def make_site(config):
     resource = JinjaHandler('index.html')
