@@ -4,10 +4,49 @@ from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
-import mock
+import mock, os, sys
+print mock
 
 from lae_automation.initialize import activate_user_account_desktop
-from lae_automation.initialize import deploy_EC2_instance
+from lae_automation.signup import signup
+
+
+class TestMakeHTTPRequest(TestCase):
+    def setUp(self):
+        self.original_directory = os.getcwd()
+        curdir = self.original_directory.split(os.sep)[-1]
+        if curdir == '_trial_temp':
+            os.chdir('../')# Hack to work-around trial resetting cwd.
+        self._patchers = []
+        def start_patch(name):
+            print "The the start_path function patching name: %s"%name
+            patcher = mock.patch(name)
+            self._patchers.append(patcher)
+            return patcher.__enter__()
+
+        self.mockmhr = start_patch('lae_automation.aws.queryapi.make_http_request')
+
+    def tearDown(self):
+        os.chdir(self.original_directory)
+        [p.__exit__() for p in self._patchers]
+
+    def test_initialization(self):
+        mactivationkey = 'MOCKACTIVATONKEY'
+        mproductcode = 'ABCDEFGH'
+        mname = 'MNAME'
+        memail = 'MEMAIL'
+        mkeyinfo = 'MKEYINFO'
+        mstdout = sys.stdout#StringIO()
+        mstderr = sys.stderr#StringIO()
+        mseed = 'MSEED'
+        msecretsfile = 'MSECRETSFILE' 
+        signup(mactivationkey, mproductcode, mname, memail, mkeyinfo, mstdout, mstderr, mseed, msecretsfile)
+        print dir(self.mockmhr)
+        print "self.mockmhr._name: %s"%self.mockmhr._name
+        print "self.mockmhr.call_count: %s"%self.mockmhr.call_count
+        print "self.mockmhr.called: %s"%self.mockmhr.called
+        print "type(self.mockmhr): %s"%type(self.mockmhr)
+
 
 class InitializationTests (TestCase):
 
@@ -37,15 +76,4 @@ class InitializationTests (TestCase):
             producttoken = mock.sentinel.producttoken,
             stdout = StringIO(),
             stderr = StringIO())
-
-    def test_deploy_EC2_instance(self):
-        return deploy_EC2_instance(
-            creds = ,
-            endpoint_uri = ,
-            ami_image_id = ,
-            instance_size = ,
-            bucket_name = ,
-            keypair_name = ,
-            stdout = ,
-            stderr = )
 
