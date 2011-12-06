@@ -7,7 +7,7 @@ from twisted.internet import defer
 import mock
 
 from lae_automation.initialize import activate_user_account_desktop
-
+from lae_automation.initialize import deploy_EC2_instance
 
 class InitializationTests (TestCase):
 
@@ -37,3 +37,15 @@ class InitializationTests (TestCase):
             producttoken = mock.sentinel.producttoken,
             stdout = StringIO(),
             stderr = StringIO())
+
+    def test_deploy_EC2_instance(self):
+        return deploy_EC2_instance(
+            creds = ,
+            endpoint_uri = ,
+            ami_image_id = ,
+            instance_size = ,
+            bucket_name = ,
+            keypair_name = ,
+            stdout = ,
+            stderr = )
+
