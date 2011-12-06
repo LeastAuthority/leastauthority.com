@@ -2,8 +2,8 @@
 from cStringIO import StringIO
 
 from twisted.trial.unittest import TestCase
-from twisted.internet.defer import Deferred
-from twisted.internet import reactor
+from twisted.internet import defer
+
 
 import mock
 
@@ -27,9 +27,7 @@ class InitializationTests (TestCase):
 
     def test_activate_user_account_desktop(self):
         def make_deferred_fire_factory(value):
-            d = Deferred()
-            reactor.callLater(0, d.callback, value)
-            return d
+            return defer.succeed(value)
 
         mockadpr = mock.Mock(name='ActivateDesktopProductResponse')
         mockadpr.usertoken = "{UserToken}..."
