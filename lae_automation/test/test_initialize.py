@@ -4,7 +4,6 @@ from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
-
 import mock
 
 from lae_automation.initialize import activate_user_account_desktop
@@ -20,7 +19,6 @@ class InitializationTests (TestCase):
             return patcher.__enter__()
 
         self.mocklsc = start_patch('lae_automation.initialize.LicenseServiceClient')
-        self.mocks3c = start_patch('lae_automation.initialize.DevPayS3Client')
 
     def tearDown(self):
         [p.__exit__() for p in self._patchers]
@@ -33,8 +31,6 @@ class InitializationTests (TestCase):
         mockadpr.usertoken = "{UserToken}..."
 
         self.mocklsc.return_value.activate_desktop_product.return_value = make_deferred_fire_factory(mockadpr)
-
-        self.mocks3c.return_value.create_bucket.return_value = make_deferred_fire_factory(mock.sentinel.UNKNOWN)
 
         return activate_user_account_desktop(
             activationkey = mock.sentinel.activationkey,
