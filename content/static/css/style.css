@@ -97,6 +97,10 @@ tt {
     font-size: 13px;
 }
 
+.clear {
+    clear: both;
+}
+
 /*
  * Style Classes
  */
@@ -166,4 +170,22 @@ tt {
     color: #aaa;
     text-align: right;
     padding: 20px 0;
+}
+
+
+/*
+ * Profile Blocks (/about_us/)
+ */
+
+.profile_block {
+    margin-top: 40px;
+}
+.profile_block h5 {
+    padding: 0;
+}
+
+.profile_role {
+    font-weight:100;
+    font-style: italic;
+    font-size: 16px;
 }
