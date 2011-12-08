@@ -5,7 +5,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
 import mock, os, sys
-print mock
+#print mock
 
 from lae_automation.initialize import activate_user_account_desktop
 from lae_automation.signup import signup
@@ -33,7 +33,7 @@ class TestAutoSetup(TestCase):
         self._patchers = []
 
         def start_patch(name):
-            print "The the start_path function patching name: %s"%name
+            #print "The the start_path function patching name: %s"%name
             patcher = mock.patch(name)
             self._patchers.append(patcher)
             return patcher.__enter__()
@@ -72,7 +72,7 @@ class TestAutoSetup(TestCase):
         mseed = 'MSEED'
         msecretsfile = 'MSECRETSFILE'
         signup(mactivationkey, mproductcode, mname, memail, mkeyinfo, mstdout, mstderr, mseed, msecretsfile)
-        print dir(self.mockmhr)
+        #print dir(self.mockmhr)
             
 
 class InitializationTests (TestCase):

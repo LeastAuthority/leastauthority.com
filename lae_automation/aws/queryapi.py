@@ -27,7 +27,6 @@ def hmac_sha1(tag, data):
 class QueryAPIMixin:
     def _send_request(self, **params):
         url = self._build_request_url(params)
-        print "Pre mock call."
         return make_http_request(url)
 
     def _build_request_url(self, params):
@@ -37,7 +36,6 @@ class QueryAPIMixin:
 
         # Make a copy because we will modify the result:
         params = dict(params)
-        print "self._creds: %s"%self._creds
         if self._creds is not None:
             update_by_keywords_without_overwrite(
                 params,
