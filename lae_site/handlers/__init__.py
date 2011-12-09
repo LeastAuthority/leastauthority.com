@@ -12,6 +12,7 @@ from lae_site.handlers.web import JinjaHandler
 PAGES = ('about_us',
          'support',
          'downloads',
+         'documentation',
          'design',
          'security',
          'products',
