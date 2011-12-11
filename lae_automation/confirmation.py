@@ -41,7 +41,7 @@ The Least Authority Enterprises team
 """
 
 SENDER_DOMAIN = "leastauthority.com"
-FROM_EMAIL = "davidsarah@leastauthority.com"
+FROM_EMAIL = "info@leastauthority.com"
 FROM_ADDRESS = "Least Authority Enterprises <%s>" % (FROM_EMAIL,)
 USER_AGENT = "Least Authority Enterprises e-mail sender"
 
