@@ -280,10 +280,6 @@ class NullOutputStream(object):
         pass
 
 
-def no_newlines(s):
-    return s.replace('\n', '|').replace('\r', '')
-
-
 flappcommand = FlappCommand("../signup.furl")
 
 def start():
@@ -306,11 +302,12 @@ class ActivationRequestHandler(HandlerBase):
         request.setResponseCode(200)
         request.write(ACTIVATIONREQ_RESPONSE_HTML)
 
-        stdin = ("%s\n"*5) % (no_newlines(activationkey),
-                              no_newlines(productcode),
-                              no_newlines(name),
-                              no_newlines(email),
-                              no_newlines(publickey),
+        # None of these fields can contain newlines because they would be quoted by get_arg.
+        stdin = ("%s\n"*5) % (activationkey,
+                              productcode,
+                              name,
+                              email,
+                              publickey,
                              )
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = NullOutputStream()
