@@ -5,7 +5,6 @@ from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
 import mock, os, sys
-#print mock
 
 from lae_automation.initialize import activate_user_account_desktop
 from lae_automation.signup import signup
@@ -23,7 +22,7 @@ class TestAutoSetup(TestCase):
 
         self.verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><VerifyProductSubscriptionByTokensResult><Subscribed>true</Subscribed></VerifyProductSubscriptionByTokensResult><ResponseMetadata><RequestId>bd9db94b-a1b0-4a5f-8d70-6cc4de427623</RequestId></ResponseMetadata></VerifyProductSubscriptionByTokensResponse>"""
 
-        self.describeEC2instresponse = """<DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>2f48cada-b92d-4f1d-98da-789c44eec9a4</requestId><reservationSet><item><reservationId>r-0453466a</reservationId><ownerId>459586236352</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>i-b14d07d2</instanceId><imageId>ami-ab36fbc2</imageId><instanceState><code>16</code><name>running</name></instanceState><privateDnsName>domU-12-31-38-07-19-09.compute-1.internal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>EC2adminkeys2</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.micro</instanceType><launchTime>2011-11-24T15:31:46.000Z</launchTime><placement><availabilityZone>us-east-1d</availabilityZone></placement><kernelId>aki-407d9529</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>""" 
+        self.describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?><DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>TEST</requestId><reservationSet><item><reservationId>TEST</reservationId><ownerId>TEST</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>TEST</instanceId><imageId>TEST</imageId><instanceState><code>TEST</code><name>TEST</name></instanceState><privateDnsName>TESTinternal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>TEST</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.TEST</instanceType><launchTime>TEST</launchTime><placement><availabilityZone>TEST</availabilityZone></placement><kernelId>TEST</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>""" 
         self.return_values = [self.adprequestresponse, self.verifyrequestresponse, self.describeEC2instresponse]
 
         self.original_directory = os.getcwd()
@@ -33,7 +32,6 @@ class TestAutoSetup(TestCase):
         self._patchers = []
 
         def start_patch(name):
-            #print "The the start_path function patching name: %s"%name
             patcher = mock.patch(name)
             self._patchers.append(patcher)
             return patcher.__enter__()
@@ -43,9 +41,7 @@ class TestAutoSetup(TestCase):
         self.mockmhr.side_effect = self.mockmakehttprequestreturns
 
         self.mocktxawsS3Clientmakequeryfactory = start_patch('lae_automation.aws.devpay_s3client.DevPayS3Client._make_query_factory')
-        #self.mocktxawsQuery = start_patch('lae_automation.aws.devpay_s3client.Query')
         self.mocktxawsEC2ClientRI = start_patch('lae_automation.initialize.EC2Client.run_instances')
-        #self.mocktxawsEC2Parser = start_patch('lae_automation.initialize.txaws_ec2_Parser')
         self.mocktxawsEC2ClientRI.side_effect = self.mockEC2clientruninstances
 
     def tearDown(self):
@@ -57,7 +53,6 @@ class TestAutoSetup(TestCase):
         return defer.succeed(self.return_values.pop(0))
 
     def mockEC2clientruninstances(self, *args, **kwargs):
-        #print "This function 'mockEC2clientruninstances' was called with args: %s"%(args)
         return defer.succeed([mock.Mock()])
 
     def test_signup(self):
@@ -68,12 +63,11 @@ class TestAutoSetup(TestCase):
         memail = 'MEMAIL'
         mkeyinfo = 'MKEYINFO'
         mstdout = sys.stdout#StringIO()
-        mstderr = sys.stderr#StringIO()
+        mstderr = StringIO()
         mseed = 'MSEED'
         msecretsfile = 'MSECRETSFILE'
-        signup(mactivationkey, mproductcode, mname, memail, mkeyinfo, mstdout, mstderr, mseed, msecretsfile)
-        #print dir(self.mockmhr)
-            
+        su_deferred = signup(mactivationkey, mproductcode, mname, memail, mkeyinfo, mstdout, mstderr, mseed, msecretsfile)
+        return su_deferred    
 
 class InitializationTests (TestCase):
 

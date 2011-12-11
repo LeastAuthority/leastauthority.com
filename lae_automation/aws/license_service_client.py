@@ -27,15 +27,12 @@ class LicenseServiceClient(QueryAPIMixin):
         """
         Reference: http://docs.amazonwebservices.com/AmazonDevPay/latest/DevPayDeveloperGuide/index.html?ActivateDesktopProduct.html
         """
-        print "This is pre self._send_request!"
         d = self._send_request(
             Action = 'ActivateDesktopProduct',
             ActivationKey = activationkey,
             ProductToken = producttoken,
             )
-        print "This is post _send_request."
         d.addCallback(ActivateDesktopProductResponse.parse)
-        print "The return value should have addCallback invoked on it! d: %s"%d
         return d
 
     def verify_subscription_by_tokens(self, usertoken, producttoken):
