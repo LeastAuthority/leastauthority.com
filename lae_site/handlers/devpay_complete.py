@@ -96,11 +96,8 @@ DEVPAY_RESPONSE_MISSING_CODE_HTML = """
 Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 </p>
 <p>
-Amazon Payments has not yet told us the activation key needed to activate your
-subscription. To obtain this key, go to
-<a href="https://www.amazon.com/dp-activate">https://www.amazon.com/dp-activate</a>,
-log in to your Amazon account, and click the Go to Application link for this
-subscription.
+Please follow the link above. You do not need to do the <b>Generate Key</b> step &mdash;
+just go ahead and click the <b>Go to Application</b> link for this subscription.
 </p>
 <p>
 If you have any problem completing the sign-up, please contact
