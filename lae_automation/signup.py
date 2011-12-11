@@ -9,6 +9,7 @@ from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
     create_user_bucket, deploy_EC2_instance, get_EC2_addresses
 from lae_automation.server import install_server, bounce_server, NotListeningError
+from lae_automation.confirmation import send_signup_confirmation
 
 
 config = Config()
@@ -22,7 +23,7 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 POLL_TIME = 30
 
 
-def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, secretsfile, clock=None):
+def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, clock=None):
     myclock = clock or reactor
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
@@ -103,11 +104,13 @@ def signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, see
                         time.sleep(10)
                         continue
 
-                bounce_server(publichost, ec2keyfilename, privatehost, usercreds, usertoken,
-                              producttoken, bucketname, stdout, stderr, secretsfile)
+                return bounce_server(publichost, ec2keyfilename, privatehost, usercreds, usertoken,
+                                     producttoken, bucketname, stdout, stderr, secretsfile)
             d3.addCallback(_got_addresses)
             return d3
         d2.addCallback(_deployed)
         return d2
     d.addCallback(_activated)
+
+    d.addCallback(lambda furl: send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr))
     return d

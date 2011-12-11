@@ -223,3 +223,5 @@ enabled = false
         'external_introducer_furl': external_introducer_furl,
     })
     secretsfile.flush()
+
+    return external_introducer_furl
