@@ -71,6 +71,7 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                              secgroups,
                              keypair_name,
                              instance_type=instance_size)
+    print "d is a %s"%d
 
     def started(instances, *args, **kw):
         print >>stdout, "EC2 instance started."
@@ -89,6 +90,9 @@ def get_EC2_addresses(creds, endpoint_uri, instance_id):
     """
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=creds, endpoint=endpoint, parser=AddressParser())
+    print "Do we get here to right before client.describe_instances? with client: %s with instance_id: %s"%(client, instance_id)
+    
+    print "client.describe_instances.return_value is: %s"%client.describe_instances.return_value
     return client.describe_instances(instance_id)
 
 

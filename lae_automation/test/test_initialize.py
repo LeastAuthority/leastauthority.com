@@ -23,7 +23,8 @@ class TestAutoSetup(TestCase):
         self.verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><VerifyProductSubscriptionByTokensResult><Subscribed>true</Subscribed></VerifyProductSubscriptionByTokensResult><ResponseMetadata><RequestId>bd9db94b-a1b0-4a5f-8d70-6cc4de427623</RequestId></ResponseMetadata></VerifyProductSubscriptionByTokensResponse>"""
 
         self.describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?><DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>TEST</requestId><reservationSet><item><reservationId>TEST</reservationId><ownerId>TEST</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>TEST</instanceId><imageId>TEST</imageId><instanceState><code>TEST</code><name>TEST</name></instanceState><privateDnsName>TESTinternal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>TEST</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.TEST</instanceType><launchTime>TEST</launchTime><placement><availabilityZone>TEST</availabilityZone></placement><kernelId>TEST</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>""" 
-        self.return_values = [self.adprequestresponse, self.verifyrequestresponse, self.describeEC2instresponse]
+        self.mhr_return_values = [self.adprequestresponse, self.verifyrequestresponse, self.describeEC2instresponse]
+        self.run_return_values = ['ubuntu']
 
         self.original_directory = os.getcwd()
         curdir = self.original_directory.split(os.sep)[-1]
@@ -36,24 +37,33 @@ class TestAutoSetup(TestCase):
             self._patchers.append(patcher)
             return patcher.__enter__()
 
-            
+        self.mockfabapi = start_patch('lae_automation.server.api')            
+        self.mockfabapi.run.side_effect = self.runsideeffects
+        self.mockfabcd = start_patch('lae_automation.server.cd')
+        self.mockfabcd.__enter__ = mock.Mock()
+        self.mockfabcd.__exit__ = mock.Mock()
+        self.mockfabcd.__exit__.return_value = None, None, None
         self.mockmhr = start_patch('lae_automation.aws.queryapi.make_http_request')
         self.mockmhr.side_effect = self.mockmakehttprequestreturns
 
         self.mocktxawsS3Clientmakequeryfactory = start_patch('lae_automation.aws.devpay_s3client.DevPayS3Client._make_query_factory')
-        self.mocktxawsEC2ClientRI = start_patch('lae_automation.initialize.EC2Client.run_instances')
-        self.mocktxawsEC2ClientRI.side_effect = self.mockEC2clientruninstances
+
+        self.mockrun_instances = start_patch('lae_automation.initialize.EC2Client.run_instances')
+        self.mockrun_instances.return_value = defer.succeed([mock.Mock()])
+        self.mockdescribe_instances = start_patch('lae_automation.initialize.EC2Client.describe_instances')
+        self.mockdescribe_instances.return_value = defer.succeed( ('0.0.0.0', '0.0.0.0') )
+
 
     def tearDown(self):
         os.chdir(self.original_directory)
         [p.__exit__() for p in self._patchers]
 
+    def runsideeffects(self, *args, **kwargs):
+        if args[0] == 'whoami':
+            return 'ubuntu'
 
     def mockmakehttprequestreturns(self, argument_to_make_http_request):
-        return defer.succeed(self.return_values.pop(0))
-
-    def mockEC2clientruninstances(self, *args, **kwargs):
-        return defer.succeed([mock.Mock()])
+        return defer.succeed(self.mhr_return_values.pop(0))
 
     def test_signup(self):
         # Arguments to signup
