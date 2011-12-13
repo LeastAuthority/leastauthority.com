@@ -3,30 +3,20 @@ from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
-import mock, os, sys
+import mock, sys
 
 from lae_automation.initialize import activate_user_account_desktop
 from lae_automation.signup import signup
-from lae_automation.config import Config
+#from lae_automation.config import Config
+from lae_automation.test.testinitvector import adprequestresponse, verifyrequestresponse, describeEC2instresponse
 
 
 class TestAutoSetup(TestCase):
     def setUp(self):
-        self.original_directory = os.getcwd()
-        curdir = self.original_directory.split(os.sep)[-1]
-        if curdir == '_trial_temp':
-            os.chdir('../')# Hack to work-around trial resetting cwd.
         # Elements of activation request response.
-        mutoken = 'TEST'+'A'*394
-        makeyID = 'TEST'+'A'*16
-        msecakey = 'TEST'+'A'*36
-        mrequestid = 'TEST'+'A'*32
-        # Test vector responses to the different make http requests: activation, verification, describe instances
-        self.adprequestresponse = """<ActivateDesktopProductResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><ActivateDesktopProductResult><UserToken>{UserToken}%s==</UserToken><AWSAccessKeyId>%s</AWSAccessKeyId><SecretAccessKey>%s</SecretAccessKey></ActivateDesktopProductResult><ResponseMetadata><RequestId>%s</RequestId></ResponseMetadata></ActivateDesktopProductResponse>"""%(mutoken, makeyID, msecakey, mrequestid)
-        
-        self.verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><VerifyProductSubscriptionByTokensResult><Subscribed>true</Subscribed></VerifyProductSubscriptionByTokensResult><ResponseMetadata><RequestId>bd9db94b-a1b0-4a5f-8d70-6cc4de427623</RequestId></ResponseMetadata></VerifyProductSubscriptionByTokensResponse>"""
-
-        self.describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?><DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>TEST</requestId><reservationSet><item><reservationId>TEST</reservationId><ownerId>TEST</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>TEST</instanceId><imageId>TEST</imageId><instanceState><code>TEST</code><name>TEST</name></instanceState><privateDnsName>TESTinternal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>TEST</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.TEST</instanceType><launchTime>TEST</launchTime><placement><availabilityZone>TEST</availabilityZone></placement><kernelId>TEST</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>"""
+        self.adprequestresponse = adprequestresponse
+        self.verifyrequestresponse = verifyrequestresponse
+        self.describeEC2instresponse = describeEC2instresponse
         self.mhr_return_values = [self.adprequestresponse, self.verifyrequestresponse, self.describeEC2instresponse]
         self._patchers = []
 
@@ -34,9 +24,7 @@ class TestAutoSetup(TestCase):
             patcher = mock.patch(name)
             self._patchers.append(patcher)
             return patcher.__enter__()
-        config = Config('lae_automation/test/init_test_config.json')
-        from lae_automation.signup import config as signupconfig
-        signupconfig.products = config.products
+ 
         self.mockinstall_server = start_patch('lae_automation.signup.install_server')
         self.mockbounce_server = start_patch('lae_automation.signup.bounce_server')
         self.mocksend_confirmation = start_patch('lae_automation.signup.send_signup_confirmation')
@@ -48,15 +36,9 @@ class TestAutoSetup(TestCase):
         self.mockdescribe_instances = start_patch('lae_automation.initialize.EC2Client.describe_instances')
         self.mockdescribe_instances.return_value = defer.succeed( ('0.0.0.0', '0.0.0.0') )
 
-
     def tearDown(self):
-        os.chdir(self.original_directory)
         [p.__exit__() for p in self._patchers]
-
-    def runsideeffects(self, *args, **kwargs):
-        if args[0] == 'whoami':
-            return 'ubuntu'
-
+ 
     def mockmakehttprequestreturns(self, argument_to_make_http_request):
         return defer.succeed(self.mhr_return_values.pop(0))
 
@@ -71,7 +53,9 @@ class TestAutoSetup(TestCase):
         mstderr = StringIO()
         mseed = 'MSEED'
         msecretsfile = 'MSECRETSFILE'
-        su_deferred = signup(mactivationkey, mproductcode, mname, memail, mkeyinfo, mstdout, mstderr, mseed, msecretsfile)
+        configfilepath = '../lae_automation/test/init_test_config.json'
+        ec2secretpath = '../../ec2secret'
+        su_deferred = signup(mactivationkey, mproductcode, mname, memail, mkeyinfo, mstdout, mstderr, mseed, msecretsfile, configfilepath, ec2secretpath )
         return su_deferred
 
 class InitializationTests (TestCase):

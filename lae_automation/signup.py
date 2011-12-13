@@ -12,7 +12,7 @@ from lae_automation.server import install_server, bounce_server, NotListeningErr
 from lae_automation.confirmation import send_signup_confirmation
 
 
-config = Config()
+
 
 class TimeoutError:
     pass
@@ -23,7 +23,8 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 POLL_TIME = 30
 
 
-def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, clock=None):
+def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret', clock=None):
+    config = Config(configpath)
     myclock = clock or reactor
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
@@ -40,7 +41,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     instancesize = product['instance_size']
 
     ec2accesskeyid = str(config.other['ec2_access_key_id'])
-    ec2secretkey = FilePath('../ec2secret').getContent().strip()
+    ec2secretkey = FilePath(ec2secretpath).getContent().strip()
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
 
     ec2keypairname = str(config.other['keypair_name'])
