@@ -60,7 +60,6 @@ class QueryAPIMixin:
 
     def _calc_signature(self, items):
         collapsed = self._collapse_params(items)
-        #print collapsed
         return b64encode(hmac_sha1(self._creds.secret_key, collapsed))
 
     @staticmethod
@@ -82,7 +81,7 @@ else:
 
 
 def xml_parse(text):
-    print >>sys.stderr, text
+    #print >>sys.stderr, text
     try:
         return XML(text)
     except xml_exceptions, e:

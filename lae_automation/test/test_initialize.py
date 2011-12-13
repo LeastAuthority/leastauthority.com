@@ -7,13 +7,12 @@ import mock, sys
 
 from lae_automation.initialize import activate_user_account_desktop
 from lae_automation.signup import signup
-#from lae_automation.config import Config
 from lae_automation.test.testinitvector import adprequestresponse, verifyrequestresponse, describeEC2instresponse
 
 
 class TestAutoSetup(TestCase):
     def setUp(self):
-        # Elements of activation request response.
+        # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
         self.adprequestresponse = adprequestresponse
         self.verifyrequestresponse = verifyrequestresponse
         self.describeEC2instresponse = describeEC2instresponse

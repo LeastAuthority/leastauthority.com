@@ -29,7 +29,6 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
     location = None  # default location for now
-    print config.products
     ps = [p for p in config.products if p['product_code'] == productcode]
     if len(ps) != 1:
         raise AssertionError("Product code %r matches %d products." % (productcode, len(ps)))
@@ -81,10 +80,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
         def _deployed(instance):
             def _wait_for_addresses(how_long_secs):
                 d4 = get_EC2_addresses(ec2creds, EC2_ENDPOINT, instance.instance_id)
-                print >>stdout, "returned from get_EC2_addresses call. d4 is %s"%d4
                 def _maybe_again2(res):
                     if res:
-                        print >>stdout, "About to return res: %s, %s"%(res)
                         return res
                     if how_long_secs <= 0.0:
                         raise TimeoutError("Timed out waiting for addresses of EC2 instance.")
