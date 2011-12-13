@@ -37,12 +37,9 @@ class TestAutoSetup(TestCase):
             self._patchers.append(patcher)
             return patcher.__enter__()
 
-        self.mockfabapi = start_patch('lae_automation.server.api')            
-        self.mockfabapi.run.side_effect = self.runsideeffects
-        self.mockfabcd = start_patch('lae_automation.server.cd')
-        self.mockfabcd.__enter__ = mock.Mock()
-        self.mockfabcd.__exit__ = mock.Mock()
-        self.mockfabcd.__exit__.return_value = None, None, None
+        self.mockinstall_server = start_patch('lae_automation.signup.install_server')            
+        self.mockbounce_server = start_patch('lae_automation.signup.bounce_server')
+        self.mocksend_confirmation = start_patch('lae_automation.signup.send_signup_confirmation')
         self.mockmhr = start_patch('lae_automation.aws.queryapi.make_http_request')
         self.mockmhr.side_effect = self.mockmakehttprequestreturns
 
@@ -67,6 +64,8 @@ class TestAutoSetup(TestCase):
 
     def test_signup(self):
         # Arguments to signup
+        from lae_automation.config import Config
+        config = Config('../lae_auto_test_config.json')
         mactivationkey = 'MOCKACTIVATONKEY'
         mproductcode = 'ABCDEFGH'
         mname = 'MNAME'
