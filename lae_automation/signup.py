@@ -28,7 +28,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
     location = None  # default location for now
-
+    print config.products
     ps = [p for p in config.products if p['product_code'] == productcode]
     if len(ps) != 1:
         raise AssertionError("Product code %r matches %d products." % (productcode, len(ps)))

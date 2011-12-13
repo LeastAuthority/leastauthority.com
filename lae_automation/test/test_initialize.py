@@ -8,15 +8,22 @@ import mock, os, sys
 
 from lae_automation.initialize import activate_user_account_desktop
 from lae_automation.signup import signup
+from lae_automation.config import Config
 
 
 class TestAutoSetup(TestCase):
     def setUp(self):
+        self.original_directory = os.getcwd()
+        curdir = self.original_directory.split(os.sep)[-1]
+        if curdir == '_trial_temp':
+            os.chdir('../')# Hack to work-around trial resetting cwd.
         # Elements of activation request response.
         mutoken = 'TEST'+'A'*394
         makeyID = 'TEST'+'A'*16
         msecakey = 'TEST'+'A'*36
         mrequestid = 'TEST'+'A'*32
+
+        
         # The Activation Request Response
         self.adprequestresponse = """<ActivateDesktopProductResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><ActivateDesktopProductResult><UserToken>{UserToken}%s==</UserToken><AWSAccessKeyId>%s</AWSAccessKeyId><SecretAccessKey>%s</SecretAccessKey></ActivateDesktopProductResult><ResponseMetadata><RequestId>%s</RequestId></ResponseMetadata></ActivateDesktopProductResponse>"""%(mutoken, makeyID, msecakey, mrequestid)
 
@@ -25,26 +32,23 @@ class TestAutoSetup(TestCase):
         self.describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?><DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>TEST</requestId><reservationSet><item><reservationId>TEST</reservationId><ownerId>TEST</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>TEST</instanceId><imageId>TEST</imageId><instanceState><code>TEST</code><name>TEST</name></instanceState><privateDnsName>TESTinternal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>TEST</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.TEST</instanceType><launchTime>TEST</launchTime><placement><availabilityZone>TEST</availabilityZone></placement><kernelId>TEST</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>""" 
         self.mhr_return_values = [self.adprequestresponse, self.verifyrequestresponse, self.describeEC2instresponse]
         self.run_return_values = ['ubuntu']
-
-        self.original_directory = os.getcwd()
-        curdir = self.original_directory.split(os.sep)[-1]
-        if curdir == '_trial_temp':
-            os.chdir('../')# Hack to work-around trial resetting cwd.
         self._patchers = []
 
         def start_patch(name):
             patcher = mock.patch(name)
             self._patchers.append(patcher)
             return patcher.__enter__()
-
+        config = Config('lae_automation/test/init_test_config.json')        
+        from lae_automation.signup import config as signupconfig
+        signupconfig.products = config.products
+        #self.mockconfigproducts = start_patch('lae_automation.signup.config')
+        #self.mockconfigproducts.products = configproducts
         self.mockinstall_server = start_patch('lae_automation.signup.install_server')            
         self.mockbounce_server = start_patch('lae_automation.signup.bounce_server')
         self.mocksend_confirmation = start_patch('lae_automation.signup.send_signup_confirmation')
         self.mockmhr = start_patch('lae_automation.aws.queryapi.make_http_request')
         self.mockmhr.side_effect = self.mockmakehttprequestreturns
-
         self.mocktxawsS3Clientmakequeryfactory = start_patch('lae_automation.aws.devpay_s3client.DevPayS3Client._make_query_factory')
-
         self.mockrun_instances = start_patch('lae_automation.initialize.EC2Client.run_instances')
         self.mockrun_instances.return_value = defer.succeed([mock.Mock()])
         self.mockdescribe_instances = start_patch('lae_automation.initialize.EC2Client.describe_instances')
@@ -64,8 +68,6 @@ class TestAutoSetup(TestCase):
 
     def test_signup(self):
         # Arguments to signup
-        from lae_automation.config import Config
-        config = Config('../lae_auto_test_config.json')
         mactivationkey = 'MOCKACTIVATONKEY'
         mproductcode = 'ABCDEFGH'
         mname = 'MNAME'
