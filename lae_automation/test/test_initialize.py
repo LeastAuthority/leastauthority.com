@@ -1,4 +1,3 @@
-
 from cStringIO import StringIO
 
 from twisted.trial.unittest import TestCase
@@ -22,14 +21,12 @@ class TestAutoSetup(TestCase):
         makeyID = 'TEST'+'A'*16
         msecakey = 'TEST'+'A'*36
         mrequestid = 'TEST'+'A'*32
-
-        
         # The Activation Request Response
         self.adprequestresponse = """<ActivateDesktopProductResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><ActivateDesktopProductResult><UserToken>{UserToken}%s==</UserToken><AWSAccessKeyId>%s</AWSAccessKeyId><SecretAccessKey>%s</SecretAccessKey></ActivateDesktopProductResult><ResponseMetadata><RequestId>%s</RequestId></ResponseMetadata></ActivateDesktopProductResponse>"""%(mutoken, makeyID, msecakey, mrequestid)
 
         self.verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><VerifyProductSubscriptionByTokensResult><Subscribed>true</Subscribed></VerifyProductSubscriptionByTokensResult><ResponseMetadata><RequestId>bd9db94b-a1b0-4a5f-8d70-6cc4de427623</RequestId></ResponseMetadata></VerifyProductSubscriptionByTokensResponse>"""
 
-        self.describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?><DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>TEST</requestId><reservationSet><item><reservationId>TEST</reservationId><ownerId>TEST</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>TEST</instanceId><imageId>TEST</imageId><instanceState><code>TEST</code><name>TEST</name></instanceState><privateDnsName>TESTinternal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>TEST</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.TEST</instanceType><launchTime>TEST</launchTime><placement><availabilityZone>TEST</availabilityZone></placement><kernelId>TEST</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>""" 
+        self.describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?><DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>TEST</requestId><reservationSet><item><reservationId>TEST</reservationId><ownerId>TEST</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>TEST</instanceId><imageId>TEST</imageId><instanceState><code>TEST</code><name>TEST</name></instanceState><privateDnsName>TESTinternal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>TEST</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.TEST</instanceType><launchTime>TEST</launchTime><placement><availabilityZone>TEST</availabilityZone></placement><kernelId>TEST</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>"""
         self.mhr_return_values = [self.adprequestresponse, self.verifyrequestresponse, self.describeEC2instresponse]
         self.run_return_values = ['ubuntu']
         self._patchers = []
@@ -38,12 +35,10 @@ class TestAutoSetup(TestCase):
             patcher = mock.patch(name)
             self._patchers.append(patcher)
             return patcher.__enter__()
-        config = Config('lae_automation/test/init_test_config.json')        
+        config = Config('lae_automation/test/init_test_config.json')
         from lae_automation.signup import config as signupconfig
         signupconfig.products = config.products
-        #self.mockconfigproducts = start_patch('lae_automation.signup.config')
-        #self.mockconfigproducts.products = configproducts
-        self.mockinstall_server = start_patch('lae_automation.signup.install_server')            
+        self.mockinstall_server = start_patch('lae_automation.signup.install_server')
         self.mockbounce_server = start_patch('lae_automation.signup.bounce_server')
         self.mocksend_confirmation = start_patch('lae_automation.signup.send_signup_confirmation')
         self.mockmhr = start_patch('lae_automation.aws.queryapi.make_http_request')
@@ -78,7 +73,7 @@ class TestAutoSetup(TestCase):
         mseed = 'MSEED'
         msecretsfile = 'MSECRETSFILE'
         su_deferred = signup(mactivationkey, mproductcode, mname, memail, mkeyinfo, mstdout, mstderr, mseed, msecretsfile)
-        return su_deferred    
+        return su_deferred
 
 class InitializationTests (TestCase):
 
@@ -108,4 +103,3 @@ class InitializationTests (TestCase):
             producttoken = mock.sentinel.producttoken,
             stdout = StringIO(),
             stderr = StringIO())
-
