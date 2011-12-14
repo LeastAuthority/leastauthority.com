@@ -7,7 +7,7 @@ import mock, sys
 
 from lae_automation.signup import signup
 from lae_automation.test.testinitvector import adprequestresponse, verifyrequestresponse, describeEC2instresponse
-
+from lae_util.http_client import make_http_request
 
 class TestSignupModule(TestCase):
     def setUp(self):
@@ -26,7 +26,7 @@ class TestSignupModule(TestCase):
         self.mockinstall_server = start_patch('lae_automation.signup.install_server')
         self.mockbounce_server = start_patch('lae_automation.signup.bounce_server')
         self.mocksend_confirmation = start_patch('lae_automation.signup.send_signup_confirmation')
-        self.mockmhr = start_patch('lae_automation.aws.queryapi.make_http_request')
+        self.mockmhr = start_patch('make_http_request')
         self.mockmhr.side_effect = self.mockmakehttprequestreturns
         self.mocktxawsS3Clientmakequeryfactory = start_patch('lae_automation.aws.devpay_s3client.DevPayS3Client._make_query_factory')
         self.mockrun_instances = start_patch('lae_automation.initialize.EC2Client.run_instances')
