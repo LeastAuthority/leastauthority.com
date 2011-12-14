@@ -11,6 +11,10 @@ from lae_automation import confirmation
 from lae_automation.confirmation import send_signup_confirmation
 
 
+class MarkerException(Exception):
+    pass
+
+
 class TestConfirmation(unittest.TestCase):
     SMTP_HOST = confirmation.SMTP_HOST
     SMTP_PORT = confirmation.SMTP_PORT
@@ -117,7 +121,7 @@ class TestConfirmation(unittest.TestCase):
         stderr = StringIO()
 
         def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
-            raise Exception('foo')
+            raise MarkerException()
         self.patch(confirmation, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
         d = send_signup_confirmation(self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
@@ -125,7 +129,7 @@ class TestConfirmation(unittest.TestCase):
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
-            f.trap(Exception)
+            f.trap(MarkerException)
             out = stdout.getvalue()
             self.failUnlessIn("Sending of e-mail failed", out)
         d.addCallbacks(_bad_success, _check_failure)
@@ -136,7 +140,7 @@ class TestConfirmation(unittest.TestCase):
         stderr = StringIO()
 
         def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
-            eventually(d.errback, Exception('foo'))
+            eventually(d.errback, MarkerException())
             return Mock()
         self.patch(confirmation, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
@@ -149,7 +153,7 @@ class TestConfirmation(unittest.TestCase):
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
-            f.trap(Exception)
+            f.trap(MarkerException)
             out = stdout.getvalue()
             self.failUnlessIn("Sending of e-mail failed", out)
         d.addCallbacks(_bad_success, _check_failure)
@@ -165,7 +169,7 @@ class TestConfirmation(unittest.TestCase):
         self.patch(confirmation, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
         def call_connectTCP(smtphost, port, factory):
-            raise Exception("foo")
+            raise MarkerException()
         self.patch(confirmation, 'connectTCP', call_connectTCP)
 
         d = send_signup_confirmation(self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
@@ -173,7 +177,7 @@ class TestConfirmation(unittest.TestCase):
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
-            f.trap(Exception)
+            f.trap(MarkerException)
             out = stdout.getvalue()
             self.failUnlessIn("Sending of e-mail failed", out)
         d.addCallbacks(_bad_success, _check_failure)
