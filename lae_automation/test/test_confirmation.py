@@ -104,7 +104,12 @@ class TestConfirmation(unittest.TestCase):
 
         def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
             eventually(d.errback, Exception('foo'))
+            return Mock()
         self.patch(confirmation, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
+
+        def call_connectTCP(smtphost, port, factory):
+            pass
+        self.patch(confirmation, 'connectTCP', call_connectTCP)
 
         d = send_signup_confirmation(self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      self.CUSTOMER_KEYINFO, stdout, stderr, password_path='smtppassword')
