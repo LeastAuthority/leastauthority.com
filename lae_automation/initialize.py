@@ -133,7 +133,12 @@ def dump_instance_information(instance, stderr):
 
 
 def create_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoken=None, location=None):
-    print >>stdout, "Creating S3 bucket..."
+    if location is None:
+        print >>stdout, "Creating S3 bucket in 'US East' region..."
+    else:
+        # TODO: print user-friendly region name
+        print >>stdout, "Creating S3 bucket..."
+
     print >>stderr, ('usertoken = %r\n'
                      'bucketname = %r\n'
                      'location = %r\n'
