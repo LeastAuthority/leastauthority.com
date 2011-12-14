@@ -6,23 +6,19 @@ from twisted.internet import defer
 import mock, sys
 
 from lae_automation.signup import signup
+
+# Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
 from lae_automation.test.testinitvector import adprequestresponse, verifyrequestresponse, describeEC2instresponse
 
 
 class TestSignupModule(TestCase):
+    mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
     def setUp(self):
-        # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
-        self.adprequestresponse = adprequestresponse
-        self.verifyrequestresponse = verifyrequestresponse
-        self.describeEC2instresponse = describeEC2instresponse
-        self.mhr_return_values = [self.adprequestresponse, self.verifyrequestresponse, self.describeEC2instresponse]
         self._patchers = []
-
         def start_patch(name):
             patcher = mock.patch(name)
             self._patchers.append(patcher)
             return patcher.__enter__()
- 
         self.mockinstall_server = start_patch('lae_automation.signup.install_server')
         self.mockbounce_server = start_patch('lae_automation.signup.bounce_server')
         self.mocksend_confirmation = start_patch('lae_automation.signup.send_signup_confirmation')
