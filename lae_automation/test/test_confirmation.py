@@ -5,7 +5,6 @@ from mock import Mock
 
 from twisted.trial import unittest
 from twisted.python.filepath import FilePath
-from twisted.python.failure import Failure
 from foolscap.api import eventually
 
 from lae_automation import confirmation

@@ -1,5 +1,5 @@
 
-import urllib, time, sys
+import urllib, time
 from hashlib import sha1
 from base64 import b64encode
 
