@@ -35,22 +35,15 @@ CONFIGFILEJSON = """{
   "key_filename":      "EC2MOCKKEYFILENAME.pem"
 }"""
 MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
-CONFIGFILEPATH = 'init_test_config.json'
-EC2SECRETPATH = 'mock_ec2secret'
 
 class TestSignupModule(TestCase):
     fakeURLs = [adphttprequestheader, verifyhttprequestheader]
     mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
     def setUp(self):
-        FilePath(CONFIGFILEPATH).setContent(CONFIGFILEJSON)
-        FilePath(EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
-
-    def tearDown(self):
-        FilePath(CONFIGFILEPATH).remove()
-        FilePath(EC2SECRETPATH).remove()
-
-
-    def test_signup(self):
+        self.CONFIGFILEPATH = 'init_test_config.json'
+        self.EC2SECRETPATH = 'mock_ec2secret'
+        FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
+        FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
         from lae_automation.aws.queryapi import time
         def call_time():
             return 0
@@ -131,6 +124,13 @@ class TestSignupModule(TestCase):
             return defer.succeed("Tested send confirmation email call!")
         self.patch(signup_servercontainer, 'send_signup_confirmation', call_send_signup_confirmation)
 
+
+    def tearDown(self):
+        FilePath(self.CONFIGFILEPATH).remove()
+        FilePath(self.EC2SECRETPATH).remove()
+
+
+    def test_signup(self):
         # Arguments to signup
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
         MPRODUCTCODE = 'ABCDEFGH'
@@ -141,5 +141,5 @@ class TestSignupModule(TestCase):
         MSTDERR = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, CONFIGFILEPATH, EC2SECRETPATH)
+        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
         return su_deferred
