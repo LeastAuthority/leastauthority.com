@@ -1,6 +1,7 @@
 from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
+from twisted.python.filepath import FilePath
 import sys
 from lae_automation.signup import signup
 
@@ -19,13 +20,37 @@ verifyhttprequestheader = """https://ls.amazonaws.com/?Action=VerifyProductSubsc
 verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/"><VerifyProductSubscriptionByTokensResult><Subscribed>true</Subscribed></VerifyProductSubscriptionByTokensResult><ResponseMetadata><RequestId>bd9db94b-a1b0-4a5f-8d70-6cc4de427623</RequestId></ResponseMetadata></VerifyProductSubscriptionByTokensResponse>"""
 #DESCRIPTION
 describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?><DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/"><requestId>TEST</requestId><reservationSet><item><reservationId>TEST</reservationId><ownerId>TEST</ownerId><groupSet><item><groupId>CustomerDefault</groupId></item></groupSet><instancesSet><item><instanceId>TEST</instanceId><imageId>TEST</imageId><instanceState><code>TEST</code><name>TEST</name></instanceState><privateDnsName>TESTinternal</privateDnsName><dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName><reason/><keyName>TEST</keyName><amiLaunchIndex>0</amiLaunchIndex><productCodes/><instanceType>t1.TEST</instanceType><launchTime>TEST</launchTime><placement><availabilityZone>TEST</availabilityZone></placement><kernelId>TEST</kernelId></item></instancesSet></item></reservationSet></DescribeInstancesResponse>"""
-
+# Vector data for the config file data:
+CONFIGFILEJSON = """{
+  "products": [
+    { "full_name":     "The test vector product.",
+      "product_code":  "ABCDEFGH",
+      "product_token": "{ProductToken}TESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "ami_image_id":  "ami-testfbc2",
+      "instance_size": "t1.testy"
+    }
+  ],
+  "ec2_access_key_id": "TESTAAAAAAAAAAAAAAAA",
+  "keypair_name":      "EC2MOCKYKEYS2",
+  "key_filename":      "EC2MOCKKEYFILENAME.pem"
+}"""
+MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+CONFIGFILEPATH = 'init_test_config.json'
+EC2SECRETPATH = 'mock_ec2secret'
 
 class TestSignupModule(TestCase):
     fakeURLs = [adphttprequestheader, verifyhttprequestheader]
     mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
+    def setUp(self):
+        FilePath(CONFIGFILEPATH).setContent(CONFIGFILEJSON)
+        FilePath(EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
+
+    def tearDown(self):
+        FilePath(CONFIGFILEPATH).remove()
+        FilePath(EC2SECRETPATH).remove()
+
+
     def test_signup(self):
-        #Patch out calls to make_http_request.  Keeps the test local, i.e. no need to communicate over-the-wire.
         from lae_automation.aws.queryapi import time
         def call_time():
             return 0
@@ -116,8 +141,5 @@ class TestSignupModule(TestCase):
         MSTDERR = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-        CONFIGFILEPATH = '../lae_automation/test/init_test_config.json'
-        EC2SECRETPATH = '../lae_automation/test/mock_ec2secret'
-
         su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, CONFIGFILEPATH, EC2SECRETPATH)
         return su_deferred
