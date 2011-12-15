@@ -53,8 +53,8 @@ class TestSignupModule(TestCase):
         #Because the S3 Client call to S3 is made through txaws, it circumvents make_http_request, and necessitates a seperate patch to isolate the system from remote components.  The patched function is the submit method of the query object in initialize.  This attribute belongs to the Query class object in:  
         from lae_automation.aws.devpay_s3client import Query
         def call_query_submit(QueryObject):
-            print "self.get_headers(): %s"% Query.get_headers(QueryObject)
-            header_dict = Query.get_headers(QueryObject)
+            print "self.get_headers(): %s"% QueryObject.get_headers()
+            header_dict = QueryObject.get_headers()
             self.failUnlessEqual(header_dict['Date'], 'Thu, 01 Jan 1970 00:00:00 GMT') 
             self.failUnlessEqual(header_dict['Content-Length'], 0)
             self.failUnlessEqual(header_dict['Authorization'], 'AWS TESTAAAAAAAAAAAAAAAA:NlnzOWOmMCut8/Opl26UpAAiIhE=')
