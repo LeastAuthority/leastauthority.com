@@ -34,12 +34,19 @@ CONFIGFILEJSON = """{
   "keypair_name":      "EC2MOCKYKEYS2",
   "key_filename":      "EC2MOCKKEYFILENAME.pem"
 }"""
+ZEROPRODUCT = """{
+  "products": [],
+  "ec2_access_key_id": "TESTAAAAAAAAAAAAAAAA",
+  "keypair_name":      "EC2MOCKYKEYS2",
+  "key_filename":      "EC2MOCKKEYFILENAME.pem"
+}"""
+
 MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
 
 class TestSignupModule(TestCase):
-    fakeURLs = [adphttprequestheader, verifyhttprequestheader]
-    mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
     def setUp(self):
+        self.fakeURLs = [adphttprequestheader, verifyhttprequestheader]
+        self.mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
         self.CONFIGFILEPATH = 'init_test_config.json'
         self.EC2SECRETPATH = 'mock_ec2secret'
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
@@ -90,21 +97,13 @@ class TestSignupModule(TestCase):
             return defer.succeed( ('0.0.0.0', '0.0.0.0') )
         self.patch(EC2Client, 'describe_instances', call_describe_instances)
 
-        from lae_automation import signup as signup_servercontainer
+        from lae_automation import signup as signupmodule
         def call_install_server(public_host, key_filename, stdout, stderr):
             self.failUnlessEqual(public_host, '0.0.0.0')
             self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
-        self.patch(signup_servercontainer, 'install_server', call_install_server)
-        def call_bounce_server(public_host,
-                               key_filename,
-                               private_host,
-                               creds,
-                               user_token,
-                               product_token,
-                               bucket_name,
-                               stdout,
-                               stderr,
-                               secretsfile):
+        self.patch(signupmodule, 'install_server', call_install_server)
+        def call_bounce_server(public_host, key_filename, private_host, creds, user_token, product_token,\
+                                   bucket_name, stdout, stderr, secretsfile):
             self.failUnlessEqual(public_host, '0.0.0.0')
             self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
             self.failUnlessEqual(private_host, '0.0.0.0')
@@ -114,7 +113,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
             self.failUnlessEqual(creds.access_key, 'TESTAAAAAAAAAAAAAAAA')
             self.failUnlessEqual(creds.secret_key, 'TESTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-        self.patch(signup_servercontainer, 'bounce_server', call_bounce_server)
+        self.patch(signupmodule, 'bounce_server', call_bounce_server)
 
         def call_send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr):
             self.failUnlessEqual(customer_name, 'MNAME')
@@ -122,7 +121,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(furl, None)
             self.failUnlessEqual(customer_keyinfo, 'MKEYINFO')
             return defer.succeed("Tested send confirmation email call!")
-        self.patch(signup_servercontainer, 'send_signup_confirmation', call_send_signup_confirmation)
+        self.patch(signupmodule, 'send_signup_confirmation', call_send_signup_confirmation)
 
 
     def tearDown(self):
@@ -131,15 +130,51 @@ class TestSignupModule(TestCase):
 
 
     def test_signup(self):
-        # Arguments to signup
+        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
+        MPRODUCTCODE = 'ABCDEFGH'
+        MNAME = 'MNAME'
+        MEMAIL = 'MEMAIL'
+        MKEYINFO = 'MKEYINFO'
+        MSTDOUT = StringIO()
+        MSTDERR = StringIO()
+        MSEED = 'MSEED'
+        MSECRETSFILE = 'MSECRETSFILE'
+        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        return su_deferred
+
+    def test_no_products(self):
+        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
+        MPRODUCTCODE = 'ABCDEFGH'
+        MNAME = 'MNAME'
+        MEMAIL = 'MEMAIL'
+        MKEYINFO = 'MKEYINFO'
+        MSTDOUT = StringIO()
+        MSTDERR = StringIO()
+        MSEED = 'MSEED'
+        MSECRETSFILE = 'MSECRETSFILE'
+        FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
+        try:
+            su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        except AssertionError, msg:
+            return defer.succeed(msg)
+
+    def test_timeout_verify(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
         MPRODUCTCODE = 'ABCDEFGH'
         MNAME = 'MNAME'
         MEMAIL = 'MEMAIL'
         MKEYINFO = 'MKEYINFO'
         MSTDOUT = sys.stdout#StringIO()
-        MSTDERR = StringIO()
+        MSTDERR = sys.stderr#StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        from twisted.python import log
+        from lae_automation import signup as signupmodule
+        def call_verify_user_account(creds, usertoken, producttoken, stdout, stderr):
+            return defer.succeed(False)
+        self.patch(signupmodule, 'verify_user_account', call_verify_user_account)
+        try:
+            su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH, testverifywait=True)
+        except lae_automation.signup.TimeoutError:
+            su_deferred.addErrback(log.err)
         return su_deferred

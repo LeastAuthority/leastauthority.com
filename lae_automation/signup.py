@@ -20,10 +20,11 @@ class TimeoutError:
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
-POLL_TIME = 30
+POLL_TIME = 3 #XXXX For testing is not 30
 
 
-def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret', clock=None):
+def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret', clock=None, testverifywait=False):
+    print "testverifywait is %s"%testverifywait
     config = Config(configpath)
     myclock = clock or reactor
 
@@ -55,19 +56,28 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
         def _wait_until_verified(how_long_secs):
             d3 = verify_user_account(usercreds, usertoken, producttoken, stdout, stderr)
+            def printer(res):
+                print "About to print res from verify_user_account: %s"%res
+            d3.addCallback(printer)
             def _maybe_again(res):
                 if res:
                     print >>stdout, "Subscription verified."
                     return
                 if how_long_secs <= 0.0:
-                    raise TimeoutError("Timed out waiting for verification of subscription.")
-                    print >>stdout, "Waiting another %d seconds..." % (POLL_TIME,)
-                    return task.deferLater(myclock, POLL_TIME, _wait_until_verified, how_long_secs - POLL_TIME)
+                    raise TimeoutError#("Timed out waiting for verification of subscription.")
+                print >>stdout, "Waiting another %d seconds..." % (POLL_TIME,)
+                return task.deferLater(myclock, POLL_TIME, _wait_until_verified, how_long_secs - POLL_TIME)
             d3.addCallback(_maybe_again)
             return d3
 
         # credit card verification might take 15 minutes, so wait 20.
-        d2 = _wait_until_verified(20 * 60.0)
+        if testverifywait == True:
+            print "testverifywait is True!"
+            d2 = _wait_until_verified(6)
+        else:
+            print "testverifywait is %s"%testverifywait
+            print "What the fuck?"
+            d2 = _wait_until_verified(20 * 60.0)
         
         d2.addCallback(lambda ign: create_user_bucket(usercreds, usertoken, bucketname, stdout, stderr,
                                                       producttoken=producttoken, location=location))
