@@ -26,8 +26,8 @@ class TestSignupModule(TestCase):
             self._patchers.append(patcher)
             return patcher.__enter__()
 
-        self.mockdescribe_instances = start_patch('lae_automation.initialize.EC2Client.describe_instances')
-        self.mockdescribe_instances.return_value = defer.succeed( ('0.0.0.0', '0.0.0.0') )
+        #self.mockdescribe_instances = start_patch('lae_automation.initialize.EC2Client.describe_instances')
+        #self.mockdescribe_instances.return_value = defer.succeed( ('0.0.0.0', '0.0.0.0') )
         self.mockinstall_server = start_patch('lae_automation.signup.install_server')
         self.mockbounce_server = start_patch('lae_automation.signup.bounce_server')
         self.mocksend_confirmation = start_patch('lae_automation.signup.send_signup_confirmation')
@@ -72,7 +72,10 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(maxinstancecount, 1)
             self.failUnlessEqual(secgroups, ['CustomerDefault'])
             self.failUnlessEqual(keypair_name, 'EC2MOCKYKEYS2')
-            return defer.succeed(['MOCKEC2INSTANCE'])
+            class MOCKEC2:
+                def __init__(self):
+                    self.instance_id = 'MOCKEC2INSTANCEID'
+            return defer.succeed([MOCKEC2()])
         self.patch(EC2Client, 'run_instances', call_run_instances)
 
         
