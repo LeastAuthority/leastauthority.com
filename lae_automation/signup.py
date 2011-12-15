@@ -51,6 +51,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     d = activate_user_account_desktop(activationkey, producttoken, stdout, stderr)
     def _activated(adpr):
         usercreds = AWSCredentials(adpr.access_key_id, adpr.secret_key)
+        print "usercreds: %s"%usercreds
         usertoken = adpr.usertoken
 
         def _wait_until_verified(how_long_secs):
@@ -68,7 +69,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
         # credit card verification might take 15 minutes, so wait 20.
         d2 = _wait_until_verified(20 * 60.0)
-
+        
         d2.addCallback(lambda ign: create_user_bucket(usercreds, usertoken, bucketname, stdout, stderr,
                                                       producttoken=producttoken, location=location))
 
