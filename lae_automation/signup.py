@@ -20,10 +20,10 @@ class TimeoutError:
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
-POLL_TIME = 3 #XXXX For testing is not 30
+POLL_TIME = 30
 
 
-def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret', clock=None, testverifywait=False):
+def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret', clock=None, testverifywait=False, testaddressreqwait=False):
     config = Config(configpath)
     myclock = clock or reactor
 
@@ -72,7 +72,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
             d2 = _wait_until_verified(1)
         else:
             d2 = _wait_until_verified(20 * 60.0)
-        
+
         d2.addCallback(lambda ign: create_user_bucket(usercreds, usertoken, bucketname, stdout, stderr,
                                                       producttoken=producttoken, location=location))
 
@@ -94,8 +94,12 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                 d4.addCallback(_maybe_again2)
                 return d4
 
-            # wait 10 seconds before the first poll, then up to 5 minutes for the addresses
-            d3 = task.deferLater(myclock, 1, _wait_for_addresses, 5 * 60.0)#XXX Changed temporarily to speed up tests.
+            if testaddressreqwait == True:
+                POLL_TIME = 1
+                d3 = task.deferLater(myclock, 1, _wait_for_addresses, 1)
+            else:
+                # wait 10 seconds before the first poll, then up to 5 minutes for the addresses
+                d3 = task.deferLater(myclock, 10, _wait_for_addresses, 5 * 60.0)
 
             def _got_addresses( (publichost, privatehost) ):
                 print >>stdout, "The server's public address is %r." % (publichost,)

@@ -176,6 +176,57 @@ class TestSignupModule(TestCase):
             pass
             #print "error is %s:"%error#XXX DavidSarah Help! What should _really_ happen here?!?!
             #print "XXX DavidSarah Help! What should _really_ happen here?!?!"
-
         su_deferred.addErrback(handle_timouterror)
+        return su_deferred
+
+    def test_timeout_addressreq(self):
+        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
+        MPRODUCTCODE = 'ABCDEFGH'
+        MNAME = 'MNAME'
+        MEMAIL = 'MEMAIL'
+        MKEYINFO = 'MKEYINFO'
+        MSTDOUT = StringIO()
+        MSTDERR = StringIO()
+        MSEED = 'MSEED'
+        MSECRETSFILE = 'MSECRETSFILE'
+        from lae_automation import signup as signupmodule
+        def call_get_EC2_addresses(ec2creds, EC2_ENDPOINT, instance_id):
+            return defer.succeed(False)
+        self.patch(signupmodule, 'get_EC2_addresses', call_get_EC2_addresses)
+        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH, testaddressreqwait=True)
+        def handle_timouterror(error):
+            pass
+            #print "error is %s:"%error#XXX DavidSarah Help! What should _really_ happen here?!?!
+            #print "XXX DavidSarah Help! What should _really_ happen here?!?!"
+        su_deferred.addErrback(handle_timouterror)
+        return su_deferred
+
+    def test_EC2_not_listening(self):
+        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
+        MPRODUCTCODE = 'ABCDEFGH'
+        MNAME = 'MNAME'
+        MEMAIL = 'MEMAIL'
+        MKEYINFO = 'MKEYINFO'
+        MSTDOUT = StringIO()
+        MSTDERR = StringIO()
+        MSEED = 'MSEED'
+        MSECRETSFILE = 'MSECRETSFILE'
+        from lae_automation.server import NotListeningError
+        from lae_automation import signup as signupmodule
+        self.First = True
+        def call_install_server(public_host, key_filename, stdout, stderr):
+            self.failUnlessEqual(public_host, '0.0.0.0')
+            self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
+            if self.First:
+                self.First = False
+                raise NotListeningError
+            else:
+                return
+        self.patch(signupmodule, 'install_server', call_install_server)
+        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        def handle_notlisteningerror(error):
+            pass
+            #print "error is %s:"%error#XXX DavidSarah Help! What should _really_ happen here?!?!
+            #print "XXX DavidSarah Help! What should _really_ happen here?!?!"
+        su_deferred.addErrback(handle_notlisteningerror)
         return su_deferred
