@@ -1,4 +1,3 @@
-
 import urllib, time
 from hashlib import sha1
 from base64 import b64encode
@@ -37,7 +36,6 @@ class QueryAPIMixin:
         # Make a copy because we will modify the result:
         params = dict(params)
         if self._creds is not None:
-            print 'self._creds.access_key: %s'% self._creds.access_key
             update_by_keywords_without_overwrite(
                 params,
                 AWSAccessKeyId = self._creds.access_key,

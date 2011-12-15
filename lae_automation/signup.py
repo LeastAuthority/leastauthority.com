@@ -51,7 +51,6 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     d = activate_user_account_desktop(activationkey, producttoken, stdout, stderr)
     def _activated(adpr):
         usercreds = AWSCredentials(adpr.access_key_id, adpr.secret_key)
-        print "usercreds: %s"%usercreds
         usertoken = adpr.usertoken
 
         def _wait_until_verified(how_long_secs):
