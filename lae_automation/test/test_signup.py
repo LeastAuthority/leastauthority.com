@@ -1,8 +1,6 @@
 from cStringIO import StringIO
-
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
-
 import mock, sys
 from lae_automation.signup import signup
 
@@ -16,7 +14,6 @@ class TestSignupModule(TestCase):
 
     def setUp(self):
         self._patchers = []
-
         def start_patch(name):
             patcher = mock.patch(name)
             self._patchers.append(patcher)
@@ -73,7 +70,6 @@ class TestSignupModule(TestCase):
             return defer.succeed( ('0.0.0.0', '0.0.0.0') )
         self.patch(EC2Client, 'describe_instances', call_describe_instances)
 
-
         from lae_automation import signup as signup_servercontainer
         def call_install_server(public_host, key_filename, stdout, stderr):
             self.failUnlessEqual(public_host, '0.0.0.0')
@@ -106,7 +102,6 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(furl, None)
             self.failUnlessEqual(customer_keyinfo, 'MKEYINFO')
             return defer.succeed("Tested send confirmation email call!")
-
         self.patch(signup_servercontainer, 'send_signup_confirmation', call_send_signup_confirmation)
 
         # Arguments to signup
