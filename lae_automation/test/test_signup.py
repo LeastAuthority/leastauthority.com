@@ -50,10 +50,10 @@ class TestSignupModule(TestCase):
             return defer.succeed(self.mhr_return_values.pop(0))
         self.patch(queryapi, 'make_http_request', call_make_http_request)            
 
-        #Because the S3 Client call to S3 is made through txaws, it circumvents make_http_request, and necessitates a seperate patch to isolate the system from remote components.  
+        #Because the S3 Client call to S3 is made through txaws, it circumvents make_http_request, and necessitates a seperate patch to isolate the system from remote components.  The patched function is the submit method of the query object in initialize.  This attribute belongs to the Query class object in:  
         from lae_automation.aws.devpay_s3client import Query
         def call_query_submit(self):
-            print "args[0]: %s"% self.get_headers()
+            print "self.get_headers(): %s"% self.get_headers()
             
         self.patch(Query, 'submit', call_query_submit)#devpay_s3client, 'Query', call_query)
         # Arguments to signup
