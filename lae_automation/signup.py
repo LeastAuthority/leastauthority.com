@@ -23,7 +23,9 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 POLL_TIME = 30
 
 
-def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret', clock=None, testverifywait=False, testaddressreqwait=False):
+def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
+           seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret',
+           clock=None, testverifywait=False, testaddressreqwait=False):
     config = Config(configpath)
     myclock = clock or reactor
 
