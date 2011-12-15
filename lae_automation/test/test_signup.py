@@ -11,17 +11,6 @@ from lae_automation.test.testinitvector import adphttprequestheader, adprequestr
 class TestSignupModule(TestCase):
     fakeURLs = [adphttprequestheader, verifyhttprequestheader]
     mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
-
-    def setUp(self):
-        self._patchers = []
-        def start_patch(name):
-            patcher = mock.patch(name)
-            self._patchers.append(patcher)
-            return patcher.__enter__()
-
-    def tearDown(self):
-        [p.__exit__() for p in self._patchers]
- 
     def test_signup(self):
         #Patch out calls to make_http_request.  Keeps the test local, i.e. no need to communicate over-the-wire.
         from lae_automation.aws.queryapi import time
