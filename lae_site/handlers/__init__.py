@@ -9,17 +9,6 @@ from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
 
 
-PAGES = ('about_us',
-         'support',
-         'downloads',
-         'documentation',
-         'design',
-         'security',
-         'products',
-         'howtoconfigure',
-        )
-
-
 def make_site(config):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
@@ -28,9 +17,6 @@ def make_site(config):
     resource.putChild('sign_up_info', Redirect('/signup'))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())
     resource.putChild('activation-request', ActivationRequestHandler())
-
-    for child in PAGES:
-        resource.putChild(child, JinjaHandler(child + '.html'))
 
     return Site(resource, logPath="sitelogs")
 
