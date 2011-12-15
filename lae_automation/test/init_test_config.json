@@ -9,5 +9,5 @@
   ],
   "ec2_access_key_id": "TESTAAAAAAAAAAAAAAAA",
   "keypair_name":      "EC2MOCKYKEYS2",
-  "key_filename":      "../EC2adminkeys2.pem"
+  "key_filename":      "EC2MOCKKEYFILENAME.pem"
 }
