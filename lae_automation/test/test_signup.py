@@ -26,8 +26,6 @@ class TestSignupModule(TestCase):
             self._patchers.append(patcher)
             return patcher.__enter__()
 
-        self.mockrun_instances = start_patch('lae_automation.initialize.EC2Client.run_instances')
-        self.mockrun_instances.return_value = defer.succeed([mock.Mock()])
         self.mockdescribe_instances = start_patch('lae_automation.initialize.EC2Client.describe_instances')
         self.mockdescribe_instances.return_value = defer.succeed( ('0.0.0.0', '0.0.0.0') )
         self.mockinstall_server = start_patch('lae_automation.signup.install_server')
@@ -53,16 +51,31 @@ class TestSignupModule(TestCase):
         #Because the S3 Client call to S3 is made through txaws, it circumvents make_http_request, and necessitates a seperate patch to isolate the system from remote components.  The patched function is the submit method of the query object in initialize.  This attribute belongs to the Query class object in:  
         from lae_automation.aws.devpay_s3client import Query
         def call_query_submit(QueryObject):
-            print "self.get_headers(): %s"% QueryObject.get_headers()
             header_dict = QueryObject.get_headers()
             self.failUnlessEqual(header_dict['Date'], 'Thu, 01 Jan 1970 00:00:00 GMT') 
             self.failUnlessEqual(header_dict['Content-Length'], 0)
             self.failUnlessEqual(header_dict['Authorization'], 'AWS TESTAAAAAAAAAAAAAAAA:NlnzOWOmMCut8/Opl26UpAAiIhE=')
             self.failUnlessEqual(header_dict['x-amz-security-token'],'{UserToken}TESTUSERTOKEN%s==,{ProductToken}TESTPRODUCTTOKEN%s='%('A'*385, 'A'*295))
             self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
- 
-            
-        self.patch(Query, 'submit', call_query_submit)#devpay_s3client, 'Query', call_query)
+            return defer.succeed('Completed devpay bucket creation submission.')
+        self.patch(Query, 'submit', call_query_submit)
+        from lae_automation.initialize import EC2Client
+        def call_run_instances(EC2Client,
+                               ami_image_id,
+                               mininstancecount,
+                               maxinstancecount,
+                               secgroups,
+                               keypair_name,
+                               instance_type):                             
+            self.failUnlessEqual(ami_image_id, 'ami-testfbc2')
+            self.failUnlessEqual(mininstancecount, 1)
+            self.failUnlessEqual(maxinstancecount, 1)
+            self.failUnlessEqual(secgroups, ['CustomerDefault'])
+            self.failUnlessEqual(keypair_name, 'EC2MOCKYKEYS2')
+            return defer.succeed(['MOCKEC2INSTANCE'])
+        self.patch(EC2Client, 'run_instances', call_run_instances)
+
+        
         # Arguments to signup
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
         MPRODUCTCODE = 'ABCDEFGH'

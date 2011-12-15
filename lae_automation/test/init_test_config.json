@@ -8,6 +8,6 @@
     }
   ],
   "ec2_access_key_id": "TESTAAAAAAAAAAAAAAAA",
-  "keypair_name":      "EC2adminkeys2",
+  "keypair_name":      "EC2MOCKYKEYS2",
   "key_filename":      "../EC2adminkeys2.pem"
 }

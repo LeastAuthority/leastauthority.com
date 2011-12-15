@@ -64,6 +64,8 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                      'keypair_name = %r'
                      % (endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name))
 
+
+
     d = client.run_instances(ami_image_id,
                              mininstancecount,
                              maxinstancecount,
