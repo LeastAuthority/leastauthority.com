@@ -24,7 +24,6 @@ POLL_TIME = 3 #XXXX For testing is not 30
 
 
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr, seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret', clock=None, testverifywait=False):
-    print "testverifywait is %s"%testverifywait
     config = Config(configpath)
     myclock = clock or reactor
 
@@ -56,9 +55,6 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
         def _wait_until_verified(how_long_secs):
             d3 = verify_user_account(usercreds, usertoken, producttoken, stdout, stderr)
-            def printer(res):
-                print "About to print res from verify_user_account: %s"%res
-            d3.addCallback(printer)
             def _maybe_again(res):
                 if res:
                     print >>stdout, "Subscription verified."
@@ -72,11 +68,9 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
         # credit card verification might take 15 minutes, so wait 20.
         if testverifywait == True:
-            print "testverifywait is True!"
-            d2 = _wait_until_verified(6)
+            POLL_TIME = 1
+            d2 = _wait_until_verified(1)
         else:
-            print "testverifywait is %s"%testverifywait
-            print "What the fuck?"
             d2 = _wait_until_verified(20 * 60.0)
         
         d2.addCallback(lambda ign: create_user_bucket(usercreds, usertoken, bucketname, stdout, stderr,
