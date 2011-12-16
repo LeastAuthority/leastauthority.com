@@ -64,8 +64,7 @@ def main():
 
 if __name__ == '__main__':
     def _err(f):
-        import traceback
-        traceback.print_exc()
+        print f
         return f
 
     d = start()
