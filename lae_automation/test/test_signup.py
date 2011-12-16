@@ -102,6 +102,13 @@ class TestSignupModule(TestCase):
 
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
         FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
+
+        self.patch(signup, 'POLL_TIME', 0.1)
+        self.patch(signup, 'CC_VERIFICATION_TIME', 0.3)
+        self.patch(signup, 'ADDRESS_DELAY_TIME', 0.1)
+        self.patch(signup, 'ADDRESS_WAIT_TIME', 0.3)
+        self.patch(signup, 'LISTEN_POLL_TIME', 0.1)
+
         from lae_automation.aws.queryapi import time
         def call_time():
             return 0

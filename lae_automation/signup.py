@@ -22,10 +22,19 @@ EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 
 POLL_TIME = 30
 
+# credit card verification might take 15 minutes, so wait 20.
+CC_VERIFICATION_TIME = 20 * 60
+
+# wait 10 seconds before the first poll, then up to 5 minutes for the addresses.
+ADDRESS_DELAY_TIME = 10
+ADDRESS_WAIT_TIME = 5 * 60
+
+LISTEN_POLL_TIME = 10
+
 
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
            seed, secretsfile, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret',
-           clock=None, testverifywait=False, testaddressreqwait=False):
+           clock=None):
     config = Config(configpath)
     myclock = clock or reactor
 
@@ -69,12 +78,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
             d3.addCallback(_maybe_again)
             return d3
 
-        # credit card verification might take 15 minutes, so wait 20.
-        if testverifywait == True:
-            POLL_TIME = 1
-            d2 = _wait_until_verified(1)
-        else:
-            d2 = _wait_until_verified(20 * 60.0)
+        d2 = _wait_until_verified(CC_VERIFICATION_TIME)
 
         d2.addCallback(lambda ign: create_user_bucket(usercreds, usertoken, bucketname, stdout, stderr,
                                                       producttoken=producttoken, location=location))
@@ -98,22 +102,22 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                 d4.addCallback(_maybe_again2)
                 return d4
 
-            if testaddressreqwait == True:
-                POLL_TIME = 1
-                d3 = task.deferLater(myclock, 1, _wait_for_addresses, 1)
-            else:
-                # wait 10 seconds before the first poll, then up to 5 minutes for the addresses
-                d3 = task.deferLater(myclock, 10, _wait_for_addresses, 5 * 60.0)
+            d3 = task.deferLater(myclock, ADDRESS_DELAY_TIME, _wait_for_addresses, ADDRESS_WAIT_TIME)
 
             def _got_addresses( (publichost, privatehost) ):
                 print >>stdout, "The server's public address is %r." % (publichost,)
+                retries = 3
                 while True:
                     try:
                         install_server(publichost, ec2keyfilename, stdout, stderr)
                         break
                     except NotListeningError:
-                        print >>stdout, "Waiting another 10 seconds..."
-                        time.sleep(10)
+                        retries -= 1
+                        if retries <= 0:
+                            print >>stdout, "Timed out waiting for EC2 instance to listen for ssh connections."
+                            raise TimeoutError()
+                        print >>stdout, "Waiting another %d seconds..." % (LISTEN_POLL_TIME)
+                        time.sleep(LISTEN_POLL_TIME)
                         continue
 
                 return bounce_server(publichost, ec2keyfilename, privatehost, usercreds, usertoken,
