@@ -2,11 +2,12 @@
 
 {% block content %}
 <h3>Products</h3>
-<p>Least Authority plans to offer a variety of products, clients, and services and our first product is Tahoe-LAFS-on-S3.</p>
+<p>Our first product is Tahoe-LAFS-on-S3.</p>
 
 <h4>What is Tahoe-LAFS-on-S3?</h4>
 <p>
-<em>Tahoe-LAFS-on-S3</em> is a reliable and scalable cloud storage back-end for use with the Tahoe-LAFS client software.</p>
+<em>Tahoe-LAFS-on-S3</em> is a reliable and scalable cloud storage back-end
+for use with the Tahoe-LAFS client software.</p>
 
 <h4>What is Tahoe-LAFS?</h4>
 
@@ -46,10 +47,26 @@ libraries, non-profits, and open source projects.</p>
 
 <h4>What is the relationship between Least Authority Enterprises and the Tahoe-LAFS open source project?</h4>
 <p>
-Zooko Wilcox-O'Hearn, founder and CEO of Least Authority Enterprises, was
-one of the inventors of Tahoe-LAFS and continues to contribute to the
-project as an architect and coder. Least Authority Enterprises contributes
-all of the code we write to the open source project.</p>
+Zooko Wilcox-O'Hearn, founder and CEO of Least Authority Enterprises, was one
+of the inventors of Tahoe-LAFS. Least Authority Enterprises contributes all
+of the code we write to the free/open source project. We believe that's the
+best thing for our customers.</p>
+
+<h4>Are there limits on how much data I can store?</h4>
+<p>There are no practical limits on the total data, but there is currently a
+limit on the size of an individual file. Files larger than about 200 MB might
+fail to upload. All upload failures, including ones caused by this, one are
+shown in your Tahoe-LAFS client software, so you'll know if this happens to
+you.</p>
+<p>We are working on lifting this limitation and will keep you informed about
+our progress.</p>
+
+<h4>Can I delete old files to save space?</h4>
+<p>For now, it is not possible to remove data from the LAE service. If you
+unlink a file, you lose your ability to access it, but it does not free up
+the space in your S3 bucket, so you still get charged for it.</p>
+<p>We are working on fixing this issue and will keep you informed about our
+progress.</p>
 
 <h4>How do I start?</h4>
 <p>
