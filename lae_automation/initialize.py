@@ -65,8 +65,6 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                      'instance_name = %r\n'
                      % (endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name, instance_name))
 
-
-
     d = client.run_instances(ami_image_id,
                              mininstancecount,
                              maxinstancecount,
@@ -85,8 +83,6 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
 
     def set_tags(instance):
         instance_id = instance.instance_id
-        print "instance_id=%r" % (instance_id,)
-        print "instance_name=%r" % (instance_name,)
         query = client.query_factory(
             action='CreateTags', creds=client.creds, endpoint=client.endpoint,
             other_params={'Version': '2011-11-01',

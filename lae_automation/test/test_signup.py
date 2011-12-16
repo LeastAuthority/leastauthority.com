@@ -13,7 +13,7 @@ REQUESTID = 'TEST'+'A'*32
 PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
 
 # Test vector requests and responses to the different make http requests: activation, verification, describe instances
-# ACTIVATION
+# ActivateDesktopProduct
 adprequestresponse = """<ActivateDesktopProductResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/">
   <ActivateDesktopProductResult>
     <UserToken>{UserToken}%s==</UserToken>
@@ -27,7 +27,7 @@ adprequestresponse = """<ActivateDesktopProductResponse xmlns="http://ls.amazona
 
 adphttprequestheader = """https://ls.amazonaws.com/?Action=ActivateDesktopProduct&ActivationKey=MOCKACTIVATONKEY&ProductToken=%7BProductToken%7DTESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D&Version=2008-04-28"""
 
-#VERIFICATION
+# VerifyProductSubscriptionByTokens
 verifyhttprequestheader = """https://ls.amazonaws.com/?Action=VerifyProductSubscriptionByTokens&AWSAccessKeyId=TESTAAAAAAAAAAAAAAAA&Expires=1970-01-01T00%3A15%3A00Z&ProductToken=%7BProductToken%7DTESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D&SignatureVersion=1&UserToken=%7BUserToken%7DTESTUSERTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D%3D&Version=2008-04-28&Signature=EoWZTlMO9qQA6Pbq5Ze4eHAlKZc%3D"""
 verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/">
   <VerifyProductSubscriptionByTokensResult>
@@ -38,7 +38,7 @@ verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="htt
   </ResponseMetadata>
 </VerifyProductSubscriptionByTokensResponse>"""
 
-#DESCRIPTION
+# DescribeInstances
 describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?>
 <DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/">
   <requestId>TEST</requestId>
@@ -128,13 +128,8 @@ class TestSignupModule(TestCase):
         self.patch(Query, 'submit', call_query_submit)
 
         from lae_automation.initialize import EC2Client
-        def call_run_instances(EC2Client,
-                               ami_image_id,
-                               mininstancecount,
-                               maxinstancecount,
-                               secgroups,
-                               keypair_name,
-                               instance_type):
+        def call_run_instances(EC2ClientObject, ami_image_id, mininstancecount, maxinstancecount,
+                               secgroups, keypair_name, instance_type):
             self.failUnlessEqual(ami_image_id, 'ami-testfbc2')
             self.failUnlessEqual(mininstancecount, 1)
             self.failUnlessEqual(maxinstancecount, 1)
