@@ -110,7 +110,7 @@ def install_server(public_host, key_filename, stdout, stderr):
     sudo_apt_get('install -y exim4-base')
     sudo_apt_get('install -y darcs')
     sudo_easy_install('foolscap')
-    run('wget https://leastauthority.com/content/static/patches/txAWS-0.2.1.post2.tar.gz')
+    run('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz')
     run('tar -xzvf txAWS-0.2.1.post2.tar.gz')
     with cd('/home/ubuntu/txAWS-0.2.1.post2'):
         sudo('python ./setup.py install')
