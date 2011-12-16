@@ -22,4 +22,4 @@ class SignupHandler(Resource):
 
         tmpl = env.get_template('signup.html')
         request.setResponseCode(200)
-        return tmpl.render(productlist=productlist).encode('ascii', 'ignore')
+        return tmpl.render(productlist=productlist).encode('utf-8')
