@@ -14,7 +14,7 @@ from lae_automation.confirmation import send_signup_confirmation
 
 
 
-class TimeoutError:
+class TimeoutError(Exception):
     pass
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
@@ -72,7 +72,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                     print >>stdout, "Subscription verified."
                     return
                 if how_long_secs <= 0.0:
-                    raise TimeoutError#("Timed out waiting for verification of subscription.")
+                    print >>stdout, "Timed out waiting for verification of subscription."
+                    raise TimeoutError()
                 print >>stdout, "Waiting another %d seconds..." % (POLL_TIME,)
                 return task.deferLater(myclock, POLL_TIME, _wait_until_verified, how_long_secs - POLL_TIME)
             d3.addCallback(_maybe_again)
@@ -96,7 +97,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                     if res:
                         return res
                     if how_long_secs <= 0.0:
-                        raise TimeoutError("Timed out waiting for addresses of EC2 instance.")
+                        print >>stdout, "Timed out waiting for addresses of EC2 instance."
+                        raise TimeoutError()
                     print >>stdout, "Waiting another %d seconds..." % (POLL_TIME,)
                     return task.deferLater(myclock, POLL_TIME, _wait_for_addresses, how_long_secs - POLL_TIME)
                 d4.addCallback(_maybe_again2)

@@ -3,7 +3,9 @@ from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
-from lae_automation.signup import signup
+
+from lae_automation import signup
+
 
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
 USERTOKEN = 'TESTUSERTOKEN'+'A'*385
@@ -68,6 +70,12 @@ describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?>
   </reservationSet>
 </DescribeInstancesResponse>"""
 
+# CreateTags
+createtagsresponse = """<CreateTagsResponse xmlns="http://ec2.amazonaws.com/doc/2011-11-01/">
+  <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
+  <return>true</return>
+</CreateTagsResponse>"""
+
 # Vector data for the config file data:
 CONFIGFILEJSON = """{
   "products": [
@@ -120,9 +128,12 @@ class TestSignupModule(TestCase):
             return defer.succeed(self.mhr_return_values.pop(0))
         self.patch(queryapi, 'make_http_request', call_make_http_request)
 
-        #Because the S3 Client call to S3 is made through txaws, it circumvents make_http_request, and necessitates a seperate patch to isolate the system from remote components.  The patched function is the submit method of the query object in initialize.  This attribute belongs to the Query class object in:
-        from lae_automation.aws.devpay_s3client import Query
-        def call_query_submit(QueryObject):
+        # Because the S3 Client call to S3 is made through txaws, it circumvents make_http_request,
+        # and necessitates a separate patch to isolate the system from remote components.
+        # The patched function is the submit method of the query object in initialize.
+        # This attribute belongs to the Query class object imported by devpay_s3client.
+        from lae_automation.aws.devpay_s3client import Query as S3_Query
+        def call_s3_query_submit(QueryObject):
             header_dict = QueryObject.get_headers()
             self.failUnlessEqual(header_dict['Date'], 'Thu, 01 Jan 1970 00:00:00 GMT')
             self.failUnlessEqual(header_dict['Content-Length'], 0)
@@ -132,7 +143,7 @@ class TestSignupModule(TestCase):
                                  '{UserToken}TESTUSERTOKEN%s==,{ProductToken}TESTPRODUCTTOKEN%s=' % ('A'*385, 'A'*295))
             self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
             return defer.succeed('Completed devpay bucket creation submission.')
-        self.patch(Query, 'submit', call_query_submit)
+        self.patch(S3_Query, 'submit', call_s3_query_submit)
 
         from lae_automation.initialize import EC2Client
         def call_run_instances(EC2ClientObject, ami_image_id, mininstancecount, maxinstancecount,
@@ -142,34 +153,39 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(maxinstancecount, 1)
             self.failUnlessEqual(secgroups, ['CustomerDefault'])
             self.failUnlessEqual(keypair_name, 'EC2MOCKYKEYS2')
-            class MOCKEC2:
+            class MockEC2Instance:
                 def __init__(self):
-                    self.instance_id = 'MOCKEC2INSTANCEID'
-            return defer.succeed([MOCKEC2()])
+                    self.instance_id = 'i-MOCKEC2INSTANCEID'
+            return defer.succeed([MockEC2Instance()])
         self.patch(EC2Client, 'run_instances', call_run_instances)
 
-        def call_describe_instances(EC2Client, instance_id):
-            self.failUnlessEqual(instance_id, 'MOCKEC2INSTANCEID')
-            return defer.succeed( ('0.0.0.0', '0.0.0.0') )
+        def call_describe_instances(EC2ClientObject, instance_id):
+            self.failUnlessEqual(instance_id, 'i-MOCKEC2INSTANCEID')
+            return defer.succeed( ('0.0.0.0', '0.0.0.1') )
         self.patch(EC2Client, 'describe_instances', call_describe_instances)
 
-        from lae_automation import signup as signupmodule
+        from lae_automation.server import NotListeningError
+        self.first = True
         def call_install_server(public_host, key_filename, stdout, stderr):
             self.failUnlessEqual(public_host, '0.0.0.0')
             self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
-        self.patch(signupmodule, 'install_server', call_install_server)
-        def call_bounce_server(public_host, key_filename, private_host, creds, user_token, product_token,\
-                                   bucket_name, stdout, stderr, secretsfile):
+            if self.first:
+                self.first = False
+                raise NotListeningError()
+        self.patch(signup, 'install_server', call_install_server)
+
+        def call_bounce_server(public_host, key_filename, private_host, creds, user_token, product_token,
+                               bucket_name, stdout, stderr, secretsfile):
             self.failUnlessEqual(public_host, '0.0.0.0')
             self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
-            self.failUnlessEqual(private_host, '0.0.0.0')
+            self.failUnlessEqual(private_host, '0.0.0.1')
             self.failUnlessEqual(user_token, '{UserToken}TESTUSERTOKEN%s=='%('A'*385,))
             self.failUnlessEqual(product_token, '{ProductToken}TESTPRODUCTTOKEN%s='%('A'*295,))
             self.failUnlessEqual(bucket_name, 'lae-abcdefgh-MSEED')
             self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
             self.failUnlessEqual(creds.access_key, 'TESTAAAAAAAAAAAAAAAA')
             self.failUnlessEqual(creds.secret_key, 'TESTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-        self.patch(signupmodule, 'bounce_server', call_bounce_server)
+        self.patch(signup, 'bounce_server', call_bounce_server)
 
         def call_send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo,
                                           stdout, stderr):
@@ -178,8 +194,12 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(furl, None)
             self.failUnlessEqual(customer_keyinfo, 'MKEYINFO')
             return defer.succeed("Tested send confirmation email call!")
-        self.patch(signupmodule, 'send_signup_confirmation', call_send_signup_confirmation)
+        self.patch(signup, 'send_signup_confirmation', call_send_signup_confirmation)
 
+        from txaws.ec2.client import Query as EC2_Query
+        def call_ec2_query_submit(QueryObject):
+            return defer.succeed(createtagsresponse)
+        self.patch(EC2_Query, 'submit', call_ec2_query_submit)
 
     def tearDown(self):
         FilePath(self.CONFIGFILEPATH).remove()
@@ -192,12 +212,14 @@ class TestSignupModule(TestCase):
         MNAME = 'MNAME'
         MEMAIL = 'MEMAIL'
         MKEYINFO = 'MKEYINFO'
-        MSTDOUT = StringIO()
-        MSTDERR = StringIO()
+        stdout = StringIO()
+        stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
-        return su_deferred
+
+        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
+                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        return d
 
     def test_no_products(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -205,15 +227,15 @@ class TestSignupModule(TestCase):
         MNAME = 'MNAME'
         MEMAIL = 'MEMAIL'
         MKEYINFO = 'MKEYINFO'
-        MSTDOUT = StringIO()
-        MSTDERR = StringIO()
+        stdout = StringIO()
+        stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
-        try:
-            su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
-        except AssertionError, msg:
-            return defer.succeed(msg)
+
+        self.failUnlessRaises(AssertionError, signup.signup,
+                              MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
+                              MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
 
     def test_timeout_verify(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -221,21 +243,25 @@ class TestSignupModule(TestCase):
         MNAME = 'MNAME'
         MEMAIL = 'MEMAIL'
         MKEYINFO = 'MKEYINFO'
-        MSTDOUT = StringIO()
-        MSTDERR = StringIO()
+        stdout = StringIO()
+        stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-        from lae_automation import signup as signupmodule
+
         def call_verify_user_account(creds, usertoken, producttoken, stdout, stderr):
             return defer.succeed(False)
-        self.patch(signupmodule, 'verify_user_account', call_verify_user_account)
-        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH, testverifywait=True)
-        def handle_timouterror(error):
-            pass
-            #print "error is %s:"%error#XXX DavidSarah Help! What should _really_ happen here?!?!
-            #print "XXX DavidSarah Help! What should _really_ happen here?!?!"
-        su_deferred.addErrback(handle_timouterror)
-        return su_deferred
+        self.patch(signup, 'verify_user_account', call_verify_user_account)
+
+        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
+                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        def _bad_success(ign):
+            self.fail("should have got a failure")
+        def _check_failure(f):
+            f.trap(signup.TimeoutError)
+            out = stdout.getvalue()
+            self.failUnlessIn("Timed out", out)
+        d.addCallbacks(_bad_success, _check_failure)
+        return d
 
     def test_timeout_addressreq(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -243,21 +269,25 @@ class TestSignupModule(TestCase):
         MNAME = 'MNAME'
         MEMAIL = 'MEMAIL'
         MKEYINFO = 'MKEYINFO'
-        MSTDOUT = StringIO()
-        MSTDERR = StringIO()
+        stdout = StringIO()
+        stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-        from lae_automation import signup as signupmodule
+
         def call_get_EC2_addresses(ec2creds, EC2_ENDPOINT, instance_id):
-            return defer.succeed(False)
-        self.patch(signupmodule, 'get_EC2_addresses', call_get_EC2_addresses)
-        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH, testaddressreqwait=True)
-        def handle_timouterror(error):
-            pass
-            #print "error is %s:"%error#XXX DavidSarah Help! What should _really_ happen here?!?!
-            #print "XXX DavidSarah Help! What should _really_ happen here?!?!"
-        su_deferred.addErrback(handle_timouterror)
-        return su_deferred
+            return defer.succeed(None)
+        self.patch(signup, 'get_EC2_addresses', call_get_EC2_addresses)
+
+        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
+                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        def _bad_success(ign):
+            self.fail("should have got a failure")
+        def _check_failure(f):
+            f.trap(signup.TimeoutError)
+            out = stdout.getvalue()
+            self.failUnlessIn("Timed out", out)
+        d.addCallbacks(_bad_success, _check_failure)
+        return d
 
     def test_EC2_not_listening(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -265,27 +295,23 @@ class TestSignupModule(TestCase):
         MNAME = 'MNAME'
         MEMAIL = 'MEMAIL'
         MKEYINFO = 'MKEYINFO'
-        MSTDOUT = StringIO()
-        MSTDERR = StringIO()
+        stdout = StringIO()
+        stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
 
         from lae_automation.server import NotListeningError
-        from lae_automation import signup as signupmodule
-        self.First = True
         def call_install_server(public_host, key_filename, stdout, stderr):
-            self.failUnlessEqual(public_host, '0.0.0.0')
-            self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
-            if self.First:
-                self.First = False
-                raise NotListeningError
-            else:
-                return
-        self.patch(signupmodule, 'install_server', call_install_server)
-        su_deferred = signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, MSTDOUT, MSTDERR, MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
-        def handle_notlisteningerror(error):
-            pass
-            #print "error is %s:"%error#XXX DavidSarah Help! What should _really_ happen here?!?!
-            #print "XXX DavidSarah Help! What should _really_ happen here?!?!"
-        su_deferred.addErrback(handle_notlisteningerror)
-        return su_deferred
+            raise NotListeningError()
+        self.patch(signup, 'install_server', call_install_server)
+
+        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
+                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+        def _bad_success(ign):
+            self.fail("should have got a failure")
+        def _check_failure(f):
+            f.trap(signup.TimeoutError)
+            out = stdout.getvalue()
+            self.failUnlessIn("Timed out", out)
+        d.addCallbacks(_bad_success, _check_failure)
+        return d
