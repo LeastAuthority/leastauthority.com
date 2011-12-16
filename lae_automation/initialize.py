@@ -39,7 +39,7 @@ def activate_user_account_desktop(activationkey, producttoken, stdout, stderr):
     return d
 
 
-def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name,
+def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name, instance_name,
                         stdout, stderr):
     """
     @param creds: a txaws.service.AWSCredentials object
@@ -61,8 +61,9 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                      'ami_image_id = %r\n'
                      'instance_size = %r\n'
                      'bucket_name = %r\n'
-                     'keypair_name = %r'
-                     % (endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name))
+                     'keypair_name = %r\n'
+                     'instance_name = %r\n'
+                     % (endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name, instance_name))
 
 
 
@@ -73,7 +74,7 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                              keypair_name,
                              instance_type=instance_size)
 
-    def started(instances, *args, **kw):
+    def started(instances):
         print >>stdout, "EC2 instance started."
         for i in instances:
             dump_instance_information(i, stderr)
@@ -81,6 +82,29 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
         assert len(instances) == 1, len(instances)
         return instances[0]
     d.addCallback(started)
+
+    def set_tags(instance):
+        instance_id = instance.instance_id
+        print "instance_id=%r" % (instance_id,)
+        print "instance_name=%r" % (instance_name,)
+        query = client.query_factory(
+            action='CreateTags', creds=client.creds, endpoint=client.endpoint,
+            other_params={'Version': '2011-11-01',
+                          'ResourceId.1': instance_id,
+                          'Tag.1.Key': 'Name', 'Tag.1.Value': instance_name,
+                          'Tag.2.Key': 'Bucket', 'Tag.2.Value': bucket_name})
+        d2 = query.submit()
+
+        def parse_response(xml_bytes):
+            doc = xml_parse(xml_bytes)
+            ret = xml_find(doc, u'return').text.strip()
+            if ret == 'true':
+                return instance
+            else:
+                raise AssertionError("could not set tags for %r" % (instance_id,))
+        d2.addCallback(parse_response)
+        return d2
+    d.addCallback(set_tags)
     return d
 
 

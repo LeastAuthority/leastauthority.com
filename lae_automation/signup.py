@@ -40,6 +40,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     producttoken = product['product_token']
     amiimageid = product['ami_image_id']
     instancesize = product['instance_size']
+    instancename = customer_email  # need not be unique
 
     ec2accesskeyid = str(config.other['ec2_access_key_id'])
     ec2secretkey = FilePath(ec2secretpath).getContent().strip()
@@ -81,7 +82,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
         # We could deploy and configure the instance in parallel with the above wait and delete it
         # if necessary, but let's keep it simple and sequential.
         d2.addCallback(lambda ign: deploy_EC2_instance(ec2creds, EC2_ENDPOINT, amiimageid, instancesize,
-                                                       bucketname, ec2keypairname, stdout, stderr))
+                                                       bucketname, ec2keypairname, instancename,
+                                                       stdout, stderr))
 
         def _deployed(instance):
             def _wait_for_addresses(how_long_secs):
