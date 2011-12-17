@@ -100,7 +100,7 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                 raise AssertionError("could not set tags for %r" % (instance_id,))
         d2.addCallback(parse_response)
         return d2
-    d.addCallback(set_tags)
+    #d.addCallback(set_tags)
     return d
 
 
