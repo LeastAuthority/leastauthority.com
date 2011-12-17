@@ -99,7 +99,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                     if how_long_secs <= 0.0:
                         print >>stdout, "Timed out waiting for addresses of EC2 instance."
                         raise TimeoutError()
-                    print >>stdout, "Waiting another %d seconds..." % (POLL_TIME,)
+                    print >>stdout, "Waiting %d seconds before address request..." % (POLL_TIME,)
                     return task.deferLater(myclock, POLL_TIME, _wait_for_addresses, how_long_secs - POLL_TIME)
                 d4.addCallback(_maybe_again2)
                 return d4
