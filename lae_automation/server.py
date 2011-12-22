@@ -92,6 +92,8 @@ def delete_customer(public_host, key_filename):
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
 
+def create_account(account_name, account_ssh_pkey_fname):
+    pass
 
 def install_server(public_host, key_filename, stdout, stderr):
     set_host_and_key(public_host, key_filename)
@@ -116,7 +118,7 @@ def install_server(public_host, key_filename, stdout, stderr):
         sudo('python ./setup.py install')
 
     print >>stdout, "Setting up customer account..."
-    sudo('adduser --disabled-password --gecos "" customer || echo Assuming that user already exists.')
+    sudo('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.')
     sudo('mkdir -p /home/customer/.ssh/')
     sudo('chown customer:customer /home/customer/.ssh')
     sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')

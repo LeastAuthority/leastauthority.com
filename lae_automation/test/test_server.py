@@ -32,17 +32,49 @@ class TestServerModule(TestCase):
             self.failUnlessEqual(seconds, 60)
         self.patch(api, 'reboot', call_api_reboot)
 
+
     def test_install_server(self):
+        self.MOCKFABRICAPIRUNARGSLIST = [\
+            ('whoami', False, {}),
+            ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz', False, {}),
+            ('tar -xzvf txAWS-0.2.1.post2.tar.gz', False, {}),
+            ('whoami', False, {}),
+            ('rm -rf /home/customer/LAFS_source', False, {}),
+            ('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source', False, {}),
+            ('python ./setup.py build', False, {}),
+            ('mkdir -p introducer storageserver', False, {}),
+            ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
+            ('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})]
 
-        self.MOCKFABRICAPIRUNARGSLIST = [('whoami', False, {}), ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz', False, {}), ('tar -xzvf txAWS-0.2.1.post2.tar.gz', False, {}), ('whoami', False, {}), ('rm -rf /home/customer/LAFS_source', False, {}), ('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source', False, {}), ('python ./setup.py build', False, {}), ('mkdir -p introducer storageserver', False, {}), ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}), ('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})]
-
-
-
-
-        self.MOCKFABRICAPISUDOARGSLIST = [('apt-get update', False, {}), ('apt-get upgrade -y', False, {}), ('apt-get install -y linux-ec2 linux-image-ec2', False, {}), ('apt-get install -y python-dev', False, {}), ('apt-get install -y python-setuptools', False, {}), ('apt-get install -y exim4-base', False, {}), ('apt-get install -y darcs', False, {}), ('easy_install foolscap', False, {}), ('python ./setup.py install', False, {}), ('adduser --disabled-password --gecos "" customer || echo Assuming that user already exists.', False, {}), ('mkdir -p /home/customer/.ssh/', False, {}), ('chown customer:customer /home/customer/.ssh', False, {}), ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}), ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}), ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}), ('chmod 700 /home/customer/.ssh/', False, {})]
+        self.MOCKFABRICAPISUDOARGSLIST = [\
+            ('apt-get update', False, {}),
+            ('apt-get upgrade -y', False, {}),
+            ('apt-get install -y linux-ec2 linux-image-ec2', False, {}),
+            ('apt-get install -y python-dev', False, {}),
+            ('apt-get install -y python-setuptools', False, {}),
+            ('apt-get install -y exim4-base', False, {}),
+            ('apt-get install -y darcs', False, {}),
+            ('easy_install foolscap', False, {}),
+            ('python ./setup.py install', False, {}),
+            ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
+            ('mkdir -p /home/customer/.ssh/', False, {}),
+            ('chown customer:customer /home/customer/.ssh', False, {}),
+            ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}),
+            ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
+            ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
+            ('chmod 700 /home/customer/.ssh/', False, {})]
 
         MHOSTNAME = '0.0.0.0'
         MKEYFILENAME = 'EC2MOCKKEYFILENAME.pem'
         stdout = StringIO()
         stderr = StringIO()
         server.install_server(MHOSTNAME, MKEYFILENAME, stdout, stderr)
+
+    def test_create_account(self):
+        from lae_automation import server
+        def call_create_account(account_name, account_ssh_pkey_fname):
+            self.failUnless(account_name == 'customer' or account_name == 'monitor', 
+                            "%r is neither %r nor %r" % 
+                            (account_name, 'customer', 'monitor'))
+
+        server.create_account(account_name, account_ssh_pkey_fname)
