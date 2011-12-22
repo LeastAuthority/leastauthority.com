@@ -95,7 +95,10 @@ def create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
     sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)))
     sudo('mkdir -p /home/%s/.ssh/'%account_name)
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
-    result = write('/home/%s/.ssh/authorized_keys' % account_name, account_ssh_pkey_fname)
+    if account_ssh_pkey_fname is None:
+        sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
+    else:    
+        result = write('/home/%s/.ssh/authorized_keys' % account_name, account_ssh_pkey_fname)
     print >> stdout, result
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % account_name)
@@ -124,7 +127,7 @@ def install_server(public_host, EC2admin_key_fname, stdout, stderr):
         sudo('python ./setup.py install')
     customer_ssh_pkey_fname = 'dummyXXX'
     monitor_ssh_pkey_fname = 'XXXdummy'
-    create_account('customer', customer_ssh_pkey_fname, stdout, stderr)
+    create_account('customer', None, stdout, stderr)
     create_account('monitor', monitor_ssh_pkey_fname, stdout, stderr)
 
     # check that creating the monitor account worked
