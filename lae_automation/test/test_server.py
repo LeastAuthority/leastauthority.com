@@ -79,7 +79,14 @@ class TestServerModule(TestCase):
         STDOUT = sys.stdout
         STDERR = sys.stderr
         self.RUNARGSLIST = []
-        self.SUDOARGSLIST =  [('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}), ('mkdir -p /home/customer/.ssh/', False, {}), ('chown customer:customer /home/customer/.ssh', False, {}), ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}), ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}), ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}), ('chmod 700 /home/customer/.ssh/', False, {})]
+        self.SUDOARGSLIST =  [\
+            ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
+            ('mkdir -p /home/customer/.ssh/', False, {}),
+            ('chown customer:customer /home/customer/.ssh', False, {}),
+            ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}),
+            ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
+            ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
+            ('chmod 700 /home/customer/.ssh/', False, {})]
         def call_write(remote_path, value, mode=None):
             self.failUnless(remote_path == '/home/customer/.ssh/authorized_keys'\
                                 or remote_path == '/home/monitor/.ssh/authorized_keys',\
