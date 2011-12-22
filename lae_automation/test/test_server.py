@@ -78,23 +78,22 @@ class TestServerModule(TestCase):
         MKEYFILENAME = 'account_ssh_pkey_fname'
         STDOUT = sys.stdout
         STDERR = sys.stderr
-        self.RUNARGSLIST = []
-        self.SUDOARGSLIST =  [\
-            ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
-            ('mkdir -p /home/customer/.ssh/', False, {}),
-            ('chown customer:customer /home/customer/.ssh', False, {}),
-            ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}),
-            ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
-            ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
-            ('chmod 700 /home/customer/.ssh/', False, {})]
-        def call_write(remote_path, value, mode=None):
-            self.failUnless(remote_path == '/home/customer/.ssh/authorized_keys'\
-                                or remote_path == '/home/monitor/.ssh/authorized_keys',\
-                                '%r is not %r or %r' %\
-                                (remote_path, '/home/customer/.ssh/authorized_keys',\
-                                     '/home/monitor/.ssh/authorized_keys'))
-            return [remote_path]
-        self.patch(server, 'write', call_write)
-        server.create_account(MOCKACCOUNTNAMES[0], MKEYFILENAME, STDOUT, STDERR)
-        #print "sudo: %s"% self.SUDOARGSLIST
-        #print "run: %s" % self.RUNARGSLIST
+        for acct_name in MOCKACCOUNTNAMES:
+            self.number_runs = 0
+            self.number_sudos = 0
+            self.RUNARGSLIST = []
+            self.SUDOARGSLIST = [\
+                ('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(acct_name,)), False, {}),
+                ('mkdir -p /home/%s/.ssh/' % acct_name, False, {}),
+                ('chown %s:%s /home/%s/.ssh' % (3*(acct_name,)), False, {}),
+                ('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(acct_name,)), False, {}),
+                ('chmod 400 /home/%s/.ssh/authorized_keys' % acct_name, False, {}),
+                ('chmod 700 /home/%s/.ssh/' % acct_name, False, {})]
+            def call_write(remote_path, value, mode=None):
+                self.failUnlessEqual(remote_path, '/home/%s/.ssh/authorized_keys' % acct_name)
+
+                return [remote_path]
+            self.patch(server, 'write', call_write)
+            server.create_account(acct_name, MKEYFILENAME, STDOUT, STDERR)
+            print "sudo: %s"% self.SUDOARGSLIST
+            print "run: %s" % self.RUNARGSLIST

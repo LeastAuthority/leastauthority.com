@@ -98,7 +98,6 @@ def create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
     result = write('/home/%s/.ssh/authorized_keys' % account_name, account_ssh_pkey_fname)
     print >> stdout, result
-    sudo('cp /home/ubuntu/.ssh/authorized_keys /home/%s/.ssh/authorized_keys' % account_name)#XXX This goes away!
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % account_name)
     sudo('chmod 700 /home/%s/.ssh/' % account_name)
