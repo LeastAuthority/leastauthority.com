@@ -96,7 +96,7 @@ DEVPAY_RESPONSE_MISSING_CODE_HTML = """
 Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 </p>
 <p>
-Please follow the link above which says "click here to get acitvation
+Please follow the link above that says "click here to get activation
 keys". It will take you to the next page. On that page you do not need to do
 the <b>Generate Key</b> step &mdash; just go ahead and click the <b>Go to
 Application</b> link for this subscription.
