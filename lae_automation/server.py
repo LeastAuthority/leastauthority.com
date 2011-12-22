@@ -127,6 +127,11 @@ def install_server(public_host, EC2admin_key_fname, stdout, stderr):
     monitor_ssh_pkey_fname = 'XXXdummy'
     create_account('customer', customer_ssh_pkey_fname, stdout, stderr)
     create_account('monitor', monitor_ssh_pkey_fname, stdout, stderr)
+
+    # check that creating the monitor account worked
+    set_host_and_key(public_host, EC2admin_key_fname, username="monitor")
+
+    # do the rest of the installation as 'customer'
     set_host_and_key(public_host, EC2admin_key_fname, username="customer")
 
     print >>stdout, "Getting Tahoe-LAFS..."
@@ -147,6 +152,32 @@ def install_server(public_host, EC2admin_key_fname, stdout, stderr):
 
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
+
+RESTART_SCRIPT = """#!/bin/sh
+cd /home/customer
+LAFS_source/bin/tahoe restart introducer
+LAFS_source/bin/tahoe restart storageserver
+"""
+
+
+def upgrade_server(public_host, EC2admin_key_fname, monitor_ssh_pkey_fname, stdout, stderr):
+    set_host_and_key(public_host, EC2admin_key_fname)
+    create_account('monitor', monitor_ssh_pkey_fname, stdout, stderr)
+
+    # check that creating the monitor account worked
+    set_host_and_key(public_host, EC2admin_key_fname, username="monitor")
+
+    # set up the reboot script as 'customer'
+    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
+    set_up_reboot(stdout, stderr)
+
+
+def set_up_reboot(stdout, stderr)
+    print >>stdout, "Setting up introducer and storage server to run on reboot..."
+    write('/home/customer/restart.sh', RESTART_SCRIPT, mode=0750)
+    write('/home/customer/ctab', '@reboot /home/customer/restart.sh')
+    run('crontab /home/customer/ctab')
+
 
 def bounce_server(public_host, EC2admin_key_fname, private_host, creds, user_token, product_token, bucket_name,
                   stdout, stderr, secretsfile):
@@ -180,6 +211,8 @@ def bounce_server(public_host, EC2admin_key_fname, private_host, creds, user_tok
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
     run('ps -fC tahoe')
     run('netstat -atW')
+
+    set_up_reboot(stdout)
 
     introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
     introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
