@@ -21,14 +21,12 @@ class TestServerModule(TestCase):
                     return 'customer'
         self.patch(api, 'run', call_api_run)
 
-        self.apisudocalls = []
         self.number_sudos = 0
         def call_api_sudo(argstring, pty=False, **kwargs):
 
             self.failUnlessEqual(self.MOCKFABRICAPISUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
             self.number_sudos = self.number_sudos + 1
         self.patch(api, 'sudo', call_api_sudo)
-
 
         def call_api_reboot(seconds, *args, **kwargs):
             self.failUnlessEqual(seconds, 60)
@@ -48,4 +46,3 @@ class TestServerModule(TestCase):
         stdout = StringIO()
         stderr = StringIO()
         server.install_server(MHOSTNAME, MKEYFILENAME, stdout, stderr)
-        print self.apisudocalls
