@@ -1,5 +1,5 @@
 """
--- The developers public keys, corresponding to which ever private keys they specify will live on the web server.  
+-- The EC2Admin public keys, corresponding to the EC2Admin private keys they specify will live on the web server.  
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
