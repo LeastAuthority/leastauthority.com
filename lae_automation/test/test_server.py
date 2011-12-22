@@ -12,27 +12,34 @@ class TestServerModule(TestCase):
         self.number_runs = 0
 
         def call_api_run(argstring, pty, **kwargs):
-            self.failUnlessEqual(self.RUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
+            self.RUNARGSLIST.append((argstring, pty, kwargs))
+            #self.failUnlessEqual(self.RUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
             self.number_runs = self.number_runs + 1
-            #self.RUNARGSLIST.append((argstring, pty, kwargs))
             if argstring == 'whoami':
                 self.number_whoamis = self.number_whoamis + 1
                 if self.number_whoamis == 1:
                     return 'ubuntu'
                 elif self.number_whoamis == 2:
+                    return 'monitor'
+                elif self.number_whoamis == 3:
                     return 'customer'
+
         self.patch(api, 'run', call_api_run)
 
         self.number_sudos = 0
         def call_api_sudo(argstring, pty=False, **kwargs):
-            #self.SUDOARGSLIST.append((argstring, pty, kwargs))
-            self.failUnlessEqual(self.SUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
+            self.SUDOARGSLIST.append((argstring, pty, kwargs))
+            #self.failUnlessEqual(self.SUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
             self.number_sudos = self.number_sudos + 1
         self.patch(api, 'sudo', call_api_sudo)
 
         def call_api_reboot(seconds, *args, **kwargs):
             self.failUnlessEqual(seconds, 60)
         self.patch(api, 'reboot', call_api_reboot)
+
+        def call_write(remote_path, value, mode=None):
+            return [remote_path]
+        self.patch(server, 'write', call_write)
 
 
     def test_install_server(self):
@@ -47,6 +54,7 @@ class TestServerModule(TestCase):
             ('mkdir -p introducer storageserver', False, {}),
             ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
             ('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})]
+        self.RUNARGSLIST = []
 
         self.SUDOARGSLIST = [\
             ('apt-get update', False, {}),
@@ -65,12 +73,19 @@ class TestServerModule(TestCase):
             ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 700 /home/customer/.ssh/', False, {})]
+        self.SUDOARGSLIST = []
+
+
 
         MHOSTNAME = '0.0.0.0'
         MKEYFILENAME = 'EC2MOCKKEYFILENAME.pem'
+        SSHPUBFNAME = 'MONSSHPUBKEY'
+        SSHPRIVFNAME = 'MONSSHPRIVATEKEY THIS IS SOOOOSECRET!'
         stdout = StringIO()
         stderr = StringIO()
-        server.install_server(MHOSTNAME, MKEYFILENAME, stdout, stderr)
+        server.install_server(MHOSTNAME, MKEYFILENAME, SSHPUBFNAME, SSHPRIVFNAME, stdout, stderr)
+        #print "run: %s" % self.RUNARGSLIST
+        #print "sudo: %s" % self.SUDOARGSLIST
 
     def test_create_account(self):
         from lae_automation import server
@@ -95,5 +110,5 @@ class TestServerModule(TestCase):
                 return [remote_path]
             self.patch(server, 'write', call_write)
             server.create_account(acct_name, MKEYFILENAME, STDOUT, STDERR)
-            print "sudo: %s"% self.SUDOARGSLIST
-            print "run: %s" % self.RUNARGSLIST
+            #print "sudo: %s"% self.SUDOARGSLIST
+            #print "run: %s" % self.RUNARGSLIST

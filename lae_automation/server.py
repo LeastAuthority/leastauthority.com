@@ -97,14 +97,13 @@ def create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
     if account_ssh_pkey_fname is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
-    else:    
-        result = write('/home/%s/.ssh/authorized_keys' % account_name, account_ssh_pkey_fname)
-    print >> stdout, result
+    else:
+        write('/home/%s/.ssh/authorized_keys' % account_name, account_ssh_pkey_fname)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % account_name)
     sudo('chmod 700 /home/%s/.ssh/' % account_name)
 
-def install_server(public_host, EC2admin_key_fname, customer_ssh_pubkey, stdout, stderr):
+def install_server(public_host, EC2admin_key_fname, monitor_ssh_pubkey, monitor_ssh_privkey, stdout, stderr):
     set_host_and_key(public_host, EC2admin_key_fname)
 
     print >>stdout, "Updating server..."
@@ -125,16 +124,15 @@ def install_server(public_host, EC2admin_key_fname, customer_ssh_pubkey, stdout,
     run('tar -xzvf txAWS-0.2.1.post2.tar.gz')
     with cd('/home/ubuntu/txAWS-0.2.1.post2'):
         sudo('python ./setup.py install')
-    customer_ssh_pkey_fname = 'dummyXXX'
-    monitor_ssh_pkey_fname = 'XXXdummy'
     create_account('customer', None, stdout, stderr)
-    create_account('monitor', monitor_ssh_pkey_fname, stdout, stderr)
+    create_account('monitor', monitor_ssh_pubkey, stdout, stderr)
 
     # check that creating the monitor account worked
-    set_host_and_key(public_host, EC2admin_key_fname, username="monitor")#XXX
+    set_host_and_key(public_host, monitor_ssh_privkey, username="monitor")
 
-    # do the rest of the installation as 'customer'
-    set_host_and_key(public_host, EC2admin_key_fname, username="customer")#XXX
+    # do the rest of the installation as 'customer', customer doesn't actually have its own ssh keys
+    # I don't know if creating one would be useful.XXX
+    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
 
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
