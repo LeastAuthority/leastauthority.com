@@ -97,6 +97,7 @@ def create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
     sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)) )
     sudo('mkdir -p /home/%s/.ssh/' % (account_name,) )
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
+    sudo('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
     if account_ssh_pkey_fname is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
     else:
