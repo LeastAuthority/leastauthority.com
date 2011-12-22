@@ -12,8 +12,9 @@ class TestServerModule(TestCase):
         self.number_runs = 0
 
         def call_api_run(argstring, pty, **kwargs):
-            self.failUnlessEqual(self.MOCKFABRICAPIRUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
+            self.failUnlessEqual(self.RUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
             self.number_runs = self.number_runs + 1
+            #self.RUNARGSLIST.append((argstring, pty, kwargs))
             if argstring == 'whoami':
                 self.number_whoamis = self.number_whoamis + 1
                 if self.number_whoamis == 1:
@@ -24,8 +25,8 @@ class TestServerModule(TestCase):
 
         self.number_sudos = 0
         def call_api_sudo(argstring, pty=False, **kwargs):
-
-            self.failUnlessEqual(self.MOCKFABRICAPISUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
+            #self.SUDOARGSLIST.append((argstring, pty, kwargs))
+            self.failUnlessEqual(self.SUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
             self.number_sudos = self.number_sudos + 1
         self.patch(api, 'sudo', call_api_sudo)
 
@@ -35,7 +36,7 @@ class TestServerModule(TestCase):
 
 
     def test_install_server(self):
-        self.MOCKFABRICAPIRUNARGSLIST = [\
+        self.RUNARGSLIST = [\
             ('whoami', False, {}),
             ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz', False, {}),
             ('tar -xzvf txAWS-0.2.1.post2.tar.gz', False, {}),
@@ -47,7 +48,7 @@ class TestServerModule(TestCase):
             ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
             ('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})]
 
-        self.MOCKFABRICAPISUDOARGSLIST = [\
+        self.SUDOARGSLIST = [\
             ('apt-get update', False, {}),
             ('apt-get upgrade -y', False, {}),
             ('apt-get install -y linux-ec2 linux-image-ec2', False, {}),
@@ -73,11 +74,20 @@ class TestServerModule(TestCase):
 
     def test_create_account(self):
         from lae_automation import server
-        MOCKACCOUNTNAME = 'monitor'
+        MOCKACCOUNTNAMES = ['customer', 'monitor']
         MKEYFILENAME = 'account_ssh_pkey_fname'
         STDOUT = sys.stdout
         STDERR = sys.stderr
-        def call_create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
-            pass
-        self.patch(server, 'create_account', call_create_account)
-        server.create_account(MOCKACCOUNTNAME, MKEYFILENAME, STDOUT, STDERR)
+        self.RUNARGSLIST = []
+        self.SUDOARGSLIST =  [('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}), ('mkdir -p /home/customer/.ssh/', False, {}), ('chown customer:customer /home/customer/.ssh', False, {}), ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}), ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}), ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}), ('chmod 700 /home/customer/.ssh/', False, {})]
+        def call_write(remote_path, value, mode=None):
+            self.failUnless(remote_path == '/home/customer/.ssh/authorized_keys'\
+                                or remote_path == '/home/monitor/.ssh/authorized_keys',\
+                                '%r is not %r or %r' %\
+                                (remote_path, '/home/customer/.ssh/authorized_keys',\
+                                     '/home/monitor/.ssh/authorized_keys'))
+            return [remote_path]
+        self.patch(server, 'write', call_write)
+        server.create_account(MOCKACCOUNTNAMES[0], MKEYFILENAME, STDOUT, STDERR)
+        #print "sudo: %s"% self.SUDOARGSLIST
+        #print "run: %s" % self.RUNARGSLIST

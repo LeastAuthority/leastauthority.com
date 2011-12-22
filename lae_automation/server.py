@@ -9,7 +9,6 @@ import simplejson
 from fabric import api
 from fabric.context_managers import cd
 
-
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
 # This file controls the configuration of the Tahoe node that
@@ -97,6 +96,8 @@ def create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
     sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)))
     sudo('mkdir -p /home/%s/.ssh/'%account_name)
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
+    result = write('/home/%s/.ssh/authorized_keys' % account_name, account_ssh_pkey_fname)
+    print >> stdout, result
     sudo('cp /home/ubuntu/.ssh/authorized_keys /home/%s/.ssh/authorized_keys' % account_name)#XXX This goes away!
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % account_name)
@@ -129,10 +130,10 @@ def install_server(public_host, EC2admin_key_fname, stdout, stderr):
     create_account('monitor', monitor_ssh_pkey_fname, stdout, stderr)
 
     # check that creating the monitor account worked
-    set_host_and_key(public_host, EC2admin_key_fname, username="monitor")
+    set_host_and_key(public_host, EC2admin_key_fname, username="monitor")#XXX
 
     # do the rest of the installation as 'customer'
-    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
+    set_host_and_key(public_host, EC2admin_key_fname, username="customer")#XXX
 
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
@@ -172,7 +173,7 @@ def upgrade_server(public_host, EC2admin_key_fname, monitor_ssh_pkey_fname, stdo
     set_up_reboot(stdout, stderr)
 
 
-def set_up_reboot(stdout, stderr)
+def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
     write('/home/customer/restart.sh', RESTART_SCRIPT, mode=0750)
     write('/home/customer/ctab', '@reboot /home/customer/restart.sh')
