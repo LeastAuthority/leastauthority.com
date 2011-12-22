@@ -4,6 +4,7 @@ from twisted.trial.unittest import TestCase
 from lae_automation import server
 from lae_automation.server import api
 
+import sys
 class TestServerModule(TestCase):
     def setUp(self):
 
@@ -72,9 +73,11 @@ class TestServerModule(TestCase):
 
     def test_create_account(self):
         from lae_automation import server
-        def call_create_account(account_name, account_ssh_pkey_fname):
-            self.failUnless(account_name == 'customer' or account_name == 'monitor', 
-                            "%r is neither %r nor %r" % 
-                            (account_name, 'customer', 'monitor'))
-
-        server.create_account(account_name, account_ssh_pkey_fname)
+        MOCKACCOUNTNAME = 'monitor'
+        MKEYFILENAME = 'account_ssh_pkey_fname'
+        STDOUT = sys.stdout
+        STDERR = sys.stderr
+        def call_create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
+            pass
+        self.patch(server, 'create_account', call_create_account)
+        server.create_account(MOCKACCOUNTNAME, MKEYFILENAME, STDOUT, STDERR)
