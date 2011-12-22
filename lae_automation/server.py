@@ -62,10 +62,10 @@ def run(argstring, **kwargs):
 def sudo(argstring, **kwargs):
     return api.sudo(argstring, pty=False, **kwargs)
 
-def set_host_and_key(public_host, key_filename, username="ubuntu"):
+def set_host_and_key(public_host, EC2admin_key_fname, username="ubuntu"):
     api.env.host_string = '%s@%s' % (username, public_host)
     api.env.reject_unknown_hosts = False  # FIXME allows MITM attacks
-    api.env.key_filename = key_filename
+    api.env.EC2admin_key_fname = EC2admin_key_fname
     api.env.abort_on_prompts = True
 
     try:
@@ -86,8 +86,8 @@ def write(remote_path, value, mode=None):
     return api.put(StringIO(value), remote_path, mode=mode)
 
 
-def delete_customer(public_host, key_filename):
-    set_host_and_key(public_host, key_filename)
+def delete_customer(public_host, EC2admin_key_fname):
+    set_host_and_key(public_host, EC2admin_key_fname)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
@@ -95,8 +95,8 @@ def delete_customer(public_host, key_filename):
 def create_account(account_name, account_ssh_pkey_fname):
     pass
 
-def install_server(public_host, key_filename, stdout, stderr):
-    set_host_and_key(public_host, key_filename)
+def install_server(public_host, EC2admin_key_fname, stdout, stderr):
+    set_host_and_key(public_host, EC2admin_key_fname)
 
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
@@ -126,7 +126,7 @@ def install_server(public_host, key_filename, stdout, stderr):
     sudo('chmod 400 /home/customer/.ssh/authorized_keys')
     sudo('chmod 700 /home/customer/.ssh/')
 
-    set_host_and_key(public_host, key_filename, username="customer")
+    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
 
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
@@ -147,13 +147,13 @@ def install_server(public_host, key_filename, stdout, stderr):
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
-def bounce_server(public_host, key_filename, private_host, creds, user_token, product_token, bucket_name,
+def bounce_server(public_host, EC2admin_key_fname, private_host, creds, user_token, product_token, bucket_name,
                   stdout, stderr, secretsfile):
     access_key_id = creds.access_key
     secret_key = creds.secret_key
     nickname = bucket_name
 
-    set_host_and_key(public_host, key_filename, username="customer")
+    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
 
     print >>stdout, "Starting introducer..."
     run('rm -f /home/customer/introducer/introducer.furl')
