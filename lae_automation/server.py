@@ -71,7 +71,7 @@ def set_host_and_key(public_host, ssh_private_keyfile, username="ubuntu"):
         whoami = run('whoami')
     except SystemExit:
         # fabric stupidly aborts if the host is not listening for ssh connections
-        # zooko: and this is why SystemExit needs to be catchable ;-)
+        # and this is why SystemExit needs to be catchable, zooko ;-)
         raise NotListeningError()
     assert whoami.strip() == username, (whoami, username)
 
@@ -84,24 +84,27 @@ def sudo_easy_install(argstring):
 def write(remote_path, value, mode=None):
     return api.put(StringIO(value), remote_path, mode=mode)
 
+
 def delete_customer(public_host, EC2admin_key_fname):
     set_host_and_key(public_host, EC2admin_key_fname)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
 
+
 def create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
-    print >>stdout, "Setting up %s account..." % account_name
-    sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)))
-    sudo('mkdir -p /home/%s/.ssh/'%account_name)
+    print >>stdout, "Setting up %s account..." % (account_name,)
+    sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)) )
+    sudo('mkdir -p /home/%s/.ssh/' % (account_name,) )
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
     if account_ssh_pkey_fname is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
     else:
-        write('/home/%s/.ssh/authorized_keys' % account_name, account_ssh_pkey_fname)
+        write('/home/%s/.ssh/authorized_keys' % (account_name,), account_ssh_pkey_fname)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
-    sudo('chmod 400 /home/%s/.ssh/authorized_keys' % account_name)
-    sudo('chmod 700 /home/%s/.ssh/' % account_name)
+    sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
+    sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
+
 
 def install_server(public_host, EC2admin_key_fname, monitor_ssh_pubkey, monitor_ssh_privkey, stdout, stderr):
     set_host_and_key(public_host, EC2admin_key_fname)
