@@ -28,8 +28,8 @@ class TestServerModule(TestCase):
 
         self.number_sudos = 0
         def call_api_sudo(argstring, pty=False, **kwargs):
-            self.SUDOARGSLIST.append((argstring, pty, kwargs))
-            #self.failUnlessEqual(self.SUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
+            #self.SUDOARGSLIST.append((argstring, pty, kwargs))
+            self.failUnlessEqual(self.SUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
             self.number_sudos = self.number_sudos + 1
         self.patch(api, 'sudo', call_api_sudo)
 
@@ -69,6 +69,7 @@ class TestServerModule(TestCase):
             ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
             ('mkdir -p /home/customer/.ssh/', False, {}),
             ('chown customer:customer /home/customer/.ssh', False, {}),
+            ('chmod u+w /home/customer/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
             ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}),
             ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
@@ -96,9 +97,10 @@ class TestServerModule(TestCase):
             self.number_sudos = 0
             self.RUNARGSLIST = []
             self.SUDOARGSLIST = [
-                ('adduser --disabled-password --gecos "" %s' % ((acct_name,)), False, {}),
+                ('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(acct_name,)), False, {}),
                 ('mkdir -p /home/%s/.ssh/' % acct_name, False, {}),
                 ('chown %s:%s /home/%s/.ssh' % (3*(acct_name,)), False, {}),
+                ('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (acct_name,), False, {}),
                 ('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(acct_name,)), False, {}),
                 ('chmod 400 /home/%s/.ssh/authorized_keys' % acct_name, False, {}),
                 ('chmod 700 /home/%s/.ssh/' % acct_name, False, {})]
