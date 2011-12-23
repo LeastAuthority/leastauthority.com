@@ -19,9 +19,9 @@ class TestServerModule(TestCase):
                 if self.number_whoamis == 1:
                     return 'ubuntu'
                 elif self.number_whoamis == 2:
-                    return 'customer'
-                elif self.number_whoamis == 3:
                     return 'monitor'
+                elif self.number_whoamis == 3:
+                    return 'customer'
 
         self.patch(api, 'run', call_api_run)
 
@@ -45,6 +45,7 @@ class TestServerModule(TestCase):
             ('whoami', False, {}),
             ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz', False, {}),
             ('tar -xzvf txAWS-0.2.1.post2.tar.gz', False, {}),
+            ('whoami', False, {}),
             ('whoami', False, {}),
             ('rm -rf /home/customer/LAFS_source', False, {}),
             ('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source', False, {}),
@@ -109,7 +110,6 @@ class TestServerModule(TestCase):
                 self.SUDOARGSLIST.insert(2, ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}))
             def call_write(remote_path, value, mode=None):
                 self.failUnlessEqual(remote_path, '/home/%s/.ssh/authorized_keys' % acct_name)
-
                 return [remote_path]
             self.patch(server, 'write', call_write)
             server.create_account(acct_name, MKEYFILENAME, STDOUT, STDERR)
