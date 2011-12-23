@@ -12,7 +12,6 @@ from lae_site.handlers.web import JinjaHandler
 def make_site(config):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
-
     resource.putChild('signup', SignupHandler(config.products))
     resource.putChild('sign_up_info', Redirect('/signup'))
     resource.putChild('devpay-complete', DevPayPurchaseHandler())

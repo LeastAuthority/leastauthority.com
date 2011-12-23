@@ -12,17 +12,17 @@ class TestServerModule(TestCase):
         self.number_runs = 0
 
         def call_api_run(argstring, pty, **kwargs):
-            self.RUNARGSLIST.append((argstring, pty, kwargs))
-            #self.failUnlessEqual(self.RUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
+            #self.RUNARGSLIST.append((argstring, pty, kwargs))
+            self.failUnlessEqual(self.RUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
             self.number_runs = self.number_runs + 1
             if argstring == 'whoami':
                 self.number_whoamis = self.number_whoamis + 1
                 if self.number_whoamis == 1:
                     return 'ubuntu'
                 elif self.number_whoamis == 2:
-                    return 'monitor'
-                elif self.number_whoamis == 3:
                     return 'customer'
+                #elif self.number_whoamis == 3:
+                #    return 'monitor'
 
         self.patch(api, 'run', call_api_run)
 
@@ -43,7 +43,7 @@ class TestServerModule(TestCase):
 
 
     def test_install_server(self):
-        self.RUNARGSLIST = [\
+        self.RUNARGSLIST = [
             ('whoami', False, {}),
             ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz', False, {}),
             ('tar -xzvf txAWS-0.2.1.post2.tar.gz', False, {}),
@@ -54,9 +54,9 @@ class TestServerModule(TestCase):
             ('mkdir -p introducer storageserver', False, {}),
             ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
             ('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})]
-        self.RUNARGSLIST = []
+        #self.RUNARGSLIST = []
 
-        self.SUDOARGSLIST = [\
+        self.SUDOARGSLIST = [
             ('apt-get update', False, {}),
             ('apt-get upgrade -y', False, {}),
             ('apt-get install -y linux-ec2 linux-image-ec2', False, {}),
@@ -73,9 +73,7 @@ class TestServerModule(TestCase):
             ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 700 /home/customer/.ssh/', False, {})]
-        self.SUDOARGSLIST = []
-
-
+        #self.SUDOARGSLIST = []
 
         MHOSTNAME = '0.0.0.0'
         MKEYFILENAME = 'EC2MOCKKEYFILENAME.pem'
@@ -97,13 +95,15 @@ class TestServerModule(TestCase):
             self.number_runs = 0
             self.number_sudos = 0
             self.RUNARGSLIST = []
-            self.SUDOARGSLIST = [\
-                ('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(acct_name,)), False, {}),
+            self.SUDOARGSLIST = [
+                ('adduser --disabled-password --gecos "" %s' % ((acct_name,)), False, {}),
                 ('mkdir -p /home/%s/.ssh/' % acct_name, False, {}),
                 ('chown %s:%s /home/%s/.ssh' % (3*(acct_name,)), False, {}),
                 ('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(acct_name,)), False, {}),
                 ('chmod 400 /home/%s/.ssh/authorized_keys' % acct_name, False, {}),
                 ('chmod 700 /home/%s/.ssh/' % acct_name, False, {})]
+            if acct_name is None:
+                self.SUDOARGSLIST.insert(2, ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}))
             def call_write(remote_path, value, mode=None):
                 self.failUnlessEqual(remote_path, '/home/%s/.ssh/authorized_keys' % acct_name)
 
