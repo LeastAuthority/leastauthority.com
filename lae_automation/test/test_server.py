@@ -21,8 +21,8 @@ class TestServerModule(TestCase):
                     return 'ubuntu'
                 elif self.number_whoamis == 2:
                     return 'customer'
-                #elif self.number_whoamis == 3:
-                #    return 'monitor'
+                elif self.number_whoamis == 3:
+                    return 'monitor'
 
         self.patch(api, 'run', call_api_run)
 
@@ -54,7 +54,6 @@ class TestServerModule(TestCase):
             ('mkdir -p introducer storageserver', False, {}),
             ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
             ('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})]
-        #self.RUNARGSLIST = []
 
         self.SUDOARGSLIST = [
             ('apt-get update', False, {}),
@@ -73,8 +72,14 @@ class TestServerModule(TestCase):
             ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}),
             ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
-            ('chmod 700 /home/customer/.ssh/', False, {})]
-        #self.SUDOARGSLIST = []
+            ('chmod 700 /home/customer/.ssh/', False, {}),
+            ('adduser --disabled-password --gecos "" monitor || echo Assuming that monitor already exists.', False, {}),
+            ('mkdir -p /home/monitor/.ssh/', False, {}),
+            ('chown monitor:monitor /home/monitor/.ssh', False, {}),
+            ('chmod u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
+            ('chown monitor:monitor /home/monitor/.ssh/authorized_keys', False, {}),
+            ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
+            ('chmod 700 /home/monitor/.ssh/', False, {})]
 
         MHOSTNAME = '0.0.0.0'
         MKEYFILENAME = 'EC2MOCKKEYFILENAME.pem'
@@ -83,8 +88,6 @@ class TestServerModule(TestCase):
         stdout = StringIO()
         stderr = StringIO()
         server.install_server(MHOSTNAME, MKEYFILENAME, SSHPUBFNAME, SSHPRIVFNAME, stdout, stderr)
-        #print "run: %s" % self.RUNARGSLIST
-        #print "sudo: %s" % self.SUDOARGSLIST
 
     def test_create_account(self):
         from lae_automation import server
@@ -112,5 +115,3 @@ class TestServerModule(TestCase):
                 return [remote_path]
             self.patch(server, 'write', call_write)
             server.create_account(acct_name, MKEYFILENAME, STDOUT, STDERR)
-            #print "sudo: %s"% self.SUDOARGSLIST
-            #print "run: %s" % self.RUNARGSLIST
