@@ -12,7 +12,6 @@ class TestServerModule(TestCase):
         self.number_runs = 0
 
         def call_api_run(argstring, pty, **kwargs):
-            #self.RUNARGSLIST.append((argstring, pty, kwargs))
             self.failUnlessEqual(self.RUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
             self.number_runs = self.number_runs + 1
             if argstring == 'whoami':
@@ -28,7 +27,6 @@ class TestServerModule(TestCase):
 
         self.number_sudos = 0
         def call_api_sudo(argstring, pty=False, **kwargs):
-            #self.SUDOARGSLIST.append((argstring, pty, kwargs))
             self.failUnlessEqual(self.SUDOARGSLIST[self.number_sudos], (argstring, pty, kwargs))
             self.number_sudos = self.number_sudos + 1
         self.patch(api, 'sudo', call_api_sudo)
