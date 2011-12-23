@@ -1,2 +1,2 @@
 #!/bin/sh
-trial lae_site lae_util lae_automation
+trial --rterrors lae_site lae_util lae_automation
