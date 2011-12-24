@@ -35,7 +35,7 @@ class TestServerModule(TestCase):
             self.failUnlessEqual(seconds, 60)
         self.patch(api, 'reboot', call_api_reboot)
 
-        def call_write(remote_path, value, mode=None):
+        def call_write(value, remote_path, usesudo=False, mode=None):
             return [remote_path]
         self.patch(server, 'write', call_write)
 
@@ -82,11 +82,11 @@ class TestServerModule(TestCase):
 
         MHOSTNAME = '0.0.0.0'
         MKEYFILENAME = 'EC2MOCKKEYFILENAME.pem'
-        SSHPUBFNAME = 'MONSSHPUBKEY'
+        MONSSHPUBKEY = 'MONSSHPUBKEY'
         SSHPRIVFNAME = 'MONSSHPRIVATEKEY THIS IS SOOOOSECRET!'
         stdout = StringIO()
         stderr = StringIO()
-        server.install_server(MHOSTNAME, MKEYFILENAME, SSHPUBFNAME, SSHPRIVFNAME, stdout, stderr)
+        server.install_server(MHOSTNAME, MKEYFILENAME, MONSSHPUBKEY, SSHPRIVFNAME, stdout, stderr)
 
     def test_create_account(self):
         from lae_automation import server
@@ -108,7 +108,7 @@ class TestServerModule(TestCase):
                 ('chmod 700 /home/%s/.ssh/' % acct_name, False, {})]
             if acct_name is None:
                 self.SUDOARGSLIST.insert(2, ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}))
-            def call_write(remote_path, value, mode=None):
+            def call_write(value, remote_path, usesudo=False, mode=None):
                 self.failUnlessEqual(remote_path, '/home/%s/.ssh/authorized_keys' % acct_name)
                 return [remote_path]
             self.patch(server, 'write', call_write)

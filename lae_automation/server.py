@@ -164,9 +164,9 @@ LAFS_source/bin/tahoe restart storageserver
 """
 
 
-def upgrade_server(public_host, EC2admin_key_fname, monitor_ssh_pkey_fname, stdout, stderr):
+def upgrade_server(public_host, EC2admin_key_fname, monitorsshpubkey, stdout, stderr):
     set_host_and_key(public_host, EC2admin_key_fname)
-    create_account('monitor', monitor_ssh_pkey_fname, stdout, stderr)
+    create_account('monitor', monitorsshpubkey, stdout, stderr)
 
     # check that creating the monitor account worked
     set_host_and_key(public_host, EC2admin_key_fname, username="monitor")
