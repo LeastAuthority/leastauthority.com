@@ -81,8 +81,8 @@ def sudo_apt_get(argstring):
 def sudo_easy_install(argstring):
     sudo('easy_install %s' % argstring)
 
-def write(remote_path, value, mode=None):
-    return api.put(StringIO(value), remote_path, mode=mode)
+def write(value, remote_path, mode=None, usesudo=True):
+    return api.put(StringIO(value), remote_path, use_sudo=usesudo, mode=mode)
 
 
 def delete_customer(public_host, EC2admin_key_fname):
@@ -92,16 +92,16 @@ def delete_customer(public_host, EC2admin_key_fname):
     sudo('rm -rf /home/customer*')
 
 
-def create_account(account_name, account_ssh_pkey_fname, stdout, stderr):
+def create_account(account_name, account_ssh_pkey, stdout, stderr):
     print >>stdout, "Setting up %s account..." % (account_name,)
     sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)) )
     sudo('mkdir -p /home/%s/.ssh/' % (account_name,) )
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
     sudo('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
-    if account_ssh_pkey_fname is None:
+    if account_ssh_pkey is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
     else:
-        write('/home/%s/.ssh/authorized_keys' % (account_name,), account_ssh_pkey_fname)
+        write(account_ssh_pkey, '/home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
