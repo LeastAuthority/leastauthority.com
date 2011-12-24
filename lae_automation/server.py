@@ -81,7 +81,7 @@ def sudo_apt_get(argstring):
 def sudo_easy_install(argstring):
     sudo('easy_install %s' % argstring)
 
-def write(value, remote_path, mode=None, usesudo=True):
+def write(value, remote_path, usesudo=False, mode=None):
     return api.put(StringIO(value), remote_path, use_sudo=usesudo, mode=mode)
 
 
@@ -101,7 +101,7 @@ def create_account(account_name, account_ssh_pkey, stdout, stderr):
     if account_ssh_pkey is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
     else:
-        write(account_ssh_pkey, '/home/%s/.ssh/authorized_keys' % (account_name,))
+        write(account_ssh_pkey, '/home/%s/.ssh/authorized_keys' % (account_name,), usesudo=True)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
