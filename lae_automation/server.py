@@ -179,8 +179,8 @@ def upgrade_server(public_host, EC2admin_key_fname, monitor_ssh_pkey_fname, stdo
 
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
-    write('/home/customer/restart.sh', RESTART_SCRIPT, mode=0750)
-    write('/home/customer/ctab', '@reboot /home/customer/restart.sh')
+    write(RESTART_SCRIPT, '/home/customer/restart.sh', mode=0750)
+    write('@reboot /home/customer/restart.sh', '/home/customer/ctab')
     run('crontab /home/customer/ctab')
 
 
@@ -194,8 +194,8 @@ def bounce_server(public_host, EC2admin_key_fname, private_host, creds, user_tok
 
     print >>stdout, "Starting introducer..."
     run('rm -f /home/customer/introducer/introducer.furl')
-    write('/home/customer/introducer/introducer.port', INTRODUCER_PORT + '\n')
-    write('/home/customer/storageserver/client.port', SERVER_PORT + '\n')
+    write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
+    write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
     run('LAFS_source/bin/tahoe restart introducer && sleep 5')
     internal_introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
@@ -206,11 +206,11 @@ def bounce_server(public_host, EC2admin_key_fname, private_host, creds, user_tok
                                       'introducer_furl': internal_introducer_furl,
                                       'access_key_id': access_key_id,
                                       'bucket_name': bucket_name}
-    write('/home/customer/storageserver/tahoe.cfg', tahoe_cfg)
+    write(tahoe_cfg, '/home/customer/storageserver/tahoe.cfg')
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write('/home/customer/storageserver/private/s3secret', secret_key, mode=0440)
-    write('/home/customer/storageserver/private/s3usertoken', user_token, mode=0440)
-    write('/home/customer/storageserver/private/s3producttoken', product_token, mode=0440)
+    write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0440)
+    write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0440)
+    write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0440)
 
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
