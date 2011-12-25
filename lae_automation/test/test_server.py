@@ -4,24 +4,20 @@ from twisted.trial.unittest import TestCase
 from lae_automation import server
 from lae_automation.server import api
 
-import sys
 class TestServerModule(TestCase):
     def setUp(self):
 
         self.number_whoamis = 0
         self.number_runs = 0
+        self.number_writes = 0
 
         def call_api_run(argstring, pty, **kwargs):
             self.failUnlessEqual(self.RUNARGSLIST[self.number_runs], (argstring, pty, kwargs))
             self.number_runs = self.number_runs + 1
             if argstring == 'whoami':
+                result = self.whoamis[self.number_whoamis]
                 self.number_whoamis = self.number_whoamis + 1
-                if self.number_whoamis == 1:
-                    return 'ubuntu'
-                elif self.number_whoamis == 2:
-                    return 'monitor'
-                elif self.number_whoamis == 3:
-                    return 'customer'
+                return result
 
         self.patch(api, 'run', call_api_run)
 
@@ -36,6 +32,8 @@ class TestServerModule(TestCase):
         self.patch(api, 'reboot', call_api_reboot)
 
         def call_write(value, remote_path, usesudo=False, mode=None):
+            self.failUnlessEqual(self.WRITEARGSLIST[self.number_writes], (value, remote_path, usesudo, mode))
+            self.number_writes = self.number_writes + 1
             return [remote_path]
         self.patch(server, 'write', call_write)
 
@@ -80,6 +78,8 @@ class TestServerModule(TestCase):
             ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
             ('chmod 700 /home/monitor/.ssh/', False, {})]
 
+        self.whoamis = ['ubuntu', 'monitor', 'customer']
+        self.WRITEARGSLIST = [('MONSSHPUBKEY', '/home/monitor/.ssh/authorized_keys', True, None)]
         MHOSTNAME = '0.0.0.0'
         MKEYFILENAME = 'EC2MOCKKEYFILENAME.pem'
         MONSSHPUBKEY = 'MONSSHPUBKEY'
@@ -92,8 +92,8 @@ class TestServerModule(TestCase):
         from lae_automation import server
         MOCKACCOUNTNAMES = ['customer', 'monitor']
         MKEYFILENAME = 'account_ssh_pkey_fname'
-        STDOUT = sys.stdout
-        STDERR = sys.stderr
+        STDOUT = StringIO()#sys.stdout
+        STDERR = StringIO()#sys.stderr
         for acct_name in MOCKACCOUNTNAMES:
             self.number_runs = 0
             self.number_sudos = 0
@@ -113,3 +113,23 @@ class TestServerModule(TestCase):
                 return [remote_path]
             self.patch(server, 'write', call_write)
             server.create_account(acct_name, MKEYFILENAME, STDOUT, STDERR)
+
+    def test_upgrade_server(self):
+        STDOUT = StringIO()#sys.stdout
+        STDERR = StringIO()#sys.stderr
+        PUBLICHOST = '0.0.0.0'
+        EC2AKEYFNAME = 'mockEC2adminkeys.pem'
+        MONSSHPUBKEY = 'THIS IS A MOCK PUB KEY'
+        self.SUDOARGSLIST = [
+            ('adduser --disabled-password --gecos "" monitor || echo Assuming that monitor already exists.', False, {}),
+            ('mkdir -p /home/monitor/.ssh/', False, {}),
+            ('chown monitor:monitor /home/monitor/.ssh', False, {}),
+            ('chmod u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
+            ('chown monitor:monitor /home/monitor/.ssh/authorized_keys', False, {}),
+            ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
+            ('chmod 700 /home/monitor/.ssh/', False, {})]
+
+        self.whoamis = ['ubuntu', 'monitor', 'customer']
+        self.WRITEARGSLIST = [('THIS IS A MOCK PUB KEY', '/home/monitor/.ssh/authorized_keys', True, None), ('#!/bin/sh\ncd /home/customer\nLAFS_source/bin/tahoe restart introducer\nLAFS_source/bin/tahoe restart storageserver\n', '/home/customer/restart.sh', False, 488), ('@reboot /home/customer/restart.sh', '/home/customer/ctab', False, None)]
+        self.RUNARGSLIST = [('whoami', False, {}), ('whoami', False, {}), ('whoami', False, {}), ('crontab /home/customer/ctab', False, {})]
+        server.upgrade_server(PUBLICHOST, EC2AKEYFNAME, MONSSHPUBKEY, STDOUT, STDERR)

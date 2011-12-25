@@ -84,13 +84,11 @@ def sudo_easy_install(argstring):
 def write(value, remote_path, usesudo=False, mode=None):
     return api.put(StringIO(value), remote_path, use_sudo=usesudo, mode=mode)
 
-
 def delete_customer(public_host, EC2admin_key_fname):
     set_host_and_key(public_host, EC2admin_key_fname)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
-
 
 def create_account(account_name, account_ssh_pkey, stdout, stderr):
     print >>stdout, "Setting up %s account..." % (account_name,)
