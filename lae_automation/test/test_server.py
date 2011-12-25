@@ -108,7 +108,7 @@ class TestServerModule(TestCase):
                 ('chmod 700 /home/%s/.ssh/' % acct_name, False, {})]
             if acct_name is None:
                 self.SUDOARGSLIST.insert(2, ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}))
-            def call_write(value, remote_path, usesudo=False, mode=None):
+            def call_write(value, remote_path, usesudo=False, mode=None, acct_name=acct_name):
                 self.failUnlessEqual(remote_path, '/home/%s/.ssh/authorized_keys' % acct_name)
                 return [remote_path]
             self.patch(server, 'write', call_write)
