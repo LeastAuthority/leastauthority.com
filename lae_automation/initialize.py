@@ -1,11 +1,10 @@
-
 import urllib, re
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
-from lae_automation.aws.queryapi import xml_parse, xml_find, ResponseParseError
+from lae_automation.aws.queryapi import xml_parse, xml_find, ResponseParseError, AddressParser
 
-from txaws.ec2.client import EC2Client, Parser as txaws_ec2_Parser
+from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint
 
@@ -114,32 +113,6 @@ def get_EC2_addresses(creds, endpoint_uri, instance_id):
 
 
 EC2_PUBLIC_DNS = re.compile(r'^ec2(-(0|([1-9][0-9]{0,2}))){4}\.')
-
-class AddressParser(txaws_ec2_Parser):
-    def describe_instances(self, xml_bytes):
-        doc = xml_parse(xml_bytes)
-        node = xml_find(doc, u'reservationSet')
-        node = xml_find(node, u'item')
-        node = xml_find(node, u'instancesSet')
-        node = xml_find(node, u'item')
-        try:
-            publichost = xml_find(node, u'dnsName').text
-            privatehost = xml_find(node, u'privateDnsName').text
-        except ResponseParseError:
-            return None
-
-        if not publichost or not privatehost:
-            return None
-
-        publichost = publichost.strip()
-        privatehost = privatehost.strip()
-        m = EC2_PUBLIC_DNS.match(publichost)
-        if m:
-            # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
-            # to eliminate the DNS point of failure.
-            publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
-
-        return (publichost, privatehost)
 
 
 def dump_instance_information(instance, stderr):

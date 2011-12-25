@@ -9,7 +9,7 @@ from txaws.util import XML
 from lae_util.http_client import make_http_request
 from lae_util.no_overwrite import update_by_keywords_without_overwrite
 from lae_util import timestamp
-
+from txaws.ec2.client import Parser as txaws_ec2_Parser
 
 def _xor(a, b):
     return "".join([chr(ord(c) ^ ord(b)) for c in a])
@@ -93,3 +93,30 @@ def xml_find(node, key):
         raise ResponseParseError('Node not found: %r' % (key,))
     else:
         return r
+
+
+class AddressParser(txaws_ec2_Parser):
+    def describe_instances(self, xml_bytes):
+        doc = xml_parse(xml_bytes)
+        node = xml_find(doc, u'reservationSet')
+        node = xml_find(node, u'item')
+        node = xml_find(node, u'instancesSet')
+        node = xml_find(node, u'item')
+        try:
+            publichost = xml_find(node, u'dnsName').text
+            privatehost = xml_find(node, u'privateDnsName').text
+        except ResponseParseError:
+            return None
+
+        if not publichost or not privatehost:
+            return None
+
+        publichost = publichost.strip()
+        privatehost = privatehost.strip()
+        m = EC2_PUBLIC_DNS.match(publichost)
+        if m:
+            # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
+            # to eliminate the DNS point of failure.
+            publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
+
+        return (publichost, privatehost)
