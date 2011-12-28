@@ -274,7 +274,7 @@ class TestSignupModule(TestCase):
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
 
-        def call_get_EC2_addresses(ec2creds, EC2_ENDPOINT, instance_id):
+        def call_get_EC2_addresses(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, instance_id):
             return defer.succeed(None)
         self.patch(signup, 'get_EC2_addresses', call_get_EC2_addresses)
 

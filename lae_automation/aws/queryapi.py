@@ -122,12 +122,13 @@ class AddressParser(txaws_ec2_Parser):
 
         return (publichost, privatehost)
 
-def get_EC2_addresses(creds, endpoint_uri, instance_id):
+def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_id):
     """
     Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
     """
+    ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
-    client = EC2Client(creds=creds, endpoint=endpoint, parser=AddressParser())
+    client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=AddressParser())
     return client.describe_instances(instance_id)
 
 

@@ -55,6 +55,9 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     ec2accesskeyid = str(config.other['ec2_access_key_id'])
     ec2secretkey = FilePath(ec2secretpath).getContent().strip()
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
+    #XXX Eventually I want to move the import of AWSCredentials to queryapi.py.  To start I am passing
+    #ec2accesskeyid, and ec2secretkey to get_EC2_addresses, since that function is required for 
+    #multiserverupgrade.py.  Once this is does the ec2creds=... line will also live in queryapi.py.
 
     ec2keypairname = str(config.other['keypair_name'])
     ec2keyfilename = str(config.other['key_filename'])
@@ -93,7 +96,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
         def _deployed(instance):
             def _wait_for_addresses(how_long_secs):
-                d4 = get_EC2_addresses(ec2creds, EC2_ENDPOINT, instance.instance_id)
+                d4 = get_EC2_addresses(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, instance.instance_id)
                 def _maybe_again2(res):
                     if res:
                         return res
