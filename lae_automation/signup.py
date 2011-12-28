@@ -7,7 +7,8 @@ from txaws.service import AWSCredentials
 
 from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
-    create_user_bucket, deploy_EC2_instance, get_EC2_addresses
+    create_user_bucket, deploy_EC2_instance
+from lae_automation.aws.queryapi import get_EC2_addresses
 from lae_automation.server import install_server, bounce_server, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation
 

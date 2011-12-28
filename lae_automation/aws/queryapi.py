@@ -9,7 +9,8 @@ from txaws.util import XML
 from lae_util.http_client import make_http_request
 from lae_util.no_overwrite import update_by_keywords_without_overwrite
 from lae_util import timestamp
-from txaws.ec2.client import Parser as txaws_ec2_Parser
+from txaws.ec2.client import EC2Client, Parser as txaws_ec2_Parser
+from txaws.service import AWSCredentials, AWSServiceEndpoint
 
 def _xor(a, b):
     return "".join([chr(ord(c) ^ ord(b)) for c in a])
@@ -120,3 +121,13 @@ class AddressParser(txaws_ec2_Parser):
             publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
 
         return (publichost, privatehost)
+
+def get_EC2_addresses(creds, endpoint_uri, instance_id):
+    """
+    Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
+    """
+    endpoint = AWSServiceEndpoint(uri=endpoint_uri)
+    client = EC2Client(creds=creds, endpoint=endpoint, parser=AddressParser())
+    return client.describe_instances(instance_id)
+
+
