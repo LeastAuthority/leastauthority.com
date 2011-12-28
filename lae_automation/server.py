@@ -8,6 +8,7 @@ import simplejson
 
 from fabric import api
 from fabric.context_managers import cd
+from txaws.ec2.client import EC2Client
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
@@ -82,6 +83,7 @@ def sudo_easy_install(argstring):
     sudo('easy_install %s' % argstring)
 
 def write(value, remote_path, usesudo=False, mode=None):
+    # There's an incompletely understood interaction between use_sudo and mode.  It can result in cryptic remote file names.
     return api.put(StringIO(value), remote_path, use_sudo=usesudo, mode=mode)
 
 def delete_customer(public_host, EC2admin_key_fname):
