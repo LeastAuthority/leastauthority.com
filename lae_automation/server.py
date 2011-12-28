@@ -101,7 +101,7 @@ def create_account(account_name, account_ssh_pkey, stdout, stderr):
     if account_ssh_pkey is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
     else:
-        write(account_ssh_pkey, '/home/%s/.ssh/authorized_keys' % (account_name,), usesudo=True)
+        write(account_ssh_pkey, '/home/%s/.ssh/authorized_keys' % (account_name,), use_sudo=True)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
@@ -129,7 +129,6 @@ def install_server(public_host, EC2admin_key_fname, monitor_ssh_pubkey, monitor_
         sudo('python ./setup.py install')
     create_account('customer', None, stdout, stderr)
     create_account('monitor', monitor_ssh_pubkey, stdout, stderr)
-
 
     # check that creating the monitor account worked
     set_host_and_key(public_host, monitor_ssh_privkey, username="monitor")
