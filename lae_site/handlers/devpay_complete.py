@@ -68,7 +68,7 @@ provider-independent security means that you don't need to tell us any secrets a
 </div>
 <p>
 If this form does not work for any reason, you can also send the same information
-by email to <a href="mailto:info@leastauthority.com">&lt;info@leastauthority.com&gt</a>.
+by email to <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
 <p>
 Happy Cloud Storing!
 </p>
@@ -103,7 +103,7 @@ Application</b> link for this subscription.
 </p>
 <p>
 If you have any problem completing the sign-up, please contact
-<a href="mailto:info@leastauthority.com">&lt;info@leastauthority.com&gt</a>.
+<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
 <p>
 Happy Cloud Storing!
 </p>
@@ -131,7 +131,7 @@ When your account is activated, we will send you a confirmation email with
 instructions on how to start using Tahoe-LAFS-on-S3, or alternatively an email
 requesting any information that was missing. If you don't receive this within
 an hour (also check your spam folder in case it is there), please contact
-<a href="mailto:info@leastauthority.com">&lt;info@leastauthority.com&gt</a>.
+<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
 </p>
 <p>
 Thanks again for signing up, and especially with your help for the alpha test.
