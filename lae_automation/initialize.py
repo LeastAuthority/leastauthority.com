@@ -1,4 +1,5 @@
 import urllib, re
+from twisted.internet import reactor, task
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
@@ -38,14 +39,18 @@ def activate_user_account_desktop(activationkey, producttoken, stdout, stderr):
     return d
 
 
+# delay between starting an instance and setting its tags
+SET_TAGS_DELAY_TIME = 5
+
 def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name, instance_name,
-                        stdout, stderr):
+                        stdout, stderr, clock=None):
     """
     @param creds: a txaws.service.AWSCredentials object
     @param ami_image_id: string identifying the AMI
     @param bucket_name: identifier that is unique to a specific customer account
     @param keypair_name: the name of the SSH keypair to be used
     """
+    myclock = clock or reactor
 
     print >>stdout, "Deploying EC2 instance..."
 
@@ -99,7 +104,7 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
                 raise AssertionError("could not set tags for %r" % (instance_id,))
         d2.addCallback(parse_response)
         return d2
-    #d.addCallback(set_tags)
+    d.addCallback(lambda instance: task.deferLater(myclock, SET_TAGS_DELAY_TIME, set_tags, instance))
     return d
 
 
