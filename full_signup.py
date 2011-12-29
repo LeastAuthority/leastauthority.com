@@ -46,6 +46,8 @@ if __name__ == '__main__':
     sys.stdout = stderr
 
     def _close(res):
+        stdout.flush()
+        stderr.flush()
         secretsfile.close()
         logfile.close()
         return res
@@ -58,7 +60,7 @@ if __name__ == '__main__':
 
     d = defer.succeed(None)
     d.addCallback(lambda ign: main(stdin, stdout, stderr, seed, secretsfile))
-    d.addBoth(_close)
     d.addErrback(_err)
+    d.addBoth(_close)
     d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
     reactor.run()
