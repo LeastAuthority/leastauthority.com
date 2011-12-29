@@ -1,5 +1,5 @@
 
-import logging, pprint, time, sys
+import logging, pprint, time, sys, os
 from urllib import quote
 from cgi import escape as htmlEscape
 
@@ -10,15 +10,19 @@ from lae_util.flapp import FlappCommand
 from lae_util.timestamp import format_iso_time
 
 
-# TODO: allow customizing the text per-product.
-DEVPAY_RESPONSE_HAVE_CODES_HTML = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+def html(title, body):
+    return """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<title>Request activation for Tahoe-LAFS-on-S3 alpha</title>
+<title>%s</title>
 </head>
-<body style="background: #FFFFFF">
+<body style="background: #FFFFFF">%s""" % (title, body)
+    return ""
+
+
+# TODO: allow customizing the text per-product.
+DEVPAY_RESPONSE_HAVE_CODES_HTML = html("Request activation for Tahoe-LAFS-on-S3 alpha", """
 <p>
 Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 </p>
@@ -78,20 +82,13 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 <hr>
 </body>
 </html>
-"""
+""")
 
 # Amazon sometimes doesn't tell us the product code and/or activation key.
 # In that case, the easiest way to get those codes is for the user to click on
 # the 'Go to Application' link, so tell them to do that, rather than requiring
 # them to paste in the code(s).
-DEVPAY_RESPONSE_MISSING_CODE_HTML = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<title>Request activation for Tahoe-LAFS-on-S3 alpha</title>
-</head>
-<body style="background: #FFFFFF">
+DEVPAY_RESPONSE_MISSING_CODE_HTML = html("Request activation for Tahoe-LAFS-on-S3 alpha", """
 <p>
 Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 </p>
@@ -113,16 +110,9 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 <hr>
 </body>
 </html>
-"""
+""")
 
-ACTIVATIONREQ_RESPONSE_HTML = """
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
-<html>
-<head>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-<title>Activation requested</title>
-</head>
-<body style="background: #FFFFFF">
+ACTIVATIONREQ_RESPONSE_NORMAL_HTML = html("Activation requested", """
 <p>
 Your activation request has been received.
 </p>
@@ -145,7 +135,38 @@ The progress of your sign-up is shown below. Please don't reload this page,
 since the activation key is only valid once.
 </p>
 <pre>
-"""
+""")
+
+ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML = html("Missing activation key", """
+<p>
+The activation key was missing from the request. This can happen in some cases if you
+reload the page after an activation request. If you are having any difficulty signing up,
+please contact <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+</p>
+<pre>
+""")
+
+ACTIVATIONREQ_RESPONSE_ALREADY_SUCCEEDED_HTML = html("Activation already succeeded", """
+<p>
+This activation key has already been used in a successful sign-up. If you have not received
+the confirmation e-mail, please contact
+<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+</p>
+<hr>
+</body>
+</html>
+""")
+
+ACTIVATIONREQ_RESPONSE_ALREADY_USED_HTML = html("Activation key already used", """
+<p>
+This activation key has already been used. If you have not yet received any e-mail
+about your sign-up, please contact
+<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+</p>
+<hr>
+</body>
+</html>
+""")
 
 SUCCEEDED_HTML = """</pre>
 <p>
@@ -282,16 +303,57 @@ class NullOutputStream(object):
         pass
 
 
-flappcommand = FlappCommand("../signup.furl")
+# Rely on start() to initialize these, in order to make it easier for tests to patch
+# and/or reinitialize.
+flappcommand = None
+all_activationkeys = None
+successful_activationkeys = None
 
 def start():
+    global flappcommand, all_activationkeys, successful_activationkeys
+
+    flappcommand = FlappCommand("../signup.furl")
+    all_activationkeys = set([])
+    successful_activationkeys = set([])
+
+    # read the sets of keys
+    try:
+        f = open("activation_requests.csv", "r")
+    except IOError:
+        if os.path.exists("activation_requests.csv"):
+            raise
+    else:
+        try:
+            for line in f:
+                fields = line.split(',')
+                if len(fields) >= 2:
+                    [timestamp, key] = fields[:2]
+                    all_activationkeys.add(key)
+        finally:
+            f.close()
+
+    try:
+        f = open("signups.csv", "r")
+    except IOError:
+        if os.path.exists("signups.csv"):
+            raise
+    else:
+        try:
+            for line in f:
+                fields = line.split(',')
+                if len(fields) >= 3:
+                    [timestamp, outcome, key] = fields[:3]
+                    if outcome == "success":
+                        successful_activationkeys.add(key)
+        finally:
+            f.close()
+
     return flappcommand.start()
+
 
 class ActivationRequestHandler(HandlerBase):
     def render(self, request):
-        print >>self.out, "Yay! Someone signed up :-)  ", request.args
-        # TODO: check whether this is a known product for which signups are currently
-        # enabled, and handle the case where the customer was already signed up.
+        print >>self.out, "Got activation request:", request.args
 
         name = self.get_arg(request, 'Name')
         email = self.get_arg(request, 'Email')
@@ -302,7 +364,17 @@ class ActivationRequestHandler(HandlerBase):
         self.append_record("activation_requests.csv", activationkey, productcode, name, email, publickey)
 
         request.setResponseCode(200)
-        request.write(ACTIVATIONREQ_RESPONSE_HTML)
+
+        if not activationkey:
+            return ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML
+        elif activationkey in successful_activationkeys:
+            return ACTIVATIONREQ_RESPONSE_ALREADY_SUCCEEDED_HTML
+        elif activationkey in all_activationkeys:
+            return ACTIVATIONREQ_RESPONSE_ALREADY_USED_HTML
+
+        print >>self.out, "Yay! Someone signed up :-)"
+
+        request.write(ACTIVATIONREQ_RESPONSE_NORMAL_HTML)
 
         # None of these fields can contain newlines because they would be quoted by get_arg.
         stdin = ("%s\n"*5) % (activationkey,
@@ -314,10 +386,13 @@ class ActivationRequestHandler(HandlerBase):
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = NullOutputStream()
         def when_done():
+            successful_activationkeys.add(activationkey)
+            all_activationkeys.add(activationkey)
             self.append_record("signups.csv", 'success', activationkey, productcode, name, email, publickey)
             request.write(SUCCEEDED_HTML)
             request.finish()
         def when_failed():
+            all_activationkeys.add(activationkey)
             self.append_record("signups.csv", 'failure', activationkey, productcode, name, email, publickey)
             request.write(FAILED_HTML)
             request.finish()
