@@ -2,6 +2,7 @@ from lae_automation.config import Config
 from txaws.service import AWSCredentials, AWSServiceEndpoint
 from lae_automation.aws.queryapi import AddressParser, get_EC2_addresses
 from twisted.python.filepath import FilePath
+from twisted.python.failure import Failure
 from twisted.internet import reactor
 from server import upgrade_server
 import sys, os
@@ -38,13 +39,11 @@ def printer(*args):
     for index, arg in enumerate(args):
         print "arg %s is %s." % (index, arg)
 
-def errprinter(x):
-    print x
-    import sys
-    reactor.stop()
-    sys.exit(89)
+def cb(x):
+    print str(x)
+    if isinstance(x, Failure) and hasattr(x.value, 'response'):
+        print x.value.response
 
-d.addCallback(printer)
-d.addErrback(errprinter)
+d.addBoth(cb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()
