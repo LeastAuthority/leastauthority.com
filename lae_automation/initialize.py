@@ -110,18 +110,6 @@ def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id
     return d
 
 
-def get_EC2_addresses(creds, endpoint_uri, instance_id):
-    """
-    Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
-    """
-    endpoint = AWSServiceEndpoint(uri=endpoint_uri)
-    client = EC2Client(creds=creds, endpoint=endpoint, parser=AddressParser())
-    return client.describe_instances(instance_id)
-
-
-EC2_PUBLIC_DNS = re.compile(r'^ec2(-(0|([1-9][0-9]{0,2}))){4}\.')
-
-
 def dump_instance_information(instance, stderr):
     if not isinstance(instance, Instance):
         print >>stderr, "not an instance: %r" % (instance,)
