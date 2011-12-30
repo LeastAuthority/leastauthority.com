@@ -81,9 +81,11 @@ def sudo_apt_get(argstring):
 def sudo_easy_install(argstring):
     sudo('easy_install %s' % argstring)
 
-def write(value, remote_path, usesudo=False, mode=None):
-    # There's an incompletely understood interaction between use_sudo and mode.  It can result in cryptic remote file names.
-    return api.put(StringIO(value), remote_path, use_sudo=usesudo, mode=mode)
+def write(value, remote_path, use_sudo=False, mode=None):
+    # There's an incompletely understood interaction between use_sudo and mode.
+    # It can result in cryptic remote file names when use_sudo is True and
+    # mode is not None.
+    return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
 def delete_customer(public_host, EC2admin_key_fname):
     set_host_and_key(public_host, EC2admin_key_fname)
