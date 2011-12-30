@@ -1,3 +1,4 @@
+
 import urllib, time, re
 from hashlib import sha1
 from base64 import b64encode
@@ -12,7 +13,7 @@ from lae_util import timestamp
 from txaws.ec2.client import EC2Client, Parser as txaws_ec2_Parser
 from txaws.service import AWSCredentials, AWSServiceEndpoint
 
-EC2_PUBLIC_DNS = re.compile(r'^ec2(-(0|([1-9][0-9]{0,2}))){4}\.')
+
 def _xor(a, b):
     return "".join([chr(ord(c) ^ ord(b)) for c in a])
 
@@ -97,6 +98,8 @@ def xml_find(node, key):
         return r
 
 
+EC2_PUBLIC_DNS = re.compile(r'^ec2(-(0|([1-9][0-9]{0,2}))){4}\.')
+
 class AddressParser(txaws_ec2_Parser):
     def describe_instances(self, xml_bytes):
         addresslist = []
@@ -130,6 +133,3 @@ def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, *instance_ids)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=AddressParser())
     return client.describe_instances(*instance_ids)
-    
-
-
