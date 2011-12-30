@@ -87,28 +87,28 @@ def write(value, remote_path, use_sudo=False, mode=None):
     # mode is not None.
     return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
-def delete_customer(public_host, EC2admin_key_fname):
-    set_host_and_key(public_host, EC2admin_key_fname)
+def delete_customer(public_host, admin_privkey_path):
+    set_host_and_key(public_host, admin_privkey_path)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
 
-def create_account(account_name, account_ssh_pkey, stdout, stderr):
+def create_account(account_name, account_pubkey, stdout, stderr):
     print >>stdout, "Setting up %s account..." % (account_name,)
     sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)) )
     sudo('mkdir -p /home/%s/.ssh/' % (account_name,) )
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
     sudo('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
-    if account_ssh_pkey is None:
+    if account_pubkey is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
     else:
-        write(account_ssh_pkey, '/home/%s/.ssh/authorized_keys' % (account_name,), use_sudo=True)
+        write(account_pubkey, '/home/%s/.ssh/authorized_keys' % (account_name,), use_sudo=True)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
 
-def install_server(public_host, EC2admin_key_fname, monitor_ssh_pubkey, monitor_ssh_privkey, stdout, stderr):
-    set_host_and_key(public_host, EC2admin_key_fname)
+def install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+    set_host_and_key(public_host, admin_privkey_path)
 
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
@@ -129,14 +129,14 @@ def install_server(public_host, EC2admin_key_fname, monitor_ssh_pubkey, monitor_
     with cd('/home/ubuntu/txAWS-0.2.1.post2'):
         sudo('python ./setup.py install')
     create_account('customer', None, stdout, stderr)
-    create_account('monitor', monitor_ssh_pubkey, stdout, stderr)
+    create_account('monitor', monitor_pubkey, stdout, stderr)
 
     # check that creating the monitor account worked
-    set_host_and_key(public_host, monitor_ssh_privkey, username="monitor")
+    set_host_and_key(public_host, monitor_privkey_path, username="monitor")
 
     # do the rest of the installation as 'customer', customer doesn't actually have its own ssh keys
     # I don't know if creating one would be useful.XXX
-    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
+    set_host_and_key(public_host, admin_privkey_path, username="customer")
 
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
@@ -164,15 +164,15 @@ LAFS_source/bin/tahoe restart storageserver
 """
 
 
-def upgrade_server(public_host, EC2admin_key_fname, monitorsshpubkey, stdout, stderr):
-    set_host_and_key(public_host, EC2admin_key_fname)
-    create_account('monitor', monitorsshpubkey, stdout, stderr)
+def upgrade_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+    set_host_and_key(public_host, admin_privkey_path)
+    create_account('monitor', monitor_pubkey, stdout, stderr)
 
     # check that creating the monitor account worked
-    set_host_and_key(public_host, EC2admin_key_fname, username="monitor")
+    set_host_and_key(public_host, monitor_privkey_path, username="monitor")
 
     # set up the reboot script as 'customer'
-    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
+    set_host_and_key(public_host, admin_privkey_path, username="customer")
     set_up_reboot(stdout, stderr)
 
 
@@ -183,13 +183,13 @@ def set_up_reboot(stdout, stderr):
     run('crontab /home/customer/ctab')
 
 
-def bounce_server(public_host, EC2admin_key_fname, private_host, creds, user_token, product_token, bucket_name,
+def bounce_server(public_host, admin_privkey_path, private_host, creds, user_token, product_token, bucket_name,
                   stdout, stderr, secretsfile):
     access_key_id = creds.access_key
     secret_key = creds.secret_key
     nickname = bucket_name
 
-    set_host_and_key(public_host, EC2admin_key_fname, username="customer")
+    set_host_and_key(public_host, admin_privkey_path, username="customer")
 
     print >>stdout, "Starting introducer..."
     run('rm -f /home/customer/introducer/introducer.furl')

@@ -79,16 +79,16 @@ class TestServerModule(TestCase):
             ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
             ('chmod 700 /home/monitor/.ssh/', False, {})
         ])
-        self.WRITEARGS_FIFO = fifo([('MONSSHPUBKEY', '/home/monitor/.ssh/authorized_keys', True, None)])
+        self.WRITEARGS_FIFO = fifo([('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None)])
 
         MHOSTNAME = '0.0.0.0'
-        MKEYFILENAME = 'EC2MOCKKEYFILENAME.pem'
-        MONSSHPUBKEY = 'MONSSHPUBKEY'
-        SSHPRIVFNAME = 'MONSSHPRIVATEKEY THIS IS SOOOOSECRET!'
+        ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
+        MONITORPUBKEY = 'THIS IS A MOCK PUBLIC KEY'
+        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
         STDOUT = StringIO()
         STDERR = StringIO()
 
-        server.install_server(MHOSTNAME, MKEYFILENAME, MONSSHPUBKEY, SSHPRIVFNAME, STDOUT, STDERR)
+        server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
         self._check_all_done()
 
     def test_create_account(self):
@@ -137,17 +137,18 @@ class TestServerModule(TestCase):
             ('chmod 700 /home/monitor/.ssh/', False, {})
         ])
         self.WRITEARGS_FIFO = fifo([
-            ('THIS IS A MOCK PUB KEY', '/home/monitor/.ssh/authorized_keys', True, None),
+            ('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None),
             ('#!/bin/sh\ncd /home/customer\nLAFS_source/bin/tahoe restart introducer\nLAFS_source/bin/tahoe restart storageserver\n',
                  '/home/customer/restart.sh', False, 0750),
             ('@reboot /home/customer/restart.sh', '/home/customer/ctab', False, None)
         ])
 
         PUBLICHOST = '0.0.0.0'
-        EC2AKEYFNAME = 'mockEC2adminkeys.pem'
-        MONSSHPUBKEY = 'THIS IS A MOCK PUB KEY'
+        ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
+        MONITORPUBKEY = 'THIS IS A MOCK PUBLIC KEY'
+        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
         STDOUT = StringIO()
         STDERR = StringIO()
 
-        server.upgrade_server(PUBLICHOST, EC2AKEYFNAME, MONSSHPUBKEY, STDOUT, STDERR)
+        server.upgrade_server(PUBLICHOST, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
         self._check_all_done()

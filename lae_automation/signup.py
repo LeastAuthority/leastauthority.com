@@ -54,8 +54,10 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     ec2accesskeyid = str(config.other['ec2_access_key_id'])
     ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
-    ec2keypairname = str(config.other['keypair_name'])
-    ec2keyfilename = str(config.other['key_filename'])
+    admin_keypair_name = str(config.other['admin_keypair_name'])
+    admin_privkey_path = str(config.other['admin_privkey_path'])
+    monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
+    monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
     print >>stdout, "Signing up customer for %s..." % (fullname,)
 
@@ -111,7 +113,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                 retries = 3
                 while True:
                     try:
-                        install_server(publichost, ec2keyfilename, stdout, stderr)
+                        install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr)
                         break
                     except NotListeningError:
                         retries -= 1
@@ -122,7 +124,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                         time.sleep(LISTEN_POLL_TIME)
                         continue
 
-                return bounce_server(publichost, ec2keyfilename, privatehost, usercreds, usertoken,
+                return bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
                                      producttoken, bucketname, stdout, stderr, secretsfile)
             d3.addCallback(_got_addresses)
             return d3

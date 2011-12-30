@@ -86,16 +86,20 @@ CONFIGFILEJSON = """{
       "instance_size": "t1.testy"
     }
   ],
-  "ec2_access_key_id": "TESTAAAAAAAAAAAAAAAA",
-  "keypair_name":      "EC2MOCKYKEYS2",
-  "key_filename":      "EC2MOCKKEYFILENAME.pem"
+  "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
+  "admin_keypair_name":   "ADMINKEYS",
+  "admin_privkey_path":   "ADMINKEYS.pem",
+  "monitor_pubkey_path":  "MONITORKEYS.pub",
+  "monitor_privkey_path": "MONITORKEYS.pem"
 }"""
 
 ZEROPRODUCT = """{
   "products": [],
-  "ec2_access_key_id": "TESTAAAAAAAAAAAAAAAA",
-  "keypair_name":      "EC2MOCKYKEYS2",
-  "key_filename":      "EC2MOCKKEYFILENAME.pem"
+  "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
+  "admin_keypair_name":   "ADMINKEYS",
+  "admin_privkey_path":   "ADMINKEYS.pem",
+  "monitor_pubkey_path":  "MONITORKEYS.pub",
+  "monitor_privkey_path": "MONITORKEYS.pem"
 }"""
 
 MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
@@ -152,7 +156,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(mininstancecount, 1)
             self.failUnlessEqual(maxinstancecount, 1)
             self.failUnlessEqual(secgroups, ['CustomerDefault'])
-            self.failUnlessEqual(keypair_name, 'EC2MOCKYKEYS2')
+            self.failUnlessEqual(keypair_name, 'ADMINKEYS')
             class MockEC2Instance:
                 def __init__(self):
                     self.instance_id = 'i-MOCKEC2INSTANCEID'
@@ -166,25 +170,27 @@ class TestSignupModule(TestCase):
 
         from lae_automation.server import NotListeningError
         self.first = True
-        def call_install_server(public_host, key_filename, stdout, stderr):
+        def call_install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
             self.failUnlessEqual(public_host, '0.0.0.0')
-            self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
+            self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
+            self.failUnlessEqual(monitor_pubkey, MONITORPUBKEY)
+            self.failUnlessEqual(monitor_privkey_path, 'MONITORKEYS.pem')
             if self.first:
                 self.first = False
                 raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
-        def call_bounce_server(public_host, key_filename, private_host, creds, user_token, product_token,
+        def call_bounce_server(public_host, admin_privkey_path, private_host, useraccesskeyid, usersecretkey, usertoken, producttoken,
                                bucket_name, stdout, stderr, secretsfile):
             self.failUnlessEqual(public_host, '0.0.0.0')
-            self.failUnlessEqual(key_filename, 'EC2MOCKKEYFILENAME.pem')
+            self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(private_host, '0.0.0.1')
-            self.failUnlessEqual(user_token, '{UserToken}TESTUSERTOKEN%s=='%('A'*385,))
-            self.failUnlessEqual(product_token, '{ProductToken}TESTPRODUCTTOKEN%s='%('A'*295,))
+            self.failUnlessEqual(useraccesskeyid, 'TESTAAAAAAAAAAAAAAAA')
+            self.failUnlessEqual(usersecretkey, 'TESTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+            self.failUnlessEqual(usertoken, '{UserToken}TESTUSERTOKEN%s=='%('A'*385,))
+            self.failUnlessEqual(producttoken, '{ProductToken}TESTPRODUCTTOKEN%s='%('A'*295,))
             self.failUnlessEqual(bucket_name, 'lae-abcdefgh-MSEED')
             self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
-            self.failUnlessEqual(creds.access_key, 'TESTAAAAAAAAAAAAAAAA')
-            self.failUnlessEqual(creds.secret_key, 'TESTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
         self.patch(signup, 'bounce_server', call_bounce_server)
 
         def call_send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo,
@@ -248,7 +254,7 @@ class TestSignupModule(TestCase):
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
 
-        def call_verify_user_account(creds, usertoken, producttoken, stdout, stderr):
+        def call_verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout, stderr):
             return defer.succeed(False)
         self.patch(signup, 'verify_user_account', call_verify_user_account)
 
@@ -301,7 +307,7 @@ class TestSignupModule(TestCase):
         MSECRETSFILE = 'MSECRETSFILE'
 
         from lae_automation.server import NotListeningError
-        def call_install_server(public_host, key_filename, stdout, stderr):
+        def call_install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
             raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
