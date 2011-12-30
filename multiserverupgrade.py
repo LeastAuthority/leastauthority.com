@@ -1,14 +1,16 @@
-from lae_automation.config import Config
-from txaws.service import AWSCredentials, AWSServiceEndpoint
-from lae_automation.aws.queryapi import AddressParser, get_EC2_addresses
+
+import sys, os
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 from twisted.internet import reactor
-from server import upgrade_server
-import sys, os
 
-EC2adminkeyfilen = '../EC2adminkeys2.pem'
-monsshpubkey = FilePath('../EC2monitorssh_key.pub').getContent().strip()
+from txaws.service import AWSServiceEndpoint
+
+from lae_automation.config import Config
+from lae_automation.server import upgrade_server
+from lae_automation.aws.queryapi import AddressParser, get_EC2_addresses
+
+
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
 configpath='../lae_automation_config.json'
 config = Config(configpath)
