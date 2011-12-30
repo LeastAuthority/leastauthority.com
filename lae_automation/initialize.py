@@ -1,9 +1,10 @@
-import urllib, re
+
+import urllib
 from twisted.internet import reactor, task
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
-from lae_automation.aws.queryapi import xml_parse, xml_find, ResponseParseError, AddressParser
+from lae_automation.aws.queryapi import xml_parse, xml_find
 
 from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance

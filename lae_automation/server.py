@@ -8,7 +8,6 @@ import simplejson
 
 from fabric import api
 from fabric.context_managers import cd
-from txaws.ec2.client import EC2Client
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
