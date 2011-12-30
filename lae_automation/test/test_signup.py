@@ -4,7 +4,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
 
-from lae_automation import signup
+from lae_automation import signup, initialize
 
 
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
@@ -120,6 +120,7 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'ADDRESS_DELAY_TIME', 0.1)
         self.patch(signup, 'ADDRESS_WAIT_TIME', 0.3)
         self.patch(signup, 'LISTEN_POLL_TIME', 0.1)
+        self.patch(initialize, 'SET_TAGS_DELAY_TIME', 0.1)
 
         from lae_automation.aws.queryapi import time
         def call_time():
