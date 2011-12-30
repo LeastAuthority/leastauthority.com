@@ -103,6 +103,7 @@ ZEROPRODUCT = """{
 }"""
 
 MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+MONITORPUBKEY = 'MONITOR PUBLIC KEY'
 
 
 class TestSignupModule(TestCase):
@@ -111,9 +112,11 @@ class TestSignupModule(TestCase):
         self.mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
         self.CONFIGFILEPATH = 'init_test_config.json'
         self.EC2SECRETPATH = 'mock_ec2secret'
+        self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
 
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
         FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
+        FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
 
         self.patch(signup, 'POLL_TIME', 0.1)
         self.patch(signup, 'CC_VERIFICATION_TIME', 0.3)
