@@ -1,3 +1,4 @@
+#!/usr/bin/python
 
 import sys, os
 from twisted.python.filepath import FilePath
