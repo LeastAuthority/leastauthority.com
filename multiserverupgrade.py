@@ -33,14 +33,11 @@ d = get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri)
 
 def upgrade_servers(public_host_list):
     for public_host in public_host_list[:1]:
-        printer(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, sys.stdout, sys.stderr)
+        print "Upgrading %r..." % (public_host,)
+        upgrade_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, sys.stdout, sys.stderr)
 
 d.addCallback(upgrade_servers)
 
-
-def printer(*args):
-    for index, arg in enumerate(args):
-        print "arg %s is %s." % (index, arg)
 
 def cb(x):
     print str(x)
