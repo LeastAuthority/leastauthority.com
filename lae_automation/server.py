@@ -179,7 +179,7 @@ def upgrade_server(public_host, admin_privkey_path, monitor_pubkey, monitor_priv
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
     write(RESTART_SCRIPT, '/home/customer/restart.sh', mode=0750)
-    write('@reboot /home/customer/restart.sh', '/home/customer/ctab')
+    write('@reboot /home/customer/restart.sh\n', '/home/customer/ctab')
     run('crontab /home/customer/ctab')
 
 
