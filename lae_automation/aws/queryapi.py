@@ -1,4 +1,4 @@
-import urllib, time
+import urllib, time, re
 from hashlib import sha1
 from base64 import b64encode
 
@@ -12,6 +12,7 @@ from lae_util import timestamp
 from txaws.ec2.client import EC2Client, Parser as txaws_ec2_Parser
 from txaws.service import AWSCredentials, AWSServiceEndpoint
 
+EC2_PUBLIC_DNS = re.compile(r'^ec2(-(0|([1-9][0-9]{0,2}))){4}\.')
 def _xor(a, b):
     return "".join([chr(ord(c) ^ ord(b)) for c in a])
 
@@ -98,37 +99,40 @@ def xml_find(node, key):
 
 class AddressParser(txaws_ec2_Parser):
     def describe_instances(self, xml_bytes):
+        addresslist = []
         doc = xml_parse(xml_bytes)
         node = xml_find(doc, u'reservationSet')
-        node = xml_find(node, u'item')
-        node = xml_find(node, u'instancesSet')
-        node = xml_find(node, u'item')
-        try:
-            publichost = xml_find(node, u'dnsName').text
-            privatehost = xml_find(node, u'privateDnsName').text
-        except ResponseParseError:
-            return None
+        itemlist = node.findall(u'item')
+        for item in itemlist:
+            iset = xml_find(item, u'instancesSet')
+            inneritem = xml_find(iset, u'item')
+            try:
+                publichost = xml_find(inneritem, u'dnsName').text
+                publichost = publichost.strip()
+                m = EC2_PUBLIC_DNS.match(publichost)
+                if m:
+                    # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
+                    # to eliminate the DNS point of failure.
+                    publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
+                addresslist.append(publichost)
+            except ResponseParseError:
+                return None
 
-        if not publichost or not privatehost:
-            return None
+            if not publichost:
+                return None
+        return addresslist
 
-        publichost = publichost.strip()
-        privatehost = privatehost.strip()
-        m = EC2_PUBLIC_DNS.match(publichost)
-        if m:
-            # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
-            # to eliminate the DNS point of failure.
-            publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
-
-        return (publichost, privatehost)
-
-def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_id):
+def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, **kwargs):
     """
     Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
     """
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=AddressParser())
-    return client.describe_instances(instance_id)
+    if kwargs.has_key('instance_ids'):
+        instance_ids = kwargs['instance_ids']
+        return client.describe_instances(instance_ids)
+    else:
+        return client.describe_instances()
 
 
