@@ -3,7 +3,6 @@
 import time
 from twisted.internet import reactor, task
 from twisted.python.filepath import FilePath
-from txaws.service import AWSCredentials
 
 from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
@@ -54,10 +53,6 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
     ec2accesskeyid = str(config.other['ec2_access_key_id'])
     ec2secretkey = FilePath(ec2secretpath).getContent().strip()
-    ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
-    #XXX Eventually I want to move the import of AWSCredentials to queryapi.py.  To start I am passing
-    #ec2accesskeyid, and ec2secretkey to get_EC2_addresses, since that function is required for 
-    #multiserverupgrade.py.  Once this is does the ec2creds=... line will also live in queryapi.py.
 
     ec2keypairname = str(config.other['keypair_name'])
     ec2keyfilename = str(config.other['key_filename'])
@@ -66,11 +61,12 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
     d = activate_user_account_desktop(activationkey, producttoken, stdout, stderr)
     def _activated(adpr):
-        usercreds = AWSCredentials(adpr.access_key_id, adpr.secret_key)
+        useraccesskeyid = adpr.access_key_id
+        usersecretkey = adpr.secret_key
         usertoken = adpr.usertoken
 
         def _wait_until_verified(how_long_secs):
-            d3 = verify_user_account(usercreds, usertoken, producttoken, stdout, stderr)
+            d3 = verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout, stderr)
             def _maybe_again(res):
                 if res:
                     print >>stdout, "Subscription verified."
@@ -85,13 +81,13 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
         d2 = _wait_until_verified(CC_VERIFICATION_TIME)
 
-        d2.addCallback(lambda ign: create_user_bucket(usercreds, usertoken, bucketname, stdout, stderr,
+        d2.addCallback(lambda ign: create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
                                                       producttoken=producttoken, location=location))
 
         # We could deploy and configure the instance in parallel with the above wait and delete it
         # if necessary, but let's keep it simple and sequential.
-        d2.addCallback(lambda ign: deploy_EC2_instance(ec2creds, EC2_ENDPOINT, amiimageid, instancesize,
-                                                       bucketname, ec2keypairname, instancename,
+        d2.addCallback(lambda ign: deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
+                                                       instancesize, bucketname, admin_keypair_name, instancename,
                                                        stdout, stderr))
 
         def _deployed(instance):

@@ -8,6 +8,7 @@ from lae_automation.aws.queryapi import xml_parse, xml_find, ResponseParseError,
 from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint
+from txaws.credentials import AWSCredentials
 
 
 
@@ -42,8 +43,8 @@ def activate_user_account_desktop(activationkey, producttoken, stdout, stderr):
 # delay between starting an instance and setting its tags
 SET_TAGS_DELAY_TIME = 5
 
-def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket_name, keypair_name, instance_name,
-                        stdout, stderr, clock=None):
+def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size, bucket_name,
+                        keypair_name, instance_name, stdout, stderr, clock=None):
     """
     @param creds: a txaws.service.AWSCredentials object
     @param ami_image_id: string identifying the AMI
@@ -58,7 +59,8 @@ def deploy_EC2_instance(creds, endpoint_uri, ami_image_id, instance_size, bucket
     maxinstancecount = 1
     secgroups = ['CustomerDefault']
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
-    client = EC2Client(creds=creds, endpoint=endpoint)
+    ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
+    client = EC2Client(creds=ec2creds, endpoint=endpoint)
 
     # Don't log credentials that are non-customer-specific secrets.
     print >>stderr, ('endpoint_uri = %r\n'
@@ -132,7 +134,8 @@ def dump_instance_information(instance, stderr):
             print >>stderr, '  %s = %r' % (attr, getattr(instance, attr))
 
 
-def create_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoken=None, location=None):
+def create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
+                       producttoken=None, location=None):
     if location is None:
         print >>stdout, "Creating S3 bucket in 'US East' region..."
     else:
@@ -144,10 +147,8 @@ def create_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoke
                      'location = %r\n'
                      % (usertoken, bucketname, location))
 
-    client = DevPayS3Client(
-        creds = creds,
-        usertoken = usertoken,
-        producttoken = producttoken)
+    usercreds = AWSCredentials(useraccesskeyid, usersecretkey)
+    client = DevPayS3Client(creds=usercreds, usertoken=usertoken, producttoken=producttoken)
 
     if location:
         object_name = "?LocationConstraint=" + urllib.quote(location)
@@ -167,16 +168,15 @@ def create_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoke
     return d
 
 
-def delete_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoken=None):
+def delete_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
+                       producttoken=None):
     print >>stdout, "Deleting S3 bucket..."
     print >>stderr, ('usertoken = %r\n'
                      'bucketname = %r\n'
                      % (usertoken, bucketname))
 
-    client = DevPayS3Client(
-        creds = creds,
-        usertoken = usertoken,
-        producttoken = producttoken)
+    usercreds = AWSCredentials(useraccesskeyid, usersecretkey)
+    client = DevPayS3Client(creds=usercreds, usertoken=usertoken, producttoken=producttoken)
 
     query = client.query_factory(
         action="DELETE", creds=client.creds, endpoint=client.endpoint,
@@ -191,11 +191,12 @@ def delete_user_bucket(creds, usertoken, bucketname, stdout, stderr, producttoke
     return d
 
 
-def verify_user_account(creds, usertoken, producttoken, stdout, stderr):
+def verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout, stderr):
     print >>stdout, "Verifying subscription..."
     print >>stderr, 'usertoken = %r' % (usertoken,)
 
-    d = LicenseServiceClient(creds).verify_subscription_by_tokens(usertoken, producttoken)
+    usercreds = AWSCredentials(useraccesskeyid, usersecretkey)
+    d = LicenseServiceClient(usercreds).verify_subscription_by_tokens(usertoken, producttoken)
 
     def verified(active):
         print >>stderr, 'DevPay License subscription active? %r' % (active,)
