@@ -5,11 +5,9 @@ from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 from twisted.internet import reactor
 
-from txaws.service import AWSServiceEndpoint
-
 from lae_automation.config import Config
 from lae_automation.server import upgrade_server
-from lae_automation.aws.queryapi import AddressParser, get_EC2_addresses
+from lae_automation.aws.queryapi import get_EC2_addresses
 
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
@@ -24,9 +22,6 @@ admin_keypair_name = str(config.other['admin_keypair_name'])
 admin_privkey_path = str(config.other['admin_privkey_path'])
 monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
-
-endpoint = AWSServiceEndpoint(endpoint_uri)
-parser = AddressParser()
 
 
 d = get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri)
