@@ -122,17 +122,14 @@ class AddressParser(txaws_ec2_Parser):
                 return None
         return addresslist
 
-def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, **kwargs):
+def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, *instance_ids):
     """
     Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
     """
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=AddressParser())
-    if kwargs.has_key('instance_ids'):
-        instance_ids = kwargs['instance_ids']
-        return client.describe_instances(instance_ids)
-    else:
-        return client.describe_instances()
+    return client.describe_instances(*instance_ids)
+    
 
 
