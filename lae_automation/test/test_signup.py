@@ -164,8 +164,8 @@ class TestSignupModule(TestCase):
             return defer.succeed([MockEC2Instance()])
         self.patch(EC2Client, 'run_instances', call_run_instances)
 
-        def call_describe_instances(EC2ClientObject, instance_id):
-            self.failUnlessEqual(instance_id, 'i-MOCKEC2INSTANCEID')
+        def call_describe_instances(EC2ClientObject, *instance_ids):
+            self.failUnlessEqual(instance_ids, ('i-MOCKEC2INSTANCEID',))
             return defer.succeed( ('0.0.0.0', '0.0.0.1') )
         self.patch(EC2Client, 'describe_instances', call_describe_instances)
 
@@ -281,7 +281,7 @@ class TestSignupModule(TestCase):
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
 
-        def call_get_EC2_addresses(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, instance_id):
+        def call_get_EC2_addresses(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, *instance_ids):
             return defer.succeed(None)
         self.patch(signup, 'get_EC2_addresses', call_get_EC2_addresses)
 
