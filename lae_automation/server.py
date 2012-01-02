@@ -183,10 +183,8 @@ def set_up_reboot(stdout, stderr):
     run('crontab /home/customer/ctab')
 
 
-def bounce_server(public_host, admin_privkey_path, private_host, creds, user_token, product_token, bucket_name,
+def bounce_server(public_host, admin_privkey_path, private_host, access_key_id, secret_key, user_token, product_token, bucket_name,
                   stdout, stderr, secretsfile):
-    access_key_id = creds.access_key
-    secret_key = creds.secret_key
     nickname = bucket_name
 
     set_host_and_key(public_host, admin_privkey_path, username="customer")
