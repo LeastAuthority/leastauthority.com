@@ -214,7 +214,7 @@ def bounce_server(public_host, admin_privkey_path, private_host, access_key_id, 
     run('ps -fC tahoe')
     run('netstat -atW')
 
-    set_up_reboot(stdout)
+    set_up_reboot(stdout, stderr)
 
     introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
     introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
