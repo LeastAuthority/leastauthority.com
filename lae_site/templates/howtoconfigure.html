@@ -35,10 +35,11 @@ introducer.furl = <i>specific to each customer</i>
 shares.needed = 1
 shares.happy = 1
 shares.total = 1
-<br>
-[storage]
-enabled = false
 </pre>
+
+<p>(If you are repurposing an existing node to use as the gateway, also set <tt>enabled = false</tt> in
+the <tt>[storage]</tt> section. It is already set that way when you create a node using
+<tt>bin/tahoe create-client</tt>.)
 
 <p>Now start your gateway using:</p>
 <pre>
