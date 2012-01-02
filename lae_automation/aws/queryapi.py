@@ -109,22 +109,25 @@ class AddressParser(txaws_ec2_Parser):
         for item in itemlist:
             iset = xml_find(item, u'instancesSet')
             inneritem = xml_find(iset, u'item')
+
             try:
                 publichost = xml_find(inneritem, u'dnsName').text
-                if publichost is None:
-                    return None
-                publichost = publichost.strip()
-                m = EC2_PUBLIC_DNS.match(publichost)
-                if m:
-                    # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
-                    # to eliminate the DNS point of failure.
-                    publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
-                addresslist.append(publichost)
+                privatehost = xml_find(inneritem, u'privateDnsName').text
             except ResponseParseError:
                 return None
 
-            if not publichost:
+            if not publichost or not privatehost:
                 return None
+
+            publichost = publichost.strip()
+            privatehost = privatehost.strip()
+            m = EC2_PUBLIC_DNS.match(publichost)
+            if m:
+                # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
+                # to eliminate the DNS point of failure.
+                publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
+
+            addresslist.append( (publichost, privatehost) )
         return addresslist
 
 def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, *instance_ids):

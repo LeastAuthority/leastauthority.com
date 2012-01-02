@@ -169,7 +169,7 @@ class TestSignupModule(TestCase):
 
         def call_describe_instances(EC2ClientObject, *instance_ids):
             self.failUnlessEqual(instance_ids, ('i-MOCKEC2INSTANCEID',))
-            return defer.succeed( ('0.0.0.0', '0.0.0.1') )
+            return defer.succeed( [('0.0.0.0', '0.0.0.1')] )
         self.patch(EC2Client, 'describe_instances', call_describe_instances)
 
         from lae_automation.server import NotListeningError

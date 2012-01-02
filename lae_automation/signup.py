@@ -108,7 +108,9 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
             d3 = task.deferLater(myclock, ADDRESS_DELAY_TIME, _wait_for_addresses, ADDRESS_WAIT_TIME)
 
-            def _got_addresses( (publichost, privatehost) ):
+            def _got_addresses(addresses):
+                assert len(addresses) == 1, addresses
+                (publichost, privatehost) = addresses[0]
                 print >>stdout, "The server's public address is %r." % (publichost,)
                 retries = 3
                 while True:

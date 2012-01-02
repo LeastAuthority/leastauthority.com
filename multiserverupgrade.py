@@ -26,8 +26,8 @@ monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
 d = get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri)
 
-def upgrade_servers(public_host_list):
-    for public_host in public_host_list[:1]:
+def upgrade_servers(host_list):
+    for (public_host, private_host) in host_list:
         print "Upgrading %r..." % (public_host,)
         upgrade_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, sys.stdout, sys.stderr)
 
