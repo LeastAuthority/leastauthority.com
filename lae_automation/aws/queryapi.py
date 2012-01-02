@@ -111,6 +111,8 @@ class AddressParser(txaws_ec2_Parser):
             inneritem = xml_find(iset, u'item')
             try:
                 publichost = xml_find(inneritem, u'dnsName').text
+                if publichost is None:
+                    return None
                 publichost = publichost.strip()
                 m = EC2_PUBLIC_DNS.match(publichost)
                 if m:
