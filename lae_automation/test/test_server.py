@@ -140,7 +140,7 @@ class TestServerModule(TestCase):
             ('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None),
             ('#!/bin/sh\ncd /home/customer\nLAFS_source/bin/tahoe restart introducer\nLAFS_source/bin/tahoe restart storageserver\n',
                  '/home/customer/restart.sh', False, 0750),
-            ('@reboot /home/customer/restart.sh', '/home/customer/ctab', False, None)
+            ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
         ])
 
         PUBLICHOST = '0.0.0.0'
