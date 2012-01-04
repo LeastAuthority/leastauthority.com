@@ -34,6 +34,18 @@ Inclusion Criteria By Repository:
 are to be re-recorded prior to inclusion in staging repositories
 (/var/source...).
 
-* My flow:
+* Typical Code Flow:
 
     (1) pull from staging to local repo
+    (2) develop
+    (3) ensure changes, pass _at least_ previously extant unit tests
+    (4) push from local to developing
+    (5) update local until: new tests, and system tests, and extant tests pass.
+         * This is an iterative process that may involve pulling from
+    developing.
+         * In this process NSR changes may be incorporated into developing.
+         * During this stage other developers may pull from and push to
+    developing.
+    (6) ensure all patches in developing are staging-ready.
+    (7) push staging-ready patch set from developing to staging.
+    (8) inform other developers of a change to staging.
