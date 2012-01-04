@@ -1,0 +1,38 @@
+* "inclusion criteria":  Standards describing the properties of code included
+  in a given repository  
+
+A list of repositories:
+
+  * "production":  This repository contains the currently running code:
+  (e.g. leastauthority.com:/home/website)
+  * "staging":     This repository contains tested code, awaiting review prior
+  to inclusion in "production".  
+  * "developing":  These repositories contain code under active
+  development. (e.g. /home/zancas/source...)
+  * "local":       These repositories are typically not visible to the
+  community.  They frequently dwell on local machines, and have no inclusion criteria.
+
+
+Inclusion Criteria By Repository:
+
+  production:
+    All unit and system tests pass.  Multi-developer review.
+
+  staging:
+    New Unit tests pass.
+
+  developing:
+    Old Unit tests pass. (I.E. no obvious regression.)
+
+  local:
+    None.
+
+
+  
+* Patches whose names begin with "NPR", are not production ready.  NPR patches
+are to be re-recorded prior to inclusion in staging repositories
+(/var/source...).
+
+* My flow:
+
+    (1) pull from staging to local repo 
