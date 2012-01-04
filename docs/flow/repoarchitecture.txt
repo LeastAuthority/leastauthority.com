@@ -46,6 +46,6 @@ are to be re-recorded prior to inclusion in staging repositories
          * In this process NSR changes may be incorporated into developing.
          * During this stage other developers may pull from and push to
     developing.
-    (6) ensure all patches in developing are staging-ready.
+    (6) ensure patches in developing are staging-ready.
     (7) push staging-ready patch set from developing to staging.
     (8) inform other developers of a change to staging.
