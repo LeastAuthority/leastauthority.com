@@ -49,3 +49,11 @@ are to be re-recorded prior to inclusion in staging repositories
     (6) ensure patches in developing are staging-ready.
     (7) push staging-ready patch set from developing to staging.
     (8) inform other developers of a change to staging.
+
+What is sufficient unit testing for inclusion into staging:
+
+  For each funtion that is modified by a patch set has tests ensure that:
+
+    (1) all invocations of the function receive the correct number of
+    arguments.
+    (2)
