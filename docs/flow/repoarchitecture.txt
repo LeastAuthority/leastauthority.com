@@ -1,12 +1,13 @@
 * "inclusion criteria":  Standards describing the properties of code included
-  in a given repository  
+  in a given repository
 
 A list of repositories:
 
   * "production":  This repository contains the currently running code:
   (e.g. leastauthority.com:/home/website)
   * "staging":     This repository contains tested code, awaiting review prior
-  to inclusion in "production".  
+  to inclusion in "production". This code is believed "production ready" by
+  at least one developer.
   * "developing":  These repositories contain code under active
   development. (e.g. /home/zancas/source...)
   * "local":       These repositories are typically not visible to the
@@ -28,11 +29,11 @@ Inclusion Criteria By Repository:
     None.
 
 
-  
-* Patches whose names begin with "NPR", are not production ready.  NPR patches
+
+* Patches whose names begin with "NSR", are not "staging" ready.  NSR patches
 are to be re-recorded prior to inclusion in staging repositories
 (/var/source...).
 
 * My flow:
 
-    (1) pull from staging to local repo 
+    (1) pull from staging to local repo
