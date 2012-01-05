@@ -30,7 +30,7 @@ Inclusion Criteria By Repository:
 
 
 
-* Patches whose names begin with "NSR", are not "staging" ready.  NSR patches
+* Patches whose names begin with "NSR", are "Not Staging Ready".  NSR patches
 are to be re-recorded prior to inclusion in staging repositories
 (/var/source...).
 
