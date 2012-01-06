@@ -7,6 +7,7 @@ from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 
 from lae_util.flapp import FlappCommand
+from lae_util.servers import append_record
 
 
 def html(title, body):
@@ -242,7 +243,7 @@ class DevPayPurchaseHandler(HandlerBase):
         activationkey = self.get_arg(request, 'ActivationKey')
         productcode = self.get_arg(request, 'ProductCode')
 
-        self.append_record("devpay_completions.csv", activationkey, productcode)
+        append_record("devpay_completions.csv", activationkey, productcode)
 
         request.setResponseCode(200)
         if activationkey and productcode:
@@ -353,7 +354,7 @@ class ActivationRequestHandler(HandlerBase):
         productcode = self.get_arg(request, 'ProductCode')
         publickey = self.get_arg(request, 'PublicKey')
 
-        self.append_record("activation_requests.csv", activationkey, productcode, name, email, publickey)
+        append_record("activation_requests.csv", activationkey, productcode, name, email, publickey)
 
         request.setResponseCode(200)
 
@@ -380,12 +381,12 @@ class ActivationRequestHandler(HandlerBase):
         def when_done():
             successful_activationkeys.add(activationkey)
             all_activationkeys.add(activationkey)
-            self.append_record("signups.csv", 'success', activationkey, productcode, name, email, publickey)
+            append_record("signups.csv", 'success', activationkey, productcode, name, email, publickey)
             request.write(SUCCEEDED_HTML)
             request.finish()
         def when_failed():
             all_activationkeys.add(activationkey)
-            self.append_record("signups.csv", 'failure', activationkey, productcode, name, email, publickey)
+            append_record("signups.csv", 'failure', activationkey, productcode, name, email, publickey)
             request.write(FAILED_HTML)
             request.finish()
         try:
