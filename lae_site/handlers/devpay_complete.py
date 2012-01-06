@@ -7,7 +7,6 @@ from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 
 from lae_util.flapp import FlappCommand
-from lae_util.timestamp import format_iso_time
 
 
 def html(title, body):
@@ -235,13 +234,6 @@ class HandlerBase(Resource):
         # anyway, to avoid XSS when we interpolate them into HTML. URL-encoding is
         # safe for HTML tag attributes enclosed in "".
         return quote(arg, safe='@=:/+ ')
-
-    def append_record(self, filename, *args):
-        f = open(filename, "a+")
-        try:
-            f.write(",".join((format_iso_time(time.time()),) + args) + "\n")
-        finally:
-            f.close()
 
 
 class DevPayPurchaseHandler(HandlerBase):
