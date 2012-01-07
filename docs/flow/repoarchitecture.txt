@@ -52,7 +52,9 @@ are to be re-recorded prior to inclusion in staging repositories
 
 What is sufficient unit testing for inclusion into staging:
 
-  For each funtion that is modified by a patch-set, there are tests ensure that:
+  For each API-altering function that is modified by a patch-set, there are
+  tests to ensure that:
+
 
     (1) all invocations of the function receive the correct number of
     arguments.
