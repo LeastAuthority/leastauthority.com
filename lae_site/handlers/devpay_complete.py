@@ -1,5 +1,5 @@
 
-import logging, pprint, time, sys, os
+import logging, pprint, sys, os
 from urllib import quote
 from cgi import escape as htmlEscape
 

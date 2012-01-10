@@ -7,7 +7,7 @@ from twisted.internet import reactor
 
 from lae_automation.config import Config
 from lae_automation.server import upgrade_server
-from lae_automation.aws.queryapi import get_EC2_addresses
+from lae_automation.signup import wait_for_EC2_addresses
 
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
@@ -24,7 +24,7 @@ monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent()
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
 
-d = get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri)
+d = wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, sys.stdout, sys.stderr)
 
 def upgrade_servers(host_list):
     for (public_host, private_host) in host_list:

@@ -9,7 +9,7 @@ from twisted.internet import reactor
 
 from lae_automation.config import Config
 from lae_automation.monitor import check_servers, readserverinfocsv, comparetolocal
-from lae_automation.aws.queryapi import get_EC2_addresses, get_EC2_properties
+from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser
 
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
@@ -31,8 +31,11 @@ for propertytuple in serverinfotuple:
     localstate[propertytuple[2]] = (propertytuple[0], propertytuple[1])
 
 propertiesofinterest = ('launchTime', 'instanceId', 'dnsName', 'privateDnsName')
+POLL_TIME = 10
+ADDRESS_WAIT_TIME = 60
 
-d = get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, propertiesofinterest)
+d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, ServerInfoParser(propertiesofinterest),
+                            POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, sys.stderr)
 
 d.addCallback(lambda remoteproperties: comparetolocal(remoteproperties, localstate))
 

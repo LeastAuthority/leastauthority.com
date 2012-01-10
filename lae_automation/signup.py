@@ -7,15 +7,10 @@ from twisted.python.filepath import FilePath
 from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
     create_user_bucket, deploy_EC2_instance
-from lae_automation.aws.queryapi import get_EC2_addresses
+from lae_automation.aws.queryapi import wait_for_EC2_properties, AddressParser, TimeoutError
 from lae_automation.server import install_server, bounce_server, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation
 
-
-
-
-class TimeoutError(Exception):
-    pass
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
@@ -30,6 +25,11 @@ ADDRESS_DELAY_TIME = 10
 ADDRESS_WAIT_TIME = 5 * 60
 
 LISTEN_POLL_TIME = 10
+
+
+def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, *instance_ids):
+    return wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, AddressParser(),
+                                   POLL_TIME, ADDRESS_WAIT_TIME, stdout, stderr, *instance_ids)
 
 
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
@@ -93,20 +93,9 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                                        stdout, stderr))
 
         def _deployed(instance):
-            def _wait_for_addresses(how_long_secs):
-                d4 = get_EC2_addresses(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, instance.instance_id)
-                def _maybe_again2(res):
-                    if res:
-                        return res
-                    if how_long_secs <= 0.0:
-                        print >>stdout, "Timed out waiting for addresses of EC2 instance."
-                        raise TimeoutError()
-                    print >>stdout, "Waiting %d seconds before address request..." % (POLL_TIME,)
-                    return task.deferLater(myclock, POLL_TIME, _wait_for_addresses, how_long_secs - POLL_TIME)
-                d4.addCallback(_maybe_again2)
-                return d4
-
-            d3 = task.deferLater(myclock, ADDRESS_DELAY_TIME, _wait_for_addresses, ADDRESS_WAIT_TIME)
+            d3 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
+                                 ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr,
+                                 instance.instance_id)
 
             def _got_addresses(addresses):
                 assert len(addresses) == 1, addresses

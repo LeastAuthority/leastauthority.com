@@ -2,6 +2,7 @@ import urllib, time, re
 from hashlib import sha1
 from base64 import b64encode
 
+from twisted.internet import reactor, task
 from xml.parsers.expat import ExpatError
 from xml.etree import ElementTree
 from txaws.util import XML
@@ -129,20 +130,62 @@ class AddressParser(txaws_ec2_Parser):
             addresslist.append( (publichost, privatehost) )
         return addresslist
 
-def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, *instance_ids):
+
+def pubIPextractor(AWSdnsName):
+    assert isinstance(AWSdnsName, str), "AWSdnsName is %s." % AWSdnsName
+    AWSdnsName = AWSdnsName.strip()
+    publichost = AWSdnsName[len('ec2-'):].split('.')[0].replace('-', '.')
+    return publichost
+
+
+class ServerInfoParser(txaws_ec2_Parser):
+    def __init__(self, properties):
+        self.propertylist = properties
+    def describe_instances(self, xml_bytes):
+        propertytuplelist = []
+        doc = xml_parse(xml_bytes)
+        node = xml_find(doc, u'reservationSet')
+        itemlist = node.findall(u'item')
+        for item in itemlist:
+            iset = xml_find(item, u'instancesSet')
+            inneritem = xml_find(iset, u'item')
+            serverproperties = []
+            for property in self.propertylist:
+                try:
+                    matching = xml_find(inneritem, unicode(property)).text
+                    serverproperties.append(matching)
+                except ResponseParseError:
+                    return None
+
+            propertytuplelist.append( tuple(serverproperties) )
+        return propertytuplelist
+
+
+def get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, parser, *instance_ids):
     """
     Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
     """
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
-    client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=AddressParser())
+    client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=parser)
     return client.describe_instances(*instance_ids)
 
-def get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, properties, *instance_ids):
-    """
-    Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
-    """
-    ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
-    endpoint = AWSServiceEndpoint(uri=endpoint_uri)
-    client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=ServerInfoParser(properties))
-    return client.describe_instances(*instance_ids)
+
+class TimeoutError(Exception):
+    pass
+
+
+def wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint, parser, poll_time, wait_time, stdout, stderr, *instance_ids):
+    def _wait(remaining_time):
+        d = get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint, parser, *instance_ids)
+        def _maybe_again(res):
+            if res:
+                return res
+            if remaining_time <= 0:
+                print >>stdout, "Timed out waiting for EC2 instance addresses."
+                raise TimeoutError()
+            print >>stdout, "Waiting %d seconds before address request..." % (poll_time,)
+            return task.deferLater(reactor, poll_time, _wait, remaining_time - poll_time)
+        d.addCallback(_maybe_again)
+        return d
+    return _wait(wait_time)

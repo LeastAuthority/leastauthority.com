@@ -284,9 +284,10 @@ class TestSignupModule(TestCase):
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
 
-        def call_get_EC2_addresses(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, *instance_ids):
+        from lae_automation.aws import queryapi
+        def call_get_EC2_properties(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, parser, *instance_ids):
             return defer.succeed(None)
-        self.patch(signup, 'get_EC2_addresses', call_get_EC2_addresses)
+        self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
                           MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
