@@ -45,8 +45,7 @@ def comparetolocal(remotepropstuplelist, localstate):
         pubIP = pubIPextractor(rpt[2])
         host_list.append( (pubIP, rpt[3]) )
         if not localstate.has_key(pubIP):
-            print "Whoa nelly, there's an EC2 online that's not in the info list!!!"
-            raise Exception("Something is very wrong, public IP %s is not in the list of known servers!" % pubIP)
+            print "Warning: Public IP %s is not in the list of known servers!" % (pubIP,)
         else:
             assert localstate[pubIP] == (rpt[0], rpt[1]), 'Expected_Launch: %s\tObserved_Launch: %s\nExpected_instanceID: %s\tObserved_instanceID: %s' % (localstate[pubIP][0], rpt[0], localstate[pubIP][1], rpt[1])
             localstate.pop(pubIP)
