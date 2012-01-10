@@ -58,5 +58,5 @@ def comparetolocal(remotepropstuplelist, localstate):
 
 def readserverinfocsv(pathtoserverinfo):
     listofinfostrings = FilePath(pathtoserverinfo).getContent().split('\n')
-    listofinfotuples = [infostring.split(',') for infostring in listofinfostrings]
+    listofinfotuples = [infostring.split(',') for infostring in listofinfostrings if infostring]
     return listofinfotuples
