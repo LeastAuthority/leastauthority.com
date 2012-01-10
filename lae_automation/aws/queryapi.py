@@ -1,4 +1,3 @@
-
 import urllib, time, re
 from hashlib import sha1
 from base64 import b64encode
@@ -125,10 +124,40 @@ class AddressParser(txaws_ec2_Parser):
             if m:
                 # If the name matches EC2_PUBLIC_DNS, we prefer to extract the IP address
                 # to eliminate the DNS point of failure.
-                publichost = publichost[len('ec2-'):].split('.')[0].replace('-', '.')
+                publichost = pubIPextractor(publichost)
 
             addresslist.append( (publichost, privatehost) )
         return addresslist
+
+
+def pubIPextractor(AWSdnsName):
+    assert isinstance(AWSdnsName, str), "AWSdnsName is %s." % AWSdnsName
+    AWSdnsName = AWSdnsName.strip()
+    publichost = AWSdnsName[len('ec2-'):].split('.')[0].replace('-', '.')
+    return publichost
+
+class ServerInfoParser(txaws_ec2_Parser):
+    def __init__(self, properties):
+        self.propertylist = properties
+    def describe_instances(self, xml_bytes):
+        propertytuplelist = []
+        doc = xml_parse(xml_bytes)
+        node = xml_find(doc, u'reservationSet')
+        itemlist = node.findall(u'item')
+        for item in itemlist:
+            iset = xml_find(item, u'instancesSet')
+            inneritem = xml_find(iset, u'item')
+            serverproperties = []
+            for property in self.propertylist:
+                try:
+                    matching = xml_find(inneritem, unicode(property)).text
+                    serverproperties.append(matching)
+                except ResponseParseError:
+                    return None
+
+            propertytuplelist.append( tuple(serverproperties) )
+        return propertytuplelist
+
 
 def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, *instance_ids):
     """
@@ -137,4 +166,13 @@ def get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, *instance_ids)
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=AddressParser())
+    return client.describe_instances(*instance_ids)
+
+def get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, properties, *instance_ids):
+    """
+    Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
+    """
+    ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
+    endpoint = AWSServiceEndpoint(uri=endpoint_uri)
+    client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=ServerInfoParser(properties))
     return client.describe_instances(*instance_ids)

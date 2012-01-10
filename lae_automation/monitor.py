@@ -1,5 +1,6 @@
 from lae_automation.server import run, set_host_and_key
 from lae_automation.aws.queryapi import pubIPextractor
+from twisted.python.filepath import FilePath
 
 def check_server(public_host, monitor_privkey_path, stdout, stderr):
     set_host_and_key(public_host, monitor_privkey_path, username="monitor")
@@ -54,3 +55,8 @@ def comparetolocal(remotepropstuplelist, localstate):
         for key in localstate.keys():
             print "Public IP: %s InstanceID: %s Launchtime: %s" % (key, localstate[key][1], localstate[key][0])
     return host_list
+
+def readserverinfocsv(pathtoserverinfo):
+    listofinfostrings = FilePath(pathtoserverinfo).getContent().split('\n')
+    listofinfotuples = [infostring.split(',') for infostring in listofinfostrings]
+    return listofinfotuples
