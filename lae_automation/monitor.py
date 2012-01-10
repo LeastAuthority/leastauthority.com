@@ -14,8 +14,8 @@ def check_server(public_host, monitor_privkey_path, stdout, stderr):
     nodes = []
     for line in pslines[1:]:
         fields = line.split()
-        [uid, pid, parent_pid, c, start_time, tty, time] = fields[:6]
-        cmd = fields[6:]
+        [uid, pid, parent_pid, c, start_time, tty, time] = fields[:7]
+        cmd = fields[7:]
         if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
                 cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
             stderr.write("%s: Unexpected command %s\n" % (public_host, " ".join(cmd)))
@@ -34,7 +34,7 @@ def check_servers(host_list, monitor_privkey_path, stdout, stderr):
     # TODO: check that no expected servers are missing.
     success = True
     for (public_host, private_host) in host_list:
-        print "Checking %r..." % (public_host,)
+        print >>stdout, "Checking %r..." % (public_host,)
         success = check_server(public_host, monitor_privkey_path, stdout, stderr) and success
 
     return success
