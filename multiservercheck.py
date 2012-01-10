@@ -2,13 +2,14 @@
 
 import sys, os
 from cStringIO import StringIO
+
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 from twisted.internet import reactor
 
 from lae_automation.config import Config
-from lae_automation.monitor import check_servers
-from lae_automation.aws.queryapi import get_EC2_addresses
+from lae_automation.monitor import check_servers, readserverinfocsv, comparetolocal
+from lae_automation.aws.queryapi import get_EC2_addresses, get_EC2_properties
 
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
@@ -18,12 +19,22 @@ config = Config(configpath)
 ec2secretpath='../ec2secret'
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
+serverinfocsvpath = '../serverinfo.csv'
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
 stderr = StringIO()
 
-d = get_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri)
+serverinfotuple = readserverinfocsv(serverinfocsvpath)
+localstate = {}
+for propertytuple in serverinfotuple:
+    localstate[propertytuple[2]] = (propertytuple[0], propertytuple[1])
+
+propertiesofinterest = ('launchTime', 'instanceId', 'dnsName', 'privateDnsName')
+
+d = get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, propertiesofinterest)
+
+d.addCallback(lambda remoteproperties: comparetolocal(remoteproperties, localstate))
 
 d.addCallback(lambda host_list: check_servers(host_list, monitor_privkey_path, sys.stdout, stderr))
 def _print_errors(success):
