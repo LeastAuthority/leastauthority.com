@@ -39,20 +39,20 @@ def check_servers(host_list, monitor_privkey_path, stdout, stderr):
 
     return success
 
-def comparetolocal(remotepropstuplelist, localstate):
+def comparetolocal(remotepropstuplelist, localstate, stdout, stderr):
     host_list = []
     for rpt in remotepropstuplelist:
         pubIP = pubIPextractor(rpt[2])
         host_list.append( (pubIP, rpt[3]) )
         if not localstate.has_key(pubIP):
-            print "Warning: Public IP %s is not in the list of known servers!" % (pubIP,)
+            print >>stdout, "Warning: Public IP %s is not in the list of known servers!" % (pubIP,)
         else:
             assert localstate[pubIP] == (rpt[0], rpt[1]), 'Expected_Launch: %s\tObserved_Launch: %s\nExpected_instanceID: %s\tObserved_instanceID: %s' % (localstate[pubIP][0], rpt[0], localstate[pubIP][1], rpt[1])
             localstate.pop(pubIP)
     if len(localstate.keys()) != 0:
-        print "The following instances are listed as known servers, but did not respond to the AWS query:"
+        print >>stdout, "The following instances are listed as known servers, but did not respond to the AWS query:"
         for key in localstate.keys():
-            print "Public IP: %s InstanceID: %s Launchtime: %s" % (key, localstate[key][1], localstate[key][0])
+            print >>stdout, "Public IP: %s InstanceID: %s Launchtime: %s" % (key, localstate[key][1], localstate[key][0])
     return host_list
 
 def readserverinfocsv(pathtoserverinfo):

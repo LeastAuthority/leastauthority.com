@@ -37,7 +37,7 @@ ADDRESS_WAIT_TIME = 60
 d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, ServerInfoParser(propertiesofinterest),
                             POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, sys.stderr)
 
-d.addCallback(lambda remoteproperties: comparetolocal(remoteproperties, localstate))
+d.addCallback(lambda remoteproperties: comparetolocal(remoteproperties, localstate, sys.stdout, sys.stderr))
 
 d.addCallback(lambda host_list: check_servers(host_list, monitor_privkey_path, sys.stdout, stderr))
 def _print_errors(success):
