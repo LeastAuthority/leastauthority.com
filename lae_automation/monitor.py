@@ -51,7 +51,7 @@ def comparetolocal(remotepropstuplelist, localstate):
             assert localstate[pubIP] == (rpt[0], rpt[1]), 'Expected_Launch: %s\tObserved_Launch: %s\nExpected_instanceID: %s\tObserved_instanceID: %s' % (localstate[pubIP][0], rpt[0], localstate[pubIP][1], rpt[1])
             localstate.pop(pubIP)
     if len(localstate.keys()) != 0:
-        print "The following instances are listed as known servers, but did respond to the AWS query:"
+        print "The following instances are listed as known servers, but did not respond to the AWS query:"
         for key in localstate.keys():
             print "Public IP: %s InstanceID: %s Launchtime: %s" % (key, localstate[key][1], localstate[key][0])
     return host_list

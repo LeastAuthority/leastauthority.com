@@ -99,3 +99,9 @@ class TestServerMonitoring(TestCase):
         self.patch(monitor, 'check_server', call_check_server)
         result = check_servers(self.HOSTLIST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
         self.failUnlessEqual(result, False)
+
+
+    def test_comparetolocal_success(self):
+        LOCPUBDNSNAME = 'ec2-0-0-0-0.c'
+        LOCINSTANCEID = 'i-aaaaaaaa'
+        LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
