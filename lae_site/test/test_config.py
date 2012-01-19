@@ -1,5 +1,5 @@
 
-from StringIO import StringIO
+from cStringIO import StringIO
 
 from twisted.trial.unittest import TestCase
 

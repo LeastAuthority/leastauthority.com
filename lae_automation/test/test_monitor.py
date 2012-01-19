@@ -1,4 +1,5 @@
-from StringIO import StringIO
+
+from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 
 from lae_automation.monitor import check_server, check_servers
