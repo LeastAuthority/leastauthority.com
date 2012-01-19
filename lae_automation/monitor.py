@@ -1,6 +1,12 @@
+
+from twisted.python.filepath import FilePath
+
 from lae_automation.server import run, set_host_and_key
 from lae_automation.aws.queryapi import pubIPextractor
-from twisted.python.filepath import FilePath
+from lae_util.send_email import send_plain_email
+
+
+# Anything printed to stderr counts as a notifiable problem.
 
 def check_server(public_host, monitor_privkey_path, stdout, stderr):
     set_host_and_key(public_host, monitor_privkey_path, username="monitor")
@@ -8,7 +14,7 @@ def check_server(public_host, monitor_privkey_path, stdout, stderr):
     psout = run('ps -fC tahoe')
     pslines = psout.splitlines()
     if not pslines[0].startswith("UID"):
-        stderr.write("%s: Unexpected ps output %r\n" % (public_host, psout))
+        print >>stderr, "Error: Host %s unexpected ps output %r.\n" % (public_host, psout)
         return False
 
     nodes = []
@@ -18,20 +24,19 @@ def check_server(public_host, monitor_privkey_path, stdout, stderr):
         cmd = fields[7:]
         if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
                 cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
-            stderr.write("%s: Unexpected command %s\n" % (public_host, " ".join(cmd)))
+            print >>stderr, "Error: Host %s unexpected command %r." % (public_host, " ".join(cmd))
             return False
         nodes.append(cmd[3])
 
     nodes.sort()
     if nodes != ['introducer', 'storageserver']:
-        stderr.write("%s: Expected nodes are not running. Actual nodes are %r" % (public_host, nodes))
+        print >>stderr, "Error: Host %s expected nodes are not running. Actual nodes are %r." % (public_host, nodes)
         return False
 
     return True
 
 
 def check_servers(host_list, monitor_privkey_path, stdout, stderr):
-    # TODO: check that no expected servers are missing.
     success = True
     for (public_host, private_host) in host_list:
         print >>stdout, "Checking %r..." % (public_host,)
@@ -39,23 +44,72 @@ def check_servers(host_list, monitor_privkey_path, stdout, stderr):
 
     return success
 
+
 def comparetolocal(remotepropstuplelist, localstate, stdout, stderr):
     host_list = []
     for rpt in remotepropstuplelist:
-        pubIP = pubIPextractor(rpt[2])
-        host_list.append( (pubIP, rpt[3]) )
-        if not localstate.has_key(pubIP):
-            print >>stdout, "Warning: Public IP %s is not in the list of known servers!" % (pubIP,)
+        public_host = pubIPextractor(rpt[2])
+        host_list.append( (public_host, rpt[3]) )
+        if not localstate.has_key(public_host):
+            print >>stderr, "Warning: Host %s is not in the list of known servers." % (public_host,)
         else:
-            assert localstate[pubIP] == (rpt[0], rpt[1]), 'Expected_Launch: %s\tObserved_Launch: %s\nExpected_instanceID: %s\tObserved_instanceID: %s' % (localstate[pubIP][0], rpt[0], localstate[pubIP][1], rpt[1])
-            localstate.pop(pubIP)
-    if len(localstate.keys()) != 0:
-        print >>stdout, "The following instances are listed as known servers, but did not respond to the AWS query:"
-        for key in localstate.keys():
-            print >>stdout, "Public IP: %s InstanceID: %s Launchtime: %s" % (key, localstate[key][1], localstate[key][0])
+            if localstate[public_host][0] != rpt[0]:
+                print >>stderr, ("Warning: Host %s launch time changed from %s to %s (probably rebooted)."
+                                 % (public_host, localstate[public_host][0], rpt[0]))
+            if localstate[public_host][1] != rpt[1]:
+                print >>stderr, ("Warning: Host %s changed instance ID from %s to %s."
+                                 % (public_host, localstate[public_host][1], rpt[1]))
+            del localstate[public_host]
+
+    if localstate:
+        print >>stderr, "The following known servers were not found by the AWS query:"
+        for key in localstate:
+            print >>stderr, "Host %s Launch time: %s Instance ID: %s" % (key, localstate[key][0], localstate[key][1])
+
     return host_list
+
+
+# The format of each line is RECORD_ADDED_TIME,LAUNCH_TIME,INSTANCE_ID,PUBLIC_HOST
 
 def readserverinfocsv(pathtoserverinfo):
     listofinfostrings = FilePath(pathtoserverinfo).getContent().split('\n')
-    listofinfotuples = [infostring.split(',') for infostring in listofinfostrings if infostring]
+    listofinfotuples = [infostring.split(',')[1:] for infostring in listofinfostrings if infostring]
     return listofinfotuples
+
+
+MONITORING_EMAIL_SUBJECT = "Monitoring report"
+
+MONITORING_EMAIL_BODY = """Hello, monitoring script here.
+
+The following problems may need investigation:
+
+%s
+
+--\x20
+multiservercheck.py
+"""
+
+SENDER_DOMAIN = "leastauthority.com"
+FROM_EMAIL = "info@leastauthority.com"
+FROM_ADDRESS = "Monitoring <%s>" % (FROM_EMAIL,)
+TO_EMAIL = FROM_EMAIL
+USER_AGENT = "Least Authority Enterprises e-mail sender"
+
+SMTP_HOST = "smtp.googlemail.com"
+SMTP_PORT = 25
+SMTP_USERNAME = FROM_EMAIL
+
+
+def send_monitoring_report(errors, password_path='../smtppassword'):
+    password = FilePath(password_path).getContent().strip()
+
+    content = MONITORING_EMAIL_BODY % (errors,)
+    headers = {
+               "From": FROM_ADDRESS,
+               "Subject": MONITORING_EMAIL_SUBJECT,
+               "User-Agent": USER_AGENT,
+               "Content-Type": 'text/plain; charset="utf-8"',
+              }
+
+    return send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, TO_EMAIL,
+                            content, headers, SENDER_DOMAIN, SMTP_PORT)
