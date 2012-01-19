@@ -43,7 +43,6 @@ enabled = false
 [drop_upload]
 # Shall this node automatically upload files created or modified in a local directory?
 enabled = false
-upload.dircap =
 local.directory =
 """
 
