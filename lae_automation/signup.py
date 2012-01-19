@@ -10,6 +10,7 @@ from lae_automation.initialize import activate_user_account_desktop, verify_user
 from lae_automation.aws.queryapi import wait_for_EC2_properties, AddressParser, TimeoutError
 from lae_automation.server import install_server, bounce_server, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation
+from lae_util.servers import append_record
 
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
@@ -101,6 +102,9 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                 assert len(addresses) == 1, addresses
                 (publichost, privatehost) = addresses[0]
                 print >>stdout, "The server's public address is %r." % (publichost,)
+
+                append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
+
                 retries = 3
                 while True:
                     try:
@@ -115,13 +119,13 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                         time.sleep(LISTEN_POLL_TIME)
                         continue
 
-                return bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
+                furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
                                      producttoken, bucketname, stdout, stderr, secretsfile)
+
+                return send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
             d3.addCallback(_got_addresses)
             return d3
         d2.addCallback(_deployed)
         return d2
     d.addCallback(_activated)
-
-    d.addCallback(lambda furl: send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr))
     return d

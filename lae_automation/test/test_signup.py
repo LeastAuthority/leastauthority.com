@@ -163,6 +163,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(keypair_name, 'ADMINKEYS')
             class MockEC2Instance:
                 def __init__(self):
+                    self.launch_time = "blah"
                     self.instance_id = 'i-MOCKEC2INSTANCEID'
             return defer.succeed([MockEC2Instance()])
         self.patch(EC2Client, 'run_instances', call_run_instances)
