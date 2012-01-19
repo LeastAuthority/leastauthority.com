@@ -26,9 +26,6 @@ shares.needed = 1
 shares.happy = 1
 shares.total = 1
 
-[storage]
-enabled = false
-
 
 (The introducer.furl setting should be on one line.)
 
