@@ -1,11 +1,8 @@
 
-from cStringIO import StringIO
-from email.mime.text import MIMEText
-
 from twisted.internet import defer
-from twisted.internet.reactor import connectTCP
 from twisted.python.filepath import FilePath
-from twisted.mail.smtp import messageid, rfc822date, ESMTPSenderFactory
+
+from lae_util.send_email import send_plain_email
 
 
 CONFIRMATION_EMAIL_SUBJECT = "Your sign-up to Tahoe-LAFS-on-S3 is complete"
@@ -92,34 +89,4 @@ def send_signup_confirmation(customer_name, customer_email, external_introducer_
         print >>stderr, str(f)
         return f
     d.addCallbacks(_sent, _error)
-    return d
-
-
-def send_plain_email(smtphost, username, password, fromEmail, toEmail, content, headers, senderDomainName=None, port=25):
-    msg = MIMEText(content)
-
-    # Setup the mail headers
-    for (header, value) in headers.items():
-        msg[header] = value
-
-    headkeys = [k.lower() for k in headers.keys()]
-
-    # Add required headers if not present
-    if "message-id" not in headkeys:
-        msg["Message-ID"] = messageid()
-    if "date" not in headkeys:
-        msg["Date"] = rfc822date()
-    if "from" not in headkeys and "sender" not in headkeys:
-        msg["From"] = fromEmail
-    if "to" not in headkeys and "cc" not in headkeys and "bcc" not in headkeys:
-        msg["To"] = toEmail
-
-    # send message
-    f = StringIO(msg.as_string())
-    d = defer.Deferred()
-    factory = ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d)
-    if senderDomainName is not None:
-        factory.domain = senderDomainName
-    connectTCP(smtphost, port, factory)
-
     return d

@@ -7,6 +7,7 @@ from twisted.trial import unittest
 from twisted.python.filepath import FilePath
 from foolscap.api import eventually
 
+from lae_util import send_email
 from lae_automation import confirmation
 from lae_automation.confirmation import send_signup_confirmation
 
@@ -86,7 +87,7 @@ class TestConfirmation(unittest.TestCase):
 
     def _test_send_signup_confirmation_success(self, call_factory, customer_keyinfo):
         self.the_factory = Mock()
-        self.patch(confirmation, 'ESMTPSenderFactory', call_factory)
+        self.patch(send_email, 'ESMTPSenderFactory', call_factory)
 
         connected = {}
         def call_connectTCP(smtphost, port, factory):
@@ -95,7 +96,7 @@ class TestConfirmation(unittest.TestCase):
             self.failUnlessEqual(factory, self.the_factory)
             self.failUnlessEqual(factory.domain, self.SENDER_DOMAIN)
             connected['flag'] = True
-        self.patch(confirmation, 'connectTCP', call_connectTCP)
+        self.patch(send_email, 'connectTCP', call_connectTCP)
 
         stdout = StringIO()
         stderr = StringIO()
@@ -122,7 +123,7 @@ class TestConfirmation(unittest.TestCase):
 
         def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
             raise MarkerException()
-        self.patch(confirmation, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
+        self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
         d = send_signup_confirmation(self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr, password_path='smtppassword')
@@ -142,11 +143,11 @@ class TestConfirmation(unittest.TestCase):
         def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
             eventually(d.errback, MarkerException())
             return Mock()
-        self.patch(confirmation, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
+        self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
         def call_connectTCP(smtphost, port, factory):
             pass
-        self.patch(confirmation, 'connectTCP', call_connectTCP)
+        self.patch(send_email, 'connectTCP', call_connectTCP)
 
         d = send_signup_confirmation(self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr, password_path='smtppassword')
@@ -166,11 +167,11 @@ class TestConfirmation(unittest.TestCase):
         def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
             eventually(d.callback, None)
             return Mock()
-        self.patch(confirmation, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
+        self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
         def call_connectTCP(smtphost, port, factory):
             raise MarkerException()
-        self.patch(confirmation, 'connectTCP', call_connectTCP)
+        self.patch(send_email, 'connectTCP', call_connectTCP)
 
         d = send_signup_confirmation(self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr, password_path='smtppassword')
