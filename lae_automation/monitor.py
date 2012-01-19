@@ -79,6 +79,11 @@ def read_serverinfo(pathtoserverinfo):
     return listofinfotuples
 
 
+def write_serverinfo(pathtoserverinfo, remotepropstuplelist):
+    for rpt in remotepropstuplelist:
+        append_record(pathtoserverinfo, rpt[0], rpt[1], pubIPextractor(rpt[2]))
+
+
 MONITORING_EMAIL_SUBJECT = "Monitoring report"
 
 MONITORING_EMAIL_BODY = """Hello, monitoring script here.
