@@ -4,6 +4,7 @@ from twisted.python.filepath import FilePath
 from lae_automation.server import run, set_host_and_key
 from lae_automation.aws.queryapi import pubIPextractor
 from lae_util.send_email import send_plain_email
+from lae_util.servers import append_record
 
 
 # Anything printed to stderr counts as a notifiable problem.
@@ -38,18 +39,18 @@ def check_server(public_host, monitor_privkey_path, stdout, stderr):
 
 def check_servers(host_list, monitor_privkey_path, stdout, stderr):
     success = True
-    for (public_host, private_host) in host_list:
+    for public_host in host_list:
         print >>stdout, "Checking %r..." % (public_host,)
         success = check_server(public_host, monitor_privkey_path, stdout, stderr) and success
 
     return success
 
 
-def comparetolocal(remotepropstuplelist, localstate, stdout, stderr):
+def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr):
     host_list = []
     for rpt in remotepropstuplelist:
         public_host = pubIPextractor(rpt[2])
-        host_list.append( (public_host, rpt[3]) )
+        host_list.append(public_host)
         if not localstate.has_key(public_host):
             print >>stderr, "Warning: Host %s is not in the list of known servers." % (public_host,)
         else:
@@ -64,14 +65,15 @@ def comparetolocal(remotepropstuplelist, localstate, stdout, stderr):
     if localstate:
         print >>stderr, "The following known servers were not found by the AWS query:"
         for key in localstate:
-            print >>stderr, "Host %s Launch time: %s Instance ID: %s" % (key, localstate[key][0], localstate[key][1])
+            s = localstate[key]
+            print >>stderr, "Host %s Launch time: %s Instance ID: %s" % (key, s[0], s[1])
 
     return host_list
 
 
 # The format of each line is RECORD_ADDED_TIME,LAUNCH_TIME,INSTANCE_ID,PUBLIC_HOST
 
-def readserverinfocsv(pathtoserverinfo):
+def read_serverinfo(pathtoserverinfo):
     listofinfostrings = FilePath(pathtoserverinfo).getContent().split('\n')
     listofinfotuples = [infostring.split(',')[1:] for infostring in listofinfostrings if infostring]
     return listofinfotuples

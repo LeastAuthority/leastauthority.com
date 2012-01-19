@@ -7,6 +7,7 @@ from lae_automation import monitor
 from lae_automation import server
 import __builtin__
 
+
 class TestServerMonitoring(TestCase):
     PUBLICHOST = '0.0.0.0'
     PRIVHOST = '1.1.1.1'
@@ -102,69 +103,63 @@ class TestServerMonitoring(TestCase):
         self.failUnlessEqual(result, False)
 
 
-    def test_comparetolocal_success(self):
+    def test_compare_servers_to_local_success(self):
         LOCINSTANCEID = 'i-aaaaaaaa'
         LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
-        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID)}
+        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP)}
 
         INSTANCEID = LOCINSTANCEID
         STARTTIME = LOCSTARTTIME
         PUBDNSNAME = 'ec2-0-0-0-0.c'
-        PRIVDNSNAME = 'ip-1-1-1-1.ec2.internal'
-        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME, PRIVDNSNAME)]
-        monitor.comparetolocal(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
+        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME)]
+        monitor.compare_servers_to_local(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
 
 
-    def test_comparetolocal_unexpectedinstance(self):
+    def test_compare_servers_to_local_unexpectedinstance(self):
         LOCINSTANCEID = 'i-'+'a'*8
         LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
-        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID)}
+        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP)}
 
         INSTANCEID = LOCINSTANCEID
         STARTTIME = LOCSTARTTIME
         PUBDNSNAME = 'ec2-0-0-0-0.c'
-        PRIVDNSNAME = 'ip-1-1-1-1.ec2.internal'
 
         INSTANCEID2 = 'i-'+'b'*8
         STARTTIME2 = '2012-00-00T01:00:00.000Z'
         PUBDNSNAME2 = 'ec2-2-2-2-2.c'
-        PRIVDNSNAME2 = 'ip-3-3-3-3.ec2.internal'
-        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME, PRIVDNSNAME),
-                             (STARTTIME2, INSTANCEID2, PUBDNSNAME2, PRIVDNSNAME2)]
-        monitor.comparetolocal(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
+        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME),
+                             (STARTTIME2, INSTANCEID2, PUBDNSNAME2)]
+        monitor.compare_servers_to_local(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
 
 
-    def test_comparetolocal_missingremoteinstance(self):
+    def test_compare_servers_to_local_missingremoteinstance(self):
         LOCINSTANCEID = 'i-'+'a'*8
         LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
-
         LOCPUBIP2 = '3.3.3.3'
         LOCINSTANCEID2 = 'i-'+'b'*8
         LOCSTARTTIME2 = '2012-00-00T01:00:00.000Z'
-        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID),
-                          LOCPUBIP2 : (LOCSTARTTIME2, LOCINSTANCEID2)}
+        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP),
+                          LOCPUBIP2 : (LOCSTARTTIME2, LOCINSTANCEID2, LOCPUBIP2)}
 
         INSTANCEID = LOCINSTANCEID
         STARTTIME = LOCSTARTTIME
         PUBDNSNAME = 'ec2-0-0-0-0.c'
-        PRIVDNSNAME = 'ip-1-1-1-1.ec2.internal'
 
-        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME, PRIVDNSNAME)]
-        monitor.comparetolocal(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
+        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME)]
+        monitor.compare_servers_to_local(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
 
 
-    def test_comparetolocal_mismatchdata(self):
+    def test_compare_servers_to_local_mismatchdata(self):
         LOCINSTANCEID = 'i-aaaaaaaa'
         LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
-        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID)}
+        LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP)}
 
         INSTANCEID = LOCINSTANCEID
         STARTTIME = LOCSTARTTIME
         DIFFPUBDNSNAME = 'ec2-0-0-0-1.c'
-        PRIVDNSNAME = 'ip-1-1-1-1.ec2.internal'
-        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, DIFFPUBDNSNAME, PRIVDNSNAME)]
-        monitor.comparetolocal(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
+        REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, DIFFPUBDNSNAME)]
+        monitor.compare_servers_to_local(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)

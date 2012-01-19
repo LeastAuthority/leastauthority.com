@@ -8,7 +8,8 @@ from twisted.python.failure import Failure
 from twisted.internet import reactor
 
 from lae_automation.config import Config
-from lae_automation.monitor import check_servers, readserverinfocsv, comparetolocal, send_monitoring_report
+from lae_automation.monitor import check_servers, read_serverinfo, compare_servers_to_local, \
+    send_monitoring_report
 from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser
 
 
@@ -25,19 +26,19 @@ monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
 stderr = StringIO()
 
-serverinfotuple = readserverinfocsv(serverinfocsvpath)
+serverinfotuple = read_serverinfo(serverinfocsvpath)
 localstate = {}
 for propertytuple in serverinfotuple:
     localstate[propertytuple[2]] = (propertytuple[0], propertytuple[1])
 
-propertiesofinterest = ('launchTime', 'instanceId', 'dnsName', 'privateDnsName')
+propertiesofinterest = ('launchTime', 'instanceId', 'dnsName')
 POLL_TIME = 10
 ADDRESS_WAIT_TIME = 60
 
 d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, ServerInfoParser(propertiesofinterest),
                             POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, stderr)
 
-d.addCallback(lambda remoteproperties: comparetolocal(remoteproperties, localstate, sys.stdout, stderr))
+d.addCallback(lambda remoteproperties: compare_servers_to_local(remoteproperties, localstate, sys.stdout, stderr))
 
 d.addCallback(lambda host_list: check_servers(host_list, monitor_privkey_path, sys.stdout, stderr))
 
