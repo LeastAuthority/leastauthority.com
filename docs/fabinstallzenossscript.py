@@ -15,14 +15,14 @@ NGINXCONFIGFILESTRING = """server {
     listen 443 default ssl;
     server_name lambda4.leastauthority.com;
     ssl on;
-    ssl_certificate /home/zenoss/keys/server.crt;
-    ssl_certificate_key /home/zenoss/keys/server.key;
+    ssl_certificate /home/nginx/keys/server.crt;
+    ssl_certificate_key /home/nginx/keys/server.key;
     ssl_session_timeout 20m;
     ssl_protocols SSLv3 TLSv1;
     ssl_ciphers RSA:HIGH;
     ssl_prefer_server_ciphers on;
 
-    access_log /home/zenoss/logs/server.log;
+    access_log /home/nginx/logs/server.log;
 
     location / {
         rewrite ^(.*)$ /VirtualHostBase/https/lambda4.leastauthority.com:443$1 break;
@@ -191,15 +191,20 @@ def install_nginxandzenoss():
     create_account('nginx', None, stdout, stderr)
     with cd('/home/nginx'):
         run('mkdir -p /home/nginx/keys')
+    with cd('/home/nginx/keys'):
         write(SERVERCERTIFICATESTRING, NGINXCERTFILENAME)
         write(SERVERKEY, NGINXKEYFILENAME)
         run('chown nginx:nginx ./*')
         run('chmod 400 ./*')
+
+        
+    write(NGINXCONFIGFILESTRING, NGINXCONFIGFILENAME)
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
     sudo_apt_get('upgrade -y')
     sudo_apt_get('install -y nginx')
 
+    run('/etc/init.d/nginx start')
     run('mkdir temp_for_zenossdeb')
     with cd('temp_for_zenossdeb'):
         run('wget http://dev.zenoss.org/deb/dists/main/stable/binary-i386/zenoss-stack_3.2.1_i386.deb')
