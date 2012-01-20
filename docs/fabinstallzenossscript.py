@@ -189,8 +189,12 @@ def install_nginxandzenoss():
     set_host_and_key(public_host, admin_privkey_path)
 
     create_account('nginx', None, stdout, stderr)
-    write(SERVERCERTIFICATESTRING, NGINXCERTFILENAME)
-    write(SERVERKEY, NGINXKEYFILENAME)
+    with cd('/home/nginx'):
+        run('mkdir -p /home/nginx/keys')
+        write(SERVERCERTIFICATESTRING, NGINXCERTFILENAME)
+        write(SERVERKEY, NGINXKEYFILENAME)
+        run('chown nginx:nginx ./*')
+        run('chmod 400 ./*')
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
     sudo_apt_get('upgrade -y')
