@@ -178,7 +178,7 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
     sudo('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
     if account_pubkey is None:
-        sudo('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys')
+        sudo('cp /home/ubuntu/.ssh/authorized_keys /home/%s/.ssh/authorized_keys' % (account_name,))
     else:
         write(account_pubkey, '/home/%s/.ssh/authorized_keys' % (account_name,), use_sudo=True)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
