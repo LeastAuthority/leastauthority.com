@@ -102,7 +102,7 @@ def write_serverinfo(pathtoserverinfo, remotepropstuplelist):
         append_record(pathtoserverinfo, rpt[0], rpt[1], pubIPextractor(rpt[2]))
 
 
-MONITORING_EMAIL_SUBJECT = "Monitoring report"
+MONITORING_EMAIL_SUBJECT = "Least Authority Enterprises monitoring report"
 
 MONITORING_EMAIL_BODY_BROKEN = """Hello, monitoring script here.
 
@@ -125,7 +125,7 @@ multiservercheck.py
 SENDER_DOMAIN = "leastauthority.com"
 FROM_EMAIL = "info@leastauthority.com"
 FROM_ADDRESS = "Monitoring <%s>" % (FROM_EMAIL,)
-TO_EMAIL = FROM_EMAIL
+TO_EMAIL = "monitoring@leastauthority.com"
 USER_AGENT = "Least Authority Enterprises e-mail sender"
 
 SMTP_HOST = "smtp.googlemail.com"
