@@ -1,0 +1,3 @@
+# m h  dom mon dow   command
+@reboot /home/website/leastauthority.com/start.sh
+*/10 * * * * /home/website/leastauthority.com/multiservercheck.sh
