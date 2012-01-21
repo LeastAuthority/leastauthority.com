@@ -12,7 +12,7 @@ from lae_util.servers import append_record
 def check_server(public_host, monitor_privkey_path, stdout, stderr):
     set_host_and_key(public_host, monitor_privkey_path, username="monitor")
 
-    psout = run('ps -fC tahoe')
+    psout = run('ps -fC tahoe || true')
     pslines = psout.splitlines()
     if not pslines[0].startswith("UID"):
         print >>stderr, "Error: Host %s unexpected ps output %r.\n" % (public_host, psout)
