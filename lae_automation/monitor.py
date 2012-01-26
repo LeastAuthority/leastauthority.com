@@ -37,9 +37,9 @@ def check_server(public_host, monitor_privkey_path, stdout, stderr):
             return False
 
         return True
-    except Exception:
+    except (Exception, SystemExit):
         print >>stderr, "Exception while checking host %s:" % (public_host,)
-        traceback.print_exc()
+        traceback.print_exc(file=stderr)
         return False
 
 
