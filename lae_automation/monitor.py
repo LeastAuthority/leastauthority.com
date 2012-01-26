@@ -1,4 +1,5 @@
 
+import traceback
 from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key
@@ -10,31 +11,36 @@ from lae_util.servers import append_record
 # Anything printed to stderr counts as a notifiable problem.
 
 def check_server(public_host, monitor_privkey_path, stdout, stderr):
-    set_host_and_key(public_host, monitor_privkey_path, username="monitor")
+    try:
+        set_host_and_key(public_host, monitor_privkey_path, username="monitor")
 
-    psout = run('ps -fC tahoe || true')
-    pslines = psout.splitlines()
-    if not pslines[0].startswith("UID"):
-        print >>stderr, "Error: Host %s unexpected ps output %r.\n" % (public_host, psout)
-        return False
-
-    nodes = []
-    for line in pslines[1:]:
-        fields = line.split()
-        [uid, pid, parent_pid, c, start_time, tty, time] = fields[:7]
-        cmd = fields[7:]
-        if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
-                cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
-            print >>stderr, "Error: Host %s unexpected command %r." % (public_host, " ".join(cmd))
+        psout = run('ps -fC tahoe || true')
+        pslines = psout.splitlines()
+        if not pslines[0].startswith("UID"):
+            print >>stderr, "Error: Host %s unexpected ps output %r.\n" % (public_host, psout)
             return False
-        nodes.append(cmd[3])
 
-    nodes.sort()
-    if nodes != ['introducer', 'storageserver']:
-        print >>stderr, "Error: Host %s expected nodes are not running. Actual nodes are %r." % (public_host, nodes)
+        nodes = []
+        for line in pslines[1:]:
+            fields = line.split()
+            [uid, pid, parent_pid, c, start_time, tty, time] = fields[:7]
+            cmd = fields[7:]
+            if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
+                    cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
+                print >>stderr, "Error: Host %s unexpected command %r." % (public_host, " ".join(cmd))
+                return False
+            nodes.append(cmd[3])
+
+        nodes.sort()
+        if nodes != ['introducer', 'storageserver']:
+            print >>stderr, "Error: Host %s expected nodes are not running. Actual nodes are %r." % (public_host, nodes)
+            return False
+
+        return True
+    except Exception:
+        print >>stderr, "Exception while checking host %s:" % (public_host,)
+        traceback.print_exc()
         return False
-
-    return True
 
 
 def check_servers(host_list, monitor_privkey_path, stdout, stderr):
