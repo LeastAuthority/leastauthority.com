@@ -11,7 +11,7 @@ import __builtin__
 class TestServerMonitoring(TestCase):
     PUBLICHOST = '0.0.0.0'
     PRIVHOST = '1.1.1.1'
-    MONPRVKEYPATH = '/a/fake/path'
+    MONPRVKEYPATH = 'a_fake_path'
     STDOUT = StringIO()
     STDERR = StringIO()
 
@@ -19,24 +19,28 @@ class TestServerMonitoring(TestCase):
     def test_checkserver_failonUID(self):
         PSLINES = """FAILID"""
         def call_run(remotecommand):
-            self.failUnlessEqual(remotecommand, 'ps -fC tahoe')
+            self.failUnlessEqual(remotecommand, 'ps -fC tahoe || true')
             return PSLINES
         self.patch(monitor, 'run', call_run)
+
         def call_crun(remotecommand, **kwargs):
             self.failUnlessEqual(remotecommand, 'whoami')
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_open(filehandle, mode='r'):
-            self.failUnlessEqual(filehandle, '/a/fake/path')
-        self.patch(__builtin__, 'open', call_open)
+        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
+            self.failUnlessEqual(public_host, self.PUBLICHOST)
+            self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
+            self.failUnlessEqual(username, 'monitor')
+        self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
+
         check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
     def test_checkserver_failonargnum(self):
         PSLINES = """UID        PID  PPID  C STIME TTY          TIME CMD\ncustomer   555     1  0 05:20 ?        00:00:00 /usr/bin/python /home/customer/LAFS_source/support/bin/tahoe introducer\ncustomer   564     1  0 05:20 ?        00:00:00 /usr/bin/python /home/customer/LAFS_source/support/bin/tahoe restart storageserver"""
         def call_run(remotecommand):
-            self.failUnlessEqual(remotecommand, 'ps -fC tahoe')
+            self.failUnlessEqual(remotecommand, 'ps -fC tahoe || true')
             return PSLINES
         self.patch(monitor, 'run', call_run)
 
@@ -45,16 +49,19 @@ class TestServerMonitoring(TestCase):
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_open(filehandle, mode='r'):
-            self.failUnlessEqual(filehandle, '/a/fake/path')
-        self.patch(__builtin__, 'open', call_open)
+        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
+            self.failUnlessEqual(public_host, self.PUBLICHOST)
+            self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
+            self.failUnlessEqual(username, 'monitor')
+        self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
+
         check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
     def test_checkserver_failonnodes(self):
         PSLINES = """UID        PID  PPID  C STIME TTY          TIME CMD\ncustomer   555     1  0 05:20 ?        00:00:00 /usr/bin/python /home/customer/LAFS_source/support/bin/tahoe restart introducer\ncustomer   564     1  0 05:20 ?        00:00:00 /usr/bin/python /home/customer/LAFS_source/support/bin/tahoe restart introducer"""
         def call_run(remotecommand):
-            self.failUnlessEqual(remotecommand, 'ps -fC tahoe')
+            self.failUnlessEqual(remotecommand, 'ps -fC tahoe || true')
             return PSLINES
         self.patch(monitor, 'run', call_run)
 
@@ -63,16 +70,19 @@ class TestServerMonitoring(TestCase):
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_open(filehandle, mode='r'):
-            self.failUnlessEqual(filehandle, '/a/fake/path')
-        self.patch(__builtin__, 'open', call_open)
+        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
+            self.failUnlessEqual(public_host, self.PUBLICHOST)
+            self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
+            self.failUnlessEqual(username, 'monitor')
+        self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
+
         check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
     def test_checkserver_withps_success(self):
         PSLINES = """UID        PID  PPID  C STIME TTY          TIME CMD\ncustomer   555     1  0 05:20 ?        00:00:00 /usr/bin/python /home/customer/LAFS_source/support/bin/tahoe restart introducer\ncustomer   564     1  0 05:20 ?        00:00:00 /usr/bin/python /home/customer/LAFS_source/support/bin/tahoe restart storageserver"""
         def call_run(remotecommand):
-            self.failUnlessEqual(remotecommand, 'ps -fC tahoe')
+            self.failUnlessEqual(remotecommand, 'ps -fC tahoe || true')
             return PSLINES
         self.patch(monitor, 'run', call_run)
 
@@ -81,9 +91,12 @@ class TestServerMonitoring(TestCase):
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_open(filehandle, mode='r'):
-            self.failUnlessEqual(filehandle, '/a/fake/path')
-        self.patch(__builtin__, 'open', call_open)
+        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
+            self.failUnlessEqual(public_host, self.PUBLICHOST)
+            self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
+            self.failUnlessEqual(username, 'monitor')
+        self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
+
         check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
