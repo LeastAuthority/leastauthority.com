@@ -21,6 +21,7 @@ ec2secretpath='../ec2secret'
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 serverinfocsvpath = 'serverinfo.csv'
+lasterrorspath = 'lasterrors.txt'
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
@@ -30,6 +31,11 @@ serverinfotuple = read_serverinfo(serverinfocsvpath)
 localstate = {}
 for propertytuple in serverinfotuple:
     localstate[propertytuple[2]] = (propertytuple[0], propertytuple[1])
+
+lasterrors = None
+lasterrorsfp = FilePath(lasterrorspath)
+if lasterrorsfp.exists():
+    lasterrors = lasterrorsfp.getContent()
 
 propertiesofinterest = ('launchTime', 'instanceId', 'dnsName')
 POLL_TIME = 10
@@ -50,9 +56,10 @@ def cb(x):
 
     errors = stderr.getvalue()
     print >>sys.stderr, errors
-    if errors:
+    if errors != lasterrors:
         d2 = send_monitoring_report(errors)
         def _sent(ign):
+            lasterrorsfp.setContent(errors)
             raise Exception("Sent failure report.")
         d2.addCallback(_sent)
         return d2

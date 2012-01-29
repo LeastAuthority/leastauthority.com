@@ -92,11 +92,19 @@ def write_serverinfo(pathtoserverinfo, remotepropstuplelist):
 
 MONITORING_EMAIL_SUBJECT = "Monitoring report"
 
-MONITORING_EMAIL_BODY = """Hello, monitoring script here.
+MONITORING_EMAIL_BODY_BROKEN = """Hello, monitoring script here.
 
-The following problems may need investigation:
+The following problem(s) may need investigation:
 
 %s
+
+--\x20
+multiservercheck.py
+"""
+
+MONITORING_EMAIL_BODY_WORKING = """Hello, monitoring script here.
+
+Everything appears to be working again, as far as I can tell.
 
 --\x20
 multiservercheck.py
@@ -116,7 +124,10 @@ SMTP_USERNAME = FROM_EMAIL
 def send_monitoring_report(errors, password_path='../smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
-    content = MONITORING_EMAIL_BODY % (errors,)
+    if errors:
+        content = MONITORING_EMAIL_BODY_BROKEN % (errors,)
+    else:
+        content = MONITORING_EMAIL_BODY_WORKING
     headers = {
                "From": FROM_ADDRESS,
                "Subject": MONITORING_EMAIL_SUBJECT,
