@@ -1,5 +1,5 @@
 
-import logging, pprint, sys, os
+import logging, pprint, sys, os, traceback
 from urllib import quote
 from cgi import escape as htmlEscape
 
@@ -304,23 +304,6 @@ class RequestOutputStream(object):
         pass
 
 
-class NullOutputStream(object):
-    def write(self, s):
-        pass
-
-    def writelines(self, seq):
-        pass
-
-    def flush(self):
-        pass
-
-    def isatty(self):
-        return False
-
-    def close(self):
-        pass
-
-
 # Rely on start() to initialize these, in order to make it easier for tests to patch
 # and/or reinitialize.
 flappcommand = None
@@ -408,22 +391,34 @@ class ActivationRequestHandler(HandlerBase):
                               publickey,
                              )
         stdout = RequestOutputStream(request, tee=self.out)
-        stderr = NullOutputStream()
+        stderr = self.out
         def when_done():
-            successful_activationkeys.add(activationkey)
-            all_activationkeys.add(activationkey)
-            append_record("signups.csv", 'success', activationkey, productcode, name, email, publickey)
-            request.write(SUCCEEDED_HTML)
-            request.finish()
+            try:
+                successful_activationkeys.add(activationkey)
+                all_activationkeys.add(activationkey)
+                append_record("signups.csv", 'success', activationkey, productcode, name, email, publickey)
+            except Exception:
+                # The request really did succeed, we just failed to record that it did. Log the error locally.
+                traceback.print_exc(100, stderr)
+                request.write(SUCCEEDED_HTML)
+            else:
+                request.write(SUCCEEDED_HTML)
+            finally:
+                request.finish()
         def when_failed():
-            all_activationkeys.add(activationkey)
-            append_record("signups.csv", 'failure', activationkey, productcode, name, email, publickey)
-            request.write(FAILED_HTML)
-            request.finish()
+            try:
+                all_activationkeys.add(activationkey)
+                append_record("signups.csv", 'failure', activationkey, productcode, name, email, publickey)
+            except Exception:
+                traceback.print_exc(100, stderr)
+                request.write(FAILED_HTML)
+            else:
+                request.write(FAILED_HTML)
+            finally:
+                request.finish()
         try:
             flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
         except Exception:
-            import traceback
             traceback.print_exc(100, stdout)
             when_failed()
 
