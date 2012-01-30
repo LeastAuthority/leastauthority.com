@@ -5,7 +5,6 @@ from twisted.trial.unittest import TestCase
 from lae_automation.monitor import check_server, check_servers
 from lae_automation import monitor
 from lae_automation import server
-import __builtin__
 
 
 class TestServerMonitoring(TestCase):
