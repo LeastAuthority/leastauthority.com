@@ -50,6 +50,8 @@ PGP_NOTIFICATION_EMAIL = "davidsarah@leastauthority.com"
 def send_signup_confirmation(customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr, password_path='../smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
+    # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
+    # but I'm being cautious for now since I haven't reviewed email.mime.text.MIMEText to make sure that's safe.
     content = CONFIRMATION_EMAIL_BODY % {
                "customer_name": customer_name,
                "external_introducer_furl": external_introducer_furl,
