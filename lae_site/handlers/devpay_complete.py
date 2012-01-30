@@ -150,7 +150,7 @@ please contact <a href="mailto:support@leastauthority.com">&lt;support@leastauth
 """)
 
 ACTIVATIONREQ_RESPONSE_MISSING_NAME_HTML = html("Missing name", """
-<p>
+<p style="color: red;">
 The 'Name' field was not filled in. All fields except for the PGP key information
 are required. If you are having any difficulty signing up, please contact
 <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
@@ -159,7 +159,7 @@ are required. If you are having any difficulty signing up, please contact
 """ + ACTIVATION_FORM_HTML)
 
 ACTIVATIONREQ_RESPONSE_MISSING_OR_INVALID_EMAIL_HTML = html("Missing or invalid email address", """
-<p>
+<p style="color: red;">
 The 'Email address' field was not filled in with a valid-looking address. All fields except for
 the PGP key information are required. If you are having any difficulty signing up, please contact
 <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
