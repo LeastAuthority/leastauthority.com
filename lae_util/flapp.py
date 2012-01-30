@@ -52,6 +52,12 @@ class FlappCommand(object):
         def _error(f):
             print >>stdout, str(f)
             when_failed()
+        def _recover(f):
+            try:
+                print >>stderr, str(f)
+            except Exception:
+                print >>stderr, "something weird"
 
         self.d.addCallback(_go)
         self.d.addCallbacks(_done, _error)
+        self.d.addErrback(_recover)
