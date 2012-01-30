@@ -117,7 +117,7 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_success(self):
         LOCINSTANCEID = 'i-aaaaaaaa'
-        LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
+        LOCSTARTTIME  = '2112-01-01T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP)}
 
@@ -130,7 +130,7 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_unexpectedinstance(self):
         LOCINSTANCEID = 'i-'+'a'*8
-        LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
+        LOCSTARTTIME  = '2112-01-01T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP)}
 
@@ -139,7 +139,7 @@ class TestServerMonitoring(TestCase):
         PUBDNSNAME = 'ec2-0-0-0-0.c'
 
         INSTANCEID2 = 'i-'+'b'*8
-        STARTTIME2 = '2012-00-00T01:00:00.000Z'
+        STARTTIME2 = '2112-01-01T01:00:00.000Z'
         PUBDNSNAME2 = 'ec2-2-2-2-2.c'
         REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME),
                              (STARTTIME2, INSTANCEID2, PUBDNSNAME2)]
@@ -148,11 +148,11 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_missingremoteinstance(self):
         LOCINSTANCEID = 'i-'+'a'*8
-        LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
+        LOCSTARTTIME  = '2112-01-01T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCPUBIP2 = '3.3.3.3'
         LOCINSTANCEID2 = 'i-'+'b'*8
-        LOCSTARTTIME2 = '2012-00-00T01:00:00.000Z'
+        LOCSTARTTIME2 = '2012-01-01T01:00:00.000Z'
         LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP),
                           LOCPUBIP2 : (LOCSTARTTIME2, LOCINSTANCEID2, LOCPUBIP2)}
 
@@ -166,7 +166,7 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_mismatchdata(self):
         LOCINSTANCEID = 'i-aaaaaaaa'
-        LOCSTARTTIME  = '2012-00-00T00:00:00.000Z'
+        LOCSTARTTIME  = '2012-01-01T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP)}
 

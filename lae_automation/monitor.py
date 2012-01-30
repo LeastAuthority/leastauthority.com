@@ -1,11 +1,12 @@
 
-import traceback
+import time, traceback
 from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key
 from lae_automation.aws.queryapi import pubIPextractor
 from lae_util.send_email import send_plain_email
 from lae_util.servers import append_record
+from lae_util.timestamp import parse_iso_time
 
 
 # Anything printed to stderr counts as a notifiable problem.
@@ -23,7 +24,7 @@ def check_server(public_host, monitor_privkey_path, stdout, stderr):
         nodes = []
         for line in pslines[1:]:
             fields = line.split()
-            [uid, pid, parent_pid, c, start_time, tty, time] = fields[:7]
+            [uid, pid, parent_pid, c, start_time, tty, proc_time] = fields[:7]
             cmd = fields[7:]
             if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
                     cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
@@ -52,14 +53,21 @@ def check_servers(host_list, monitor_privkey_path, stdout, stderr):
     return success
 
 
-def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr):
+def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, now=None):
+    if now is None:
+        now = time.time()
     host_list = []
     for rpt in remotepropstuplelist:
         public_host = pubIPextractor(rpt[2])
-        host_list.append(public_host)
         if not localstate.has_key(public_host):
-            print >>stderr, "Warning: Host %s is not in the list of known servers." % (public_host,)
+            launch_time = parse_iso_time(rpt[0])
+            if now - launch_time < 10*60:
+                print >>stdout, "Note: Ignoring host %s because it was launched less than 10 minutes ago at %s." % (public_host, rpt[0])
+            else:
+                print >>stderr, "Warning: Host %s is not in the list of known servers." % (public_host,)
+                host_list.append(public_host)
         else:
+            host_list.append(public_host)
             if localstate[public_host][0] != rpt[0]:
                 print >>stderr, ("Warning: Host %s launch time changed from %s to %s (probably rebooted)."
                                  % (public_host, localstate[public_host][0], rpt[0]))

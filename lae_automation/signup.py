@@ -103,8 +103,6 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                 (publichost, privatehost) = addresses[0]
                 print >>stdout, "The server's public address is %r." % (publichost,)
 
-                append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
-
                 retries = 3
                 while True:
                     try:
@@ -121,6 +119,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
                 furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
                                      producttoken, bucketname, stdout, stderr, secretsfile)
+
+                append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
 
                 return send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
             d3.addCallback(_got_addresses)
