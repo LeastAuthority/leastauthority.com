@@ -22,12 +22,7 @@ def html(title, body):
     return ""
 
 
-# TODO: allow customizing the text per-product.
-DEVPAY_RESPONSE_HAVE_CODES_HTML = html("Request activation for Tahoe-LAFS-on-S3 alpha", """
-<p>
-Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
-</p>
-<p>
+ACTIVATION_FORM_HTML = """<p>
 Your sign up is not quite finished; to complete it and activate your account,
 please tell us the name and email address you want us to use to communicate
 with you. We will not resell or pass on this email address, and will only use it
@@ -83,7 +78,14 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 <hr>
 </body>
 </html>
-""")
+"""
+
+# TODO: allow customizing the text per-product.
+DEVPAY_RESPONSE_HAVE_CODES_HTML = html("Request activation for Tahoe-LAFS-on-S3 alpha", """
+<p>
+Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
+</p>
+""" + ACTIVATION_FORM_HTML)
 
 # Amazon sometimes doesn't tell us the product code and/or activation key.
 # In that case, the easiest way to get those codes is for the user to click on
@@ -138,14 +140,32 @@ since the activation key is only valid once.
 <pre>
 """)
 
-ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML = html("Missing activation key", """
+ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML = html("Missing activation key or product code", """
 <p>
-The activation key was missing from the request. This can happen in some cases if you
-reload the page after an activation request. If you are having any difficulty signing up,
+The activation key or product code was missing from the request. This can happen in some cases
+if you reload the page after an activation request. If you are having any difficulty signing up,
 please contact <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
 </p>
 <pre>
 """)
+
+ACTIVATIONREQ_RESPONSE_MISSING_NAME_HTML = html("Missing name", """
+<p>
+The 'Name' field was not filled in. All fields except for the PGP key information
+are required. If you are having any difficulty signing up, please contact
+<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+</p>
+<hr>
+""" + ACTIVATION_FORM_HTML)
+
+ACTIVATIONREQ_RESPONSE_MISSING_OR_INVALID_EMAIL_HTML = html("Missing or invalid email address", """
+<p>
+The 'Email address' field was not filled in with a valid-looking address. All fields except for
+the PGP key information are required. If you are having any difficulty signing up, please contact
+<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+</p>
+<hr>
+""" + ACTIVATION_FORM_HTML)
 
 ACTIVATIONREQ_RESPONSE_ALREADY_SUCCEEDED_HTML = html("Activation already succeeded", """
 <p>
@@ -232,10 +252,14 @@ class HandlerBase(Resource):
             [arg] = request.args[argname]
         except (KeyError, ValueError):
             arg = ""
-        # We don't expect characters that need to be quoted, but quote the arguments
-        # anyway, to avoid XSS when we interpolate them into HTML. URL-encoding is
-        # safe for HTML tag attributes enclosed in "".
-        return quote(arg, safe='@=:/+ ')
+
+        # Quote the arguments to avoid injection attacks when we interpolate them into HTML
+        # attributes (enclosed in ""), CSV values, or the stdin of the flapp command.
+        # We could use htmlEscape, but that does not escape ',' or newlines so we would need
+        # additional quoting for CSV and flapp.
+        # URL-encoding with the set of safe-characters below will work for all these cases.
+        # Note that the safe set must include characters that are valid in email addresses.
+        return quote(arg, safe=' !#$()*+-./:=?@^_`{|}~')
 
 
 class DevPayPurchaseHandler(HandlerBase):
@@ -359,12 +383,18 @@ class ActivationRequestHandler(HandlerBase):
 
         request.setResponseCode(200)
 
-        if not activationkey:
+        if not (activationkey and productcode):
             return ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML
         elif activationkey in successful_activationkeys:
             return ACTIVATIONREQ_RESPONSE_ALREADY_SUCCEEDED_HTML
         elif activationkey in all_activationkeys:
             return ACTIVATIONREQ_RESPONSE_ALREADY_USED_HTML
+        elif not name:
+            return ACTIVATIONREQ_RESPONSE_MISSING_NAME_HTML % {"activationkey": activationkey,
+                                                               "productcode": productcode}
+        elif "%" in email or not "@" in email:
+            return ACTIVATIONREQ_RESPONSE_MISSING_OR_INVALID_EMAIL_HTML % {"activationkey": activationkey,
+                                                                           "productcode": productcode}
 
         print >>self.out, "Yay! Someone signed up :-)"
 

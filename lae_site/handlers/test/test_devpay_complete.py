@@ -83,22 +83,22 @@ class Handlers(TestCase):
         d.addCallback(lambda ign:
                       self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
                                          ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
-                                         Name=["Joe"], Email=["joe!@example.org"], PublicKey=["===BEGIN BLAH==="]))
+                                         Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
 
         def _finished( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn("<title>Activation requested</title>", output)
             self.failUnlessIn("Your sign-up is complete.", output)
-            self.failUnlessIn(",ACTIVATIONKEY,PRODUCTCODE,Joe,joe%21@example.org,===BEGIN BLAH===\n",
+            self.failUnlessIn(",ACTIVATIONKEY,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",
                               FilePath("activation_requests.csv").getContent())
-            self.failUnlessIn(",success,ACTIVATIONKEY,PRODUCTCODE,Joe,joe%21@example.org,===BEGIN BLAH===\n",
+            self.failUnlessIn(",success,ACTIVATIONKEY,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",
                               FilePath("signups.csv").getContent())
         d.addCallback(_finished)
 
         d.addCallback(lambda ign:
                       self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
                                          ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
-                                         Name=["Joe"], Email=["joe!@example.org"], PublicKey=["===BEGIN BLAH==="]))
+                                         Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
 
         def _finished_again( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
@@ -110,14 +110,40 @@ class Handlers(TestCase):
         d.addCallback(lambda ign:
                       self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
                                          ActivationKey=["ACTIVATIONKEY2"], ProductCode=["PRODUCTCODE"],
-                                         Name=["Joe"], Email=["joe!@example.org"], PublicKey=["===BEGIN BLAH==="]))
+                                         Name=[""], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
+        def _no_name( (req, output) ):
+            self.failUnlessEqual(req.responsecode, OK)
+            self.failUnlessIn("<title>Missing name</title>", output)
+            self.failUnlessIn("The 'Name' field was not filled in", output)
+            self.failUnlessIn(",ACTIVATIONKEY2,PRODUCTCODE,,joe+mildred@example.org,===BEGIN BLAH===\n",
+                              FilePath("activation_requests.csv").getContent())
+            self.failIfIn("ACTIVATIONKEY2", FilePath("signups.csv").getContent())
+        d.addCallback(_no_name)
+
+        d.addCallback(lambda ign:
+                      self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
+                                         ActivationKey=["ACTIVATIONKEY3"], ProductCode=["PRODUCTCODE"],
+                                         Name=["Joe & Mildred"], Email=["joe&mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
+        def _bad_email( (req, output) ):
+            self.failUnlessEqual(req.responsecode, OK)
+            self.failUnlessIn("<title>Missing or invalid email address</title>", output)
+            self.failUnlessIn("The 'Email address' field was not filled in with a valid-looking address", output)
+            self.failUnlessIn(",ACTIVATIONKEY3,PRODUCTCODE,Joe %26 Mildred,joe%26mildred@example.org,===BEGIN BLAH===\n",
+                              FilePath("activation_requests.csv").getContent())
+            self.failIfIn("ACTIVATIONKEY3", FilePath("signups.csv").getContent())
+        d.addCallback(_bad_email)
+
+        d.addCallback(lambda ign:
+                      self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
+                                         ActivationKey=["ACTIVATIONKEY4"], ProductCode=["PRODUCTCODE"],
+                                         Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
         def _finished_error( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn("<title>Activation requested</title>", output)
             self.failUnlessIn("We weren't able to complete your sign-up automatically", output)
-            self.failUnlessIn(",ACTIVATIONKEY2,PRODUCTCODE,Joe,joe%21@example.org,===BEGIN BLAH===\n",
+            self.failUnlessIn(",ACTIVATIONKEY4,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",
                               FilePath("activation_requests.csv").getContent())
-            self.failUnlessIn(",failure,ACTIVATIONKEY2,PRODUCTCODE,Joe,joe%21@example.org,===BEGIN BLAH===\n",
+            self.failUnlessIn(",failure,ACTIVATIONKEY4,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",
                               FilePath("signups.csv").getContent())
         d.addCallback(_finished_error)
         return d
