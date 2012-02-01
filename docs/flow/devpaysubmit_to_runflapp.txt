@@ -47,7 +47,8 @@
     BUCKET_NAME = lae-PRODUCTCODE-RANDOMSTRING
 
   This information will eventually go into a database on the automation server;
-  for now it will be logged to a file [more details needed].
+  for now it is set in the properties of the EC2 instance, and also logged to a
+  file in signup_logs.
 
   The service registered on the flappserver has its core functionality in "full_signup.py".
 
