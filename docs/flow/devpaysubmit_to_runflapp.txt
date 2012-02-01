@@ -6,11 +6,9 @@
    (2) It begins a "vetting" process to determine if the applicant's payment credentials are valid.
 
     Without reference to devpay's vetting process, the user's browser then
-    informs the LAE-webserver by passing it the "activation key". The
-    webserver sends a(n http?) request to the flappserver hosted signup
+    informs the LAE-webserver by passing it the "activation key". The webserver
+    sends a request using foolscap protocol to the flappserver-hosted signup
     service.
-
-      This request has FOO BAR BAM SPAZM in its headers and SUCH AND FORTH IN ITS body.
 
     To limit the scope of server failure we will run the automation server
   on a separate EC2 instance.  A flappserver client/server pair is
