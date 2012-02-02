@@ -1,4 +1,4 @@
-import time
+import time, calendar
 from dateutil.parser import parse
 
 
@@ -9,4 +9,4 @@ def format_iso_time(secs):
 
 def parse_iso_time(timestamp):
     dt = parse(timestamp)
-    return time.mktime(dt.timetuple())
+    return calendar.timegm(dt.timetuple())
