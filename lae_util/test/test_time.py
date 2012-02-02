@@ -18,3 +18,6 @@ class TimeTests (TestCase):
 
         secs2 = timestamp.parse_iso_time(self.SOME_TIMESTAMP2)
         self.failUnlessEqual(secs2, self.SOME_TIME)
+
+        self.failUnlessRaises(ValueError, timestamp.parse_iso_time, "2012-00-00T00:00:00Z")
+        self.failUnlessRaises(ValueError, timestamp.parse_iso_time, "not a timestamp")
