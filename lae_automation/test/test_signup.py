@@ -4,7 +4,7 @@ from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
 
-from lae_automation import signup, initialize
+from lae_automation import signup, initialize, server
 
 
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
@@ -90,7 +90,9 @@ CONFIGFILEJSON = """{
   "admin_keypair_name":   "ADMINKEYS",
   "admin_privkey_path":   "ADMINKEYS.pem",
   "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem"
+  "monitor_privkey_path": "MONITORKEYS.pem",
+  "zenoss_privkey_path": "ZMONKEYS.pem",
+  "zenoss_IP": "9.9.9.9"
 }"""
 
 ZEROPRODUCT = """{
@@ -227,7 +229,16 @@ class TestSignupModule(TestCase):
         stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-
+        
+        def call_set_host_and_key(zenoss_public_ip, zenoss_privkey_path, username='zenoss'):
+            pass
+        self.patch(server, 'set_host_and_key', call_set_host_and_key)
+        def call_run(argstring, **kwargs):
+            pass
+        self.patch(server, 'run', call_run)
+        def call_write(value, remote_path, use_sudo=False, mode=None):
+            pass
+        self.patch(server, 'write', call_write)
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
                           MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
         return d

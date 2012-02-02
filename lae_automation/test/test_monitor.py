@@ -166,7 +166,7 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_mismatchdata(self):
         LOCINSTANCEID = 'i-aaaaaaaa'
-        LOCSTARTTIME  = '2012-01-01T00:00:00.000Z'
+        LOCSTARTTIME  = '2012-01-01T01:01:01.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCALSTATEDICT = {LOCPUBIP : (LOCSTARTTIME, LOCINSTANCEID, LOCPUBIP)}
 
