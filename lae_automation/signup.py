@@ -8,7 +8,7 @@ from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
     create_user_bucket, deploy_EC2_instance
 from lae_automation.aws.queryapi import wait_for_EC2_properties, AddressParser, TimeoutError
-from lae_automation.server import install_server, bounce_server, NotListeningError
+from lae_automation.server import install_server, bounce_server, notify_zenoss, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation
 from lae_util.servers import append_record
 
@@ -59,6 +59,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     admin_privkey_path = str(config.other['admin_privkey_path'])
     monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
     monitor_privkey_path = str(config.other['monitor_privkey_path'])
+    zenoss_privkey_path = str(config.other['zenoss_privkey_path'])
+    zenoss_IP = str(config.other['zenoss_IP'])
 
     print >>stdout, "Signing up customer for %s..." % (fullname,)
 
@@ -121,7 +123,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                      producttoken, bucketname, stdout, stderr, secretsfile)
 
                 append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
-
+                notify_zenoss(instance.instance_id, publichost, zenoss_IP, zenoss_privkey_path)
                 return send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
             d3.addCallback(_got_addresses)
             return d3
