@@ -59,7 +59,10 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
     host_list = []
     for rpt in remotepropstuplelist:
         public_host = pubIPextractor(rpt[2])
-        if not localstate.has_key(public_host):
+        if not public_host:
+            print >>stderr, ("Warning: Host launched at %s with instance ID %s has no public IP (maybe it has been terminated)."
+                             % (rpt[0], rpt[1]))
+        elif not localstate.has_key(public_host):
             launch_time = parse_iso_time(rpt[0])
             if now - launch_time < 10*60:
                 print >>stdout, "Note: Ignoring host %s because it was launched less than 10 minutes ago at %s." % (public_host, rpt[0])
