@@ -132,6 +132,8 @@ class AddressParser(txaws_ec2_Parser):
 
 
 def pubIPextractor(AWSdnsName):
+    if AWSdnsName is None:
+        return ""
     assert isinstance(AWSdnsName, str), "AWSdnsName is %s." % AWSdnsName
     AWSdnsName = AWSdnsName.strip()
     publichost = AWSdnsName[len('ec2-'):].split('.')[0].replace('-', '.')

@@ -37,11 +37,11 @@ lasterrorsfp = FilePath(lasterrorspath)
 if lasterrorsfp.exists():
     lasterrors = lasterrorsfp.getContent()
 
-propertiesofinterest = ('launchTime', 'instanceId', 'dnsName')
 POLL_TIME = 10
 ADDRESS_WAIT_TIME = 60
 
-d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, ServerInfoParser(propertiesofinterest),
+d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
+                            ServerInfoParser(('launchTime', 'instanceId'), ('dnsName',)),
                             POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, stderr)
 
 d.addCallback(lambda remoteproperties: compare_servers_to_local(remoteproperties, localstate, sys.stdout, stderr))
