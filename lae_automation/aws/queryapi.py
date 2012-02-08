@@ -153,6 +153,8 @@ class ServerInfoParser(txaws_ec2_Parser):
             for property in self.propertylist:
                 try:
                     matching = xml_find(inneritem, unicode(property)).text
+                    if matching is None:
+                        return None
                     serverproperties.append(matching)
                 except ResponseParseError:
                     return None
