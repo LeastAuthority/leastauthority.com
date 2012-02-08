@@ -139,8 +139,10 @@ def pubIPextractor(AWSdnsName):
 
 
 class ServerInfoParser(txaws_ec2_Parser):
-    def __init__(self, properties):
-        self.propertylist = properties
+    def __init__(self, req_properties, opt_properties=[]):
+        self.req_properties = req_properties
+        self.opt_properties = opt_properties
+
     def describe_instances(self, xml_bytes):
         propertytuplelist = []
         doc = xml_parse(xml_bytes)
@@ -150,10 +152,10 @@ class ServerInfoParser(txaws_ec2_Parser):
             iset = xml_find(item, u'instancesSet')
             inneritem = xml_find(iset, u'item')
             serverproperties = []
-            for property in self.propertylist:
+            for property in self.req_properties + self.opt_properties:
                 try:
                     matching = xml_find(inneritem, unicode(property)).text
-                    if matching is None:
+                    if matching is None and property in self.req_properties:
                         return None
                     serverproperties.append(matching)
                 except ResponseParseError:
