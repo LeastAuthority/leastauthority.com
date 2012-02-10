@@ -1,4 +1,3 @@
-
 from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 
@@ -119,36 +118,19 @@ class TestServerModule(TestCase):
             server.create_account(acct_name, pubkey, STDOUT, STDERR)
             self._check_all_done()
 
-    def test_upgrade_server(self):
-        self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
+    def test_update_monitors(self):
+        self.WRITEARGS_FIFO = []
+        self.SUDOARGS_FIFO = []
+        self.WHOAMI_FIFO = fifo(['monitor'])
         self.RUNARGS_FIFO = fifo([
-            ('whoami', False, {}),
-            ('whoami', False, {}),
-            ('whoami', False, {}),
-            ('crontab /home/customer/ctab', False, {})
-        ])
-        self.SUDOARGS_FIFO = fifo([
-            ('adduser --disabled-password --gecos "" monitor || echo Assuming that monitor already exists.', False, {}),
-            ('mkdir -p /home/monitor/.ssh/', False, {}),
-            ('chown monitor:monitor /home/monitor/.ssh', False, {}),
-            ('chmod u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
-            ('chown monitor:monitor /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod 700 /home/monitor/.ssh/', False, {})
-        ])
-        self.WRITEARGS_FIFO = fifo([
-            ('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None),
-            ('#!/bin/sh\ncd /home/customer\nLAFS_source/bin/tahoe restart introducer\nLAFS_source/bin/tahoe restart storageserver\n',
-                 '/home/customer/restart.sh', False, 0750),
-            ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
-        ])
-
+                ('whoami', False, {}),
+                ('rm -rf /home/monitor/monitors', False, {}),
+                ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),
+                                  ])
         PUBLICHOST = '0.0.0.0'
-        ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
-        MONITORPUBKEY = 'THIS IS A MOCK PUBLIC KEY'
         MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
         STDOUT = StringIO()
         STDERR = StringIO()
 
-        server.upgrade_server(PUBLICHOST, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
+        server.update_monitors(PUBLICHOST, MONITORPRIVKEYPATH, STDOUT, STDERR)
         self._check_all_done()

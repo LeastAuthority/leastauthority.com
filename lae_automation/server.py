@@ -163,16 +163,11 @@ LAFS_source/bin/tahoe restart storageserver
 """
 
 
-def upgrade_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
-    set_host_and_key(public_host, admin_privkey_path)
-    create_account('monitor', monitor_pubkey, stdout, stderr)
-
-    # check that creating the monitor account worked
+def update_monitors(public_host, monitor_privkey_path, stdout, stderr):
     set_host_and_key(public_host, monitor_privkey_path, username="monitor")
-
-    # set up the reboot script as 'customer'
-    set_host_and_key(public_host, admin_privkey_path, username="customer")
-    set_up_reboot(stdout, stderr)
+    print >>stdout, "Getting monitoring code..."
+    run('rm -rf /home/monitor/monitors')
+    run('darcs get --lazy https://leastauthority.com/static/source/monitors')
 
 
 def set_up_reboot(stdout, stderr):

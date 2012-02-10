@@ -6,7 +6,7 @@ from twisted.python.failure import Failure
 from twisted.internet import reactor
 
 from lae_automation.config import Config
-from lae_automation.server import upgrade_server
+from lae_automation.server import update_monitors
 from lae_automation.signup import wait_for_EC2_addresses
 
 
@@ -18,9 +18,6 @@ ec2secretpath='../ec2secret'
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
-admin_keypair_name = str(config.other['admin_keypair_name'])
-admin_privkey_path = str(config.other['admin_privkey_path'])
-monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
 
@@ -29,7 +26,7 @@ d = wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, sys.stdou
 def upgrade_servers(host_list):
     for (public_host, private_host) in host_list:
         print "Upgrading %r..." % (public_host,)
-        upgrade_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, sys.stdout, sys.stderr)
+        update_monitors(public_host, monitor_privkey_path, sys.stdout, sys.stderr)
 
 d.addCallback(upgrade_servers)
 
