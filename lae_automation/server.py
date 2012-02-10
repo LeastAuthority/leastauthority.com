@@ -168,7 +168,7 @@ def update_monitors(public_host, monitor_privkey_path, stdout, stderr):
     print >>stdout, "Getting monitoring code..."
     run('rm -rf /home/monitor/monitors')
     run('darcs get --lazy https://leastauthority.com/static/source/monitors')
-
+    run('chmod +x /home/monitor/monitors/*')
 
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."

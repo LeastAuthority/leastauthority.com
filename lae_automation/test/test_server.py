@@ -126,7 +126,8 @@ class TestServerModule(TestCase):
                 ('whoami', False, {}),
                 ('rm -rf /home/monitor/monitors', False, {}),
                 ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),
-                                  ])
+                ('chmod +x /home/monitor/monitors/*', False, {})
+                ])
         PUBLICHOST = '0.0.0.0'
         MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
         STDOUT = StringIO()
