@@ -97,6 +97,7 @@ def read_serverinfo(pathtoserverinfo):
 
 
 def write_serverinfo(pathtoserverinfo, remotepropstuplelist):
+    open(pathtoserverinfo, "w").close()
     for rpt in remotepropstuplelist:
         append_record(pathtoserverinfo, rpt[0], rpt[1], pubIPextractor(rpt[2]))
 
