@@ -40,6 +40,18 @@ Your data, encrypted, is stored on Amazon's Simple Storage Service
 (S3), which is a convenient, reliable, and widely understood
 platform for storage.</p>
 
+<p>
+Data is replicated according to the following policy decribed in Amazon's
+<a href="https://awsmedia.s3.amazonaws.com/pdf/AWS_Security_Whitepaper.pdf">Overview of Security Processes</a>:
+<blockquote>
+Data stored in Amazon S3, Amazon SimpleDB, or Amazon Elastic Block Store (EBS)
+is redundantly stored in multiple physical locations as part of normal operation
+of those services and at no additional charge. Amazon S3 and Amazon SimpleDB
+provide object durability by storing objects multiple times across multiple
+Availability Zones on the initial write and then actively doing further
+replication in the event of device unavailability or detected bit-rot.
+</blockquote></p>
+
 <h4>How much does Tahoe-LAFS-on-S3 cost?</h4>
 <p>$1.00/GB/month</p>
 <p>Discounts are available for full-time students, educational institutions,
