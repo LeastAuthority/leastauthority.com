@@ -3,14 +3,13 @@
 import sys
 from lae_automation.server import notify_zenoss
 
-if len(sys.argv) < 5:
-    print "Usage: python notify_monitor.py EC2INSTANCEID EC2PUBIP ZENOSSSERVERIP ZENOSSKEYSPATH"
+if len(sys.argv) < 4:
+    print "Usage: python notify_zenoss.py EC2PUBIP ZENOSSSERVERIP ZENOSSKEYSPATH"
     print "Happy notifying the Zenoss server!"
     sys.exit(1)
 
-ec2instanceid = sys.argv[1]
-ec2pubip = sys.argv[2]
-zenoss_IP = sys.argv[3]
-zenoss_privkey_path= sys.argv[4]
+ec2pubip = sys.argv[1]
+zenoss_IP = sys.argv[2]
+zenoss_privkey_path= sys.argv[3]
 
-notify_zenoss(ec2instanceid, ec2pubip, zenoss_IP, zenoss_privkey_path)
+notify_zenoss(ec2pubip, zenoss_IP, zenoss_privkey_path)

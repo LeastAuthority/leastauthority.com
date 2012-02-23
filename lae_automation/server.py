@@ -255,10 +255,10 @@ shares.total = 1
 
     return external_introducer_furl
 
-def notify_zenoss(EC2instanceID, EC2pubIP, zenoss_IP, zenoss_privkey_path):
-    zenbatchloadstring ='/Devices/Server/SSH/Linux\nSSEC2_%s setManageIp="%s"\n' % (EC2instanceID, EC2pubIP)
+def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
+    zenbatchloadstring ='/Devices/Server/SSH/Linux\n%s setManageIp="%s"\n' % (EC2pubIP, EC2pubIP)
     loadfiledirname = '/home/zenoss/loadfiles/'
-    loadfilebasename = 'zbatch_%s' % (EC2instanceID,)
+    loadfilebasename = 'zbatch_%s' % (EC2pubIP,)
     remotepath = loadfiledirname + loadfilebasename
     set_host_and_key(zenoss_IP, zenoss_privkey_path, username='zenoss')
     write(zenbatchloadstring, remotepath)

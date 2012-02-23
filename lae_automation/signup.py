@@ -123,7 +123,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                      producttoken, bucketname, stdout, stderr, secretsfile)
 
                 append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
-                notify_zenoss(instance.instance_id, publichost, zenoss_IP, zenoss_privkey_path)
+                notify_zenoss(publichost, zenoss_IP, zenoss_privkey_path)
                 return send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
             d3.addCallback(_got_addresses)
             return d3
