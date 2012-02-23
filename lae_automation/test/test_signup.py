@@ -229,6 +229,7 @@ class TestSignupModule(TestCase):
         stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
+        MOCKEC2PUBIP = '0.0.0.0'
         
         def call_set_host_and_key(zenoss_public_ip, zenoss_privkey_path, username='zenoss'):
             self.failUnlessEqual(zenoss_public_ip, '9.9.9.9')
@@ -237,13 +238,14 @@ class TestSignupModule(TestCase):
             
         self.patch(server, 'set_host_and_key', call_set_host_and_key)
         def call_run(argstring, **kwargs):
-            self.failUnlessEqual(argstring, '/usr/local/zenoss/zenoss/bin/zenbatchload /home/zenoss/loadfiles/zbatch_i-MOCKEC2INSTANCEID')
+            self.failUnlessEqual(argstring, '/usr/local/zenoss/zenoss/bin/zenbatchload /home/zenoss/loadfiles/zbatch_'+MOCKEC2PUBIP)
             self.failUnlessEqual(kwargs, {})
 
         self.patch(server, 'run', call_run)
         def call_write(value, remote_path, use_sudo=False, mode=None):
-            self.failUnlessEqual(value, '/Devices/Server/SSH/Linux\nSSEC2_i-MOCKEC2INSTANCEID setManageIp="0.0.0.0"\n')
-            self.failUnlessEqual(remote_path, '/home/zenoss/loadfiles/zbatch_i-MOCKEC2INSTANCEID')
+
+            self.failUnlessEqual(value, '/Devices/Server/SSH/Linux\n'+MOCKEC2PUBIP+' setManageIp="'+MOCKEC2PUBIP+'"\n')
+            self.failUnlessEqual(remote_path, '/home/zenoss/loadfiles/zbatch_'+MOCKEC2PUBIP)
             self.failUnlessEqual(use_sudo, False)
             self.failUnlessEqual(mode, None)
 
