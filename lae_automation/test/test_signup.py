@@ -231,13 +231,22 @@ class TestSignupModule(TestCase):
         MSECRETSFILE = 'MSECRETSFILE'
         
         def call_set_host_and_key(zenoss_public_ip, zenoss_privkey_path, username='zenoss'):
-            pass
+            self.failUnlessEqual(zenoss_public_ip, '9.9.9.9')
+            self.failUnlessEqual(zenoss_privkey_path, 'ZMONKEYS.pem')
+            self.failUnlessEqual(username, 'zenoss')
+            
         self.patch(server, 'set_host_and_key', call_set_host_and_key)
         def call_run(argstring, **kwargs):
-            pass
+            self.failUnlessEqual(argstring, '/usr/local/zenoss/zenoss/bin/zenbatchload /home/zenoss/loadfiles/zbatch_i-MOCKEC2INSTANCEID')
+            self.failUnlessEqual(kwargs, {})
+
         self.patch(server, 'run', call_run)
         def call_write(value, remote_path, use_sudo=False, mode=None):
-            pass
+            self.failUnlessEqual(value, '/Devices/Server/SSH/Linux\nSSEC2_i-MOCKEC2INSTANCEID setManageIp="0.0.0.0"\n')
+            self.failUnlessEqual(remote_path, '/home/zenoss/loadfiles/zbatch_i-MOCKEC2INSTANCEID')
+            self.failUnlessEqual(use_sudo, False)
+            self.failUnlessEqual(mode, None)
+
         self.patch(server, 'write', call_write)
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
                           MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
