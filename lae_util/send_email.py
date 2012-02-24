@@ -8,7 +8,7 @@ from twisted.mail.smtp import messageid, rfc822date, ESMTPSenderFactory
 
 
 def send_plain_email(smtphost, username, password, fromEmail, toEmail, content, headers,
-                     senderDomainName=None, port=25):
+                     senderDomainName=None, port=25, requireSSL=True):
     msg = MIMEText(content)
 
     # Setup the mail headers
@@ -30,7 +30,8 @@ def send_plain_email(smtphost, username, password, fromEmail, toEmail, content, 
     # send message
     f = StringIO(msg.as_string())
     d = defer.Deferred()
-    factory = ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d)
+    factory = ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d,
+                                 requireTransportSecurity=requireSSL)
     if senderDomainName is not None:
         factory.domain = senderDomainName
     connectTCP(smtphost, port, factory)

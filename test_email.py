@@ -10,6 +10,7 @@ from lae_util.send_email import send_plain_email
 
 if len(sys.argv) < 10:
     print "Usage: python test_email.py SMTP_HOST SMTP_USERNAME SMTP_PASSWORD FROM_EMAIL TO_EMAIL SUBJECT SENDER_DOMAIN SMTP_PORT REQUIRE_SSL"
+    print "REQUIRE_SSL = 0|1"
     print "Happy email testing!"
     sys.exit(1)
 
@@ -21,7 +22,7 @@ toemail = sys.argv[5]
 subject = sys.argv[6]
 senderdomain = sys.argv[7]
 smtpport = sys.argv[8]
-requiressl = sys.argv[9]
+requiressl = bool(int(sys.argv[9]))
 
 
 def cb(x):
