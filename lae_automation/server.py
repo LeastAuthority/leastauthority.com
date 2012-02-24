@@ -180,8 +180,8 @@ def update_tahoe(public_host, admin_privkey_path, stdout, stderr):
     set_host_and_key(public_host, admin_privkey_path, username="customer")
     print >>stdout, "Updating Tahoe-LAFS..."
     with cd('/home/customer/LAFS_source'):
-        run('bin/tahoe stop ../introducer')
-        run('bin/tahoe stop ../storageserver')
+        run('bin/tahoe stop ../introducer || echo Assuming introducer is stopped.')
+        run('bin/tahoe stop ../storageserver || echo Assuming storage server is stopped.')
         run('darcs pull --all')
         run('python setup.py build')
     print >>stdout, "Restarting..."
