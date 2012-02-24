@@ -59,6 +59,7 @@ class TestServerModule(TestCase):
             ('apt-get update', False, {}),
             ('apt-get upgrade -y', False, {}),
             ('apt-get install -y linux-ec2 linux-image-ec2', False, {}),
+            ('dpkg -P consolekit', False, {}),
             ('apt-get install -y python-dev', False, {}),
             ('apt-get install -y python-setuptools', False, {}),
             ('apt-get install -y exim4-base', False, {}),

@@ -113,6 +113,7 @@ def install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_priv
     sudo_apt_get('update')
     sudo_apt_get('upgrade -y')
     sudo_apt_get('install -y linux-ec2 linux-image-ec2')
+    sudo("dpkg -P consolekit")
 
     print >>stdout, "Rebooting server..."
     api.reboot(60)
@@ -173,6 +174,24 @@ def set_up_monitors(public_host, monitor_privkey_path, stdout, stderr):
     run('rm -rf /home/monitor/monitors')
     run('darcs get --lazy https://leastauthority.com/static/source/monitors')
     run('chmod +x /home/monitor/monitors/*')
+
+
+def update_tahoe(public_host, admin_privkey_path, stdout, stderr):
+    set_host_and_key(public_host, admin_privkey_path, username="customer")
+    print >>stdout, "Updating Tahoe-LAFS..."
+    with cd('/home/customer/LAFS_source'):
+        run('bin/tahoe stop ../introducer')
+        run('bin/tahoe stop ../storageserver')
+        run('darcs pull --all')
+    print >>stdout, "Restarting..."
+    run('/home/customer/restart.sh')
+
+
+def update_packages(public_host, admin_privkey_path, stdout, stderr):
+    set_host_and_key(public_host, admin_privkey_path)
+    print >>stdout, "Removing unneeded packages..."
+    sudo("dpkg -P consolekit")
+
 
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
