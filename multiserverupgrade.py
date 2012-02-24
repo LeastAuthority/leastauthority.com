@@ -7,7 +7,7 @@ from twisted.internet import reactor
 
 from lae_automation.config import Config
 from lae_automation.server import set_up_monitors, update_packages, update_tahoe
-from lae_automation.signup import wait_for_EC2_addresses
+from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser, pubIPextractor
 
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
@@ -22,14 +22,24 @@ monitor_privkey_path = str(config.other['monitor_privkey_path'])
 admin_privkey_path = str(config.other['admin_privkey_path'])
 
 
-d = wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, sys.stdout, sys.stderr)
+POLL_TIME = 10
+ADDRESS_WAIT_TIME = 60
 
-def upgrade_servers(host_list):
-    for (public_host, private_host) in host_list:
-        print "Upgrading %r..." % (public_host,)
-        set_up_monitors(public_host, monitor_privkey_path, sys.stdout, sys.stderr)
-        update_packages(public_host, admin_privkey_path, sys.stdout, sys.stderr)
-        update_tahoe(public_host, admin_privkey_path, sys.stdout, sys.stderr)
+d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
+                            ServerInfoParser(('launchTime', 'instanceId'), ('dnsName',)),
+                            POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, sys.stderr)
+
+def upgrade_servers(remotepropstuplelist):
+    for rpt in remotepropstuplelist:
+        public_host = pubIPextractor(rpt[2])
+        if not public_host:
+            print >>sys.stderr, ("Warning: Host launched at %s with instance ID %s has no public IP (maybe it has been terminated)."
+                                 % (rpt[0], rpt[1]))
+        else:
+            print "Upgrading %r..." % (public_host,)
+            set_up_monitors(public_host, monitor_privkey_path, sys.stdout, sys.stderr)
+            update_packages(public_host, admin_privkey_path, sys.stdout, sys.stderr)
+            update_tahoe(public_host, admin_privkey_path, sys.stdout, sys.stderr)
 
 d.addCallback(upgrade_servers)
 
