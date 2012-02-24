@@ -112,7 +112,6 @@ def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, s
     password = FilePath(password_path).getContent().strip()
 
     print >>stderr, str(f)
-    print >>stdout, "Notifying one of our staff of the failure..."
 
     content = NOTIFY_FAILURE_BODY % {
                "customer_name": customer_name,
@@ -130,12 +129,12 @@ def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, s
                          content, headers, SENDER_DOMAIN, SMTP_PORT)
 
     def _sent(ign):
-        print >>stdout, "Failure notification sent."
+        print >>stdout, "Failure notification sent for the following error:"
     def _error(emailf):
-        print >>stdout, "The notification could not be sent."
-        print >>stdout, "Contacting <info@leastauthority.com> yourself may help to resolve this problem more quickly."
+        print >>stdout, "A failure notification could not be sent."
+        print >>stdout, "Contacting <info@leastauthority.com> yourself may help to resolve this problem more quickly:"
         print >>stderr, str(emailf)
-        # return the original failure
-        return f
     d.addCallbacks(_sent, _error)
+    # return the original failure
+    d.addBoth(lambda ign: f)
     return d
