@@ -20,9 +20,11 @@ def make_site(config):
     return Site(resource, logPath="sitelogs")
 
 
+EXPECTED_DOMAIN = 'leastauthority.com'
+
 class RedirectToHTTPS(Resource):
     """
-    I redirect to the same path at https: and remove any leading "www.".
+    I redirect to the same path at https:, rewriting *.EXPECTED_DOMAIN -> EXPECTED_DOMAIN.
     Thanks to rakslice at http://stackoverflow.com/questions/5311229/redirect-http-to-https-in-twisted
     """
     isLeaf = 0
@@ -36,8 +38,8 @@ class RedirectToHTTPS(Resource):
         assert newpath.scheme != "https", "https->https redirection loop: %r" % (request,)
         newpath.scheme = "https"
         host = newpath.netloc.split(':')[0]
-        if host.startswith('www.'):
-            host = host[len('www.'):]
+        if host.endswith('.' + EXPECTED_DOMAIN):
+            host = EXPECTED_DOMAIN
         if self.port == 443:
             newpath.netloc = host
         else:
