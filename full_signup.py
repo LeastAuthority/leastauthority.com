@@ -9,7 +9,7 @@ from lae_util.streams import LoggingTeeStream
 from lae_util.timestamp import format_iso_time
 
 
-def main(stdin, stdout, stderr, seed, secretsfile):
+def main(stdin, stdout, stderr, seed, secretsfile, logfilename):
     print >>stdout, "Automation script started."
     print >>stderr, "On separate lines: Activation key, Product code, Name, Email, Key info"
     activationkey = stdin.readline().strip()
@@ -25,7 +25,7 @@ def main(stdin, stdout, stderr, seed, secretsfile):
     print >>stderr, "Received all fields, thanks."
     try:
         from lae_automation.signup import signup
-        return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, secretsfile)
+        return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, secretsfile, logfilename)
     except Exception:
         import traceback
         traceback.print_exc(100, stdout)
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         return f
 
     d = defer.succeed(None)
-    d.addCallback(lambda ign: main(stdin, stdout, stderr, seed, secretsfile))
+    d.addCallback(lambda ign: main(stdin, stdout, stderr, seed, secretsfile, logfilename))
     d.addErrback(_err)
     d.addBoth(_close)
     d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))

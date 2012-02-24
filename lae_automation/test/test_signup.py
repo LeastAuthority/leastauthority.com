@@ -3,6 +3,7 @@ from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
+from twisted.python.failure import Failure
 
 from lae_automation import signup, initialize, server
 
@@ -209,6 +210,14 @@ class TestSignupModule(TestCase):
             return defer.succeed("Tested send confirmation email call!")
         self.patch(signup, 'send_signup_confirmation', call_send_signup_confirmation)
 
+        def call_send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr):
+            self.failUnless(isinstance(f, Failure), f)
+            self.failUnlessEqual(customer_name, 'MNAME')
+            self.failUnlessEqual(customer_email, 'MEMAIL')
+            self.failUnlessEqual(logfilename, '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+            return f
+        self.patch(signup, 'send_notify_failure', call_send_notify_failure)
+
         from txaws.ec2.client import Query as EC2_Query
         def call_ec2_query_submit(QueryObject):
             return defer.succeed(createtagsresponse)
@@ -229,6 +238,8 @@ class TestSignupModule(TestCase):
         stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
+        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+
         MOCKEC2PUBIP = '0.0.0.0'
         def call_set_host_and_key(zenoss_public_ip, zenoss_privkey_path, username='zenoss'):
             self.failUnlessEqual(zenoss_public_ip, '9.9.9.9')
@@ -250,7 +261,7 @@ class TestSignupModule(TestCase):
 
         self.patch(server, 'write', call_write)
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
         return d
 
     def test_no_products(self):
@@ -263,11 +274,12 @@ class TestSignupModule(TestCase):
         stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
+        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.signup,
                               MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                              MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                              MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
 
     def test_timeout_verify(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -279,13 +291,14 @@ class TestSignupModule(TestCase):
         stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
+        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         def call_verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout, stderr):
             return defer.succeed(False)
         self.patch(signup, 'verify_user_account', call_verify_user_account)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -305,6 +318,7 @@ class TestSignupModule(TestCase):
         stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
+        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         from lae_automation.aws import queryapi
         def call_get_EC2_properties(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, parser, *instance_ids):
@@ -312,7 +326,7 @@ class TestSignupModule(TestCase):
         self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -332,6 +346,7 @@ class TestSignupModule(TestCase):
         stderr = StringIO()
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
+        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         from lae_automation.server import NotListeningError
         def call_install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
@@ -339,7 +354,7 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'install_server', call_install_server)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
