@@ -230,12 +230,11 @@ class TestSignupModule(TestCase):
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
         MOCKEC2PUBIP = '0.0.0.0'
-        
         def call_set_host_and_key(zenoss_public_ip, zenoss_privkey_path, username='zenoss'):
             self.failUnlessEqual(zenoss_public_ip, '9.9.9.9')
             self.failUnlessEqual(zenoss_privkey_path, 'ZMONKEYS.pem')
             self.failUnlessEqual(username, 'zenoss')
-            
+
         self.patch(server, 'set_host_and_key', call_set_host_and_key)
         def call_run(argstring, **kwargs):
             self.failUnlessEqual(argstring, '/usr/local/zenoss/zenoss/bin/zenbatchload /home/zenoss/loadfiles/zbatch_'+MOCKEC2PUBIP)
