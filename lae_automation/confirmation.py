@@ -76,6 +76,7 @@ def send_signup_confirmation(customer_name, customer_email, external_introducer_
                "From": FROM_ADDRESS,
                "Subject": CONFIRMATION_EMAIL_SUBJECT,
                "User-Agent": USER_AGENT,
+               "Content-Type": 'text/plain; charset="utf-8"',
               }
 
     d = defer.succeed(None)
