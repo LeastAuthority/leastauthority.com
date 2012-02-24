@@ -183,6 +183,7 @@ def update_tahoe(public_host, admin_privkey_path, stdout, stderr):
         run('bin/tahoe stop ../introducer')
         run('bin/tahoe stop ../storageserver')
         run('darcs pull --all')
+        run('python setup.py build')
     print >>stdout, "Restarting..."
     run('/home/customer/restart.sh')
 
