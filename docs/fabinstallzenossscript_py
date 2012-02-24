@@ -1,4 +1,3 @@
-
 from cStringIO import StringIO
 
 from fabric import api
@@ -188,6 +187,8 @@ def install_nginxandzenoss():
     create_account('nginx', None, stdout, stderr)
     with cd('/home/nginx'):
         run('mkdir -p /home/nginx/keys')
+        run('mkdir -p /home/nginx/logs')
+        run('chown nginx:nginx ./*')
     with cd('/home/nginx/keys'):
         write(SERVERCERTIFICATESTRING, NGINXCERTFILENAME)
         write(SERVERKEY, NGINXKEYFILENAME)
@@ -206,3 +207,6 @@ def install_nginxandzenoss():
     with cd('temp_for_zenossdeb'):
         run('wget http://dev.zenoss.org/deb/dists/main/stable/binary-i386/zenoss-stack_3.2.1_i386.deb')
         run('dpkg -i zenoss-stack_3.2.1_i386.deb')
+
+    run('/etc/init.d/nginx start')
+    run('/etc/init.d/zenoss-stack start')
