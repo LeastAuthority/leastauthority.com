@@ -128,12 +128,12 @@ FROM_ADDRESS = "Monitoring <%s>" % (FROM_EMAIL,)
 TO_EMAIL = "monitoring@leastauthority.com"
 USER_AGENT = "Least Authority Enterprises e-mail sender"
 
-SMTP_HOST = "smtp.googlemail.com"
+SMTP_HOST = "127.0.0.1"
 SMTP_PORT = 25
 SMTP_USERNAME = FROM_EMAIL
 
 
-def send_monitoring_report(errors, password_path='../smtppassword'):
+def send_monitoring_report(errors, password_path='../monitoring_smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
     if errors:
