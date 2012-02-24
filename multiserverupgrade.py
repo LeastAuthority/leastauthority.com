@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os
+import sys, os, traceback
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 from twisted.internet import reactor
@@ -37,9 +37,12 @@ def upgrade_servers(remotepropstuplelist):
                                  % (rpt[0], rpt[1]))
         else:
             print "Upgrading %r..." % (public_host,)
-            set_up_monitors(public_host, monitor_privkey_path, sys.stdout, sys.stderr)
-            update_packages(public_host, admin_privkey_path, sys.stdout, sys.stderr)
-            update_tahoe(public_host, admin_privkey_path, sys.stdout, sys.stderr)
+            try:
+                set_up_monitors(public_host, monitor_privkey_path, sys.stdout, sys.stderr)
+                update_packages(public_host, admin_privkey_path, sys.stdout, sys.stderr)
+                update_tahoe(public_host, admin_privkey_path, sys.stdout, sys.stderr)
+            except:
+                traceback.print_exc()
 
 d.addCallback(upgrade_servers)
 
