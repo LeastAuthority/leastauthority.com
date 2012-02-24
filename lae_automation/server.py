@@ -130,8 +130,8 @@ def install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_priv
     create_account('customer', None, stdout, stderr)
     create_account('monitor', monitor_pubkey, stdout, stderr)
 
-    # check that creating the monitor account worked
-    set_host_and_key(public_host, monitor_privkey_path, username="monitor")
+    # this also checks that creating the monitor account worked
+    set_up_monitors(public_host, monitor_privkey_path, stdout, stderr)
 
     # do the rest of the installation as 'customer', customer doesn't actually have its own ssh keys
     # I don't know if creating one would be useful.XXX
@@ -160,10 +160,14 @@ RESTART_SCRIPT = """#!/bin/sh
 cd /home/customer
 LAFS_source/bin/tahoe restart introducer
 LAFS_source/bin/tahoe restart storageserver
+                ('whoami', False, {}),
+                ('rm -rf /home/monitor/monitors', False, {}),
+                ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),
+                ('chmod +x /home/monitor/monitors/*', False, {})
 """
 
 
-def update_monitors(public_host, monitor_privkey_path, stdout, stderr):
+def set_up_monitors(public_host, monitor_privkey_path, stdout, stderr):
     set_host_and_key(public_host, monitor_privkey_path, username="monitor")
     print >>stdout, "Getting monitoring code..."
     run('rm -rf /home/monitor/monitors')

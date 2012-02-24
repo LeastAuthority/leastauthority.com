@@ -44,6 +44,9 @@ class TestServerModule(TestCase):
             ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz', False, {}),
             ('tar -xzvf txAWS-0.2.1.post2.tar.gz', False, {}),
             ('whoami', False, {}),
+            ('rm -rf /home/monitor/monitors', False, {}),
+            ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),
+            ('chmod +x /home/monitor/monitors/*', False, {}),
             ('whoami', False, {}),
             ('rm -rf /home/customer/LAFS_source', False, {}),
             ('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source', False, {}),
@@ -118,7 +121,7 @@ class TestServerModule(TestCase):
             server.create_account(acct_name, pubkey, STDOUT, STDERR)
             self._check_all_done()
 
-    def test_update_monitors(self):
+    def test_set_up_monitors(self):
         self.WRITEARGS_FIFO = []
         self.SUDOARGS_FIFO = []
         self.WHOAMI_FIFO = fifo(['monitor'])
@@ -133,5 +136,5 @@ class TestServerModule(TestCase):
         STDOUT = StringIO()
         STDERR = StringIO()
 
-        server.update_monitors(PUBLICHOST, MONITORPRIVKEYPATH, STDOUT, STDERR)
+        server.set_up_monitors(PUBLICHOST, MONITORPRIVKEYPATH, STDOUT, STDERR)
         self._check_all_done()
