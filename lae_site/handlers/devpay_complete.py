@@ -53,7 +53,7 @@ provider-independent security means that you don't need to tell us any secrets a
   </tr>
   <tr>
     <td style="width:25em"><label for="ProductName">Product: </label></td>
-    <td><input type="text" id="ProductName" name="ProductName" value="Tahoe-LAFS-on-S3 alpha" disabled style="width:20em">
+    <td><input type="text" id="ProductName" name="ProductName" value="%(productfullname)s" disabled style="width:20em">
         <input type="hidden" name="ProductCode" value="%(productcode)s"></td>
   </tr>
   <tr>
@@ -218,6 +218,13 @@ it manually if possible, and email you when that is done or if we need more info
 """
 
 
+def get_full_name(productcode, products):
+    matches = [p['full_name'] for p in products if p['product_code'] == productcode]
+    if len(matches) != 1:
+        return "Unknown"
+    return matches[0]
+
+
 class HandlerBase(Resource):
     def __init__(self, out=None, *a, **kw):
         Resource.__init__(self, *a, **kw)
@@ -263,6 +270,10 @@ class HandlerBase(Resource):
 
 
 class DevPayPurchaseHandler(HandlerBase):
+    def __init__(self, products, out=None):
+        HandlerBase.__init__(self, out=out)
+        self.products = products
+
     def render(self, request):
         print >>self.out, "Ooh, possible signup coming:", request.args
         activationkey = self.get_arg(request, 'ActivationKey')
@@ -273,7 +284,8 @@ class DevPayPurchaseHandler(HandlerBase):
         request.setResponseCode(200)
         if activationkey and productcode:
             return DEVPAY_RESPONSE_HAVE_CODES_HTML % {"activationkey": activationkey,
-                                                      "productcode": productcode}
+                                                      "productcode": productcode,
+                                                      "productfullname": get_full_name(productcode, self.products)}
         else:
             return DEVPAY_RESPONSE_MISSING_CODE_HTML
 
@@ -353,6 +365,10 @@ def start():
 
 
 class ActivationRequestHandler(HandlerBase):
+    def __init__(self, products, out=None):
+        HandlerBase.__init__(self, out=out)
+        self.products = products
+
     def render(self, request):
         print >>self.out, "Got activation request:", request.args
 
@@ -374,10 +390,12 @@ class ActivationRequestHandler(HandlerBase):
             return ACTIVATIONREQ_RESPONSE_ALREADY_USED_HTML
         elif not name:
             return ACTIVATIONREQ_RESPONSE_MISSING_NAME_HTML % {"activationkey": activationkey,
-                                                               "productcode": productcode}
+                                                               "productcode": productcode,
+                                                               "productfullname": get_full_name(productcode, self.products)}
         elif "%" in email or not "@" in email:
             return ACTIVATIONREQ_RESPONSE_MISSING_OR_INVALID_EMAIL_HTML % {"activationkey": activationkey,
-                                                                           "productcode": productcode}
+                                                                           "productcode": productcode,
+                                                                           "productfullname": get_full_name(productcode, self.products)}
 
         print >>self.out, "Yay! Someone signed up :-)"
 

@@ -13,8 +13,8 @@ def make_site(config):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
     resource.putChild('signup', SignupHandler(config.products))
-    resource.putChild('devpay-complete', DevPayPurchaseHandler())
-    resource.putChild('activation-request', ActivationRequestHandler())
+    resource.putChild('devpay-complete', DevPayPurchaseHandler(config.products))
+    resource.putChild('activation-request', ActivationRequestHandler(config.products))
 
     return Site(resource, logPath="sitelogs")
 

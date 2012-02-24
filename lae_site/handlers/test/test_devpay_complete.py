@@ -8,6 +8,19 @@ from twisted.web.server import NOT_DONE_YET
 from twisted.python.filepath import FilePath
 
 from lae_site.handlers import devpay_complete
+from lae_site.config import Config
+
+
+SITE_CONFIG_JSON = """{
+  "products": [
+    { "short_name":    "product",
+      "full_name":     "Yummy cloud hotness for everyone",
+      "listed":        "true",
+      "signup_url":    "https://example.com/abc?offeringCode=12345678",
+      "product_code":  "PRODUCTCODE"
+    }
+  ]
+}"""
 
 
 def remove_if_possible(fp):
@@ -55,10 +68,11 @@ class Handlers(TestCase):
 
     def _test_devpaypurchasehandler(self, method):
         out = StringIO()
+        config = Config(StringIO(SITE_CONFIG_JSON))
 
         d = devpay_complete.start()
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.DevPayPurchaseHandler(out), method,
+                      self._mock_request(devpay_complete.DevPayPurchaseHandler(config.products, out=out), method,
                                          ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"]))
 
         def _finished( (req, output) ):
@@ -78,10 +92,11 @@ class Handlers(TestCase):
 
     def _test_activationrequesthandler(self, method):
         out = StringIO()
+        config = Config(StringIO(SITE_CONFIG_JSON))
 
         d = devpay_complete.start()
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
+                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
                                          ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
 
@@ -96,7 +111,7 @@ class Handlers(TestCase):
         d.addCallback(_finished)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
+                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
                                          ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
 
@@ -108,7 +123,7 @@ class Handlers(TestCase):
         d.addCallback(_finished_again)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
+                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
                                          ActivationKey=["ACTIVATIONKEY2"], ProductCode=["PRODUCTCODE"],
                                          Name=[""], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
         def _no_name( (req, output) ):
@@ -121,7 +136,7 @@ class Handlers(TestCase):
         d.addCallback(_no_name)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
+                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
                                          ActivationKey=["ACTIVATIONKEY3"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe&mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
         def _bad_email( (req, output) ):
@@ -134,7 +149,7 @@ class Handlers(TestCase):
         d.addCallback(_bad_email)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(out), method,
+                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
                                          ActivationKey=["ACTIVATIONKEY4"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
         def _finished_error( (req, output) ):
