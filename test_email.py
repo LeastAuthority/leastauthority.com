@@ -21,7 +21,7 @@ fromemail = sys.argv[4]
 toemail = sys.argv[5]
 subject = sys.argv[6]
 senderdomain = sys.argv[7]
-smtpport = sys.argv[8]
+smtpport = int(sys.argv[8])
 requiressl = bool(int(sys.argv[9]))
 
 
