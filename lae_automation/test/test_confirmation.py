@@ -31,7 +31,9 @@ class TestConfirmation(unittest.TestCase):
     def setUp(self):
         FilePath('smtppassword').setContent(self.SMTP_PASSWORD)
 
-    def _call_ESMTPSenderFactory_non_PGP(self, username, password, fromEmail, toEmail, f, d):
+    def _call_ESMTPSenderFactory_non_PGP(self, username, password, fromEmail, toEmail, f, d,
+                                         retries=5, timeout=None, contextFactory=None, heloFallback=False,
+                                         requireAuthentication=True, requireTransportSecurity=True):
         self.failUnlessEqual(username, self.SMTP_USERNAME)
         self.failUnlessEqual(password, self.SMTP_PASSWORD)
         self.failUnlessEqual(fromEmail, self.FROM_EMAIL)
@@ -58,7 +60,9 @@ class TestConfirmation(unittest.TestCase):
         eventually(d.callback, None)
         return self.the_factory
 
-    def _call_ESMTPSenderFactory_PGP(self, username, password, fromEmail, toEmail, f, d):
+    def _call_ESMTPSenderFactory_PGP(self, username, password, fromEmail, toEmail, f, d,
+                                     retries=5, timeout=None, contextFactory=None, heloFallback=False,
+                                     requireAuthentication=True, requireTransportSecurity=True):
         self.failUnlessEqual(username, self.SMTP_USERNAME)
         self.failUnlessEqual(password, self.SMTP_PASSWORD)
         self.failUnlessEqual(fromEmail, self.FROM_EMAIL)
@@ -121,7 +125,9 @@ class TestConfirmation(unittest.TestCase):
         stdout = StringIO()
         stderr = StringIO()
 
-        def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
+        def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d,
+                                    retries=5, timeout=None, contextFactory=None, heloFallback=False,
+                                    requireAuthentication=True, requireTransportSecurity=True):
             raise MarkerException()
         self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
@@ -140,7 +146,9 @@ class TestConfirmation(unittest.TestCase):
         stdout = StringIO()
         stderr = StringIO()
 
-        def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
+        def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d,
+                                    retries=5, timeout=None, contextFactory=None, heloFallback=False,
+                                    requireAuthentication=True, requireTransportSecurity=True):
             eventually(d.errback, MarkerException())
             return Mock()
         self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
@@ -164,7 +172,9 @@ class TestConfirmation(unittest.TestCase):
         stdout = StringIO()
         stderr = StringIO()
 
-        def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d):
+        def call_ESMTPSenderFactory(username, password, fromEmail, toEmail, f, d,
+                                    retries=5, timeout=None, contextFactory=None, heloFallback=False,
+                                    requireAuthentication=True, requireTransportSecurity=True):
             eventually(d.callback, None)
             return Mock()
         self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
