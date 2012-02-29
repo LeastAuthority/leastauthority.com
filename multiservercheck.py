@@ -62,7 +62,7 @@ def cb(x):
             lasterrorsfp.setContent(errors)
             raise Exception("Sent failure report.")
         def _err(f):
-            print >>stderr, str(f)
+            print >>sys.stderr, str(f)
             return f
         d2.addCallbacks(_sent, _err)
         return d2
