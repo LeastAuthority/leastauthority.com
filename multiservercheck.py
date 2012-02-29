@@ -61,7 +61,10 @@ def cb(x):
         def _sent(ign):
             lasterrorsfp.setContent(errors)
             raise Exception("Sent failure report.")
-        d2.addCallback(_sent)
+        def _err(f):
+            print >>stderr, str(f)
+            return f
+        d2.addCallbacks(_sent, _err)
         return d2
 
 d.addBoth(cb)
