@@ -153,5 +153,6 @@ def send_monitoring_report(errors, password_path='../smtppassword'):
     d = send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, TO_EMAIL,
                          content, headers, SENDER_DOMAIN, SMTP_PORT)
     d.addBoth(lambda ign: send_plain_email(SMTP_HOST2, SMTP_USERNAME2, '', FROM_EMAIL, TO_EMAIL2,
-                                           content, headers, SENDER_DOMAIN, SMTP_PORT))
+                                           content, headers, SENDER_DOMAIN, SMTP_PORT,
+                                           requireSSL=False))
     return d
