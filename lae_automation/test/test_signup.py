@@ -201,8 +201,9 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
         self.patch(signup, 'bounce_server', call_bounce_server)
 
-        def call_send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo,
+        def call_send_signup_confirmation(public_host, customer_name, customer_email, furl, customer_keyinfo,
                                           stdout, stderr):
+            self.failUnlessEqual(public_host, '0.0.0.0')
             self.failUnlessEqual(customer_name, 'MNAME')
             self.failUnlessEqual(customer_email, 'MEMAIL')
             self.failUnlessEqual(furl, None)
