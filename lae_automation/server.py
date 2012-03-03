@@ -22,7 +22,7 @@ TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname = %(nickname)s
 web.port =
 web.static = public_html
-tub.location = %(publichost)s:12346,%(private_host)s:12346
+tub.location = %(publichost)s:12346,%(privatehost)s:12346
 
 [client]
 # Which services should this client connect to?
@@ -201,7 +201,7 @@ def set_up_reboot(stdout, stderr):
     run('crontab /home/customer/ctab')
 
 
-def bounce_server(publichost, admin_privkey_path, private_host, access_key_id, secret_key, user_token, product_token, bucket_name,
+def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, secret_key, user_token, product_token, bucket_name,
                   stdout, stderr, secretsfile):
     nickname = bucket_name
 
@@ -217,7 +217,7 @@ def bounce_server(publichost, admin_privkey_path, private_host, access_key_id, s
 
     tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
                                       'publichost': publichost,
-                                      'private_host': private_host,
+                                      'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
                                       'access_key_id': access_key_id,
                                       'bucket_name': bucket_name}
@@ -262,7 +262,7 @@ shares.total = 1
 
     print >>secretsfile, simplejson.dumps({
         'publichost':              publichost,
-        'private_host':             private_host,
+        'privatehost':             privatehost,
         'access_key_id':            access_key_id,
         'secret_key':               secret_key,
         'user_token':               user_token,
