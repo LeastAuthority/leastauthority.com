@@ -27,8 +27,8 @@ class TestServerMonitoring(TestCase):
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
-            self.failUnlessEqual(public_host, self.PUBLICHOST)
+        def call_set_host_and_key(publichost, monitor_privkey_path, username=None):
+            self.failUnlessEqual(publichost, self.PUBLICHOST)
             self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
@@ -48,8 +48,8 @@ class TestServerMonitoring(TestCase):
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
-            self.failUnlessEqual(public_host, self.PUBLICHOST)
+        def call_set_host_and_key(publichost, monitor_privkey_path, username=None):
+            self.failUnlessEqual(publichost, self.PUBLICHOST)
             self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
@@ -69,8 +69,8 @@ class TestServerMonitoring(TestCase):
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
-            self.failUnlessEqual(public_host, self.PUBLICHOST)
+        def call_set_host_and_key(publichost, monitor_privkey_path, username=None):
+            self.failUnlessEqual(publichost, self.PUBLICHOST)
             self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
@@ -90,8 +90,8 @@ class TestServerMonitoring(TestCase):
             return 'monitor'
         self.patch(server, 'run', call_crun)
 
-        def call_set_host_and_key(public_host, monitor_privkey_path, username=None):
-            self.failUnlessEqual(public_host, self.PUBLICHOST)
+        def call_set_host_and_key(publichost, monitor_privkey_path, username=None):
+            self.failUnlessEqual(publichost, self.PUBLICHOST)
             self.failUnlessEqual(monitor_privkey_path, self.MONPRVKEYPATH)
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
@@ -100,7 +100,7 @@ class TestServerMonitoring(TestCase):
 
 
     def test_checkserverS_true(self):
-        def call_check_server(public_host, monitor_privkey_path, stdout, stderr):
+        def call_check_server(publichost, monitor_privkey_path, stdout, stderr):
             return True
         self.patch(monitor, 'check_server', call_check_server)
         result = check_servers(self.HOSTLIST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
@@ -108,7 +108,7 @@ class TestServerMonitoring(TestCase):
 
 
     def test_checkserverS_false(self):
-        def call_check_server(public_host, monitor_privkey_path, stdout, stderr):
+        def call_check_server(publichost, monitor_privkey_path, stdout, stderr):
             return False
         self.patch(monitor, 'check_server', call_check_server)
         result = check_servers(self.HOSTLIST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)

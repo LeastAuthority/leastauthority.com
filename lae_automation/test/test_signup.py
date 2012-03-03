@@ -178,8 +178,8 @@ class TestSignupModule(TestCase):
 
         from lae_automation.server import NotListeningError
         self.first = True
-        def call_install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
-            self.failUnlessEqual(public_host, '0.0.0.0')
+        def call_install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+            self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(monitor_pubkey, MONITORPUBKEY)
             self.failUnlessEqual(monitor_privkey_path, 'MONITORKEYS.pem')
@@ -188,9 +188,9 @@ class TestSignupModule(TestCase):
                 raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
-        def call_bounce_server(public_host, admin_privkey_path, private_host, useraccesskeyid, usersecretkey, usertoken, producttoken,
+        def call_bounce_server(publichost, admin_privkey_path, private_host, useraccesskeyid, usersecretkey, usertoken, producttoken,
                                bucket_name, stdout, stderr, secretsfile):
-            self.failUnlessEqual(public_host, '0.0.0.0')
+            self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(private_host, '0.0.0.1')
             self.failUnlessEqual(useraccesskeyid, 'TESTAAAAAAAAAAAAAAAA')
@@ -201,9 +201,9 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
         self.patch(signup, 'bounce_server', call_bounce_server)
 
-        def call_send_signup_confirmation(public_host, customer_name, customer_email, furl, customer_keyinfo,
+        def call_send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo,
                                           stdout, stderr):
-            self.failUnlessEqual(public_host, '0.0.0.0')
+            self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(customer_name, 'MNAME')
             self.failUnlessEqual(customer_email, 'MEMAIL')
             self.failUnlessEqual(furl, None)
@@ -350,7 +350,7 @@ class TestSignupModule(TestCase):
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         from lae_automation.server import NotListeningError
-        def call_install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+        def call_install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
             raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 

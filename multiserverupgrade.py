@@ -31,16 +31,16 @@ d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
 
 def upgrade_servers(remotepropstuplelist):
     for rpt in remotepropstuplelist:
-        public_host = pubIPextractor(rpt[2])
-        if not public_host:
+        publichost = pubIPextractor(rpt[2])
+        if not publichost:
             print >>sys.stderr, ("Warning: Host launched at %s with instance ID %s has no public IP (maybe it has been terminated)."
                                  % (rpt[0], rpt[1]))
         else:
-            print "Upgrading %r..." % (public_host,)
+            print "Upgrading %r..." % (publichost,)
             try:
-                set_up_monitors(public_host, monitor_privkey_path, sys.stdout, sys.stderr)
-                update_packages(public_host, admin_privkey_path, sys.stdout, sys.stderr)
-                update_tahoe(public_host, admin_privkey_path, sys.stdout, sys.stderr)
+                set_up_monitors(publichost, monitor_privkey_path, sys.stdout, sys.stderr)
+                update_packages(publichost, admin_privkey_path, sys.stdout, sys.stderr)
+                update_tahoe(publichost, admin_privkey_path, sys.stdout, sys.stderr)
             except:
                 traceback.print_exc()
 

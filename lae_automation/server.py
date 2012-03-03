@@ -22,7 +22,7 @@ TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname = %(nickname)s
 web.port =
 web.static = public_html
-tub.location = %(public_host)s:12346,%(private_host)s:12346
+tub.location = %(publichost)s:12346,%(private_host)s:12346
 
 [client]
 # Which services should this client connect to?
@@ -60,8 +60,8 @@ def run(argstring, **kwargs):
 def sudo(argstring, **kwargs):
     return api.sudo(argstring, pty=False, **kwargs)
 
-def set_host_and_key(public_host, ssh_private_keyfile, username="ubuntu"):
-    api.env.host_string = '%s@%s' % (username, public_host)
+def set_host_and_key(publichost, ssh_private_keyfile, username="ubuntu"):
+    api.env.host_string = '%s@%s' % (username, publichost)
     api.env.reject_unknown_hosts = False  # FIXME allows MITM attacks
     api.env.key_filename = ssh_private_keyfile
     api.env.abort_on_prompts = True
@@ -86,8 +86,8 @@ def write(value, remote_path, use_sudo=False, mode=None):
     # mode is not None.
     return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
-def delete_customer(public_host, admin_privkey_path):
-    set_host_and_key(public_host, admin_privkey_path)
+def delete_customer(publichost, admin_privkey_path):
+    set_host_and_key(publichost, admin_privkey_path)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
@@ -106,8 +106,8 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
 
-def install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
-    set_host_and_key(public_host, admin_privkey_path)
+def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+    set_host_and_key(publichost, admin_privkey_path)
 
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
@@ -132,11 +132,11 @@ def install_server(public_host, admin_privkey_path, monitor_pubkey, monitor_priv
     create_account('monitor', monitor_pubkey, stdout, stderr)
 
     # this also checks that creating the monitor account worked
-    set_up_monitors(public_host, monitor_privkey_path, stdout, stderr)
+    set_up_monitors(publichost, monitor_privkey_path, stdout, stderr)
 
     # do the rest of the installation as 'customer', customer doesn't actually have its own ssh keys
     # I don't know if creating one would be useful.XXX
-    set_host_and_key(public_host, admin_privkey_path, username="customer")
+    set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
@@ -168,16 +168,16 @@ LAFS_source/bin/tahoe restart storageserver
 """
 
 
-def set_up_monitors(public_host, monitor_privkey_path, stdout, stderr):
-    set_host_and_key(public_host, monitor_privkey_path, username="monitor")
+def set_up_monitors(publichost, monitor_privkey_path, stdout, stderr):
+    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
     print >>stdout, "Getting monitoring code..."
     run('rm -rf /home/monitor/monitors')
     run('darcs get --lazy https://leastauthority.com/static/source/monitors')
     run('chmod +x /home/monitor/monitors/*')
 
 
-def update_tahoe(public_host, admin_privkey_path, stdout, stderr):
-    set_host_and_key(public_host, admin_privkey_path, username="customer")
+def update_tahoe(publichost, admin_privkey_path, stdout, stderr):
+    set_host_and_key(publichost, admin_privkey_path, username="customer")
     print >>stdout, "Updating Tahoe-LAFS..."
     with cd('/home/customer/LAFS_source'):
         run('bin/tahoe stop ../introducer || echo Assuming introducer is stopped.')
@@ -188,8 +188,8 @@ def update_tahoe(public_host, admin_privkey_path, stdout, stderr):
     run('/home/customer/restart.sh')
 
 
-def update_packages(public_host, admin_privkey_path, stdout, stderr):
-    set_host_and_key(public_host, admin_privkey_path)
+def update_packages(publichost, admin_privkey_path, stdout, stderr):
+    set_host_and_key(publichost, admin_privkey_path)
     print >>stdout, "Removing unneeded packages..."
     sudo("dpkg -P consolekit")
 
@@ -201,11 +201,11 @@ def set_up_reboot(stdout, stderr):
     run('crontab /home/customer/ctab')
 
 
-def bounce_server(public_host, admin_privkey_path, private_host, access_key_id, secret_key, user_token, product_token, bucket_name,
+def bounce_server(publichost, admin_privkey_path, private_host, access_key_id, secret_key, user_token, product_token, bucket_name,
                   stdout, stderr, secretsfile):
     nickname = bucket_name
 
-    set_host_and_key(public_host, admin_privkey_path, username="customer")
+    set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     print >>stdout, "Starting introducer..."
     run('rm -f /home/customer/introducer/introducer.furl')
@@ -216,7 +216,7 @@ def bounce_server(public_host, admin_privkey_path, private_host, access_key_id, 
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
 
     tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
-                                      'public_host': public_host,
+                                      'publichost': publichost,
                                       'private_host': private_host,
                                       'introducer_furl': internal_introducer_furl,
                                       'access_key_id': access_key_id,
@@ -245,7 +245,7 @@ def bounce_server(public_host, admin_privkey_path, private_host, access_key_id, 
     assert atsign, internal_introducer_furl
     (location, slash, swissnum) = suffix.partition('/')
     assert slash, internal_introducer_furl
-    external_introducer_furl = "%s@%s:%s/%s" % (prefix, public_host, INTRODUCER_PORT, swissnum)
+    external_introducer_furl = "%s@%s:%s/%s" % (prefix, publichost, INTRODUCER_PORT, swissnum)
 
     # The webserver will HTML-escape the FURL in its output, so no need to escape here.
     print >>stdout, """
@@ -261,7 +261,7 @@ shares.total = 1
 """ % (external_introducer_furl,)
 
     print >>secretsfile, simplejson.dumps({
-        'public_host':              public_host,
+        'publichost':              publichost,
         'private_host':             private_host,
         'access_key_id':            access_key_id,
         'secret_key':               secret_key,

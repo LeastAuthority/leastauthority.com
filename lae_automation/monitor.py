@@ -11,14 +11,14 @@ from lae_util.timestamp import parse_iso_time
 
 # Anything printed to stderr counts as a notifiable problem.
 
-def check_server(public_host, monitor_privkey_path, stdout, stderr):
+def check_server(publichost, monitor_privkey_path, stdout, stderr):
     try:
-        set_host_and_key(public_host, monitor_privkey_path, username="monitor")
+        set_host_and_key(publichost, monitor_privkey_path, username="monitor")
 
         psout = run('ps -fC tahoe || true')
         pslines = psout.splitlines()
         if not pslines[0].startswith("UID"):
-            print >>stderr, "Error: Host %s unexpected ps output %r.\n" % (public_host, psout)
+            print >>stderr, "Error: Host %s unexpected ps output %r.\n" % (publichost, psout)
             return False
 
         nodes = []
@@ -28,27 +28,27 @@ def check_server(public_host, monitor_privkey_path, stdout, stderr):
             cmd = fields[7:]
             if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
                     cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
-                print >>stderr, "Error: Host %s unexpected command %r." % (public_host, " ".join(cmd))
+                print >>stderr, "Error: Host %s unexpected command %r." % (publichost, " ".join(cmd))
                 return False
             nodes.append(cmd[3])
 
         nodes.sort()
         if nodes != ['introducer', 'storageserver']:
-            print >>stderr, "Error: Host %s expected nodes are not running. Actual nodes are %r." % (public_host, nodes)
+            print >>stderr, "Error: Host %s expected nodes are not running. Actual nodes are %r." % (publichost, nodes)
             return False
 
         return True
     except (Exception, SystemExit):
-        print >>stderr, "Exception while checking host %s:" % (public_host,)
+        print >>stderr, "Exception while checking host %s:" % (publichost,)
         traceback.print_exc(file=stderr)
         return False
 
 
 def check_servers(host_list, monitor_privkey_path, stdout, stderr):
     success = True
-    for public_host in host_list:
-        print >>stdout, "Checking %r..." % (public_host,)
-        success = check_server(public_host, monitor_privkey_path, stdout, stderr) and success
+    for publichost in host_list:
+        print >>stdout, "Checking %r..." % (publichost,)
+        success = check_server(publichost, monitor_privkey_path, stdout, stderr) and success
 
     return success
 
@@ -58,26 +58,26 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
         now = time.time()
     host_list = []
     for rpt in remotepropstuplelist:
-        public_host = pubIPextractor(rpt[2])
-        if not public_host:
+        publichost = pubIPextractor(rpt[2])
+        if not publichost:
             print >>stderr, ("Warning: Host launched at %s with instance ID %s has no public IP (maybe it has been terminated)."
                              % (rpt[0], rpt[1]))
-        elif not localstate.has_key(public_host):
+        elif not localstate.has_key(publichost):
             launch_time = parse_iso_time(rpt[0])
             if now - launch_time < 10*60:
-                print >>stdout, "Note: Ignoring host %s because it was launched less than 10 minutes ago at %s." % (public_host, rpt[0])
+                print >>stdout, "Note: Ignoring host %s because it was launched less than 10 minutes ago at %s." % (publichost, rpt[0])
             else:
-                print >>stderr, "Warning: Host %s is not in the list of known servers." % (public_host,)
-                host_list.append(public_host)
+                print >>stderr, "Warning: Host %s is not in the list of known servers." % (publichost,)
+                host_list.append(publichost)
         else:
-            host_list.append(public_host)
-            if localstate[public_host][0] != rpt[0]:
+            host_list.append(publichost)
+            if localstate[publichost][0] != rpt[0]:
                 print >>stderr, ("Warning: Host %s launch time changed from %s to %s (probably rebooted)."
-                                 % (public_host, localstate[public_host][0], rpt[0]))
-            if localstate[public_host][1] != rpt[1]:
+                                 % (publichost, localstate[publichost][0], rpt[0]))
+            if localstate[publichost][1] != rpt[1]:
                 print >>stderr, ("Warning: Host %s changed instance ID from %s to %s."
-                                 % (public_host, localstate[public_host][1], rpt[1]))
-            del localstate[public_host]
+                                 % (publichost, localstate[publichost][1], rpt[1]))
+            del localstate[publichost]
 
     if localstate:
         print >>stderr, "The following known servers were not found by the AWS query:"
