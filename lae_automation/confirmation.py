@@ -31,7 +31,9 @@ shares.total = 1
 
 You can monitor the behavior of your server by following this link:
 
-https://monitoring.leastauthority.com/zport/dmd/Devices/Server/SSH/Linux/devices/%(publichost)s/devicedetail
+https://monitoring.leastauthority.com/zport/dmd/Devices/Server/SSH/Linux/devices/%(publichost)s/devicedetail  .
+
+  You will be directed to login screen.  The username and password are: "guest" / "guest".
 
 and then clicking on the "Graphs" button in the left-hand menu.
 
