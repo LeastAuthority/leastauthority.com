@@ -188,7 +188,7 @@ class TestSignupModule(TestCase):
                 raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
-        def call_bounce_server(public_host, admin_privkey_path, private_host, useraccesskeyid, usersecretkey, usertoken, producttoken,
+        def call_bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken, producttoken,
                                bucket_name, stdout, stderr, secretsfile):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
