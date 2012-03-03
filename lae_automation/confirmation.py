@@ -31,7 +31,7 @@ shares.total = 1
 
 You can monitor the behavior of your server by following this link:
 
-https://monitoring.leastauthority.com/zport/dmd/Devices/Server/SSH/Linux/devices/%(publichost)s/devicedetail#deviceDetailNav:device_graphs
+https://monitoring.leastauthority.com/zport/dmd/Devices/Server/SSH/Linux/devices/%(publichost)s/devicedetail
 
 and then clicking on the "Graphs" button in the left-hand menu.
 
