@@ -88,7 +88,7 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
     return host_list
 
 
-# The format of each line is RECORD_ADDED_TIME,LAUNCH_TIME,INSTANCE_ID,PUBLIC_HOST
+# The format of each line is RECORD_ADDED_TIME,LAUNCH_TIME,INSTANCE_ID,PUBLICHOST
 
 def read_serverinfo(pathtoserverinfo):
     listofinfostrings = FilePath(pathtoserverinfo).getContent().split('\n')
