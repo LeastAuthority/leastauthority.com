@@ -60,6 +60,7 @@ class TestConfirmation(unittest.TestCase):
         self.failUnlessIn(self.EXTERNAL_INTRODUCER_FURL, body)
         self.failUnlessIn('https://monitoring.leastauthority.com/', body)
         self.failUnlessIn('/%s/' % (self.PUBIP,), body)
+        self.failUnlessIn('https://leastauthority.com/support', body)
 
         eventually(d.callback, None)
         return self.the_factory
