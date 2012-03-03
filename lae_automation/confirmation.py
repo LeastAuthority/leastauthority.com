@@ -33,7 +33,10 @@ You can monitor the behavior of your server by following this link:
 
   https://monitoring.leastauthority.com/zport/dmd/Devices/Server/SSH/Linux/devices/%(publichost)s/devicedetail
 
-Login with username "guest" and password "guest", then click on the "Graphs" button in the left-hand menu.
+Log in with username "guest" and password "guest", then click on the "Graphs"
+button in the left-hand menu. For more information on monitoring, see
+
+  https://leastauthority.com/support
 
 We hope you enjoy using our service and find it useful.
 
@@ -48,7 +51,8 @@ NOTIFY_FAILURE_BODY = """Hello, hard-working support person.
 The sign-up process failed for customer %(customer_name)s <%(customer_email)s>.
 The log filename is '%(logfilename)s'.
 
-I'm sure you'll be able to fix it in no time with your human intellect. Good luck!
+I'm sure you'll be able to fix it in no time with your human intellect.
+Good luck!
 
 --\x20
 signup.py
