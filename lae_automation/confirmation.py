@@ -29,6 +29,12 @@ shares.total = 1
 
 (The introducer.furl setting should be on one line.)
 
+You can monitor the behavior of your server by following this link:
+
+https://monitoring.leastauthority.com/zport/dmd/Devices/Server/SSH/Linux/devices/%(publichost)s/devicedetail#deviceDetailNav:device_graphs
+
+and then clicking on the "Graphs" button in the left-hand menu.
+
 We hope you enjoy using our service and find it useful.
 
 --\x20
@@ -63,7 +69,7 @@ NOTIFY_FAILURE_EMAIL = "info@leastauthority.com"
 PGP_NOTIFICATION_EMAIL = "davidsarah@leastauthority.com"
 
 
-def send_signup_confirmation(customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr, password_path='../smtppassword'):
+def send_signup_confirmation(publichost, customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr, password_path='../smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
@@ -71,6 +77,7 @@ def send_signup_confirmation(customer_name, customer_email, external_introducer_
     content = CONFIRMATION_EMAIL_BODY % {
                "customer_name": customer_name,
                "external_introducer_furl": external_introducer_furl,
+               "publichost": publichost
               }
     headers = {
                "From": FROM_ADDRESS,

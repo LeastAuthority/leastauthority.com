@@ -124,7 +124,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
                 append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
 
-                d4 = send_signup_confirmation(customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
+                d4 = send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
                 def _setup_monitoring(ign):
                     print >>stdout, "Setting up monitoring..."
                     notify_zenoss(publichost, zenoss_IP, zenoss_privkey_path)
