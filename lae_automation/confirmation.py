@@ -31,10 +31,11 @@ shares.total = 1
 
 You can monitor the behavior of your server by following this link:
 
-  https://monitoring.leastauthority.com/zport/dmd/Devices/Server/SSH/Linux/devices/%(publichost)s/devicedetail
+  https://monitoring.leastauthority.com/server/%(publichost)s
 
-Log in with username "guest" and password "guest", then click on the "Graphs"
-button in the left-hand menu. For more information on monitoring, see
+Log in with username "guest" and password "guest". If you don't see the
+graphs, click on the "Graphs" button in the left-hand menu. For more
+information on monitoring, see
 
   https://leastauthority.com/support
 
