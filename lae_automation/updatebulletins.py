@@ -7,7 +7,10 @@ from lae_util.send_email import send_plain_email
 bulletinsubject_01 = "LAE Enterprises Now Provides Server Monitoring Data"
 bulletinbody_01 = """Hello %(customer_name)s
 
-  Least Authority Enterprises prides itself on a maximally transparent operations model.  In keeping with this philosophy we are pleased to provide public access to server data.  The public may view current server operations by following the instructions on our website at:
+  Least Authority Enterprises prides itself on a maximally transparent
+  operations model.  In keeping with this philosophy we are pleased to
+  provide public access to server data.  The public may view current server
+  operations by following the instructions on our website at:
 
   https://leastauthority.com/support
 
@@ -18,7 +21,9 @@ You can monitor the behavior of your specific server by following this link:
 Log in with username "guest" and password "guest", then click on the "Graphs"
 button in the left-hand menu.
 
-We hope our commitment to transparency gives you confidence that you know how your data is being handled.  We look forward to providing more insight in the future and welcome suggestions as to how we can better keep you informed.
+We hope our commitment to transparency gives you confidence that you know how
+your data is being handled.  We look forward to providing more insight in the
+future and welcome suggestions as to how we can better keep you informed.
 
 --\x20
 The Least Authority Enterprises team
@@ -33,7 +38,7 @@ SMTP_HOST = "smtp.googlemail.com"
 SMTP_PORT = 25
 SMTP_USERNAME = FROM_EMAIL
 
-PGP_NOTIFICATION_EMAIL = "zancas@leastauthority.com"
+PGP_NOTIFICATION_EMAIL = "davidsarah@leastauthority.com"
 
 
 def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, stdout, stderr, password_path='../smtppassword'):
