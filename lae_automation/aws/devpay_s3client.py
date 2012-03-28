@@ -4,8 +4,8 @@
 class DependencyError(Exception):
     pass
 
-REQUIRED_TXAWS_VERSION = "0.2.1.post2"
-REQUIRED_TXAWS_URL = "https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz"
+REQUIRED_TXAWS_VERSION = "0.2.1.post4"
+REQUIRED_TXAWS_URL = "https://leastauthority.com/static/patches/%s.tar.gz" % (REQUIRED_TXAWS_VERSION,)
 REQUIRED_S3_API_VERSION = "2006-03-01"
 
 import txaws
