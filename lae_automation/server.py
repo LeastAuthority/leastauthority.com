@@ -176,13 +176,25 @@ def set_up_monitors(publichost, monitor_privkey_path, stdout, stderr):
     run('chmod +x /home/monitor/monitors/*')
 
 
-def update_tahoe(publichost, admin_privkey_path, stdout, stderr):
+def update_txaws(publichost, admin_privkey_path, stdout, stderr):
+    set_host_and_key(publichost, admin_privkey_path)
+    run('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post4.tar.gz')
+    run('tar -xzvf txAWS-0.2.1.post4.tar.gz')
+    with cd('/home/ubuntu/txAWS-0.2.1.post4'):
+        sudo('python ./setup.py install')
+
+
+def update_tahoe(publichost, admin_privkey_path, stdout, stderr, do_update_txaws=False):
     set_host_and_key(publichost, admin_privkey_path, username="customer")
     print >>stdout, "Updating Tahoe-LAFS..."
     with cd('/home/customer/LAFS_source'):
         run('bin/tahoe stop ../introducer || echo Assuming introducer is stopped.')
         run('bin/tahoe stop ../storageserver || echo Assuming storage server is stopped.')
         run('darcs pull --all')
+    if do_update_txaws:
+        update_txaws(publichost, admin_privkey_path, stdout, stderr)
+        set_host_and_key(publichost, admin_privkey_path, username="customer")
+    with cd('/home/customer/LAFS_source'):
         run('python setup.py build')
     print >>stdout, "Restarting..."
     run('/home/customer/restart.sh')

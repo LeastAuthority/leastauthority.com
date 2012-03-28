@@ -6,7 +6,7 @@ from twisted.python.failure import Failure
 from twisted.internet import reactor
 
 from lae_automation.config import Config
-from lae_automation.server import set_up_monitors, update_packages, update_tahoe
+from lae_automation.server import update_tahoe
 from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser, pubIPextractor
 
 
@@ -38,9 +38,9 @@ def upgrade_servers(remotepropstuplelist):
         else:
             print "Upgrading %r..." % (publichost,)
             try:
-                set_up_monitors(publichost, monitor_privkey_path, sys.stdout, sys.stderr)
-                update_packages(publichost, admin_privkey_path, sys.stdout, sys.stderr)
-                update_tahoe(publichost, admin_privkey_path, sys.stdout, sys.stderr)
+                #set_up_monitors(publichost, monitor_privkey_path, sys.stdout, sys.stderr)
+                #update_packages(publichost, admin_privkey_path, sys.stdout, sys.stderr)
+                update_tahoe(publichost, admin_privkey_path, sys.stdout, sys.stderr, do_update_txaws=True)
             except:
                 traceback.print_exc()
 
