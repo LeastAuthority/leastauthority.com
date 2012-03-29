@@ -3,7 +3,7 @@ Setup of Incident Gatherer
 ==========================
 
  The incident gatherer (and potentially other gatherers in the future) lives
- on monitoring.   The gatherers have their own user "``gatherer``".  
+ on monitoring.   The gatherers have their own user "``gatherer``".
 
  The file "``misc/incident-gatherer/support_classifiers.py``" appears to have
  been renamed "``misc/incident-gatherer/classify_tahoe.py``".
@@ -14,10 +14,10 @@ Setup of Incident Gatherer
  possibly ``classify_tahoe.py`` should be moved into the foolscap package?
  The correct disposition is unclear to me.
 
- 
+
  When I typo the dump command I get this very unhelpful traceback:::
 
-  0 /home/arc/myLAEgateway/logs/incidents 506 $ flogtool dimp incident-2012-02-10--03\:50\:31Z-on5dnui.flog.bz2 
+  0 /home/arc/myLAEgateway/logs/incidents 506 $ flogtool dimp incident-2012-02-10--03\:50\:31Z-on5dnui.flog.bz2
   Traceback (most recent call last):
     File "/usr/local/bin/flogtool", line 5, in <module>
       pkg_resources.run_script('foolscap==0.6.1', 'flogtool')
@@ -37,7 +37,7 @@ Setup of Incident Gatherer
 
  Incident gatherers are a type of log gatherer.
 
- 
+
  flogtool create-incident-gatherer WORKDIR && cd WORKDIR && twistd -y gatherer.tac
 
  vs.
