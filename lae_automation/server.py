@@ -130,7 +130,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     sudo_easy_install('foolscap')
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
-    with cd('/home/ubuntu/txAWS-0.2.1.post2'):
+    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
     create_account('customer', None, stdout, stderr)
     create_account('monitor', monitor_pubkey, stdout, stderr)
@@ -184,7 +184,7 @@ def update_txaws(publichost, admin_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
-    with cd('/home/ubuntu/txAWS-0.2.1.post4'):
+    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
 
 
