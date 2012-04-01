@@ -41,8 +41,8 @@ class TestServerModule(TestCase):
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
         self.RUNARGS_FIFO = fifo([
             ('whoami', False, {}),
-            ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz', False, {}),
-            ('tar -xzvf txAWS-0.2.1.post2.tar.gz', False, {}),
+            ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post4.tar.gz', False, {}),
+            ('tar -xzvf txAWS-0.2.1.post4.tar.gz', False, {}),
             ('whoami', False, {}),
             ('rm -rf /home/monitor/monitors', False, {}),
             ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),

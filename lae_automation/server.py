@@ -50,6 +50,10 @@ class NotListeningError(Exception):
     pass
 
 
+INSTALL_TXAWS_VERSION = "0.2.1.post4"
+INSTALL_TXAWS_URL = "https://leastauthority.com/static/patches/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
+
+
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
 # pty=False will cause fabric to echo stdin, but that's fine.
@@ -124,8 +128,8 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     sudo_apt_get('install -y exim4-base')
     sudo_apt_get('install -y darcs')
     sudo_easy_install('foolscap')
-    run('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post2.tar.gz')
-    run('tar -xzvf txAWS-0.2.1.post2.tar.gz')
+    run('wget %s' % (INSTALL_TXAWS_URL,))
+    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-0.2.1.post2'):
         sudo('python ./setup.py install')
     create_account('customer', None, stdout, stderr)
@@ -178,8 +182,8 @@ def set_up_monitors(publichost, monitor_privkey_path, stdout, stderr):
 
 def update_txaws(publichost, admin_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
-    run('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post4.tar.gz')
-    run('tar -xzvf txAWS-0.2.1.post4.tar.gz')
+    run('wget %s' % (INSTALL_TXAWS_URL,))
+    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-0.2.1.post4'):
         sudo('python ./setup.py install')
 
