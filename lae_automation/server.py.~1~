@@ -383,5 +383,6 @@ def set_remote_config_option(pathtoremote, section, option, value):
     config.set(section, option, value)
     outgoingconfig = StringIO()
     config.write(outgoingconfig)
-    write(outgoingconfig.getValue(), pathtoremote)
+    write(outgoingconfig.getvalue(), pathtoremote)
+    # FIXME: move this to caller
     run('/home/customer/restart.sh')
