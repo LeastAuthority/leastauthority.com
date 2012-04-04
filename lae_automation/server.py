@@ -300,3 +300,23 @@ def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
     set_host_and_key(zenoss_IP, zenoss_privkey_path, username='zenoss')
     write(zenbatchloadstring, remotepath)
     run('/usr/local/zenoss/zenoss/bin/zenbatchload %s' % (remotepath,))
+
+REMOTECONFSETTERSCRIPT="""import ConfigParser, os
+config = ConfigParser.SafeConfigParser()
+config.read([os.path.join("%(remotetahoedir)s", "tahoe.cfg")])
+config.set("%(section)s", "%(option)s", "%(value)")"""
+
+def setremoteconfigoption(pathtoremote, section, option, value):
+    """This function expects set_host_and_key have already been run!"""
+    interpdict = {'remotetahoedir':pathtoremote,
+                  'section':section,
+                  'option':option,
+                  'value':value}
+
+    scriptcontent = REMOTECONFSETTERSCRIPT % interpdict
+    if remotetahoedir[-1] == os.sep:
+        remotetahoedir = remotetahoedir.rstrip(os.sep)
+    pathtoscript = remotetahoedir+os.sep+'set_'+option+'_script.py'
+    write(scriptcontent, pathtoscript)
+    run('python '+pathtoscript)
+    run('/home/customer/restart.sh)
