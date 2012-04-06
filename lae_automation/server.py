@@ -165,10 +165,6 @@ RESTART_SCRIPT = """#!/bin/sh
 cd /home/customer
 LAFS_source/bin/tahoe restart introducer
 LAFS_source/bin/tahoe restart storageserver
-                ('whoami', False, {}),
-                ('rm -rf /home/monitor/monitors', False, {}),
-                ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),
-                ('chmod +x /home/monitor/monitors/*', False, {})
 """
 
 
