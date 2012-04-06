@@ -14,4 +14,4 @@ publicip = sys.argv[1]
 timestamp = sys.argv[2]
 ec2keyfilename = "../EC2adminkeys2.pem"
 
-record_secrets(publicip, timestamp, ec2keyfilename, sys.stdout, sys.stderr, sys.stderr)
+record_secrets(publicip, timestamp, ec2keyfilename, sys.stdout, sys.stderr)
