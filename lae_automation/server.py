@@ -233,7 +233,8 @@ def record_secrets(publichost, timestamp, admin_privkey_path, raw_stdout, raw_st
     sys.stdout = stderr
 
     try:
-        set_host_and_key(publichost, admin_privkey_path)
+        set_host_and_key(publichost, admin_privkey_path, username="customer")
+
         print >>stdout, "Reading secrets..."
         introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
         introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
