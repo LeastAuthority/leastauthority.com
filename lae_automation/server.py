@@ -302,12 +302,8 @@ def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
     write(zenbatchloadstring, remotepath)
     run('/usr/local/zenoss/zenoss/bin/zenbatchload %s' % (remotepath,))
 
-REMOTECONFSETTERSCRIPT="""import ConfigParser, os
 
-
-"""
-
-def setremoteconfigoption(pathtoremote, section, option, value):
+def set_remote_config_option(pathtoremote, section, option, value):
     """This function expects set_host_and_key have already been run!"""
     incomingconfig = StringIO()
     api.get(pathtoremote, incomingconfig)
@@ -315,5 +311,6 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     config.set(section, option, value)
     outgoingconfig = StringIO()
     config.write(outgoingconfig)
-    write(outgoingconfig.getValue(), pathtoremote)
+    write(outgoingconfig.getvalue(), pathtoremote)
+    # FIXME: move this to caller
     run('/home/customer/restart.sh')
