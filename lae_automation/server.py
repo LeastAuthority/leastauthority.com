@@ -242,7 +242,8 @@ def record_secrets(publichost, timestamp, admin_privkey_path, raw_stdout, raw_st
         server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
 
         tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
-        config = SafeConfigParser(tahoe_cfg, StringIO(tahoe_cfg))
+        config = SafeConfigParser()
+        config.readfp(StringIO(tahoe_cfg))
         internal_introducer_furl = config.get('client', 'introducer.furl')
         external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
 
