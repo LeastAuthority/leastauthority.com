@@ -3,12 +3,16 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
+import os, sys, base64, simplejson
 from cStringIO import StringIO
-import simplejson
-import ConfigParser
+from ConfigParser import SafeConfigParser
+from twisted.python.filepath import FilePath
 
 from fabric import api
 from fabric.context_managers import cd
+
+from lae_util.streams import LoggingTeeStream
+
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
@@ -214,6 +218,75 @@ def set_up_reboot(stdout, stderr):
     run('crontab /home/customer/ctab')
 
 
+def record_secrets(publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
+    seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
+    logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
+
+    secretsfile = FilePath('secrets').child(logfilename).open('a+')
+    logfile = FilePath('signup_logs').child(logfilename).open('a+')
+
+    stdout = LoggingTeeStream(raw_stdout, logfile, '>')
+    stderr = LoggingTeeStream(raw_stderr, logfile, '')
+
+    # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
+    # It does have a way to disable that, but not (easily) to redirect it.
+    sys.stdout = stderr
+
+    try:
+        set_host_and_key(publichost, admin_privkey_path)
+        print >>stdout, "Reading secrets..."
+        introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
+        introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
+        server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
+        server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
+
+        tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
+        config = SafeConfigParser(tahoe_cfg, StringIO(tahoe_cfg))
+        internal_introducer_furl = config.get('client', 'introducer.furl')
+        external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
+
+        access_key_id = config.get('storage', 's3.access_key_id')
+        bucket_name = config.get('storage', 's3.bucket')
+
+        secret_key = run('cat /home/customer/storageserver/private/s3secret')
+        user_token = run('cat /home/customer/storageserver/private/s3usertoken')
+        product_token = run('cat /home/customer/storageserver/private/s3producttoken')
+
+        tub_location = config.get('node', 'tub.location')
+        # %(publichost)s:12346,%(privatehost)s:12346
+        privatehost = tub_location.partition(',')[2].partition(':')[0]
+
+        print >>stdout, "Writing secrets file..."
+        print >>secretsfile, simplejson.dumps({
+            'publichost':               publichost,
+            'privatehost':              privatehost,
+            'access_key_id':            access_key_id,
+            'secret_key':               secret_key,
+            'user_token':               user_token,
+            'product_token':            product_token,
+            'bucket_name':              bucket_name,
+            'introducer_node_pem':      introducer_node_pem,
+            'introducer_nodeid':        introducer_nodeid,
+            'server_node_pem':          server_node_pem,
+            'server_nodeid':            server_nodeid,
+            'internal_introducer_furl': internal_introducer_furl,
+            'external_introducer_furl': external_introducer_furl,
+        })
+    finally:
+        stdout.flush()
+        stderr.flush()
+        secretsfile.close()
+        logfile.close()
+
+
+def make_external_furl(internal_furl, publichost):
+    (prefix, atsign, suffix) = internal_furl.partition('@')
+    assert atsign, internal_furl
+    (location, slash, swissnum) = suffix.partition('/')
+    assert slash, internal_furl
+    external_furl = "%s@%s:%s/%s" % (prefix, publichost, INTRODUCER_PORT, swissnum)
+    return external_furl
+
 
 def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, secret_key, user_token, product_token, bucket_name,
                   stdout, stderr, secretsfile):
@@ -255,11 +328,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
 
     print >>stdout, "The introducer and storage server are running."
 
-    (prefix, atsign, suffix) = internal_introducer_furl.partition('@')
-    assert atsign, internal_introducer_furl
-    (location, slash, swissnum) = suffix.partition('/')
-    assert slash, internal_introducer_furl
-    external_introducer_furl = "%s@%s:%s/%s" % (prefix, publichost, INTRODUCER_PORT, swissnum)
+    external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
 
     # The webserver will HTML-escape the FURL in its output, so no need to escape here.
     print >>stdout, """
@@ -275,8 +344,8 @@ shares.total = 1
 """ % (external_introducer_furl,)
 
     print >>secretsfile, simplejson.dumps({
-        'publichost':              publichost,
-        'privatehost':             privatehost,
+        'publichost':               publichost,
+        'privatehost':              privatehost,
         'access_key_id':            access_key_id,
         'secret_key':               secret_key,
         'user_token':               user_token,
@@ -293,6 +362,7 @@ shares.total = 1
 
     return external_introducer_furl
 
+
 def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
     zenbatchloadstring ='/Devices/Server/SSH/Linux\n%s setManageIp="%s"\n' % (EC2pubIP, EC2pubIP)
     loadfiledirname = '/home/zenoss/loadfiles/'
@@ -307,7 +377,7 @@ def set_remote_config_option(pathtoremote, section, option, value):
     """This function expects set_host_and_key have already been run!"""
     incomingconfig = StringIO()
     api.get(pathtoremote, incomingconfig)
-    config = ConfigParser.SafeConfigParser.readfp(incomingconfig)
+    config = SafeConfigParser.readfp(incomingconfig)
     config.set(section, option, value)
     outgoingconfig = StringIO()
     config.write(outgoingconfig)
