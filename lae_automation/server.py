@@ -376,14 +376,21 @@ def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
 
 def setremoteconfigoption(pathtoremote, section, option, value):
     """This function expects set_host_and_key have already been run!"""
-    incomingconfig = StringIO()
-    api.get(pathtoremote, incomingconfig)
-    config = SafeConfigParser.readfp(incomingconfig)
-    config.set(section, option, value)
+    #api.get does not appear to actually use StringIO's yet!
+    #So I had to use a temp file.
+    tempfhandle = open('tempconfigfile','w')
+    api.get(pathtoremote, tempfhandle)
+    configparser = SafeConfigParser()
+    tempfhandle.close()
+    tempfhandle = open('tempconfigfile','r')
+    configparser.readfp(tempfhandle)
+    configparser.set(section, option, value)
     outgoingconfig = StringIO()
-    config.write(outgoingconfig)
+    configparser.write(outgoingconfig)
     temppath = pathtoremote+'temp'
-    write(outgoingconfig.getValue(), temppath)
+    outgoingconfig.seek(0)
+    write(outgoingconfig.read(), temppath)
     run('mv '+temppath+' '+pathtoremote)
     # FIXME: move this to caller
     run('/home/customer/restart.sh')
+    os.remove('tempconfigfile')
