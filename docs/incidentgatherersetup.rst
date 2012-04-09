@@ -46,3 +46,13 @@ is that log_gatherer.furl is the correct field to set for the incident
 gatherer's furl.
 
 
+Automated Setup:
+================
+
+  To set a Pub IP address indexed list of storageservers to be gathered by an
+  incident gatherer, use the gatherincidentconfigs.py script in the
+  leastauthority.com directory.  This script uses the setremoteconfigoption
+  function of the lae_automation.server module.  It expects to be able to ssh
+  using a key located in a file offered as its first argument.  It expects to
+  be given a csv file containins pub IPs as the last element of each line as
+  its second argument.
