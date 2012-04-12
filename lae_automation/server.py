@@ -13,6 +13,10 @@ from fabric.context_managers import cd
 
 from lae_util.streams import LoggingTeeStream
 
+#The incident gatherer's furl is a secret, so it is obtained from lae_automation_config.
+from lae_automation.config import Config
+config = Config('../lae_automation_config.json')
+incident_gatherer_furl = str(config.other['incident_gatherer_furl'])
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
@@ -28,6 +32,7 @@ nickname = %(nickname)s
 web.port =
 web.static = public_html
 tub.location = %(publichost)s:12346,%(privatehost)s:12346
+log_gatherer.furl = %(incident_gatherer_furl)s
 
 [client]
 # Which services should this client connect to?
@@ -309,7 +314,8 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
                                       'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
                                       'access_key_id': access_key_id,
-                                      'bucket_name': bucket_name}
+                                      'bucket_name': bucket_name,
+                                      'incident_gatherer_furl': incident_gatherer_furl}
     write(tahoe_cfg, '/home/customer/storageserver/tahoe.cfg')
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
     write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0440)
