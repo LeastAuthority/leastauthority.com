@@ -5,6 +5,9 @@ from lae_automation import server
 from lae_automation.server import api
 
 
+INTRODUCER_PORT = '12345'
+SERVER_PORT = '12346'
+
 def fifo(xs):
     xs.reverse()
     return xs
@@ -139,3 +142,68 @@ class TestServerModule(TestCase):
 
         server.set_up_monitors(PUBLICHOST, MONITORPRIVKEYPATH, STDOUT, STDERR)
         self._check_all_done()
+
+    def test_bounce_server(self):
+        def call_set_host_and_key(publichost, admin_privkey_path, username):
+            self.failUnlessEqual(publichost, '0.0.0.0')
+            self.failUnlessEqual(admin_privkey_path, 'mockEC2adminkeys.pem')
+            self.failUnlessEqual(username, 'customer')
+        self.patch(server, 'set_host_and_key', call_set_host_and_key)
+        def call_api_run(argstring, pty, **kwargs):
+            self.failUnlessEqual(self.RUNARGS_FIFO.pop(), (argstring, pty, kwargs))
+            if argstring == 'whoami':
+                return self.WHOAMI_FIFO.pop()
+            if argstring == 'cat /home/customer/introducer/introducer.furl':
+                return INTERNALINTROFURL
+        self.patch(api, 'run', call_api_run)
+        MHOSTNAME = '0.0.0.0'
+        ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
+        MPRIVHOST = '1.1.1.1'
+        ACCESSKEYID = 'TEST'+'A'*16
+        SECRETACCESSKEY = 'TEST'+'A'*36
+        USERTOKEN = 'TESTUSERTOKEN'+'A'*385
+        PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
+        BUCKETNAME = 'foooooo'
+        STDOUT = StringIO()
+        STDERR = StringIO()
+        MSECRETSFILE = StringIO()
+        INTERNALINTROFURL = 'pb://TUBID@LOCATION/SWISSNUM'
+        from lae_automation.server import TAHOE_CFG_TEMPLATE
+        from lae_automation.server import incident_gatherer_furl
+        from lae_automation.server import RESTART_SCRIPT
+        test_tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': BUCKETNAME,
+                                      'publichost': MHOSTNAME,
+                                      'privatehost': MPRIVHOST,
+                                      'introducer_furl': INTERNALINTROFURL,
+                                      'access_key_id': ACCESSKEYID,
+                                      'bucket_name': BUCKETNAME,
+                                      'incident_gatherer_furl': incident_gatherer_furl}
+        self.WHOAMI_FIFO = []
+        self.RUNARGS_FIFO = fifo([
+                ('rm -f /home/customer/introducer/introducer.furl', False, {}),
+                ('LAFS_source/bin/tahoe restart introducer && sleep 5', False, {}),
+                ('cat /home/customer/introducer/introducer.furl', False, {}),
+                ('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.', False, {}),
+                ('LAFS_source/bin/tahoe restart storageserver && sleep 5', False, {}),
+                ('ps -fC tahoe', False, {}),
+                ('netstat -atW', False, {}),
+                ('crontab /home/customer/ctab', False, {}),
+                ('cat /home/customer/introducer/private/node.pem', False, {}),
+                ('cat /home/customer/introducer/my_nodeid', False, {}),
+                ('cat /home/customer/storageserver/private/node.pem', False, {}),
+                ('cat /home/customer/storageserver/my_nodeid', False, {})
+                ])
+        self.SUDOARGS_FIFO = []
+        self.WRITEARGS_FIFO = fifo([
+                (INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port', False, None),
+                (SERVER_PORT + '\n', '/home/customer/storageserver/client.port', False, None),
+                (test_tahoe_cfg, '/home/customer/storageserver/tahoe.cfg', False, None),
+                (SECRETACCESSKEY, '/home/customer/storageserver/private/s3secret', False, 0440),
+                (USERTOKEN, '/home/customer/storageserver/private/s3usertoken', False, 0440),
+                (PRODUCTTOKEN, '/home/customer/storageserver/private/s3producttoken', False, 0440),
+                (RESTART_SCRIPT, '/home/customer/restart.sh', False, 0750),
+                ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
+                ])
+        server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
+                                 SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, \
+                                 STDOUT, STDERR, MSECRETSFILE)
