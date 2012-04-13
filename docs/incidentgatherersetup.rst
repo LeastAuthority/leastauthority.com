@@ -2,9 +2,14 @@
 What's an Incident Gatherer?
 ============================
 
+
  The incident gatherer is a process that runs on
- "monitoring.leastauthority.com". Potentially other gatherers will run there
- in the future. These gatherers have their own user account: "``gatherer``".
+ "monitoring.leastauthority.com". It connects to a number of tahoe-lafs nodes
+ and, when they have an incident to report, it receives the contents of the
+ incident from them and writes it into a file in the local filesystem.
+
+ Potentially other gatherers will run there in the future. These gatherers
+ have their own user account: "``gatherer``".
 
  An incident gatherer that monitors tahoe nodes need not be colocated with a
  ``tahoe`` repository, or ``tahoe`` process.  ``foolscap`` and ``twistd`` (upon which
@@ -15,7 +20,7 @@ What's an Incident Gatherer?
 HOWTO Set One Up:
 =================
 
-  (1) Get access to a "monitoring" (persistently connected etc.) server.
+  (1) Get access to a "monitoring" persistently connected server, with sufficient memory to store incidents.
   (2) Set up a user "``gatherer``"
   (3) Make sure ``python-foolscap`` is installed
   (4) ``cd /home/gatherer && flogtool create-incident-gatherer incident``
