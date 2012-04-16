@@ -92,7 +92,7 @@ CONFIGFILEJSON = """{
   "admin_privkey_path":   "ADMINKEYS.pem",
   "monitor_pubkey_path":  "MONITORKEYS.pub",
   "monitor_privkey_path": "MONITORKEYS.pem",
-  "zenoss_privkey_path": "ZMONKEYS.pem",
+  "zenoss_privkey_path":  "ZMONKEYS.pem",
   "zenoss_IP": "9.9.9.9"
 }"""
 
