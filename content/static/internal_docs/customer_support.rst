@@ -1,11 +1,13 @@
+.. _LAE: https://leastauthority.com/
+.. _Tahoe-LAFS: https://tahoe-lafs.org/trac/tahoe-lafs
+
+
 What do I do when a user reports an issue?
 ==========================================
 
  This document is focused on the simple case of an email directed to
  support@leastauthority.com.  An email addressed thus causes a zendesk ticket to
  be opened.
-
-
 
 Response Rules (*When* to Respond):
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -37,3 +39,14 @@ Responses Have the Following Form (*What* to Respond):
  (5) Assurance that the issue is being addressed, or has been addressed.
  (6) Assurance that LAE will contact the reporter as soon as there is relevant progress, or sufficient time has passed and a still-alive assurance is deemed necessary.
 
+Tahoe-LAFS Relevant Issues:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ Some issues have relevance for both the Tahoe-LAFS_ project and LAE_.  These
+ issues must be documented in both endeavors.  If an issue is intially
+ reported as a Tahoe-LAFS ticket, then an LAE engineer that monitors
+ Tahoe-LAFS tickets (David-Sarah) will create an appropriate email
+ referencing the ticket, and send it to support@leastauthority.com.
+ Conversely relevant issues first reported to LAE, will be documented as
+ tickets on Tahoe-LAFS_, by the monitor of support@leastauthority.com
+ (Zancas).
