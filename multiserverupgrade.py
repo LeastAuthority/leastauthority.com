@@ -40,7 +40,7 @@ def upgrade_servers(remotepropstuplelist):
             try:
                 #set_up_monitors(publichost, monitor_privkey_path, sys.stdout, sys.stderr)
                 #update_packages(publichost, admin_privkey_path, sys.stdout, sys.stderr)
-                update_tahoe(publichost, admin_privkey_path, sys.stdout, sys.stderr, do_update_txaws=True)
+                update_tahoe(publichost, admin_privkey_path, sys.stdout, sys.stderr, do_update_txaws=False)
             except:
                 traceback.print_exc()
 
