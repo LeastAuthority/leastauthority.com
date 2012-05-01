@@ -26,8 +26,9 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
             fields = line.split()
             [uid, pid, parent_pid, c, start_time, tty, proc_time] = fields[:7]
             cmd = fields[7:]
-            if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
-                    cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
+            if not ((len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
+                     cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver'))
+                    or [True for c in cmd if c.startswith('@')]):
                 print >>stderr, "Error: Host %s unexpected command %r." % (publichost, " ".join(cmd))
                 return False
             nodes.append(cmd[3])
