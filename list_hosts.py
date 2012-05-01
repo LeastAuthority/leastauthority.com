@@ -1,12 +1,11 @@
 #!/usr/bin/python
 
-import sys, os, traceback
+import sys, os
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 from twisted.internet import reactor
 
 from lae_automation.config import Config
-from lae_automation.server import update_tahoe
 from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser, pubIPextractor
 
 
