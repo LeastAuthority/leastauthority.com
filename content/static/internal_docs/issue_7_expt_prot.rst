@@ -1,36 +1,43 @@
-.. _1590: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/1590
+﻿
 
 Problem Statement:
 ==================
 
  During some operations, at least HTTP "PUT"s invoked in the course of a
- backup (a many iteration process), the Gateway receives an error message
- from the storageserver.  The storageserver is transmitting an error it
- received from the S3 instance.  The error emitted by the S3 instance
- "S3Error" is an HTTP packet with a 500 header, and body:
+ backup, the Gateway receives an error message from the storageserver.  The
+ storageserver is transmitting an error it received from the S3 instance.
+ The error emitted by the S3 instance "S3Error" is an HTTP response with a
+ 500 header, and body:
 
 ``"Error Message: We encountered an internal error. Please try again."``
 
 Research:
 =========
 
- Zooko performed extensive research documented on Tahoe-LAFS ticket 1590_.
- If I understand correctly he discovered that the kind of error we're seeing
- is common enough that AWS expected to tolerate it in up to 1 of 5000 HTTP
- requests.
+ Zooko and David-Sarah performed extensive research documented on `Tahoe-LAFS
+ ticket 1590`_.  The `AWS Service Level Agreement`_ says that they intend for
+ at least 99% of requests to succeed and less than 1% of requests to incur
+ errors like this, and they will pay a discount if they fail to achieve
+ that. It looks like we're getting the error on substantially more than 1% of
+ requests, but we're still working on collecting statistics in order to
+ confirm that. This may indicate some undiagnosed problem on AWS's side.
+
+.. _Tahoe-LAFS ticket 1590: https://tahoe-lafs.org/trac/tahoe-lafs/ticket/1590
+.. _AWS Service Level Agreement: https://aws.amazon.com/s3-sla/
 
 Implemented Solution:
 =====================
 
- Acknowledging that more elegant solutions are available we are, for the time
- being at least, retrying requests that receive "HTTP-5xx" -headed (a strict
- superset of the "HTTP-500" -headed) responses a single time.
+ Pending better diagnosis of the issue, we have deployed a patch that retries
+ requests that receive "HTTP-5xx" -headed (a superset of the "HTTP-500"
+ -headed) responses. We retry only one time, and if it fails a second time we
+ return the error to the client.
 
 Experimental Goal:
 ==================
 
  Determine whether the implemented solution is sufficient to cause up and
- downloads to succeed in the presence of rare HTTP-500 packets.
+ downloads to succeed in the presence of rare HTTP-500 responses.
 
 Procedure:
 ==========
@@ -51,14 +58,14 @@ AND
 Experiment One:
 ---------------
 
-  (1) Create a directory in the experimental TLOS3 instance.
+  (1) Create a directory in the experimental TLoS3 instance.
 
   (2) Using the "tahoe backup" command upload 101 files from: 0 (inclusive) to: 792 byte in size in 8 byte increments
 
 Experiment Two:
 ---------------
 
-  (1) Create a directory in the experimental TLOS3 instance.  
+  (1) Create a directory in the experimental TLoS3 instance.  
 
   (2) Using the "tahoe backup" command upload 101 to 1001 [in increments of 100] files in 10 successive operations. 
  
@@ -79,7 +86,7 @@ Experimental (With 5xx-Retry Patch):
 
  The results are ambiguous, I could not determine whether the upload failed
  or my monitoring tool failed.  I should be able to determine this by
- inspecting the state of the TLOS3 store, however rather than investigating
+ inspecting the state of the TLoS3 store, however rather than investigating
  in this way, I'll run the single mutable files with multiple
  reads-and-writes experiment.  This test with its single generated capability
  will be easier to analyze. (Thanks to David-Sarah for the suggestion!)
