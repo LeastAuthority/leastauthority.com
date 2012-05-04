@@ -4,7 +4,7 @@ import sys, os, mimetypes
 import logging
 
 # before importing Twisted
-mimetypes.add_type("text/x-rst", ".rst")
+mimetypes.add_type("text/plain", ".rst")
 
 
 from twisted.internet import ssl, reactor
