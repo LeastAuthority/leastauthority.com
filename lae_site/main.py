@@ -1,7 +1,11 @@
 #! /usr/bin/env python
 
-import sys, os
+import sys, os, mimetypes
 import logging
+
+# before importing Twisted
+mimetypes.add_type("text/x-rst", ".rst")
+
 
 from twisted.internet import ssl, reactor
 
