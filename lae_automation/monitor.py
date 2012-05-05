@@ -1,5 +1,8 @@
 
 import time, traceback
+from cStringIO import StringIO
+from ConfigParser import SafeConfigParser
+
 from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key
@@ -38,6 +41,15 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
         nodes.sort()
         if nodes != ['introducer', 'storageserver']:
             print >>stderr, "Error: Host %s expected nodes are not running. Actual nodes are %r." % (publichost, nodes)
+            return False
+
+        tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
+        config = SafeConfigParser()
+        config.readfp(StringIO(tahoe_cfg))
+        s3host = config.get('storage', 's3.bucket') + '.s3.amazonaws.com'
+        nslookup = run('nslookup ' + s3host)
+        if not 'answer:' in nslookup:
+            print >>stderr, "Error: Host %s was not able to resolve %r:\n%r" % (publichost, s3host, nslookup)
             return False
 
         return True
