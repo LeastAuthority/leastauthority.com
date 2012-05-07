@@ -100,11 +100,13 @@ def write(value, remote_path, use_sudo=False, mode=None):
     # mode is not None.
     return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
+
 def delete_customer(publichost, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
+
 
 def create_account(account_name, account_pubkey, stdout, stderr):
     print >>stdout, "Setting up %s account..." % (account_name,)
@@ -119,6 +121,7 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
+
 
 def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
@@ -296,7 +299,7 @@ def make_external_furl(internal_furl, publichost):
 
 
 def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, secret_key, user_token, product_token, bucket_name,
-                  stdout, stderr, secretsfile):
+                  oldsecrets, stdout, stderr, secretsfile):
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
@@ -328,6 +331,9 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
     run('netstat -atW')
 
     set_up_reboot(stdout, stderr)
+
+    if oldsecrets:
+        restore_secrets(oldsecrets, stdout, stderr)
 
     introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
     introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
@@ -371,6 +377,22 @@ shares.total = 1
     return external_introducer_furl
 
 
+def restore_secrets(secrets, stdout, stderr):
+    if 'introducer_node_pem' in secrets and 'introducer_nodeid' in secrets:
+        print >>stdout, "Restoring introducer identity..."
+        write(secrets['introducer_node_pem'], '/home/customer/introducer/private/node.pem')
+        write(secrets['introducer_nodeid'],   '/home/customer/introducer/my_nodeid')
+    else:
+        print >>stderr, "Warning: missing field for introducer identity."
+
+    if 'server_node_pem' in secrets and 'server_nodeid' in secrets:
+        print >>stdout, "Restoring storage server identity..."
+        write(secrets['server_node_pem'], '/home/customer/storageserver/private/node.pem')
+        write(secrets['server_nodeid'],   '/home/customer/storageserver/my_nodeid')
+    else:
+        print >>stderr, "Warning: missing field for storage server identity."
+
+
 def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
     zenbatchloadstring ='/Devices/Server/SSH/Linux\n%s setManageIp="%s"\n' % (EC2pubIP, EC2pubIP)
     loadfiledirname = '/home/zenoss/loadfiles/'
@@ -379,6 +401,7 @@ def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
     set_host_and_key(zenoss_IP, zenoss_privkey_path, username='zenoss')
     write(zenbatchloadstring, remotepath)
     run('/usr/local/zenoss/zenoss/bin/zenbatchload %s' % (remotepath,))
+
 
 def setremoteconfigoption(pathtoremote, section, option, value):
     """This function expects set_host_and_key have already been run!"""

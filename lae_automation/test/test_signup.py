@@ -189,7 +189,7 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'install_server', call_install_server)
 
         def call_bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken, producttoken,
-                               bucket_name, stdout, stderr, secretsfile):
+                               bucket_name, oldsecrets, stdout, stderr, secretsfile):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(privatehost, '0.0.0.1')
@@ -198,6 +198,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(usertoken, '{UserToken}TESTUSERTOKEN%s=='%('A'*385,))
             self.failUnlessEqual(producttoken, '{ProductToken}TESTPRODUCTTOKEN%s='%('A'*295,))
             self.failUnlessEqual(bucket_name, 'lae-abcdefgh-MSEED')
+            self.failUnlessEqual(oldsecrets, None)
             self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
         self.patch(signup, 'bounce_server', call_bounce_server)
 

@@ -34,7 +34,7 @@ def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, s
 
 
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
-           seed, secretsfile, logfilename, configpath='../lae_automation_config.json', ec2secretpath='../ec2secret',
+           seed, secretsfile, logfilename, configpath='../lae_automation_config.json', ec2secretpath=None,
            clock=None):
     config = Config(configpath)
     myclock = clock or reactor
@@ -50,17 +50,6 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     producttoken = product['product_token']
     amiimageid = product['ami_image_id']
     instancesize = product['instance_size']
-    instancename = customer_email  # need not be unique
-
-    ec2accesskeyid = str(config.other['ec2_access_key_id'])
-    ec2secretkey = FilePath(ec2secretpath).getContent().strip()
-
-    admin_keypair_name = str(config.other['admin_keypair_name'])
-    admin_privkey_path = str(config.other['admin_privkey_path'])
-    monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
-    monitor_privkey_path = str(config.other['monitor_privkey_path'])
-    zenoss_privkey_path = str(config.other['zenoss_privkey_path'])
-    zenoss_IP = str(config.other['zenoss_IP'])
 
     print >>stdout, "Signing up customer for %s..." % (fullname,)
 
@@ -91,49 +80,30 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
         # We could deploy and configure the instance in parallel with the above wait and delete it
         # if necessary, but let's keep it simple and sequential.
-        d2.addCallback(lambda ign: deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
-                                                       instancesize, bucketname, admin_keypair_name, instancename,
-                                                       stdout, stderr))
-
-        def _deployed(instance):
-            d3 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
-                                 ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr,
-                                 instance.instance_id)
-
-            def _got_addresses(addresses):
-                assert len(addresses) == 1, addresses
-                (publichost, privatehost) = addresses[0]
-                print >>stdout, "The server's public address is %r." % (publichost,)
-
-                retries = 3
-                while True:
-                    try:
-                        install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr)
-                        break
-                    except NotListeningError:
-                        retries -= 1
-                        if retries <= 0:
-                            print >>stdout, "Timed out waiting for EC2 instance to listen for ssh connections."
-                            raise TimeoutError()
-                        print >>stdout, "Waiting another %d seconds..." % (LISTEN_POLL_TIME)
-                        time.sleep(LISTEN_POLL_TIME)
-                        continue
-
-                furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
-                                     producttoken, bucketname, stdout, stderr, secretsfile)
-
-                append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
-
-                d4 = send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
-                def _setup_monitoring(ign):
-                    print >>stdout, "Setting up monitoring..."
-                    notify_zenoss(publichost, zenoss_IP, zenoss_privkey_path)
-                d4.addCallback(_setup_monitoring)
-                return d4
-            d3.addCallback(_got_addresses)
-            return d3
-        d2.addCallback(_deployed)
+        d2.addCallback(lambda ign: deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
+                                                 bucketname, None, amiimageid, instancesize,
+                                                 customer_name, customer_email, customer_keyinfo, stdout, stderr,
+                                                 secretsfile, config, ec2secretpath, clock=myclock))
         return d2
     d.addCallback(_activated)
     d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr))
+    return d
+
+
+def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
+                   secretsfile, logfilename, configpath='../lae_automation_config.json',
+                   ec2secretpath=None, clock=None):
+    config = Config(configpath)
+    useraccesskeyid = oldsecrets['access_key_id']
+    usersecretkey   = oldsecrets['secret_key']
+    usertoken       = oldsecrets['user_token']
+    producttoken    = oldsecrets['product_token']
+    bucketname      = oldsecrets["bucket_name"]
+
+    # hack: customer_keyinfo = None will result in a staff notification rather than an email to the customer.
+    d = deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
+                      bucketname, oldsecrets, amiimageid, instancesize,
+                      "someone", customer_email, None, stdout, stderr,
+                      secretsfile, config, ec2secretpath, clock)
+    d.addErrback(lambda f: send_notify_failure(f, "someone", customer_email, logfilename, stdout, stderr))
     return d

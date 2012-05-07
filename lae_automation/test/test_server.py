@@ -205,5 +205,7 @@ class TestServerModule(TestCase):
                 ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
                 ])
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
-                                 SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, \
-                                 STDOUT, STDERR, MSECRETSFILE)
+                             SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
+                             STDOUT, STDERR, MSECRETSFILE)
+        self._check_all_done()
+
