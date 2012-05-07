@@ -18,7 +18,7 @@ if __name__ == '__main__':
         sys.exit(1)
 
     oldsecretspath = sys.argv[1]
-    oldsecrets = simplejson.loads(oldsecretspath)
+    oldsecrets = simplejson.load(oldsecretspath)
 
     # TODO: ideally these would be in the secrets file.
     amiimageid = sys.argv[2]
