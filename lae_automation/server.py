@@ -325,15 +325,15 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
     write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0440)
     write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0440)
 
+    if oldsecrets:
+        restore_secrets(oldsecrets, stdout, stderr)
+
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
     run('ps -fC tahoe')
     run('netstat -atW')
 
     set_up_reboot(stdout, stderr)
-
-    if oldsecrets:
-        restore_secrets(oldsecrets, stdout, stderr)
 
     introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
     introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
