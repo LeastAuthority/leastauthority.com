@@ -33,6 +33,14 @@ def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, s
                                    POLL_TIME, ADDRESS_WAIT_TIME, stdout, stderr, *instance_ids)
 
 
+def lookup_product(config, productcode):
+    ps = [p for p in config.products if p['product_code'] == productcode]
+    if len(ps) != 1:
+        raise AssertionError("Product code %r matches %d products." % (productcode, len(ps)))
+
+    return ps[0]
+
+
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
            seed, secretsfile, logfilename, configpath='../lae_automation_config.json', ec2secretpath=None,
            clock=None):
@@ -41,11 +49,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
     location = None  # default location for now
-    ps = [p for p in config.products if p['product_code'] == productcode]
-    if len(ps) != 1:
-        raise AssertionError("Product code %r matches %d products." % (productcode, len(ps)))
-
-    product = ps[0]
+    product = lookup_product(config, productcode)
     fullname = product['full_name']
     producttoken = product['product_token']
     amiimageid = product['ami_image_id']
@@ -106,4 +110,69 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
                       "someone", customer_email, None, stdout, stderr,
                       secretsfile, config, ec2secretpath, clock)
     d.addErrback(lambda f: send_notify_failure(f, "someone", customer_email, logfilename, stdout, stderr))
+    return d
+
+
+# TODO: too many args. Consider passing them in a dict.
+def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
+                  bucketname, oldsecrets, amiimageid, instancesize,
+                  customer_name, customer_email, customer_keyinfo, stdout, stderr,
+                  secretsfile, config, ec2secretpath=None, clock=None):
+    ec2secretpath = ec2secretpath or '../ec2secret'
+    myclock = clock or reactor
+
+    ec2accesskeyid = str(config.other['ec2_access_key_id'])
+    ec2secretkey = FilePath(ec2secretpath).getContent().strip()
+
+    instancename = customer_email  # need not be unique
+
+    admin_keypair_name = str(config.other['admin_keypair_name'])
+    admin_privkey_path = str(config.other['admin_privkey_path'])
+    monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
+    monitor_privkey_path = str(config.other['monitor_privkey_path'])
+    zenoss_privkey_path = str(config.other['zenoss_privkey_path'])
+    zenoss_IP = str(config.other['zenoss_IP'])
+
+    d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
+                            instancesize, bucketname, admin_keypair_name, instancename,
+                            stdout, stderr)
+
+    def _deployed(instance):
+        d2 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
+                             ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr,
+                             instance.instance_id)
+
+        def _got_addresses(addresses):
+            assert len(addresses) == 1, addresses
+            (publichost, privatehost) = addresses[0]
+            print >>stdout, "The server's public address is %r." % (publichost,)
+
+            retries = 3
+            while True:
+                try:
+                    install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr)
+                    break
+                except NotListeningError:
+                    retries -= 1
+                    if retries <= 0:
+                        print >>stdout, "Timed out waiting for EC2 instance to listen for ssh connections."
+                        raise TimeoutError()
+                    print >>stdout, "Waiting another %d seconds..." % (LISTEN_POLL_TIME)
+                    time.sleep(LISTEN_POLL_TIME)
+                    continue
+
+            furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
+                                 producttoken, bucketname, oldsecrets, stdout, stderr, secretsfile)
+
+            append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
+
+            d3 = send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
+            def _setup_monitoring(ign):
+                print >>stdout, "Setting up monitoring..."
+                notify_zenoss(publichost, zenoss_IP, zenoss_privkey_path)
+            d3.addCallback(_setup_monitoring)
+            return d3
+        d2.addCallback(_got_addresses)
+        return d2
+    d.addCallback(_deployed)
     return d
