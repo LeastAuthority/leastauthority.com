@@ -104,7 +104,6 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     producttoken    = oldsecrets['product_token']
     bucketname      = oldsecrets["bucket_name"]
 
-    # hack: customer_keyinfo = None will result in a staff notification rather than an email to the customer.
     d = deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                       bucketname, oldsecrets, amiimageid, instancesize,
                       "someone", customer_email, None, stdout, stderr,
@@ -166,7 +165,9 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
 
             append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
 
-            d3 = send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo, stdout, stderr)
+            if not oldsecrets:
+                d3 = send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo,
+                                              stdout, stderr)
             def _setup_monitoring(ign):
                 print >>stdout, "Setting up monitoring..."
                 notify_zenoss(publichost, zenoss_IP, zenoss_privkey_path)
