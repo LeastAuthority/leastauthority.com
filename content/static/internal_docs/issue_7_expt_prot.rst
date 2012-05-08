@@ -114,12 +114,12 @@ Control Run:
  successfully updated 1000 times.
 
  During this run the test script invoking the gateway "put" command emitted
- the following error:
+ the following error one time and success 999 times::
 
   ``On the 109th 'put'. HTTPCODE is Error:. Comm Tuple is ('', 'Error: 500 Internal Server Error\n"Traceback (most recent call last):\\x0aFailure: allmydata.mutable.common.NotEnoughServersError: (\'Publish ran out of good servers, last failure was: [Failure instance: Traceback (failure with no frames): <class \\\\\'foolscap.tokens.RemoteException\\\\\'>: <RemoteException around \\\\\'[CopiedFailure instance: Traceback from remote host -- Traceback (most recent call last):\\\\n  File \\"/usr/local/lib/python2.6/dist-packages/Twisted-11.1.0-py2.6-linux-i686.egg/twisted/internet/tcp.py\\", line 277, in connectionLost\\\\n    protocol.connectionLost(reason)\\\\n  File \\"/usr/local/lib/python2.6/dist-packages/Twisted-11.1.0-py2.6-linux-i686.egg/twisted/web/client.py\\", line 191, in connectionLost\\\\n    self.factory._disconnectedDeferred.callback(None)\\\\n  File \\"/usr/local/lib/python2.6/dist-packages/Twisted-11.1.0-py2.6-linux-i686.egg/twisted/internet/defer.py\\", line 362, in callback\\\\n    self._startRunCallbacks(result)\\\\n  File \\"/usr/local/lib/python2.6/dist-packages/Twisted-11.1.0-py2.6-linux-i686.egg/twisted/internet/defer.py\\", line 458, in _startRunCallbacks\\\\n    self._runCallbacks()\\\\n--- <exception caught here> ---\\\\n  File \\"/usr/local/lib/python2.6/dist-packages/Twisted-11.1.0-py2.6-linux-i686.egg/twisted/internet/defer.py\\", line 545, in _runCallbacks\\\\n    current.result = callback(current.result, *args, **kw)\\\\n  File \\"/home/customer/LAFS_source/src/allmydata/storage/backends/s3/s3_common.py\\", line 98, in <lambda>\\\\n    lambda f2:  _log_and_maybe_reraise(\\"repeated failure: \\", True))\\\\n  File \\"/home/customer/LAFS_source/src/allmydata/storage/backends/s3/s3_common.py\\", line 79, in _log_and_maybe_reraise\\\\n    raise f.value\\\\nallmydata.storage.backends.s3.s3_common.TahoeS3Error: (\\\\\'500\\\\\', \\\\\'500 Internal Server Error\\\\\', \\\\\'<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?>\\\\\\\\n<Error><Code>InternalError</Code><Message>We encountered an internal error. Please try again.</Message><RequestId>48B583860CB8E0D3</RequestId><HostId>bOmdhKOJpGcM7HzZkhZgN52CP92S7GLECdiCU789VLqxJw6ybvOeos7i63eEBe2F</HostId></Error>\\\\\')\\\\n]\\\\\'>\\\\n]\', None)\\x0a"\n').``
 
 
- When I ran it without the retry-once-patch_
+ When I ran it -- again 1000 times -- without the retry-once-patch_, and manually hit C-r in a WUI while it was running, I found three errors. The first and third one appeared in the web browser after C-r. The second one I found in the twistd.log.
 
 Error One:
 ----------
