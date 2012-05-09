@@ -226,12 +226,12 @@ def set_up_reboot(stdout, stderr):
     run('crontab /home/customer/ctab')
 
 
-def record_secrets(publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
+def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
 
-    secretsfile = FilePath('secrets').child(logfilename).open('a+')
-    logfile = FilePath('signup_logs').child(logfilename).open('a+')
+    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+    logfile = basefp.child('signup_logs').child(logfilename).open('a+')
 
     stdout = LoggingTeeStream(raw_stdout, logfile, '>')
     stderr = LoggingTeeStream(raw_stderr, logfile, '')

@@ -32,11 +32,12 @@ def main(stdin, stdout, stderr, seed, secretsfile, logfilename):
         raise
 
 if __name__ == '__main__':
+    basefp = FilePath('..')
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (format_iso_time(time.time()).replace(':', ''), seed)
 
-    secretsfile = FilePath('secrets').child(logfilename).open('a+')
-    logfile = FilePath('signup_logs').child(logfilename).open('a+')
+    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+    logfile = basefp.child('signup_logs').child(logfilename).open('a+')
     stdin = sys.stdin
     stdout = LoggingTeeStream(sys.stdout, logfile, '>')
     stderr = LoggingTeeStream(sys.stderr, logfile, '')
