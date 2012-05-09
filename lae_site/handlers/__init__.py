@@ -16,7 +16,7 @@ def make_site(config):
     resource.putChild('devpay-complete', DevPayPurchaseHandler(config.products))
     resource.putChild('activation-request', ActivationRequestHandler(config.products))
 
-    return Site(resource, logPath="sitelogs")
+    return Site(resource, logPath="../sitelogs")
 
 
 EXPECTED_DOMAIN = 'leastauthority.com'
