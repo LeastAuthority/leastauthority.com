@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import time
-from twisted.internet import reactor, task
+from twisted.internet import defer, reactor, task
 from twisted.python.filepath import FilePath
 
 from lae_automation.config import Config
@@ -165,9 +165,10 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
 
             append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
 
+            d3 = defer.succeed(None)
             if not oldsecrets:
-                d3 = send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo,
-                                              stdout, stderr)
+                d3.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo,
+                                                                    stdout, stderr))
             def _setup_monitoring(ign):
                 print >>stdout, "Setting up monitoring..."
                 notify_zenoss(publichost, zenoss_IP, zenoss_privkey_path)
