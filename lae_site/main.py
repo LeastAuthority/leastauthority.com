@@ -15,7 +15,7 @@ from lae_site.handlers import make_site, make_redirector_site
 from lae_site.handlers.devpay_complete import start
 
 
-def main():
+def main(basefp):
     default_port = 443
     port = None
     ssl_enabled = True
@@ -45,7 +45,7 @@ def main():
         datefmt = '%Y-%m-%dT%H:%M:%S%z',
         )
 
-    site = make_site(FilePath('..'), config)
+    site = make_site(basefp, config)
 
     logging.info('Listening on port %d...' % (port,))
     if ssl_enabled:
@@ -68,12 +68,13 @@ def main():
 
 
 if __name__ == '__main__':
+    basefp = FilePath('..')
     def _err(f):
         print f
         return f
 
-    d = start()
-    d.addCallback(lambda ign: main())
+    d = start(basefp)
+    d.addCallback(lambda ign: main(basefp))
     d.addErrback(_err)
     d.addErrback(lambda ign: os._exit(1))
     reactor.run()
