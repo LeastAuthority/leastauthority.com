@@ -9,14 +9,14 @@ from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
 
 
-def make_site(config):
+def make_site(basefp, config):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
     resource.putChild('signup', SignupHandler(config.products))
-    resource.putChild('devpay-complete', DevPayPurchaseHandler(config.products))
-    resource.putChild('activation-request', ActivationRequestHandler(config.products))
+    resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
+    resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
 
-    return Site(resource, logPath="../sitelogs")
+    return Site(resource, logPath=basefp.child('sitelogs').path)
 
 
 EXPECTED_DOMAIN = 'leastauthority.com'

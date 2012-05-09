@@ -1,5 +1,5 @@
 
-import logging, pprint, sys, os, traceback
+import logging, pprint, sys, traceback
 from urllib import quote
 from cgi import escape as htmlEscape
 
@@ -8,6 +8,12 @@ from twisted.web.server import NOT_DONE_YET
 
 from lae_util.flapp import FlappCommand
 from lae_util.servers import append_record
+
+
+DEVPAY_COMPLETIONS_FILE  = 'devpay_completions.csv'
+ACTIVATION_REQUESTS_FILE = 'activation_requests.csv'
+SIGNUPS_FILE             = 'signups.csv'
+SIGNUP_FURL_FILE         = 'signup.furl'
 
 
 def html(title, body):
@@ -270,8 +276,9 @@ class HandlerBase(Resource):
 
 
 class DevPayPurchaseHandler(HandlerBase):
-    def __init__(self, products, out=None):
+    def __init__(self, basefp, products, out=None):
         HandlerBase.__init__(self, out=out)
+        self.basefp = basefp
         self.products = products
 
     def render(self, request):
@@ -279,7 +286,7 @@ class DevPayPurchaseHandler(HandlerBase):
         activationkey = self.get_arg(request, 'ActivationKey')
         productcode = self.get_arg(request, 'ProductCode')
 
-        append_record("devpay_completions.csv", activationkey, productcode)
+        append_record(self.basefp.child(DEVPAY_COMPLETIONS_FILE), activationkey, productcode)
 
         request.setResponseCode(200)
         if activationkey and productcode:
@@ -322,18 +329,22 @@ flappcommand = None
 all_activationkeys = None
 successful_activationkeys = None
 
-def start():
+def start(basefp):
     global flappcommand, all_activationkeys, successful_activationkeys
 
-    flappcommand = FlappCommand("../signup.furl")
+    signup_furl_fp = basefp.child(SIGNUP_FURL_FILE)
+    activation_requests_fp = basefp.child(ACTIVATION_REQUESTS_FILE)
+    signups_fp = basefp.child(SIGNUPS_FILE)
+
+    flappcommand = FlappCommand(signup_furl_fp.path)
     all_activationkeys = set([])
     successful_activationkeys = set([])
 
     # read the sets of keys
     try:
-        f = open("activation_requests.csv", "r")
+        f = activation_requests_fp.open("r")
     except IOError:
-        if os.path.exists("activation_requests.csv"):
+        if activation_requests_fp.exists():
             raise
     else:
         try:
@@ -346,9 +357,9 @@ def start():
             f.close()
 
     try:
-        f = open("signups.csv", "r")
+        f = signups_fp.open("r")
     except IOError:
-        if os.path.exists("signups.csv"):
+        if signups_fp.exists():
             raise
     else:
         try:
@@ -365,8 +376,9 @@ def start():
 
 
 class ActivationRequestHandler(HandlerBase):
-    def __init__(self, products, out=None):
+    def __init__(self, basefp, products, out=None):
         HandlerBase.__init__(self, out=out)
+        self.basefp = basefp
         self.products = products
 
     def render(self, request):
@@ -378,7 +390,10 @@ class ActivationRequestHandler(HandlerBase):
         productcode = self.get_arg(request, 'ProductCode')
         publickey = self.get_arg(request, 'PublicKey')
 
-        append_record("activation_requests.csv", activationkey, productcode, name, email, publickey)
+        activation_requests_fp = self.basefp.child(ACTIVATION_REQUESTS_FILE)
+        signups_fp = self.basefp.child(SIGNUPS_FILE)
+
+        append_record(activation_requests_fp, activationkey, productcode, name, email, publickey)
 
         request.setResponseCode(200)
 
@@ -414,7 +429,7 @@ class ActivationRequestHandler(HandlerBase):
             try:
                 successful_activationkeys.add(activationkey)
                 all_activationkeys.add(activationkey)
-                append_record("signups.csv", 'success', activationkey, productcode, name, email, publickey)
+                append_record(signups_fp, 'success', activationkey, productcode, name, email, publickey)
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
                 traceback.print_exc(100, stderr)
@@ -426,7 +441,7 @@ class ActivationRequestHandler(HandlerBase):
         def when_failed():
             try:
                 all_activationkeys.add(activationkey)
-                append_record("signups.csv", 'failure', activationkey, productcode, name, email, publickey)
+                append_record(signups_fp, 'failure', activationkey, productcode, name, email, publickey)
             except Exception:
                 traceback.print_exc(100, stderr)
                 request.write(FAILED_HTML)

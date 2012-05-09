@@ -2,6 +2,8 @@
 
 import sys
 
+from twisted.python.filepath import FilePath
+
 from lae_automation.server import record_secrets
 
 

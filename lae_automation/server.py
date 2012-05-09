@@ -6,7 +6,6 @@
 import os, sys, base64, simplejson
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
-from twisted.python.filepath import FilePath
 
 from fabric import api
 from fabric.context_managers import cd

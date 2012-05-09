@@ -8,6 +8,7 @@ mimetypes.add_type("text/plain", ".rst")
 
 
 from twisted.internet import ssl, reactor
+from twisted.python.filepath import FilePath
 
 from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
@@ -44,7 +45,7 @@ def main():
         datefmt = '%Y-%m-%dT%H:%M:%S%z',
         )
 
-    site = make_site(config)
+    site = make_site(FilePath('..'), config)
 
     logging.info('Listening on port %d...' % (port,))
     if ssl_enabled:

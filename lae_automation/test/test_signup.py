@@ -114,10 +114,12 @@ class TestSignupModule(TestCase):
         self.fakeURLs = [adphttprequestheader, verifyhttprequestheader]
         self.mhr_return_values = [adprequestresponse, verifyrequestresponse, describeEC2instresponse]
         self.CONFIGFILEPATH = 'init_test_config.json'
+        self.SERVERINFOPATH = 'mock_serverinfo.csv'
         self.EC2SECRETPATH = 'mock_ec2secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
 
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
+        FilePath(self.SERVERINFOPATH).setContent('')
         FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
         FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
 
@@ -227,6 +229,7 @@ class TestSignupModule(TestCase):
 
     def tearDown(self):
         FilePath(self.CONFIGFILEPATH).remove()
+        FilePath(self.SERVERINFOPATH).remove()
         FilePath(self.EC2SECRETPATH).remove()
 
 
@@ -263,7 +266,7 @@ class TestSignupModule(TestCase):
 
         self.patch(server, 'write', call_write)
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
         return d
 
     def test_no_products(self):
@@ -281,7 +284,7 @@ class TestSignupModule(TestCase):
 
         self.failUnlessRaises(AssertionError, signup.signup,
                               MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                              MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                              MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
 
     def test_timeout_verify(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -300,7 +303,7 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'verify_user_account', call_verify_user_account)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -328,7 +331,7 @@ class TestSignupModule(TestCase):
         self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -356,7 +359,7 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'install_server', call_install_server)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):

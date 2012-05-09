@@ -63,17 +63,18 @@ class MockRequest(object):
 class Handlers(TestCase):
     def setUp(self):
         self.patch(devpay_complete, 'FlappCommand', MockFlappCommand)
-        remove_if_possible(FilePath("activation_requests.csv"))
-        remove_if_possible(FilePath("signups.csv"))
+        self.basefp = FilePath('.')
+        remove_if_possible(self.basefp.child("activation_requests.csv"))
+        remove_if_possible(self.basefp.child("signups.csv"))
 
     def _test_devpaypurchasehandler(self, method):
         out = StringIO()
         config = Config(StringIO(SITE_CONFIG_JSON))
 
-        d = devpay_complete.start()
+        d = devpay_complete.start(self.basefp)
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.DevPayPurchaseHandler(config.products, out=out), method,
-                                         ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"]))
+                      self._mock_request(devpay_complete.DevPayPurchaseHandler(self.basefp, config.products, out=out),
+                                         method, ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"]))
 
         def _finished( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
@@ -94,10 +95,10 @@ class Handlers(TestCase):
         out = StringIO()
         config = Config(StringIO(SITE_CONFIG_JSON))
 
-        d = devpay_complete.start()
+        d = devpay_complete.start(self.basefp)
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
-                                         ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
+                      self._mock_request(devpay_complete.ActivationRequestHandler(self.basefp, config.products, out=out),
+                                         method, ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
 
         def _finished( (req, output) ):
@@ -111,8 +112,8 @@ class Handlers(TestCase):
         d.addCallback(_finished)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
-                                         ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
+                      self._mock_request(devpay_complete.ActivationRequestHandler(self.basefp, config.products, out=out),
+                                         method, ActivationKey=["ACTIVATIONKEY"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
 
         def _finished_again( (req, output) ):
@@ -123,8 +124,8 @@ class Handlers(TestCase):
         d.addCallback(_finished_again)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
-                                         ActivationKey=["ACTIVATIONKEY2"], ProductCode=["PRODUCTCODE"],
+                      self._mock_request(devpay_complete.ActivationRequestHandler(self.basefp, config.products, out=out),
+                                         method, ActivationKey=["ACTIVATIONKEY2"], ProductCode=["PRODUCTCODE"],
                                          Name=[""], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
         def _no_name( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
@@ -136,8 +137,8 @@ class Handlers(TestCase):
         d.addCallback(_no_name)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
-                                         ActivationKey=["ACTIVATIONKEY3"], ProductCode=["PRODUCTCODE"],
+                      self._mock_request(devpay_complete.ActivationRequestHandler(self.basefp, config.products, out=out),
+                                         method, ActivationKey=["ACTIVATIONKEY3"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe&mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
         def _bad_email( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
@@ -149,8 +150,8 @@ class Handlers(TestCase):
         d.addCallback(_bad_email)
 
         d.addCallback(lambda ign:
-                      self._mock_request(devpay_complete.ActivationRequestHandler(config.products, out=out), method,
-                                         ActivationKey=["ACTIVATIONKEY4"], ProductCode=["PRODUCTCODE"],
+                      self._mock_request(devpay_complete.ActivationRequestHandler(self.basefp, config.products, out=out),
+                                         method, ActivationKey=["ACTIVATIONKEY4"], ProductCode=["PRODUCTCODE"],
                                          Name=["Joe & Mildred"], Email=["joe+mildred@example.org"], PublicKey=["===BEGIN BLAH==="]))
         def _finished_error( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)

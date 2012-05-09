@@ -4,6 +4,7 @@ from cStringIO import StringIO
 
 import mock
 
+from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase
 from twisted.web.http import OK, NOT_FOUND
 from twisted.web.server import unquote
@@ -17,7 +18,7 @@ SITE_CONFIG_JSON = """{ "products": [] }"""
 class Site(TestCase):
     def test_site(self):
         config = Config(StringIO(SITE_CONFIG_JSON))
-        site = make_site(config)
+        site = make_site(FilePath('.'), config)
 
         (req, resp) = self._mock_request(site, '/', 'GET')
         req.setResponseCode.assert_called_with(OK)

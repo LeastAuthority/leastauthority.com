@@ -42,8 +42,8 @@ def lookup_product(config, productcode):
 
 
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
-           seed, secretsfile, logfilename, configpath='../lae_automation_config.json', ec2secretpath=None,
-           clock=None):
+           seed, secretsfile, logfilename, configpath='../lae_automation_config.json',
+           serverinfopath=None, ec2secretpath=None, clock=None):
     config = Config(configpath)
     myclock = clock or reactor
 
@@ -87,7 +87,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
         d2.addCallback(lambda ign: deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                                                  bucketname, None, amiimageid, instancesize,
                                                  customer_name, customer_email, customer_keyinfo, stdout, stderr,
-                                                 secretsfile, config, ec2secretpath, clock=myclock))
+                                                 secretsfile, config, serverinfopath, ec2secretpath, clock=myclock))
         return d2
     d.addCallback(_activated)
     d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr))
@@ -96,7 +96,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
                    secretsfile, logfilename, configpath='../lae_automation_config.json',
-                   ec2secretpath=None, clock=None):
+                   serverinfopath=None, ec2secretpath=None, clock=None):
     config = Config(configpath)
     useraccesskeyid = oldsecrets['access_key_id']
     usersecretkey   = oldsecrets['secret_key']
@@ -107,7 +107,7 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     d = deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                       bucketname, oldsecrets, amiimageid, instancesize,
                       "someone", customer_email, None, stdout, stderr,
-                      secretsfile, config, ec2secretpath, clock)
+                      secretsfile, config, serverinfopath, ec2secretpath, clock)
     d.addErrback(lambda f: send_notify_failure(f, "someone", customer_email, logfilename, stdout, stderr))
     return d
 
@@ -116,7 +116,8 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
 def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                   bucketname, oldsecrets, amiimageid, instancesize,
                   customer_name, customer_email, customer_keyinfo, stdout, stderr,
-                  secretsfile, config, ec2secretpath=None, clock=None):
+                  secretsfile, config, serverinfopath=None, ec2secretpath=None, clock=None):
+    serverinfopath = serverinfopath or '../serverinfo.csv'
     ec2secretpath = ec2secretpath or '../ec2secret'
     myclock = clock or reactor
 
@@ -163,7 +164,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
                                  producttoken, bucketname, oldsecrets, stdout, stderr, secretsfile)
 
-            append_record("serverinfo.csv", instance.launch_time, instance.instance_id, publichost)
+            append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id, publichost)
 
             d3 = defer.succeed(None)
             if not oldsecrets:
