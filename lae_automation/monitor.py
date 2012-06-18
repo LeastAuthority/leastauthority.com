@@ -106,15 +106,17 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
 # The format of each line is RECORD_ADDED_TIME,LAUNCH_TIME,INSTANCE_ID,PUBLICHOST
 
 def read_serverinfo(pathtoserverinfo):
-    listofinfostrings = FilePath(pathtoserverinfo).getContent().split('\n')
+    serverinfofp = FilePath(pathtoserverinfo)
+    listofinfostrings = serverinfofp.getContent().split('\n')
     listofinfotuples = [infostring.split(',')[1:] for infostring in listofinfostrings if infostring]
     return listofinfotuples
 
 
 def write_serverinfo(pathtoserverinfo, remotepropstuplelist):
-    open(pathtoserverinfo, "w").close()
+    serverinfofp = FilePath(pathtoserverinfo)
+    serverinfofp.setContent("")
     for rpt in remotepropstuplelist:
-        append_record(pathtoserverinfo, rpt[0], rpt[1], pubIPextractor(rpt[2]))
+        append_record(serverinfofp, rpt[0], rpt[1], pubIPextractor(rpt[2]))
 
 
 MONITORING_EMAIL_SUBJECT = "Least Authority Enterprises monitoring report"
