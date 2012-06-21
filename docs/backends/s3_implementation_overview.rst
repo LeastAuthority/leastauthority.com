@@ -7,8 +7,8 @@ Pluggable Backends
 .. _S3: ../../src/allmydata/storage/s3/s3_backend.py
 
 The basic pattern is to provide a `substrate agnostic interface`_ to the
-`StorageServer`_ by which it handles queries to the storage
-backend. As of this writing the extant backends are:
+`StorageServer`_ by which it (the `StorageServer`_) handles queries to the
+storage backend. As of this writing the extant backends are:
 
 (1) `disk`_
 
@@ -24,8 +24,8 @@ ShareSet Prefixes:
 
 When a ShareSet is uploaded the storage index (a XXXbit pseudo-random number)
 is used as a template to generate a probabilistically "balanced" directory
-structure.  The purpose of this process to facilitate  subsequent look-ups of
-the resource.  
+structure.  The purpose of this process is to facilitate subsequent look-ups
+of the resource.
 
 Concretely the first two characters in the base32 encoded string
 (StorageIndex) are used to either generate a new directory, or reference one
@@ -37,10 +37,10 @@ arbitrary-yet-deterministic subdirectory.
 The effect is that ShareSets are partitioned into no more than 1024 bins, a
 tractable number for subsequent lookups (at least on current-and-tested systems).
 
-This notion of "prefix" is specific to LAFS.  Unfortunately it's not quite
-orthogonal to the notion of an S3 prefix (S3 prefixes *contain* LAFS
-prefixes), but the relationship is incidental and the two notions should be
-treated independently where possible.
+This notion of "prefix" is specific to LAFS.  It's not quite orthogonal to
+the notion of an S3 prefix (S3 prefixes *contain* LAFS prefixes), but the
+relationship is incidental and the two notions should be treated
+independently where possible.
 
 S3 Prefixes:
 ~~~~~~~~~~~~
