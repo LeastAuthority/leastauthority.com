@@ -21,8 +21,8 @@ POLL_TIME = 30
 # credit card verification might take 15 minutes, so wait 20.
 CC_VERIFICATION_TIME = 20 * 60
 
-# wait 40 seconds before the first poll, then up to 5 minutes for the addresses.
-ADDRESS_DELAY_TIME = 40
+# wait 75 seconds before the first poll, then up to 5 minutes for the addresses.
+ADDRESS_DELAY_TIME = 75
 ADDRESS_WAIT_TIME = 5 * 60
 
 LISTEN_RETRIES = 5
@@ -139,6 +139,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                             stdout, stderr)
 
     def _deployed(instance):
+        print >>stdout, "Waiting %d seconds for the server to be ready..." % (ADDRESS_DELAY_TIME,)
         d2 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
                              ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr,
                              instance.instance_id)
