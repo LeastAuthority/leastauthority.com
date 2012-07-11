@@ -32,6 +32,6 @@ try:
         install_server(publicip, ec2_privkey_path, monitor_pubkey, monitor_privkey_path, sys.stdout, sys.stderr)
 
     bounce_server(publicip, ec2_privkey_path, privateip, useraccesskeyid, usersecretkey, usertoken, producttoken, bucketname,
-                  sys.stdout, sys.stderr, secretsfile)
+                  None, sys.stdout, sys.stderr, secretsfile)
 finally:
     secretsfile.close()
