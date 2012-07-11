@@ -30,7 +30,7 @@ configpath = sys.argv[12]
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
-secretsfile = open(secretspath, 'a+')
+secretsfile = open(secretspath, 'a')
 
 def cb(x):
     secretsfile.close()
