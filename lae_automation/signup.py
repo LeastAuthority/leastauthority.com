@@ -21,8 +21,8 @@ POLL_TIME = 30
 # credit card verification might take 15 minutes, so wait 20.
 CC_VERIFICATION_TIME = 20 * 60
 
-# wait 20 seconds before the first poll, then up to 5 minutes for the addresses.
-ADDRESS_DELAY_TIME = 20
+# wait 40 seconds before the first poll, then up to 5 minutes for the addresses.
+ADDRESS_DELAY_TIME = 40
 ADDRESS_WAIT_TIME = 5 * 60
 
 LISTEN_RETRIES = 5
