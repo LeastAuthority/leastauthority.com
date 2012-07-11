@@ -10,7 +10,7 @@ from lae_automation.signup import deploy_server
 
 
 if len(sys.argv) < 13:
-    print "Usage: python deploy_server.py ACCESS_KEY_ID SECRET_KEY USER_TOKEN PRODUCT_TOKEN BUCKET_NAME AMI_IMAGE_ID INSTANCE_SIZE CUSTOMER_NAME CUSTOMER_EMAIL CUSTOMER_KEYINFO SECRETS_FILE CONFIG_PATH"
+    print "Usage: python deploy_server.py ACCESS_KEY_ID SECRET_KEY USER_TOKEN PRODUCT_TOKEN BUCKET_NAME AMI_IMAGE_ID INSTANCE_SIZE CUSTOMER_NAME CUSTOMER_EMAIL CUSTOMER_KEYINFO SECRETS_PATH CONFIG_PATH"
     print "Happy server-deploying!"
     sys.exit(1)
 
@@ -24,13 +24,16 @@ instancesize = sys.argv[7]
 customer_name = sys.argv[8]
 customer_email = sys.argv[9]
 customer_keyinfo = sys.argv[10]
-secretsfile = sys.argv[11]
+secretspath = sys.argv[11]
 configpath = sys.argv[12]
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
+secretsfile = open(secretspath, 'a+')
+
 def cb(x):
+    secretsfile.close()
     print str(x)
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
