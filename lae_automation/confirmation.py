@@ -69,7 +69,7 @@ SMTP_HOST = "smtp.googlemail.com"
 SMTP_PORT = 25
 SMTP_USERNAME = FROM_EMAIL
 
-NOTIFY_FAILURE_EMAIL = "info@leastauthority.com"
+NOTIFY_FAILURE_EMAIL = "support@leastauthority.com"
 
 PGP_NOTIFICATION_EMAIL = "davidsarah@leastauthority.com"
 
@@ -144,7 +144,7 @@ def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, s
         print >>stdout, "Failure notification sent for the following error:"
     def _error(emailf):
         print >>stdout, "A failure notification could not be sent."
-        print >>stdout, "Contacting <info@leastauthority.com> yourself may help to resolve this problem more quickly:"
+        print >>stdout, "Contacting <%s> yourself may help to resolve this problem more quickly:" % (NOTIFY_FAILURE_EMAIL,)
         print >>stderr, str(emailf)
     d.addCallbacks(_sent, _error)
     # return the original failure
