@@ -21,11 +21,12 @@ POLL_TIME = 30
 # credit card verification might take 15 minutes, so wait 20.
 CC_VERIFICATION_TIME = 20 * 60
 
-# wait 10 seconds before the first poll, then up to 5 minutes for the addresses.
-ADDRESS_DELAY_TIME = 10
+# wait 20 seconds before the first poll, then up to 5 minutes for the addresses.
+ADDRESS_DELAY_TIME = 20
 ADDRESS_WAIT_TIME = 5 * 60
 
-LISTEN_POLL_TIME = 10
+LISTEN_RETRIES = 5
+LISTEN_POLL_TIME = 15
 
 
 def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, *instance_ids):
@@ -147,7 +148,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             (publichost, privatehost) = addresses[0]
             print >>stdout, "The server's public address is %r." % (publichost,)
 
-            retries = 3
+            retries = LISTEN_RETRIES
             while True:
                 try:
                     install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr)
