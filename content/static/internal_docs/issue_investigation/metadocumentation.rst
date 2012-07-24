@@ -17,5 +17,7 @@ deliverable', I push this repository to the remote repository at:
 ``theta.leastauthority.com:/home/zancas/repos/workbench_docs`` .
 
 When documentation reaches a review-ready state (i.e. me re-reading it is
-producing diminishing returns) I "``darcs record``" the above repository, and
-pull that patch into "staging". 
+producing diminishing returns) I run ``git pull`` in staging.  This pulls
+from ``/home/zancas/repos/workbench_docs`` .
+
+I then "``darcs add``" new files and "``darcs record``" in staging.
