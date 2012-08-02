@@ -1,0 +1,226 @@
+1 patch for repository tahoe-lafs.org:/home/source/darcs/tahoe-lafs/ticket999-S3-backend:
+
+Fri Jun 29 04:17:45 BST 2012  david-sarah@jacaranda.org
+  * Reverse the change to use S3 prefix queries. For testing only.
+
+New patches:
+
+[Reverse the change to use S3 prefix queries. For testing only.
+david-sarah@jacaranda.org**20120629031745
+ Ignore-this: e56e50ef410f2989288ccc3c144efd2f
+] {
+hunk ./src/allmydata/storage/backends/s3/mock_s3.py 5
+ from twisted.internet import defer
+ from twisted.web.error import Error
+ 
+-from foolscap.logging import log
+-
+ from zope.interface import implements
+ from allmydata.storage.backends.s3.s3_common import IS3Bucket, S3BucketMixin
+ from allmydata.util.time_format import iso_utc
+hunk ./src/allmydata/storage/backends/s3/mock_s3.py 21
+     return S3Backend(s3bucket, corruption_advisory_dir)
+ 
+ 
++MAX_KEYS = 1000
++
+ class MockS3Bucket(S3BucketMixin):
+     implements(IS3Bucket)
+     """
+hunk ./src/allmydata/storage/backends/s3/mock_s3.py 56
+                     shnumstr = sharefp.basename()
+                     yield (sharefp, "%s/%s" % (sikey, shnumstr))
+ 
+-    def _list_objects(self, prefix='', max_keys=1000):
++    def _list_all_objects(self):
+         contents = []
+         def _next_share(res):
+             if res is None:
+hunk ./src/allmydata/storage/backends/s3/mock_s3.py 62
+                 return
+             (sharefp, sharekey) = res
+-            if sharekey.startswith(prefix):
+-                mtime_utc = iso_utc(sharefp.getmtime(), sep=' ')+'+00:00'
+-                item = BucketItem(key=sharekey, modification_date=mtime_utc, etag="",
+-                                  size=sharefp.getsize(), storage_class="STANDARD")
+-                contents.append(item)
+-            return len(contents) < max_keys
++            mtime_utc = iso_utc(sharefp.getmtime(), sep=' ')+'+00:00'
++            item = BucketItem(key=sharekey, modification_date=mtime_utc, etag="",
++                              size=sharefp.getsize(), storage_class="STANDARD")
++            contents.append(item)
++            return len(contents) < MAX_KEYS
+ 
+         d = async_iterate(_next_share, self._iterate_dirs())
+         def _done(completed):
+hunk ./src/allmydata/storage/backends/s3/mock_s3.py 71
+             contents.sort(key=lambda item: item.key)
+-            return BucketListing(self.bucketname, '', '', max_keys,
++            return BucketListing(self.bucketname, '', '', MAX_KEYS,
+                                  is_truncated=str(not completed).lower(), contents=contents)
+         d.addCallback(_done)
+         return d
+hunk ./src/allmydata/storage/backends/s3/mock_s3.py 112
+     def delete(self):
+         return self._do_aws('delete bucket', self._delete)
+ 
+-    def list_objects(self, **kwargs):
+-        d = self._do_aws('list objects', self._list_objects, **kwargs)
+-        def _log(res):
+-            if res.is_truncated != 'false':
+-                log.msg(format="truncated %(truncated)r get_bucket response (%(numobjects)d objects)",
+-                        truncated=res.is_truncated, numobjects=len(res.contents), level=log.WEIRD)
+-            return res
+-        d.addCallback(_log)
+-        return d
++    def list_all_objects(self):
++        return self._do_aws('list objects', self._list_all_objects)
+ 
+     def put_object(self, object_name, data, content_type=None, metadata={}):
+         return self._do_aws('PUT object', self._put_object, object_name, data, content_type, metadata)
+hunk ./src/allmydata/storage/backends/s3/s3_backend.py 12
+ from allmydata.storage.backends.base import Backend, ShareSet
+ from allmydata.storage.backends.s3.immutable import ImmutableS3ShareForReading, ImmutableS3ShareForWriting
+ from allmydata.storage.backends.s3.mutable import load_mutable_s3_share, create_mutable_s3_share
+-from allmydata.storage.backends.s3.s3_common import get_s3_share_key, NUM_RE
++from allmydata.storage.backends.s3.s3_common import get_s3_share_key, list_objects, NUM_RE
+ from allmydata.mutable.layout import MUTABLE_MAGIC
+ 
+ 
+hunk ./src/allmydata/storage/backends/s3/s3_backend.py 65
+         self._incomingset = set()
+ 
+     def get_sharesets_for_prefix(self, prefix):
+-        d = self._s3bucket.list_objects(prefix='shares/%s/' % (prefix,))
++        d = list_objects(self._s3bucket, 'shares/%s/' % (prefix,))
+         def _get_sharesets(res):
+             # XXX this enumerates all shares to get the set of SIs.
+             # Is there a way to enumerate SIs more efficiently?
+hunk ./src/allmydata/storage/backends/s3/s3_backend.py 110
+         return 0
+ 
+     def get_shares(self):
+-        d = self._s3bucket.list_objects(prefix=self._key)
++        d = list_objects(self._s3bucket, self._key)
+         def _get_shares(res):
+             si = self.get_storage_index()
+             shnums = []
+hunk ./src/allmydata/storage/backends/s3/s3_bucket.py 2
+ 
+-from foolscap.logging import log
+-
+ from zope.interface import implements
+ from allmydata.storage.backends.s3.s3_common import IS3Bucket, S3BucketMixin
+ 
+hunk ./src/allmydata/storage/backends/s3/s3_bucket.py 50
+     def delete(self):
+         return self._do_aws('delete bucket', self.client.delete, self.bucketname)
+ 
+-    def list_objects(self, **kwargs):
+-        d = self._do_aws('list objects', self.client.get_bucket, self.bucketname, **kwargs)
+-        def _log(res):
+-            if res.is_truncated != 'false':
+-                log.msg(format="truncated %(truncated)r get_bucket response (%(numobjects)d objects)",
+-                        truncated=res.is_truncated, numobjects=len(res.contents), level=log.WEIRD)
+-            return res
+-        d.addCallback(_log)
+-        return d
++    # We want to be able to do prefix queries, but txaws 0.2 doesn't implement that.
++    def list_all_objects(self):
++        return self._do_aws('list objects', self.client.get_bucket, self.bucketname)
+ 
+     def put_object(self, object_name, data, content_type='application/octet-stream', metadata={}):
+         return self._do_aws('PUT object', self.client.put_object, self.bucketname,
+hunk ./src/allmydata/storage/backends/s3/s3_common.py 21
+     else:
+         return "shares/%s/%s/%d" % (sistr[:2], sistr, shnum)
+ 
++def list_objects(s3bucket, prefix, marker='/'):
++    # XXX we want to be able to implement this in terms of a prefix query. Fake it for now.
++    #d = self._s3bucket.list_objects('shares/%s/' % (prefix,), marker)
++    d = s3bucket.list_all_objects()
++    def _filter(res):
++        if res.is_truncated != 'false':
++            log.msg(format="truncated get_bucket response (%(num)d objects)", num=len(res.contents), level=log.WEIRD)
++        res.contents = [item for item in res.contents if item.key.startswith(prefix)]
++        return res
++    d.addCallback(_filter)
++    return d
++
+ NUM_RE=re.compile("^[0-9]+$")
+ 
+ 
+hunk ./src/allmydata/storage/backends/s3/s3_common.py 51
+         The bucket must be empty before it can be deleted.
+         """
+ 
+-    def list_objects(**kwargs):
++    def list_all_objects():
+         """
+         Get a BucketListing that lists all the objects in this bucket.
+         """
+hunk ./src/allmydata/test/test_storage.py 22
+ from allmydata.storage.backends.disk.disk_backend import DiskBackend
+ from allmydata.storage.backends.disk.immutable import load_immutable_disk_share, create_immutable_disk_share
+ from allmydata.storage.backends.disk.mutable import MutableDiskShare
++from allmydata.storage.backends.s3 import s3_common
+ from allmydata.storage.backends.s3.s3_backend import S3Backend
+hunk ./src/allmydata/test/test_storage.py 24
+-from allmydata.storage.backends.s3 import mock_s3, s3_common
+ from allmydata.storage.backends.s3.mock_s3 import MockS3Bucket, MockS3Error, BucketListing
+ from allmydata.storage.bucket import BucketWriter, BucketReader
+ from allmydata.storage.common import DataTooLargeError, UnknownContainerVersionError, \
+hunk ./src/allmydata/test/test_storage.py 380
+ 
+ 
+ class S3Common(unittest.TestCase):
+-    def workdir(self, name):
+-        return FilePath("storage").child(self.__class__.__name__).child(name)
+-
+     def test_list_objects_truncated(self):
+         # A truncated bucket listing should cause an incident.
+hunk ./src/allmydata/test/test_storage.py 382
+-        basedir = self.workdir("test_list_objects_truncated")
+-        basedir.makedirs()
+ 
+hunk ./src/allmydata/test/test_storage.py 383
+-        class MockBucket(MockS3Bucket):
+-            def _list_objects(self, prefix=''):
+-                return defer.succeed(BucketListing("bucket", "", "", 0, True, contents=[]))
++        class MockBucket(object):
++            def list_all_objects(self):
++                return defer.succeed(BucketListing("bucket", "", "/", 0, True, contents=[]))
+ 
+         s = {"level": 0}
+         def call_log_msg(*args, **kwargs):
+hunk ./src/allmydata/test/test_storage.py 390
+             s["level"] = max(s["level"], kwargs["level"])
+-        self.patch(mock_s3.log, 'msg', call_log_msg)
++        self.patch(s3_common.log, 'msg', call_log_msg)
+ 
+hunk ./src/allmydata/test/test_storage.py 392
+-        bucket = MockBucket(basedir)
+-        d = bucket.list_objects(prefix="")
++        d = s3_common.list_objects(MockBucket(), "")
+         d.addCallback(lambda ign: self.failUnless(s["level"] >= WEIRD, s["level"]))
+         return d
+ 
+hunk ./src/allmydata/test/test_storage.py 1339
+             level = kwargs.get("level", OPERATIONAL)
+             if level > OPERATIONAL:
+                 levels.append(level)
+-        self.patch(mock_s3.log, 'msg', call_log_msg)
++        self.patch(s3_common.log, 'msg', call_log_msg)
+ 
+         ss = self.create("test_s3_errors")
+ 
+}
+
+Context:
+
+[TAG allmydata-tahoe-1.9.1.dev1
+david-sarah@jacaranda.org**20120522033928
+ Ignore-this: 3df82d8713cfe8f6a8245250c0d49b60
+] 
+Patch bundle hash:
+e331ae8a91634c6f77ae9b3d965b8ebd45dd38ff
