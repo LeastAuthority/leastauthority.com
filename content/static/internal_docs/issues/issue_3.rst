@@ -36,15 +36,15 @@ servers. When we do deploy it we'll update this issue report.
 further issue -- large mutable files
 ====================================
 
-Even in the Cloud Backend which processes immutable objects in a streaming
-fashion, mutable objects are still processed all at once. Therefore large
-mutable objects still will not work. Typical usage of Tahoe-LAFS (e.g. using
-the "tahoe backup" command) uses immutable files for everything except for
-some directories, and directories are usually not that large, so under such
-usage the limitation of the size of mutables will not interfere.
+Even the Cloud Backend, which processes immutable objects in a streaming
+fashion, processes mutable objects all at once. Therefore large mutable
+objects still will not work. Typical usage of Tahoe-LAFS (e.g. using the
+"tahoe backup" command) uses immutable files for everything except for some
+directories, and directories are usually not that large, so under such usage
+the limitation of the size of mutables will not interfere.
 
 Fixing this is somewhat involved, for compatibility reasons and because if
 the upload were to be interrupted, the partially uploaded file could be left
-corrupted. In the future, we intend to develop an improvement to Tahoe-LAFS
-(along with the other Tahoe-LAFS hackers), involving an end-to-end
+corrupted. In the future, we intend (with the other Tahoe-LAFS hackers) to
+develop an improvement to Tahoe-LAFS involving an end-to-end
 two-phase-commit.
