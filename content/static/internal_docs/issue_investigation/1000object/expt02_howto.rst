@@ -1,3 +1,5 @@
+The protocol for the >1000 object experiment, by: Zancas De Araña
+
 To run this experiment you need a "Client", and an S3-backed "Storage
 Server".  I ran this experiment with the S3-backed Storage Server running on
 an AWS EC2, but it should be possible to replicate the experiment with the
@@ -243,7 +245,8 @@ objects.
 
 I'm puzzled about the behavior of ``GET`` requests to over-1000 object
 buckets though, as I would have expected *all* requests to generate
-``truncate get_bucket reponses``'s.
+``truncate get_bucket responses``'s, and subsequently fail (unless they fail
+before even getting the truncated response).
 
 
 Simulation of Backup [#]_:
