@@ -54,3 +54,11 @@ We deployed the multi-retry patch to all customer storage servers. If you
 were having failures using the Tahoe-LAFS-on-S3 service due to this problem,
 those failures are probably.  Please try again and let us know (by emailing
 support@leastauthority.com) if it works for you now.
+
+lab notebook
+============
+
+For complete details, see the `issue 1 lab notebook`_ that Zancas kept when
+performing this investigation.
+
+.. _issue 1 lab notebook: issue_investigation/5xx_retry/expt01_howto.rst
