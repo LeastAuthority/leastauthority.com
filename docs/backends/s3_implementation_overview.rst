@@ -68,6 +68,7 @@ txaws methods) to S3.
 get_sharesets_for_prefix
 ''''''''''''''''''''''''
 
+.. _the "prefix" patch: https://tahoe-lafs.org/trac/tahoe-lafs/changeset/20120308035637-93fa1-91de31882b6b213ccc6cf9b21bcc60c00548b722/ticket999-S3-backend
 .. _s3_backend.S3Backend.get_sharesets_for_prefix: ../../src/allmydata/storage/s3/s3_backend.py
 .. _s3_bucket.S3Bucket.list_objects: ../../src/allmydata/storage/s3/s3_bucket.py
 
@@ -86,6 +87,8 @@ approached as each of the 1024 (possible) subdirectories is filled, so we can
 expect to not request more than 1000 objects until about 1,024,000 distinct
 shares have been stored in the bucket.
 
+This behavior was not changed by `the "prefix" patch`_ that stimulated this document.
+ 
 get_shares
 ''''''''''
 
@@ -94,7 +97,7 @@ get_shares
 The `s3_backend.get_S3ShareSet.get_shares`_ method also calls the
 `s3_bucket.S3Bucket.list_objects`_ method with a string, but of the form
 ``shares/AB/ABXXX``, this prefix guarantees that at most 255 objects are
-returned by the call.
+returned by the call.  This call *is* affected by `the "prefix" patch`_.
 
 Experimental Setup
 ------------------
@@ -104,4 +107,3 @@ believe it is sufficient to remove the ``prefix`` arguments from the calls
 described above.
 
 .. [1] The get_sharesets_for_prefix method of the S3_backend is only invoked by crawlers.
-
