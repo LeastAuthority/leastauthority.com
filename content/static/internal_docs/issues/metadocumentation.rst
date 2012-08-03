@@ -3,7 +3,7 @@ How Documents Get From Za to LAE Staging
 
 On my laptop there's a single git repository rooted at:
 
-``/home/arc/pyvirtenvs/source/leastauthority.com/content/static/internal_docs/issue_investigation/``
+``/home/arc/pyvirtenvs/source/leastauthority.com/content/static/internal_docs/issues/``
 
 It contains 2 branches "``master``" and "``working``".
 
