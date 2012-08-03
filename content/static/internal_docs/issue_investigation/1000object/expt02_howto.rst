@@ -61,7 +61,7 @@ Set the repository to the Control state:
 ----------------------------------------
  
 .. _reverse patch: ./reverse-prefix-change.darcs.patch
-.. _the state it was in when I ran this experiment: https://tahoe-lafs.org/trac/tahoe-lafs/browser/ticket999-S3-backend
+.. _the state it was in when I ran this experiment:  https://github.com/zancas/1000objexpt/commit/0fa18645e6b83f8cd278ed20fc648eaceaeb90d7
 
 In the future, of course, the source code will not be in `the state it was in
 when I ran this experiment`_.  To reproduce the experiment, the code must be
@@ -111,7 +111,7 @@ to Prepopulate using this method, so start at the beginning of this doc!
 Set the repository to the Case state:
 ---------------------------------------
 
-.. _same production version: https://tahoe-lafs.org/trac/tahoe-lafs/browser/ticket999-S3-backend
+.. _same production version: https://github.com/zancas/1000objexpt/tree/0fa18645e6b83f8cd278ed20fc648eaceaeb90d7
 
 NOTE:  You probably don't want to set the source code to this (The Case)
 state unless you've already run the experiment in the Control state. You
@@ -300,7 +300,7 @@ the 100 trials I ran!  QED Have a nice day.
 
 .. _timefilter.sh: ./timefilter.sh
 
-.. _the prefix query patch: https://tahoe-lafs.org/trac/tahoe-lafs/changeset/5634/ticket999-S3-backend
+.. _the prefix query patch: https://github.com/zancas/1000objexpt/commit/a47b84b8a9406cfcbddd48304a38a85cc3c6e69c
 
 .. [#] I git pulled from ``git://github.com/warner/tahoe-lafs`` at 1343089833 which yielded version: "``allmydata-tahoe: 1.9.0.post163``"
 
