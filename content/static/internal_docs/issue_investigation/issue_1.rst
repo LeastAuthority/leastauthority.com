@@ -41,11 +41,11 @@ satisfied. Red dots indicate that the request had to be retried at least
 once. The green triangle indicates the worst -- the longest round-trip time
 -- request out of the 10,000 requests.
 
-.. figure:: issue_1-rttimes.png
-   :width: 800px
+.. figure:: 5xx_retry/issue_1-rttimes.png
+   :width: 600px
    :figwidth: image
 
-   round trip times of 10,000 successive requests
+   figure 1: Round trip times of 10,000 successive requests
 
 fix
 ===
@@ -61,4 +61,4 @@ lab notebook
 For complete details, see the `issue 1 lab notebook`_ that Zancas Wilcox kept
 when performing this investigation.
 
-.. _issue 1 lab notebook: issue_investigation/5xx_retry/expt01_howto.rst
+.. _issue 1 lab notebook: 5xx_retry/
