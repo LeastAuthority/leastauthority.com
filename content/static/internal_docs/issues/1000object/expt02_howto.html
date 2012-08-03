@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.6: http://docutils.sourceforge.net/" />
+<title></title>
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 5951 2009-05-18 18:03:10Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left{
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: left }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document">
+
+
+<p>The protocol for the &gt;1000 object experiment, by: Zancas De Araña</p>
+<p>To run this experiment you need a &quot;Client&quot;, and an S3-backed &quot;Storage
+Server&quot;.  I ran this experiment with the S3-backed Storage Server running on
+an AWS EC2, but it should be possible to replicate the experiment with the
+Storage Server running on any appropriately configured machine.</p>
+<div class="section" id="test-client-setup">
+<h1>Test Client Setup:</h1>
+<p>To set up a running instance of Tahoe-LAFS <a class="footnote-reference" href="#id5" id="id1">[1]</a> <a class="reference external" href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/quickstart.rst">follow these instructions</a>.
+I refer to the resultant Client instance of Tahoe as a &quot;Gateway&quot;, i.e. a
+Tahoe node that functions as a portal to other nodes, but does not itself
+provide storage.  A typical (and optimally secure) setup is to run the
+Gateway as a local service on the machine most proximal to the User, other
+configurations are possible...</p>
+<p>I assume you successfully configure your Gateway's <tt class="docutils literal">tahoe.cfg</tt> file, per these
+<a class="reference external" href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/configuration.rst#client-configuration">configuration-instructions</a>.</p>
+</div>
+<div class="section" id="test-hostec2-setup">
+<h1>Test HostEC2 Setup:</h1>
+<p>I refer to the EC2 used in the experiment as a &quot;HostEC2&quot; because its function is
+to host a Tahoe Storage Server. The modifier &quot;Test&quot; distinguishes the EC2
+instance from production EC2s, in particular the expected lifespan of this EC2
+is approximately equal to the duration of the experiment.</p>
+<p>The following assumes that the experimenter will <em>not</em> be monitoring in real
+time, if you are monitoring in real time, then the <tt class="docutils literal"><span class="pre">--quiet</span></tt> option is
+unnecessary.  You will probably also be interested in the setup described in
+<a class="reference external" href="../realtimemonitoring_howto.html">the realtime monitoring howto</a>.</p>
+<div class="section" id="prepare-and-access-the-test-hostec2">
+<h2>Prepare and Access the Test HostEC2:</h2>
+<ol class="arabic">
+<li><p class="first">Setup the Host EC2 per <a class="reference external" href="https://leastauthority.com/signup/">these instructions</a>, in particular following the product specific link will result in the launch of a configured Host EC2.</p>
+</li>
+<li><dl class="first docutils">
+<dt>Access the Host EC2 (if you purchased LAE's services we'll need to make some arrangement to provide ssh access):</dt>
+<dd><p class="first last"><tt class="docutils literal">ssh <span class="pre">-i</span> EC2ADMINSSHPRIVKEYFILE.pem ubuntu&#64;PUBIP_OF_TESTEC2</tt> <a class="footnote-reference" href="#id6" id="id2">[2]</a></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Set background to default state:</dt>
+<dd><p class="first last"><tt class="docutils literal">sudo <span class="pre">apt-get</span> update &amp;&amp; sudo <span class="pre">apt-get</span> upgrade <span class="pre">-y</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Install <tt class="docutils literal">git</tt>:</dt>
+<dd><p class="first last"><tt class="docutils literal">sudo <span class="pre">apt-get</span> install <span class="pre">-y</span> <span class="pre">git-core</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Restart the server (some upgrades might have necessitated this):</dt>
+<dd><p class="first last"><tt class="docutils literal">sudo shutdown <span class="pre">-r</span> now</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Access the Host EC2, as &quot;customer&quot;:</dt>
+<dd><p class="first last"><tt class="docutils literal">ssh <span class="pre">-i</span> EC2ADMINSSHPRIVKEYFILE.pem customer&#64;PUBIP_OF_TESTEC2</tt></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="set-the-repository-to-the-control-state">
+<h2>Set the repository to the Control state:</h2>
+<p>In the future, of course, the source code will not be in <a class="reference external" href="https://github.com/zancas/1000objexpt/commit/0fa18645e6b83f8cd278ed20fc648eaceaeb90d7">the state it was in
+when I ran this experiment</a>.  To reproduce the experiment, the code must be
+returned to its state at the time of the experiment.</p>
+<p>Because production Host EC2's have storage servers installed via <tt class="docutils literal">darcs</tt> (at
+the time of this writing), and because <tt class="docutils literal">git</tt> provides a strong assurance
+that the data it manages is in a certain state, it was necessary to replace
+the default LAF_source repository.</p>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>Start in the right spot (all in the context of the Test Host EC2):</dt>
+<dd><p class="first last"><tt class="docutils literal">cd /home/customer</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Move the default repo out of the way:</dt>
+<dd><p class="first last"><tt class="docutils literal">mv /home/customer/LAFS_source /home/customer/defaultsourcebackup</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Use <tt class="docutils literal">git</tt> to obtain the Control Code (note the &quot;--branch control&quot; option is essential):</dt>
+<dd><p class="first last"><tt class="docutils literal">git clone <span class="pre">--branch</span> control <span class="pre">https://github.com/zancas/1000objexpt.git</span> /home/customer/LAFS_source</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Build tahoe:</dt>
+<dd><p class="first last"><tt class="docutils literal">cd /home/customer/LAFS_source/ &amp;&amp; python ./setup.py build | tee controlbuildlog_`date +%s`</tt></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="prepopulate-the-s3-bucket">
+<h2>Prepopulate the S3 Bucket:</h2>
+<p>The hypothesis being tested is that an excess of 1000 objects in the S3
+bucket is causing the S3 interface to return truncated query responses.  To
+test this hypothesis we need a bucket with an excess of 1000 objects in it!</p>
+<p>To generate this bucket:</p>
+<p>(1) run <a class="reference external" href="./makebackupcore.py">makebackupcore.py</a> which generates 2000 files each of which is
+slightly larger than 55 bytes, i.e. 56 or more (but not a lot more) bytes, in
+a local directory.</p>
+<p>(2) Follow the directions <a class="reference external" href="https://leastauthority.com/howtoconfigure">here</a> to upload these files to the grid as
+immutables, where &quot;DIRECTORY_TO_BACKUP&quot; is &quot;<tt class="docutils literal">filesfilestoprepopulatewith</tt>&quot; as
+specified in <a class="reference external" href="./makebackupcore.py">makebackupcore.py</a>.</p>
+<p>NOTE:  You need a running EC2 with the Control source code installed and a Gateway
+to Prepopulate using this method, so start at the beginning of this doc!</p>
+</div>
+<div class="section" id="set-the-repository-to-the-case-state">
+<h2>Set the repository to the Case state:</h2>
+<p>NOTE:  You probably don't want to set the source code to this (The Case)
+state unless you've already run the experiment in the Control state. You
+also probably want to prepopulate the S3 Bucket before setting the repository
+to this state!</p>
+<p>The Control repository contains <a class="reference external" href="https://github.com/zancas/1000objexpt/commit/a47b84b8a9406cfcbddd48304a38a85cc3c6e69c">the prefix query patch</a>, functionality
+which ensures that requests for objects from S3 buckets are constrained to a
+named subset of all objects in the bucket.  As currently implemented the
+prefix query patch specifies a complete storage index, which in the S3 backed
+implementation of Tahoe being used by LAE always maps to a single S3 bucket object.</p>
+<p>The Case repository is the <a class="reference external" href="https://github.com/zancas/1000objexpt/tree/0fa18645e6b83f8cd278ed20fc648eaceaeb90d7">same production version</a> as Control with the
+&quot;<a class="reference external" href="./reverse-prefix-change.darcs.patch">reverse patch</a>&quot; applied.  This version of the code is referred to by the
+&quot;case&quot; branch on the github repository.  The following procedure assumes the
+context set in the &quot;<em>Set the repository to the Control state</em>&quot; section of
+this document.  Specifically it assumes you are in the source directory of a
+git repo on a Test Host EC2. To install:</p>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>Setup the Case code and clean any leftovers from the Control install:</dt>
+<dd><p class="first last"><tt class="docutils literal">git checkout <span class="pre">--quiet</span> <span class="pre">-f</span> case &amp;&amp; make clean</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Build tahoe:</dt>
+<dd><p class="first last"><tt class="docutils literal">cd /home/customer/LAFS_source/ &amp;&amp; python ./setup.py build | tee casebuildlog_`date +%s`</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Make the Tahoe processes on the Test Host EC2 run the Case code:</dt>
+<dd><p class="first last"><tt class="docutils literal">cd /home/customer &amp;&amp; ./restart.sh</tt></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+<div class="section" id="prepare-the-storage-server-now-using-the-relevant-repository">
+<h2>Prepare the Storage Server (Now Using the Relevant Repository):</h2>
+<p>Prior to running the test script I removed all incidents from the storage
+server's &quot;logs/incidents&quot; directory, so that any incidents recorded there
+would be from the test.</p>
+<p>I also moved twistd log files out of the way for the same purpose.</p>
+<ol class="arabic">
+<li><dl class="first docutils">
+<dt>Set the running process to use the updated repository (unless you <em>just</em> did this):</dt>
+<dd><p class="first last"><tt class="docutils literal">cd /home/customer/ &amp;&amp; ./restart.sh &amp;&amp; cd /home/customer/storageserver</tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Prep a storage area (codetype is &quot;case&quot; or &quot;control&quot;):</dt>
+<dd><p class="first last"><tt class="docutils literal">mkdir <span class="pre">pre$(codetype)_incidents</span> &amp;&amp; mkdir <span class="pre">pre$(codetype)_twistdlogs</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Clean the &quot;incidents&quot; directory:</dt>
+<dd><p class="first last"><tt class="docutils literal">mv logs/incidents/incident* <span class="pre">./pre$(codetype)_incidents</span></tt></p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>Clean the twistd logs:</dt>
+<dd><p class="first last"><tt class="docutils literal">mv logs/twist* <span class="pre">./pre$(codetype)_twistdlogs</span></tt></p>
+</dd>
+</dl>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="summary-of-basictahoefileput-py-behavior">
+<h1>Summary of basictahoefileput.py Behavior:</h1>
+<p>The test script <a class="reference external" href="./basictahoefileput.py">basictahoefileput.py</a> generates a directory to hold
+run-specific information on each run.  This directory is a child of a
+directory named after the relevant state of the source code (i.e. &quot;case&quot; or
+&quot;control&quot;), it's name is simply the time (in seconds since the epoch +/- some
+drift) of the run.  It contains several files on each run:</p>
+<ol class="arabic simple">
+<li>a 'data' file which contains sufficient data to ensure that the resulting LAFS file is not a literal, but rather a 'standard' immutable.</li>
+<li>a time file that contains timing information for each of the (by default 10000) <tt class="docutils literal">put</tt>'s.<ol class="arabic">
+<li>The output of <tt class="docutils literal">time.time()</tt> immediately before the invocation <a class="footnote-reference" href="#id7" id="id3">[3]</a></li>
+<li>The output of <tt class="docutils literal">time.time()</tt> immediately after the invocation</li>
+<li>The difference between the two.</li>
+</ol>
+</li>
+</ol>
+</div>
+<div class="section" id="post-experiment-analysis">
+<h1>Post Experiment Analysis:</h1>
+<p>After the each run I filtered the resulting <a class="reference external" href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/logging.rst">incident &quot;flog&quot; files</a> to only
+include those incidents that occurred during the run as indicated by the
+output of <a class="reference external" href="./basictahoefileput.py">basictahoefileput.py</a>.  This was accomplished by running
+<a class="reference external" href="./timefilter.sh">timefilter.sh</a>.</p>
+<ul class="simple">
+<li>The Control run start was <tt class="docutils literal">1343094921</tt> the Control run stop was <tt class="docutils literal">1343101930</tt>.</li>
+<li>The Case run start was <tt class="docutils literal">1343847371</tt> the Case run stop was <tt class="docutils literal">1343852019</tt>.</li>
+</ul>
+<div class="section" id="control-run">
+<h2>Control Run:</h2>
+<p>After viewing one of the time filtered incident &quot;flogfiles&quot;. I filtered
+incidents (with <a class="reference external" href="./severityfilter.sh">severityfilter.sh</a>) that occurred with a severity below
+25-INFREQUENT.  I did this in part because there were only a few incidents at
+or above this level, and in part because I recognized the INFREQUENT level
+events as <a class="reference external" href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/ticket999-S3-backend/src/allmydata/storage/backends/s3/s3_common.py#L107">error messages from retries</a>.</p>
+<p>Upon inspection (of <a class="reference external" href="./dumper.sh">dumper.sh</a> dumped flogfiles) I realized that <em>all</em> the
+INFREQUENT events were retries, and that there was a 1-1 correlation between
+those INFREQUENTs and a set of subsequent WEIRDs.  The pattern is illustrated
+by <a class="reference external" href="./control_run_webview.html">this example</a> html file output from <tt class="docutils literal">flogtool <span class="pre">web-view</span> FLOGFILE</tt> where
+FLOGFILE is one of the files that underwent the previously described two
+rounds of filtering.</p>
+<p>I concluded two things:</p>
+<ol class="arabic simple">
+<li>Each set of 4 events as in the above example is caused by a single non-response (HTTP 500) error from AWS S3.</li>
+<li>Since the immutables were successfully uploaded in this run, these events do not indicate a lack of functionality.</li>
+</ol>
+</div>
+<div class="section" id="case-run">
+<h2>Case Run:</h2>
+<p>Upon examination of the results of a filtering process similar to that
+described above, I found that <em>all</em> level 30 events produced during the
+experiment were &quot;<tt class="docutils literal">truncated get_bucket response</tt>&quot; errors.</p>
+<p>That there were 0 such errors (in 10000 puts during the Control run) and 34
+out of 1233 trials in the Case run, is strong evidence that the prefix
+query patch did indeed resolve issues stemming from requests for too many
+objects.</p>
+<p>I'm puzzled about the behavior of <tt class="docutils literal">GET</tt> requests to over-1000 object
+buckets though, as I would have expected <em>all</em> requests to generate
+<tt class="docutils literal">truncate get_bucket responses</tt>'s, and subsequently fail (unless they fail
+before even getting the truncated response).</p>
+</div>
+<div class="section" id="simulation-of-backup">
+<h2>Simulation of Backup <a class="footnote-reference" href="#id8" id="id4">[4]</a>:</h2>
+<p>The <a class="reference external" href="https://leastauthority.zendesk.com/tickets/5">issue reported by a user</a> that stimulated our initial investigation had
+slightly different characteristics from the error messages I saw generated
+during the Case run.</p>
+<div class="section" id="with-case-repository">
+<h3>With Case Repository:</h3>
+<p>To attempt to regenerate the <a class="reference external" href="https://leastauthority.zendesk.com/tickets/5">initial incident error</a> I executed: <tt class="docutils literal">tahoe
+backup DIRECTORY ALIAS</tt> on the &quot;filestoprepopulatewith&quot; directory (see
+<a class="reference external" href="./makebackupcore.py">makebackupcore.py</a>).</p>
+<p>I received the <a class="reference external" href="./backuperroroutput_timeout.txt">linked timeout errors</a>, which I believe should be properly
+considered in a separate context, simply included here so they're not
+forgotten.</p>
+</div>
+<div class="section" id="with-the-control-repository">
+<h3>With The Control Repository:</h3>
+</div>
+</div>
+<div class="section" id="against-mutables">
+<h2>Against Mutables:</h2>
+<p>I noticed that the 410 Gone Error was raised in the context of a mutable
+object so I next ran a <a class="reference external" href="./repeatmutablefileput.py">repeated PUT against a mutable object</a>, in the hopes of
+generating the 410 Error.</p>
+<div class="section" id="am-with-the-case-repository">
+<h3>AM With The Case Repository:</h3>
+<p>Every request (of 24) generated the following error (or similar):</p>
+<pre class="literal-block">
+Error: 410 Gone\nUnrecoverableFileError: the directory (or mutable file) could not be retrieved, because there were insufficient good shares. This might indicate that no servers were connected, insufficient servers were connected, the URI was corrupt, or that shares have been lost due to server departure, hard drive failure, or disk corruption. You should perform a filecheck on this object to learn more.
+</pre>
+<p>which is in good agreement with the initial error report!</p>
+</div>
+<div class="section" id="am-with-the-control-repository">
+<h3>AM With The Control Repository:</h3>
+<p>In the case of the Control repository there were 0 &quot;<tt class="docutils literal">410 Gone</tt>&quot; errors in
+the 100 trials I ran!  QED Have a nice day.</p>
+<table class="docutils footnote" frame="void" id="id5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>I git pulled from <tt class="docutils literal"><span class="pre">git://github.com/warner/tahoe-lafs</span></tt> at 1343089833 which yielded version: &quot;<tt class="docutils literal"><span class="pre">allmydata-tahoe:</span> 1.9.0.post163</tt>&quot;</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id6" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td>The IP address was <tt class="docutils literal">23.22.195.217</tt> for the test I ran.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id7" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td>The <tt class="docutils literal">put</tt> command is executed as a python subprocess.</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id8" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id4">[4]</a></td><td>From this point forward I simply toggle code &quot;state&quot;s Case-vs.-Control by running:
+<tt class="docutils literal">cd /home/customer/LAFS_source &amp;&amp; make clean &amp;&amp; git checkout $(state) &amp;&amp; make clean &amp;&amp; python ./setup.py build &amp;&amp; cd /home/customer &amp;&amp; /home/customer/restart.sh</tt></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</body>
+</html>
