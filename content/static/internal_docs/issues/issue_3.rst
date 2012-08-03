@@ -30,12 +30,21 @@ Backend") fixes this limitation for immutable files, by uploading the file in
 a series of reasonably-sized chunks. With that code, immutable files of any
 size can be uploaded.
 
-Even with the Cloud Backend, large mutable files pose a problem because if
-the upload were to be interrupted, the partially uploaded file could be left
-corrupted. A future extension of Tahoe-LAFS itself to do over-the-network
-two-phase commit could solve that problem. In the meantime, even with the
-Cloud Backend, you cannot upload mutable files larger than the available RAM
-on the server.
-
 The Cloud Backend has not yet been deployed to LAE customer storage
 servers. When we do deploy it we'll update this issue report.
+
+further issue -- large mutable files
+====================================
+
+Even in the Cloud Backend which processes immutable objects in a streaming
+fashion, mutable objects are still processed all at once. Therefore large
+mutable objects still will not work. Typical usage of Tahoe-LAFS (e.g. using
+the "tahoe backup" command) uses immutable files for everything except for
+some directories, and directories are usually not that large, so under such
+usage the limitation of the size of mutables will not interfere.
+
+Fixing this is somewhat involved, for compatibility reasons and because if
+the upload were to be interrupted, the partially uploaded file could be left
+corrupted. In the future, we intend to develop an improvement to Tahoe-LAFS
+(along with the other Tahoe-LAFS hackers), involving an end-to-end
+two-phase-commit.

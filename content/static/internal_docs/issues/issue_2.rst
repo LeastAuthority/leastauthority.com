@@ -35,10 +35,9 @@ none of them were evidence of any other problem.
 fix
 ===
 
-We wrote and deployed a patch which detects this condition and handles
-it. With the patch, the Tahoe-LAFS storage server sends a series of requests,
-each of which yields another 1000-object-name part of the complete list, and
-collects all of the results.
+We wrote and deployed a patch which avoids this problem by listing only those
+objects related to the needed file (of which there are always less than
+1000).
 
 We also opened `a ticket`_ on the Tahoe-LAFS trac to inform other Tahoe-LAFS
 developers and users about the issue and the patch to fix it.
