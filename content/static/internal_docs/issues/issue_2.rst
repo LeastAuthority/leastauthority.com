@@ -51,7 +51,7 @@ know (by emailing support@leastauthority.com) if it works for you now.
 lab notebook
 ============
 
-For complete details, see the `issue 2 lab notebook`_ that Zancas Wilcox kept
-when performing this investigation.
+For complete details, see the `issue 2 lab notebook`_ that Zancas kept when
+performing this investigation.
 
 .. _issue 2 lab notebook: 1000object/

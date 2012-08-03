@@ -58,7 +58,7 @@ emailing support@leastauthority.com) if it works for you now.
 lab notebook
 ============
 
-For complete details, see the `issue 1 lab notebook`_ that Zancas Wilcox kept
-when performing this investigation.
+For complete details, see the `issue 1 lab notebook`_ that Zancas kept when
+performing this investigation.
 
 .. _issue 1 lab notebook: 5xx_retry/
