@@ -41,15 +41,11 @@ class TestServerModule(TestCase):
 
 
     def test_install_server(self):
-        self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
+        self.WHOAMI_FIFO = fifo(['ubuntu', 'customer'])
         self.RUNARGS_FIFO = fifo([
             ('whoami', False, {}),
             ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post4.tar.gz', False, {}),
             ('tar -xzvf txAWS-0.2.1.post4.tar.gz', False, {}),
-            ('whoami', False, {}),
-            ('rm -rf /home/monitor/monitors', False, {}),
-            ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),
-            ('chmod +x /home/monitor/monitors/*', False, {}),
             ('whoami', False, {}),
             ('rm -rf /home/customer/LAFS_source', False, {}),
             ('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source', False, {}),
@@ -77,24 +73,15 @@ class TestServerModule(TestCase):
             ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 700 /home/customer/.ssh/', False, {}),
-            ('adduser --disabled-password --gecos "" monitor || echo Assuming that monitor already exists.', False, {}),
-            ('mkdir -p /home/monitor/.ssh/', False, {}),
-            ('chown monitor:monitor /home/monitor/.ssh', False, {}),
-            ('chmod u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
-            ('chown monitor:monitor /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod 700 /home/monitor/.ssh/', False, {})
         ])
-        self.WRITEARGS_FIFO = fifo([('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None)])
+        self.WRITEARGS_FIFO = fifo([])
 
         MHOSTNAME = '0.0.0.0'
         ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
-        MONITORPUBKEY = 'THIS IS A MOCK PUBLIC KEY'
-        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
         STDOUT = StringIO()
         STDERR = StringIO()
 
-        server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
+        server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, STDOUT, STDERR)
         self._check_all_done()
 
     def test_create_account(self):
@@ -124,24 +111,6 @@ class TestServerModule(TestCase):
 
             server.create_account(acct_name, pubkey, STDOUT, STDERR)
             self._check_all_done()
-
-    def test_set_up_monitors(self):
-        self.WRITEARGS_FIFO = []
-        self.SUDOARGS_FIFO = []
-        self.WHOAMI_FIFO = fifo(['monitor'])
-        self.RUNARGS_FIFO = fifo([
-                ('whoami', False, {}),
-                ('rm -rf /home/monitor/monitors', False, {}),
-                ('darcs get --lazy https://leastauthority.com/static/source/monitors', False, {}),
-                ('chmod +x /home/monitor/monitors/*', False, {})
-                ])
-        PUBLICHOST = '0.0.0.0'
-        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
-        STDOUT = StringIO()
-        STDERR = StringIO()
-
-        server.set_up_monitors(PUBLICHOST, MONITORPRIVKEYPATH, STDOUT, STDERR)
-        self._check_all_done()
 
     def test_bounce_server(self):
         def call_set_host_and_key(publichost, admin_privkey_path, username):

@@ -8,7 +8,7 @@ from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
     create_user_bucket, deploy_EC2_instance
 from lae_automation.aws.queryapi import wait_for_EC2_properties, AddressParser, TimeoutError
-from lae_automation.server import install_server, bounce_server, notify_zenoss, NotListeningError
+from lae_automation.server import install_server, bounce_server, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 from lae_util.servers import append_record
 
@@ -129,10 +129,6 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
 
     admin_keypair_name = str(config.other['admin_keypair_name'])
     admin_privkey_path = str(config.other['admin_privkey_path'])
-    monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
-    monitor_privkey_path = str(config.other['monitor_privkey_path'])
-    zenoss_privkey_path = str(config.other['zenoss_privkey_path'])
-    zenoss_IP = str(config.other['zenoss_IP'])
 
     d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
                             instancesize, bucketname, admin_keypair_name, instancename,
@@ -152,7 +148,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             retries = LISTEN_RETRIES
             while True:
                 try:
-                    install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr)
+                    install_server(publichost, admin_privkey_path, stdout, stderr)
                     break
                 except NotListeningError:
                     retries -= 1
@@ -172,10 +168,6 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             if not oldsecrets:
                 d3.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo,
                                                                     stdout, stderr))
-            def _setup_monitoring(ign):
-                print >>stdout, "Setting up monitoring..."
-                notify_zenoss(publichost, zenoss_IP, zenoss_privkey_path)
-            d3.addCallback(_setup_monitoring)
             return d3
         d2.addCallback(_got_addresses)
         return d2

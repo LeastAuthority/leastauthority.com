@@ -58,7 +58,6 @@ class TestConfirmation(unittest.TestCase):
         self.failUnlessIn(self.CUSTOMER_NAME, body)
         self.failUnlessIn('https://leastauthority.com/howtoconfigure', body)
         self.failUnlessIn(self.EXTERNAL_INTRODUCER_FURL, body)
-        self.failUnlessIn('https://monitoring.leastauthority.com/', body)
         self.failUnlessIn('%s' % (self.PUBIP,), body)
         self.failUnlessIn('https://leastauthority.com/support', body)
 

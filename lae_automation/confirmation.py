@@ -29,13 +29,7 @@ shares.total = 1
 
 (The introducer.furl setting should be on one line.)
 
-You can monitor the behavior of your server by following this link:
-
-  https://monitoring.leastauthority.com/server/%(publichost)s
-
-Log in with username "guest" and password "guest". If you don't see the
-graphs, click on the "Graphs" button in the left-hand menu. For more
-information on monitoring, see
+For more information, see
 
   https://leastauthority.com/support
 

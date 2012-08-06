@@ -5,7 +5,7 @@ from twisted.internet import defer
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 
-from lae_automation import signup, initialize, server
+from lae_automation import signup, initialize
 
 
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
@@ -89,20 +89,14 @@ CONFIGFILEJSON = """{
   ],
   "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
   "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem",
-  "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem",
-  "zenoss_privkey_path":  "ZMONKEYS.pem",
-  "zenoss_IP": "9.9.9.9"
+  "admin_privkey_path":   "ADMINKEYS.pem"
 }"""
 
 ZEROPRODUCT = """{
   "products": [],
   "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
   "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem",
-  "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem"
+  "admin_privkey_path":   "ADMINKEYS.pem"
 }"""
 
 MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
@@ -180,11 +174,9 @@ class TestSignupModule(TestCase):
 
         from lae_automation.server import NotListeningError
         self.first = True
-        def call_install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+        def call_install_server(publichost, admin_privkey_path, stdout, stderr):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
-            self.failUnlessEqual(monitor_pubkey, MONITORPUBKEY)
-            self.failUnlessEqual(monitor_privkey_path, 'MONITORKEYS.pem')
             if self.first:
                 self.first = False
                 raise NotListeningError()
@@ -245,26 +237,6 @@ class TestSignupModule(TestCase):
         MSECRETSFILE = 'MSECRETSFILE'
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
-        MOCKEC2PUBIP = '0.0.0.0'
-        def call_set_host_and_key(zenoss_public_ip, zenoss_privkey_path, username='zenoss'):
-            self.failUnlessEqual(zenoss_public_ip, '9.9.9.9')
-            self.failUnlessEqual(zenoss_privkey_path, 'ZMONKEYS.pem')
-            self.failUnlessEqual(username, 'zenoss')
-
-        self.patch(server, 'set_host_and_key', call_set_host_and_key)
-        def call_run(argstring, **kwargs):
-            self.failUnlessEqual(argstring, '/usr/local/zenoss/zenoss/bin/zenbatchload /home/zenoss/loadfiles/zbatch_'+MOCKEC2PUBIP)
-            self.failUnlessEqual(kwargs, {})
-
-        self.patch(server, 'run', call_run)
-        def call_write(value, remote_path, use_sudo=False, mode=None):
-
-            self.failUnlessEqual(value, '/Devices/Server/SSH/Linux\n'+MOCKEC2PUBIP+' setManageIp="'+MOCKEC2PUBIP+'"\n')
-            self.failUnlessEqual(remote_path, '/home/zenoss/loadfiles/zbatch_'+MOCKEC2PUBIP)
-            self.failUnlessEqual(use_sudo, False)
-            self.failUnlessEqual(mode, None)
-
-        self.patch(server, 'write', call_write)
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
                           MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
         return d
@@ -354,7 +326,7 @@ class TestSignupModule(TestCase):
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         from lae_automation.server import NotListeningError
-        def call_install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+        def call_install_server(publichost, admin_privkey_path, stdout, stderr):
             raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 

@@ -122,7 +122,7 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
 
 
-def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+def install_server(publichost, admin_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
 
     print >>stdout, "Updating server..."
@@ -145,10 +145,6 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
     create_account('customer', None, stdout, stderr)
-    create_account('monitor', monitor_pubkey, stdout, stderr)
-
-    # this also checks that creating the monitor account worked
-    set_up_monitors(publichost, monitor_privkey_path, stdout, stderr)
 
     # do the rest of the installation as 'customer', customer doesn't actually have its own ssh keys
     # I don't know if creating one would be useful.XXX
@@ -178,14 +174,6 @@ cd /home/customer
 LAFS_source/bin/tahoe restart introducer
 LAFS_source/bin/tahoe restart storageserver
 """
-
-
-def set_up_monitors(publichost, monitor_privkey_path, stdout, stderr):
-    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
-    print >>stdout, "Getting monitoring code..."
-    run('rm -rf /home/monitor/monitors')
-    run('darcs get --lazy https://leastauthority.com/static/source/monitors')
-    run('chmod +x /home/monitor/monitors/*')
 
 
 def update_txaws(publichost, admin_privkey_path, stdout, stderr):
@@ -390,16 +378,6 @@ def restore_secrets(secrets, stdout, stderr):
         write(secrets['server_nodeid'],   '/home/customer/storageserver/my_nodeid')
     else:
         print >>stderr, "Warning: missing field for storage server identity."
-
-
-def notify_zenoss(EC2pubIP, zenoss_IP, zenoss_privkey_path):
-    zenbatchloadstring ='/Devices/Server/SSH/Linux\n%s setManageIp="%s"\n' % (EC2pubIP, EC2pubIP)
-    loadfiledirname = '/home/zenoss/loadfiles/'
-    loadfilebasename = 'zbatch_%s' % (EC2pubIP,)
-    remotepath = loadfiledirname + loadfilebasename
-    set_host_and_key(zenoss_IP, zenoss_privkey_path, username='zenoss')
-    write(zenbatchloadstring, remotepath)
-    run('/usr/local/zenoss/zenoss/bin/zenbatchload %s' % (remotepath,))
 
 
 def setremoteconfigoption(pathtoremote, section, option, value):
