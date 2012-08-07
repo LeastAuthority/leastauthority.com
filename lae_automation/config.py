@@ -34,6 +34,12 @@ class Config(object):
             configFile = open(configFile, 'r')
 
         try:
+            fpos = configFile.tell()
             return simplejson.load(configFile)
+        except simplejson.decoder.JSONDecodeError, e:
+            configFile.seek(fpos)
+            data = configFile.read()
+            e.args = tuple(e.args + (configFile, repr(data),))
+            raise
         finally:
             configFile.close()
