@@ -140,8 +140,14 @@ The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
 </p>
 <hr>
 <p>
-The progress of your sign-up is shown below. Please don't reload this page,
-since the activation key is only valid once.
+The progress of your server setup is shown below. You do not need to read and
+understand it -- it is shown solely to let you know that progress is being
+made. Once the server setup is complete, an email will be sent to you with
+all the information you need to know.
+</p>
+<p>
+Please don't reload this page, since the activation key is
+only valid once.
 </p>
 <pre>
 """)
