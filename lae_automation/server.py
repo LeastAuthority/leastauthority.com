@@ -122,7 +122,7 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
 
 
-def install_server(publichost, admin_privkey_path, stdout, stderr):
+def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
 
     print >>stdout, "Updating server..."
@@ -145,6 +145,8 @@ def install_server(publichost, admin_privkey_path, stdout, stderr):
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
     create_account('customer', None, stdout, stderr)
+    create_account('monitor', monitor_pubkey, stdout, stderr)
+    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
 
     # do the rest of the installation as 'customer', customer doesn't actually have its own ssh keys
     # I don't know if creating one would be useful.XXX

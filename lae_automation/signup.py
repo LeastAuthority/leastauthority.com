@@ -129,6 +129,8 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
 
     admin_keypair_name = str(config.other['admin_keypair_name'])
     admin_privkey_path = str(config.other['admin_privkey_path'])
+    monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
+    monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
     d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
                             instancesize, bucketname, admin_keypair_name, instancename,
@@ -148,7 +150,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             retries = LISTEN_RETRIES
             while True:
                 try:
-                    install_server(publichost, admin_privkey_path, stdout, stderr)
+                    install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr)
                     break
                 except NotListeningError:
                     retries -= 1

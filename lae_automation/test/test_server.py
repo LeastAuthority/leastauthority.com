@@ -41,7 +41,7 @@ class TestServerModule(TestCase):
 
 
     def test_install_server(self):
-        self.WHOAMI_FIFO = fifo(['ubuntu', 'customer'])
+        self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
         self.RUNARGS_FIFO = fifo([
             ('whoami', False, {}),
             ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post4.tar.gz', False, {}),
@@ -73,15 +73,24 @@ class TestServerModule(TestCase):
             ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
             ('chmod 700 /home/customer/.ssh/', False, {}),
+            ('adduser --disabled-password --gecos "" monitor || echo Assuming that monitor already exists.', False, {}),
+            ('mkdir -p /home/monitor/.ssh/', False, {}),
+            ('chown monitor:monitor /home/monitor/.ssh', False, {}),
+            ('chmod u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
+            ('chown monitor:monitor /home/monitor/.ssh/authorized_keys', False, {}),
+            ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
+            ('chmod 700 /home/monitor/.ssh/', False, {})
         ])
-        self.WRITEARGS_FIFO = fifo([])
+        self.WRITEARGS_FIFO = fifo([('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None)])
 
         MHOSTNAME = '0.0.0.0'
         ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
+        MONITORPUBKEY = 'THIS IS A MOCK PUBLIC KEY'
+        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
         STDOUT = StringIO()
         STDERR = StringIO()
 
-        server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, STDOUT, STDERR)
+        server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
         self._check_all_done()
 
     def test_create_account(self):
