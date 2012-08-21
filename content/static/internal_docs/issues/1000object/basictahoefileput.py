@@ -43,7 +43,7 @@ def main():
     
     trialstop = time.time()
     totaltime = (trialstop - trialtime)/3600.
-    errorfrequencystr = str((HTTPNot200Count*1.0) / (counter*1.0))
+    #errorfrequencystr = str((HTTPNot200Count*1.0) / (counter*1.0))
     errorcountstring = "The number of responses to the put request, not headed by HTTP 200 Codes in %s attempts is: %s\n" % (counter, HTTPNot200Count) 
     errorout.write(errorcountstring)
     errorout.close()
