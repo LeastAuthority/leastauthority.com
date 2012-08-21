@@ -89,14 +89,18 @@ CONFIGFILEJSON = """{
   ],
   "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
   "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem"
+  "admin_privkey_path":   "ADMINKEYS.pem",
+  "monitor_pubkey_path":  "MONITORKEYS.pub",
+  "monitor_privkey_path": "MONITORKEYS.pem"
 }"""
 
 ZEROPRODUCT = """{
   "products": [],
   "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
   "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem"
+  "admin_privkey_path":   "ADMINKEYS.pem",
+  "monitor_pubkey_path":  "MONITORKEYS.pub",
+  "monitor_privkey_path": "MONITORKEYS.pem"
 }"""
 
 MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'

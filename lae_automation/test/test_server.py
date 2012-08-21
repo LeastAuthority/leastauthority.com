@@ -41,7 +41,7 @@ class TestServerModule(TestCase):
 
 
     def test_install_server(self):
-        self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
+        self.WHOAMI_FIFO = fifo(['ubuntu', 'customer'])
         self.RUNARGS_FIFO = fifo([
             ('whoami', False, {}),
             ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post4.tar.gz', False, {}),

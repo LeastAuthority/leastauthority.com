@@ -146,7 +146,9 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
         sudo('python ./setup.py install')
     create_account('customer', None, stdout, stderr)
     create_account('monitor', monitor_pubkey, stdout, stderr)
-    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
+    # We don't actually do anything while logged in as monitor so I don't think 
+    # the following call to set_host_and_key is needed.
+    # XXX set_host_and_key(publichost, monitor_privkey_path, username="monitor")
 
     # do the rest of the installation as 'customer', customer doesn't actually have its own ssh keys
     # I don't know if creating one would be useful.XXX
