@@ -58,6 +58,9 @@ local.directory =
 class NotListeningError(Exception):
     pass
 
+class UnrecognizedGathererType(Exception):
+    def __init__(self, gtype):
+        self.gtype = gtype
 
 INSTALL_TXAWS_VERSION = "0.2.1.post4"
 INSTALL_TXAWS_URL = "https://leastauthority.com/static/patches/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
@@ -200,6 +203,23 @@ def update_tahoe(publichost, admin_privkey_path, stdout, stderr, do_update_txaws
         set_host_and_key(publichost, admin_privkey_path, username="customer")
     with cd('/home/customer/LAFS_source'):
         run('python setup.py build')
+    print >>stdout, "Restarting..."
+    run('/home/customer/restart.sh')
+
+def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_type, furl):
+    set_host_and_key(publichost, admin_privkey_path, username="customer")
+    if gatherer_type == 'incident':
+        print >>stdout, "Registering storageserver with %s gatherer." % (gatherer_type,)
+        setremoteconfigoption('/home/customer/storageserver/tahoe.cfg', 'node', 'log_gatherer.furl', furl)
+        print >>stdout, "Registering introducer with %s gatherer." % (gatherer_type,)
+        setremoteconfigoption('/home/customer/introducer/tahoe.cfg', 'node', 'log_gatherer.furl', furl)
+    elif gatherer_type == 'stats':
+        print >>stdout, "Registering storageserver with %s gatherer." % (gatherer_type,)
+        setremoteconfigoption('/home/customer/storageserver/tahoe.cfg', 'client', 'stats_gatherer.furl', furl)
+        print >>stdout, "Registering introducer with %s gatherer." % (gatherer_type,)
+        setremoteconfigoption('/home/customer/introducer/tahoe.cfg', 'client', 'stats_gatherer.furl', furl)
+    else:
+        raise UnrecognizedGathererType(gatherer_type)
     print >>stdout, "Restarting..."
     run('/home/customer/restart.sh')
 
@@ -401,6 +421,4 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     outgoingconfig.seek(0)
     write(outgoingconfig.read(), temppath)
     run('mv '+temppath+' '+pathtoremote)
-    # FIXME: move this to caller
-    run('/home/customer/restart.sh')
     os.remove('tempconfigfile')

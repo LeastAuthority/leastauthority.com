@@ -2,30 +2,29 @@
 What's an Incident Gatherer?
 ============================
 
+ The incident gatherer is a process that runs on "mu.leastauthority.com".
+ When 'registered' tahoe-lafs nodes have incidents to report they connect to
+ it and send the contents of the incident report.  The gatherer writes
+ the report into a file in the local filesystem.
 
- The incident gatherer is a process that runs on
- "monitoring.leastauthority.com". It connects to a number of tahoe-lafs nodes
- and, when they have an incident to report, it receives the contents of the
- incident from them and writes it into a file in the local filesystem.
-
- Potentially other gatherers will run there in the future. These gatherers
+ Potentially other gatherers will run on "``mu``" in the future. These gatherers
  have their own user account: "``gatherer``".
 
  An incident gatherer that monitors tahoe nodes need not be colocated with a
  ``tahoe`` repository, or ``tahoe`` process.  ``foolscap`` and ``twistd`` (upon which
  ``foolscap`` depends) are sufficient to run an incident gatherer. The LAE
- monitoring server does not have a copy of ``tahoe``.
+ monitoring server "``mu``" does not have a copy of ``tahoe``.
 
 
 HOWTO Set One Up:
 =================
 
-  (1) Get access to a "monitoring" persistently connected server, with sufficient memory to store incidents.
-  (2) Set up a user "``gatherer``"
-  (3) Make sure ``python-foolscap`` is installed
+  (1) Get access to a "monitoring" persistently connected server [1]_, with sufficient memory to store incidents.
+  (2) Make sure ``python-foolscap`` is installed
+  (3) Set up a user "``gatherer``", and run subsequent steps as this user.
   (4) ``cd /home/gatherer && flogtool create-incident-gatherer incident``
   (5) ``cd /home/gatherer/incident && twistd -y gatherer.tac``
-  (6) Obtain <FURL> from: "``/home/gatherer/log_gatherer.furl``"
+  (6) Obtain <FURL> from: "``/home/gatherer/incident/log_gatherer.furl``" [2]_
   (7) On all monitored tahoe nodes set "``tahoe.cfg``" to contain: "``log_gatherer.furl = <FURL>``"
 
 
