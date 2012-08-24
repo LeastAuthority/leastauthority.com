@@ -42,3 +42,6 @@ Config Tahoe Nodes to be Gathered:
    (4) the configuration to set is in the ``node`` section of ``tahoe.cfg`` it is "``log_gatherer.furl``".
    (5) a helper function in ``lae_automation/server.py`` named ``setremoteconfigoption`` is designed to set arbitrary (section, option, value) tuples in .ini style config files and is quite handy for this task!
    (6) the above function will restart the host, if you don't use it, you'll have to restart the server some other way!
+
+.. [1] Ours is at IP address ``23.23.228.205``.
+.. [2] Ours is: ``CENSORED!!``
