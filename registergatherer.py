@@ -9,6 +9,12 @@ from lae_automation.config import Config
 from lae_automation.server import register_gatherer
 from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser, pubIPextractor
 
+if len(sys.argv) != 2:
+    print "Usage: python registergatherer.py GATHERERTYPE"
+    print "Happy registering!"
+    sys.exit(1)
+
+gtype = sys.argv[1]
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
 configpath='../lae_automation_config.json'
@@ -20,7 +26,7 @@ ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 admin_privkey_path = str(config.other['admin_privkey_path'])
-
+gatherer_furl = str(config.other['%s_gatherer_furl' % gtype])
 
 POLL_TIME = 10
 ADDRESS_WAIT_TIME = 60
@@ -28,6 +34,7 @@ ADDRESS_WAIT_TIME = 60
 d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
                             ServerInfoParser(('launchTime', 'instanceId'), ('dnsName',)),
                             POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, sys.stderr)
+
 
 def notify_servers(remotepropstuplelist):
     for rpt in remotepropstuplelist:
