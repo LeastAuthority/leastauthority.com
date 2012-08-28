@@ -6,7 +6,7 @@ from twisted.python.failure import Failure
 from twisted.internet import reactor
 
 from lae_automation.config import Config
-from lae_automation.server import register_gatherer
+from lae_automation.server import register_gatherer, UnrecognizedGathererType
 from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser, pubIPextractor
 
 if len(sys.argv) != 2:
@@ -14,7 +14,7 @@ if len(sys.argv) != 2:
     print "Happy registering!"
     sys.exit(1)
 
-gtype = sys.argv[1]
+gatherer_type = sys.argv[1]
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
 configpath='../lae_automation_config.json'
@@ -26,7 +26,7 @@ ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 admin_privkey_path = str(config.other['admin_privkey_path'])
-gatherer_furl = str(config.other['%s_gatherer_furl' % gtype])
+gatherer_furl = str(config.other['%s_gatherer_furl' % gatherer_type])
 
 POLL_TIME = 10
 ADDRESS_WAIT_TIME = 60
@@ -45,9 +45,9 @@ def notify_servers(remotepropstuplelist):
         else:
             print "Notifying %r about gatherer at: %s ..." % (publichost, gatherer_furl)
             try:
-                register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_type, gatherer_furl)
+                register_gatherer(publichost, admin_privkey_path, sys.stdout, sys.stderr, gatherer_type, gatherer_furl)
             except UnrecognizedGathererType, exceptinstance:
-                print >>sys.stderr, "The registration attempted to register a %s gatherer." % (exceptinstance.gtype,)
+                print >>sys.stderr, "The registration attempted to register a %s gatherer." % (exceptinstance.gatherer_type,)
                 raise
             except:
                 traceback.print_exc()
