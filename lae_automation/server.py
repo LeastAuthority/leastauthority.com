@@ -58,10 +58,6 @@ local.directory =
 class NotListeningError(Exception):
     pass
 
-class UnrecognizedGathererType(Exception):
-    def __init__(self, gtype):
-        self.gtype = gtype
-
 INSTALL_TXAWS_VERSION = "0.2.1.post4"
 INSTALL_TXAWS_URL = "https://leastauthority.com/static/patches/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
@@ -218,8 +214,7 @@ def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_t
         setremoteconfigoption('/home/customer/storageserver/tahoe.cfg', 'client', 'stats_gatherer.furl', furl)
         print >>stdout, "Registering introducer with %s gatherer." % (gatherer_type,)
         setremoteconfigoption('/home/customer/introducer/tahoe.cfg', 'client', 'stats_gatherer.furl', furl)
-    else:
-        raise UnrecognizedGathererType(gatherer_type)
+
     print >>stdout, "Restarting..."
     run('/home/customer/restart.sh')
 

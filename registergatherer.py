@@ -6,7 +6,7 @@ from twisted.python.failure import Failure
 from twisted.internet import reactor
 
 from lae_automation.config import Config
-from lae_automation.server import register_gatherer, UnrecognizedGathererType
+from lae_automation.server import register_gatherer
 from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser, pubIPextractor
 
 if len(sys.argv) != 2:
@@ -46,9 +46,6 @@ def notify_servers(remotepropstuplelist):
             print "Notifying %r about gatherer at: %s ..." % (publichost, gatherer_furl)
             try:
                 register_gatherer(publichost, admin_privkey_path, sys.stdout, sys.stderr, gatherer_type, gatherer_furl)
-            except UnrecognizedGathererType, exceptinstance:
-                print >>sys.stderr, "The registration attempted to register a %s gatherer." % (exceptinstance.gatherer_type,)
-                raise
             except:
                 traceback.print_exc()
 
