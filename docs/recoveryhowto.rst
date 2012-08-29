@@ -4,10 +4,10 @@ Disaster Recovery HOWTO
 =======================
 
   The disaster recovery process consists of a series of function calls.
-  These functions are used in the signup process.  For the recovery situation
-  we are prepared for here the functions from "deploy_EC2_instance" to the
-  end of the signup.py module must all be called for all destroyed
-  server/accounts.
+  These functions are used in the signup process.  In the case of the
+  recovery situation we are prepared for, the functions from
+  "deploy_EC2_instance" to the end of the signup.py module must all be called
+  for all destroyed server/accounts.
 
   This will need scripting if it's ever actually used, in which case this doc
   will serve as a useful reference.  I've listed the data necessary for these
