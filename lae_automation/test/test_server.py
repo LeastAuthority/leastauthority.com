@@ -149,6 +149,7 @@ class TestServerModule(TestCase):
         INTERNALINTROFURL = 'pb://TUBID@LOCATION/SWISSNUM'
         from lae_automation.server import TAHOE_CFG_TEMPLATE
         from lae_automation.server import incident_gatherer_furl
+        from lae_automation.server import stats_gatherer_furl
         from lae_automation.server import RESTART_SCRIPT
         test_tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': BUCKETNAME,
                                       'publichost': MHOSTNAME,
@@ -156,7 +157,8 @@ class TestServerModule(TestCase):
                                       'introducer_furl': INTERNALINTROFURL,
                                       'access_key_id': ACCESSKEYID,
                                       'bucket_name': BUCKETNAME,
-                                      'incident_gatherer_furl': incident_gatherer_furl}
+                                      'incident_gatherer_furl': incident_gatherer_furl,
+                                      'stats_gatherer_furl': stats_gatherer_furl}
         self.WHOAMI_FIFO = []
         self.RUNARGS_FIFO = fifo([
                 ('rm -f /home/customer/introducer/introducer.furl', False, {}),
