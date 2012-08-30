@@ -212,8 +212,6 @@ def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_t
     elif gatherer_type == 'stats':
         print >>stdout, "Registering storageserver with %s gatherer." % (gatherer_type,)
         setremoteconfigoption('/home/customer/storageserver/tahoe.cfg', 'client', 'stats_gatherer.furl', furl)
-        print >>stdout, "Registering introducer with %s gatherer." % (gatherer_type,)
-        setremoteconfigoption('/home/customer/introducer/tahoe.cfg', 'client', 'stats_gatherer.furl', furl)
 
     print >>stdout, "Restarting..."
     run('/home/customer/restart.sh')
