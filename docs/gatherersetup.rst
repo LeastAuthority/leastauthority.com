@@ -56,18 +56,32 @@ Testing That The Incident Gatherer is Working:
 To test that the incident gatherer that is registered with particular
 tahoe-node is working follow this recipe:
 
- (1) On ``monitoring`` run:
-   ``cd /home/gatherer/incident && watch 'ls -lart incidents classified'``
- (2) On ``monitoring`` run:
-   ``cd /home/gatherer/incident && tail -f twistd.log``
- (3) On the Host EC2 run:
-   ``cd /home/customer/storageserver && foolscap tail private/logport.furl``
+ (1) On ``monitoring`` run: ``cd /home/gatherer/incident && watch 'ls -lart incidents classified'``
+ (2) On ``monitoring`` run: ``cd /home/gatherer/incident && tail -f twistd.log``
+ (3) On the Host EC2 run: ``cd /home/customer/storageserver && foolscap tail private/logport.furl``
  (4) On the Host EC2 change ``web.port =`` to ``web.port = 3456``
  (5) On the Host EC2: ``cd /home/customer && ./restart.sh``
  (6) On the Host EC2: ``curl --data flop localhost:3456/report_incident``.
 
 
+========================
+What's a Stats Gatherer?
+========================
 
+The stats gatherer (in contrast to the incident gatherer) *is* a tahoe node. 
+
+HOWTO SetUp A Stats Gatherer:
+=============================
+
+ (1) ssh to "monitoring"
+ (2) install darcs
+ (3) as user "gatherer": ``cd /home/gatherer/ && darcs get --lazy https://tahoe-lafs.org/source/tahoe-lafs/ticket999-S3-backend LAFS_source``
+ (4) ``cd /home/gatherer/LAFS_source/``
+ (5) ``python ./setup.py build``
+ (6) ``cd /home/gatherer && mkdir stats && cd /home/gatherer/stats``
+ (7) ``/home/gatherer/LAFS_source/bin/tahoe create-stats-gatherer --node-directory=/home/gatherer/stats``
+ (8) ``/home/gatherer/LAFS_source/bin/tahoe start /home/gatherer/stats``
+ (9) ``cat stats_gatherer.furl`` and place the value into the appropriate field in the website configuration json file.
 
 .. [1] For NAT traversal we use ``monitoring.leastauthority.com`` in place of an IP address.
 .. [2] Ours is: ``CENSORED!!``
