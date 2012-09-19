@@ -7,7 +7,7 @@
 .. role:: ybg
 
 * "av" means available
-* "av-" means available except Wed no D-S, Mon no Zooko
+* "av-" means limited availability; Wed no D-S, Mon no Zooko, other days maybe Zooko
 * "st" means standup meeting
 * "cm" means coffee meeting
 
