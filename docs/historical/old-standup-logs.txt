@@ -2144,3 +2144,152 @@ by Monday's standup:
 friction: no more so than usual...? Distracted today about friam+#tahoe-lafs chat
  
 blockers: none
+
+2012-09-17
+
+Zancas
+
+since last time:
+
+• asked more questions of the statmover engineering team
+• experimented with different ways of "browsing" to the statmover display pages
+• discussed how to modify the setup-metric Usage message to make it more useful
+
+by next time (tomorrow):
+
+• run the planned experiments to clarify statmover terminology and usage -- http://codepad.org/iYOJgobZ
+• update the StatMover docs to reflect what is learned
+• meet with the statmover team for lunch to learn about new features about to be released by statmover
+_ posted notice of ouchto #tahoe-dev mailing list
+_ discussed security of various browser based authentication schemes in #tahoe-lafs
+
+blockers: none
+
+David-Sarah
+
+since last time:
+
+• refactored the commits that were on my github branch, recreated the branch forking from the official tahoe-lafs repo, and put back the refactored commits
+★ learned more about how to use git and git gui, created a pull request for a small change to .gitignore (mostly as a practice pull request)
+◦ found some bugs in the work I'd done after what is on github, and am in the process of fixing those
+_ some Tahoe-LAFS ticket gardening
+_ posted a proposed fix for #1808
+
+by tomorrow:
+
+• push another 10 changes or so to github
+
+friction: social event tomorrow
+
+blockers: None
+
+Zooko
+
+since last time:
+
+★ set up new office in the garage
+_ set up "bot" an Efika MX Smarttop running debian/armhf
+_ chatted about Tahoe-LAFS on the #tahoe-lafs IRC channel
+_ reported some bugs in Tahoe-LAFS WUI when used with Konqueror (#1808, #1809)
+_ started reading about the changes in Trac v1.0 (for tahoe-lafs.org)
+
+by tomorrow:
+
+★ pay zancas
+★ set up interviews with CPAs
+★ buy individual health insurance for my family
+• code-review David-Sarah's leasedb patches
+
+friction: headache, nausea, dreading the though of dealing with taxes and health insurance
+
+blockers: none
+
+2012-09-18
+
+Zancas
+
+since last time:
+
+_ configured new computer
+
+by tomorrow's standup:
+
+• finish statmover tutorial
+• install statmover on test EC2 instance
+
+friction: physical announcement of Thursday night meetup, at political meeting of Noisebridge tonight
+
+blockers: none
+
+Zooko
+
+since last time:
+
+_ read about the changes in Trac 1.0 (for tahoe-lafs.org)
+_ participated in the Tahoe-LAFS Weekly Call, writing notes thereof, chatting on #tahoe-lafs with jgarzik and others
+
+by tomorrow:
+
+★ PAY ZANCAS
+★ write to CPAs about taxes
+
+friction: cleaning
+
+blockers: none
+
+2012-09-19
+
+Zooko
+
+since last time:
+
+★ pay Zancas
+★ contact CPA, bookkeeper
+_ post Tahoe-LAFS Weekly Dev Hangout notes to tahoe-dev mailing list
+★ other bizdev chat with potential investors/customers
+
+by next time:
+
+• code-review David-Sarah's leasedb patches
+
+2012-09-20
+
+Zooko since last time:
+
+★ set up call with D.S., my favorite advisor and the one who got us the DARPA contract
+★ set up call with T.H., a bookkeeper we might hire to do lots of business paperwork for us
+
+2012-09-24
+
+Zancas, since last time:
+
+nothing to report
+
+by next time:
+
+• set up an emit client to emit actual storage server data
+• document how this was done
+• repeat the process on a test storage server EC2: 23.22.15.209
+if I get this far: • iterate and add more and more data streams
+
+friction: slightly ill
+
+blockers: none
+
+David-Sarah, since last time:
+
+• pushed some more patches to github, and corrected more errors in my local repo (the latter were just ready to be pushed before standup, but haven't been pushed yet), the leasedb tests are looking in much better shape now
+
+by next time:
+
+• get the storage and system tests working
+
+friction: slow web browser
+
+blockers: none
+
+Zooko, since last time:
+
+★ negotiated with a government agency about hiring LeastAuthority.com as security consultants to audit open source censorship-resistance software
+_ chatting with folks about tahoe-lafs on the #tahoe-dev channel
+_ organizing Tahoe-LAFS Weekly Hangout
