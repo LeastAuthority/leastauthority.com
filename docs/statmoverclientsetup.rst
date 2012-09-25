@@ -5,6 +5,12 @@ Get a tarball from statmover somehow.
 Put it in someplace on someserver (almost certainly theta).
 Check its signature against some key.
 
+Two components of the statmover User-system:
+--------------------------------------------
+
+ (1) The metric:
+ (2) The emitter:
+
 Deploying the Statmover Client to Storage Server Hosting EC2s:
 ==============================================================
 
