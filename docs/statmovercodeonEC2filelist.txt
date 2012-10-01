@@ -1,0 +1,38 @@
+The following is a brief manifest of the statmover client code that resides
+on the User EC2s.
+
+On The EC2 in /home/monitor/statmover/:
+---------------------------------------
+
+provisioned_observables/<propertyname>_<metricname>.cfg:
+  
+  A config file that contains persistent data needed to:
+    Collect a value (first way of doing this will be valuefromps.sh)
+    format the value (into json for emit client)
+
+generatevalues.py:
+
+  Called by cron every AMOUNTOFTIME
+  calls generatevalue.py once for each file in provisioned_observables.
+  XXX OPTIONAL LOGGING?
+
+generatevalue.py <--(<propertyname>_<metricname>.cfg):
+
+  Called by generatevalues.py
+  Loads persistentdata from: <propertyname>_<metricname>.cfg
+  Calls valuefromps.sh passes args retrieves val
+  Calls jsonformatforemitclient.py passes args retrieves val
+  Calls emit-client passes arg, XXX OPTIONAL LOGGING?: passes log to stdout
+
+valuefromps.sh <--(--procname <PROCESSNAME> --procproperty <PROCESSPROPERTY>
+[--procpattern <PATTERN>])
+   --> value:
+  Called by generatevalue.py, which passes appropriate arguments (obtained
+  from cfg file)
+  
+jsonformatforemitclient.py <--(persistentdata, value)
+   --> jsonformatted value:
+  Called by generatevalue.py, which passes appropriate arguments (obtained
+  from cfg file), and value obtained from value collector (currently
+  valuefromps.sh).
+  Returns the formatted valuem which is handled by generatevalue.py  
