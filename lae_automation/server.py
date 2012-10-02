@@ -130,7 +130,6 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
     sudo_apt_get('upgrade -y')
-    sudo_apt_get('install -y linux-ec2 linux-image-ec2')
     sudo("dpkg -P consolekit")
 
     print >>stdout, "Rebooting server..."
