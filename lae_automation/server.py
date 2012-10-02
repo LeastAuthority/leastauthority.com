@@ -90,7 +90,7 @@ def set_host_and_key(publichost, ssh_private_keyfile, username="ubuntu"):
     assert whoami.strip() == username, (whoami, username)
 
 def sudo_apt_get(argstring):
-    sudo('DEBIAN_FRONTEND=noninteractive apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confnew" apt-get %s' % argstring)
+    sudo('apt-get %s' % argstring)
 
 def sudo_easy_install(argstring):
     sudo('easy_install %s' % argstring)
