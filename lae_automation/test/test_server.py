@@ -57,8 +57,7 @@ class TestServerModule(TestCase):
         ])
         self.SUDOARGS_FIFO = fifo([
             ('apt-get update', False, {}),
-            ('apt-get upgrade -y', False, {}),
-            ('apt-get install -y linux-ec2 linux-image-ec2', False, {}),
+            ('apt-get dist-upgrade -y', False, {}),
             ('dpkg -P consolekit', False, {}),
             ('apt-get install -y python-dev', False, {}),
             ('apt-get install -y python-setuptools', False, {}),
