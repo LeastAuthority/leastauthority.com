@@ -30,7 +30,7 @@ stderr = StringIO()
 serverinfotuple = read_serverinfo(serverinfocsvpath)
 localstate = {}
 for propertytuple in serverinfotuple:
-    localstate[propertytuple[2]] = (propertytuple[0], propertytuple[1])
+    localstate[propertytuple[2]] = (propertytuple[0], propertytuple[1], propertytuple[3])
 
 lasterrors = None
 lasterrorsfp = FilePath(lasterrorspath)
@@ -41,7 +41,7 @@ POLL_TIME = 10
 ADDRESS_WAIT_TIME = 60
 
 d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
-                            ServerInfoParser(('launchTime', 'instanceId'), ('dnsName',)),
+                            ServerInfoParser(('launchTime', 'instanceId'), ('dnsName', 'instanceState.name')),
                             POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, stderr)
 
 d.addCallback(lambda remoteproperties: compare_servers_to_local(remoteproperties, localstate, sys.stdout, stderr))

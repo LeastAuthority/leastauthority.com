@@ -5,7 +5,7 @@ from ConfigParser import SafeConfigParser
 
 from twisted.python.filepath import FilePath
 
-from lae_automation.server import run, set_host_and_key
+from lae_automation.server import run, set_host_and_key, NotListeningError
 from lae_automation.aws.queryapi import pubIPextractor
 from lae_util.send_email import send_plain_email
 from lae_util.servers import append_record
@@ -53,6 +53,9 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
             return False
 
         return True
+    except NotListeningError:
+        print >>stderr, "Error: Host %s is not listening." % (publichost,)
+        return False
     except (Exception, SystemExit):
         print >>stderr, "Exception while checking host %s:" % (publichost,)
         traceback.print_exc(file=stderr)
@@ -71,44 +74,61 @@ def check_servers(host_list, monitor_privkey_path, stdout, stderr):
 def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, now=None):
     if now is None:
         now = time.time()
-    host_list = []
-    for rpt in remotepropstuplelist:
-        publichost = pubIPextractor(rpt[2])
+    running_list = []
+    for (rpt_launch_time, rpt_instance_id, rpt_host, rpt_status) in remotepropstuplelist:
+        publichost = pubIPextractor(rpt_host)
         if not publichost:
-            print >>stderr, ("Warning: Host launched at %s with instance ID %s has no public IP (maybe it has been terminated)."
-                             % (rpt[0], rpt[1]))
+            print >>stderr, ("Warning: Host launched at %s with instance ID %s (which is %s) has no public IP. Maybe it has been terminated."
+                             % (rpt_launch_time, rpt_instance_id, rpt_status))
         elif not localstate.has_key(publichost):
-            launch_time = parse_iso_time(rpt[0])
+            launch_time = parse_iso_time(rpt_launch_time)
             if now - launch_time < 10*60:
-                print >>stdout, "Note: Ignoring host %s because it was launched less than 10 minutes ago at %s." % (publichost, rpt[0])
+                print >>stdout, ("Note: Ignoring host %s (which is %s) because it was launched less than 10 minutes ago at %s."
+                                 % (publichost, rpt_status, rpt_launch_time))
             else:
-                print >>stderr, "Warning: Host %s is not in the list of known servers." % (publichost,)
-                host_list.append(publichost)
+                print >>stderr, ("Warning: Host %s (which is %s) is not in the list of known servers."
+                                 % (publichost, rpt_status))
+                running_list.append(publichost)
         else:
-            host_list.append(publichost)
-            if localstate[publichost][0] != rpt[0]:
+            (launch_time, instance_id, status) = localstate[publichost]
+            if status == 'running':
+                running_list.append(publichost)
+
+            if launch_time != rpt_launch_time:
                 print >>stderr, ("Warning: Host %s launch time changed from %s to %s (probably rebooted)."
-                                 % (publichost, localstate[publichost][0], rpt[0]))
-            if localstate[publichost][1] != rpt[1]:
+                                 % (publichost, launch_time, rpt_launch_time))
+            if instance_id != rpt_instance_id:
                 print >>stderr, ("Warning: Host %s changed instance ID from %s to %s."
-                                 % (publichost, localstate[publichost][1], rpt[1]))
+                                 % (publichost, instance_id, rpt_instance_id))
+            if status != rpt_status:
+                print >>stderr, ("Warning: Host %s status is %s when expected to be %s."
+                                 % (publichost, rpt_status, status))
             del localstate[publichost]
 
     if localstate:
         print >>stderr, "The following known servers were not found by the AWS query:"
         for key in localstate:
-            s = localstate[key]
-            print >>stderr, "Host %s Launch time: %s Instance ID: %s" % (key, s[0], s[1])
+            (s_launch_time, s_instance_id, s_status) = localstate[key]
+            print >>stderr, ("Host %-15s  Launch time: %s  Instance ID: %s  Expected status: %s"
+                             % (key, s_launch_time, s_instance_id, s_status))
+        print >>stderr
 
-    return host_list
+    return running_list
 
 
-# The format of each line is RECORD_ADDED_TIME,LAUNCH_TIME,INSTANCE_ID,PUBLICHOST
+# The format of each line is RECORD_ADDED_TIME,LAUNCH_TIME,INSTANCE_ID,PUBLICHOST[,STATUS]
+
+def _parse_serverinfo_line(line):
+    info = tuple(line.split(',')[1:])
+    if len(info) == 4:
+        return info
+    else:
+        return info + ('running',)
 
 def read_serverinfo(pathtoserverinfo):
     serverinfofp = FilePath(pathtoserverinfo)
     listofinfostrings = serverinfofp.getContent().split('\n')
-    listofinfotuples = [infostring.split(',')[1:] for infostring in listofinfostrings if infostring]
+    listofinfotuples = [_parse_serverinfo_line(infostring) for infostring in listofinfostrings if infostring]
     return listofinfotuples
 
 

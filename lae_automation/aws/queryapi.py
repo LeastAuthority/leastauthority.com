@@ -90,12 +90,14 @@ def xml_parse(text):
         raise ResponseParseError(e)
 
 
-def xml_find(node, key):
-    r = node.find(key)
+def xml_find(node, *keys):
+    r = node.find(keys[0])
     if r is None:
-        raise ResponseParseError('Node not found: %r' % (key,))
-    else:
+        raise ResponseParseError('Node not found: %r' % (keys,))
+    if len(keys) == 1:
         return r
+    keys = keys[1:]
+    return xml_find(r, *keys)
 
 
 EC2_PUBLIC_DNS = re.compile(r'^ec2(-(0|([1-9][0-9]{0,2}))){4}\.')
@@ -156,7 +158,8 @@ class ServerInfoParser(txaws_ec2_Parser):
             serverproperties = []
             for property in self.req_properties + self.opt_properties:
                 try:
-                    matching = xml_find(inneritem, unicode(property)).text
+                    path = unicode(property).split(u'.')
+                    matching = xml_find(inneritem, *path).text
                     if matching is None and property in self.req_properties:
                         return None
                     serverproperties.append(matching)
