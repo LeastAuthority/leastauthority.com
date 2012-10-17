@@ -65,7 +65,7 @@ SMTP_USERNAME = FROM_EMAIL
 
 NOTIFY_FAILURE_EMAIL = "support@leastauthority.com"
 
-PGP_NOTIFICATION_EMAIL = "davidsarah@leastauthority.com"
+PGP_NOTIFICATION_EMAIL = "zancas@leastauthority.com"
 
 
 def send_signup_confirmation(publichost, customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr, password_path='../smtppassword'):
