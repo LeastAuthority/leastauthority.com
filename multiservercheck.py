@@ -30,7 +30,8 @@ stderr = StringIO()
 serverinfotuple = read_serverinfo(serverinfocsvpath)
 localstate = {}
 for propertytuple in serverinfotuple:
-    localstate[propertytuple[2]] = (propertytuple[0], propertytuple[1], propertytuple[3])
+    (launch_time, instance_id, publichost, status) = propertytuple
+    localstate[instance_id] = (launch_time, publichost, status)
 
 lasterrors = None
 lasterrorsfp = FilePath(lasterrorspath)

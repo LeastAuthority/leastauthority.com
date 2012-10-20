@@ -76,41 +76,52 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
         now = time.time()
     running_list = []
     for (rpt_launch_time, rpt_instance_id, rpt_host, rpt_status) in remotepropstuplelist:
-        publichost = pubIPextractor(rpt_host)
-        if not publichost:
-            print >>stderr, ("Warning: Host launched at %s with instance ID %s (which is %s) has no public IP. Maybe it has been terminated."
-                             % (rpt_launch_time, rpt_instance_id, rpt_status))
-        elif not localstate.has_key(publichost):
+        rpt_publichost = pubIPextractor(rpt_host)
+        rpt_publichost_s = rpt_publichost or '<no public IP>'
+
+        if not localstate.has_key(rpt_instance_id):
+            # unknown instance
             launch_time = parse_iso_time(rpt_launch_time)
             if now - launch_time < 10*60:
-                print >>stdout, ("Note: Ignoring host %s (which is %s) because it was launched less than 10 minutes ago at %s."
-                                 % (publichost, rpt_status, rpt_launch_time))
+                print >>stdout, ("Note: Ignoring unknown %s instance %s at %s because it was launched less than 10 minutes ago at %s."
+                                 % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
             else:
-                print >>stderr, ("Warning: Host %s (which is %s) is not in the list of known servers."
-                                 % (publichost, rpt_status))
-                running_list.append(publichost)
-        else:
-            (launch_time, instance_id, status) = localstate[publichost]
-            if status == 'running':
-                running_list.append(publichost)
+                print >>stderr, ("Warning: The %s instance %s at %s launched at %s is not in the list of known servers."
+                                 % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
 
-            if launch_time != rpt_launch_time:
-                print >>stderr, ("Warning: Host %s launch time changed from %s to %s (probably rebooted)."
-                                 % (publichost, launch_time, rpt_launch_time))
-            if instance_id != rpt_instance_id:
-                print >>stderr, ("Warning: Host %s changed instance ID from %s to %s."
-                                 % (publichost, instance_id, rpt_instance_id))
-            if status != rpt_status:
-                print >>stderr, ("Warning: Host %s status is %s when expected to be %s."
-                                 % (publichost, rpt_status, status))
-            del localstate[publichost]
+                if rpt_status == 'running' and rpt_publichost:
+                    running_list.append(rpt_publichost)
+        else:
+            # known instance
+            (launch_time, publichost, status) = localstate[rpt_instance_id]
+            if status == 'ignore' or (status == 'not_running' and rpt_status != 'running'):
+                print >>stdout, ("Note: Ignoring %s instance %s at %s launched at %s."
+                                 % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
+            else:
+                if rpt_status == 'running' and rpt_publichost:
+                    running_list.append(rpt_publichost)
+
+                if publichost != rpt_publichost:
+                    print >>stderr, ("Warning: The %s instance %s launched at %s changed public IP from %s to %s."
+                                     % (rpt_status, rpt_instance_id, rpt_launch_time, publichost, rpt_publichost_s))
+
+                if launch_time != rpt_launch_time:
+                    print >>stderr, ("Warning: The %s instance %s at %s changed launch time from %s to %s (probably restarted)."
+                                     % (rpt_status, rpt_instance_id, rpt_publichost_s, launch_time, rpt_launch_time))
+
+                if status != rpt_status:
+                    print >>stderr, ("Warning: The %s instance %s at %s launched at %s was expected to be %s."
+                                     % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time, status))
+            del localstate[rpt_instance_id]
 
     if localstate:
+        print >>stderr
         print >>stderr, "The following known servers were not found by the AWS query:"
         for key in localstate:
-            (s_launch_time, s_instance_id, s_status) = localstate[key]
-            print >>stderr, ("Host %-15s  Launch time: %s  Instance ID: %s  Expected status: %s"
-                             % (key, s_launch_time, s_instance_id, s_status))
+            (s_launch_time, s_publichost, s_status) = localstate[key]
+            if s_status not in ('ignore', 'not_running'):
+                print >>stderr, ("Instance ID: %s  Public IP: %-15s  Launch time: %s  Expected status: %s"
+                                 % (key, s_publichost, s_launch_time, s_status))
         print >>stderr
 
     return running_list
