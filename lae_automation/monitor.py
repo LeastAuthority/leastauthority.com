@@ -114,14 +114,19 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
                                      % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time, status))
             del localstate[rpt_instance_id]
 
-    if localstate:
-        print >>stderr
-        print >>stderr, "The following known servers were not found by the AWS query:"
-        for key in localstate:
-            (s_launch_time, s_publichost, s_status) = localstate[key]
-            if s_status not in ('ignore', 'not_running'):
-                print >>stderr, ("Instance ID: %s  Public IP: %-15s  Launch time: %s  Expected status: %s"
-                                 % (key, s_publichost, s_launch_time, s_status))
+    printed_heading = False
+    for key in localstate:
+        (s_launch_time, s_publichost, s_status) = localstate[key]
+        if s_status not in ('ignore', 'not_running'):
+            if not printed_heading:
+                print >>stderr
+                print >>stderr, "The following known servers were not found by the AWS query:"
+                printed_heading = True
+
+            print >>stderr, ("Instance ID: %s  Public IP: %-15s  Launch time: %s  Expected status: %s"
+                             % (key, s_publichost, s_launch_time, s_status))
+
+    if printed_heading:
         print >>stderr
 
     return running_list
