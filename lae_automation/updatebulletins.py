@@ -41,7 +41,7 @@ SMTP_USERNAME = FROM_EMAIL
 PGP_NOTIFICATION_EMAIL = "davidsarah@leastauthority.com"
 
 
-def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, stdout, stderr, password_path='../smtppassword'):
+def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, stdout, stderr, password_path='../secret_config/smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,

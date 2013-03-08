@@ -21,9 +21,9 @@ producttoken = sys.argv[6]
 bucketname = sys.argv[7]
 secretspath = sys.argv[8]
 
-ec2_privkey_path = '../EC2adminkeys2.pem'
-monitor_pubkey = FilePath('../EC2monitorkeys2.pub').getContent().strip()
-monitor_privkey_path = '../EC2monitorkeys2.pem'
+ec2_privkey_path = '../secret_config/EC2adminkeys2.pem'
+monitor_pubkey = FilePath('../secret_config/EC2monitorkeys2.pub').getContent().strip()
+monitor_privkey_path = '../secret_config/EC2monitorkeys2.pem'
 
 try:
     secretsfile = open(secretspath, 'a')

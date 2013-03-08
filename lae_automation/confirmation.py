@@ -68,7 +68,7 @@ NOTIFY_FAILURE_EMAIL = "support@leastauthority.com"
 PGP_NOTIFICATION_EMAIL = "zancas@leastauthority.com"
 
 
-def send_signup_confirmation(publichost, customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr, password_path='../smtppassword'):
+def send_signup_confirmation(publichost, customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr, password_path='../secret_config/smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
@@ -114,7 +114,7 @@ def send_signup_confirmation(publichost, customer_name, customer_email, external
     return d
 
 
-def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr, password_path='../smtppassword'):
+def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr, password_path='../secret_config/smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
     print >>stderr, str(f)

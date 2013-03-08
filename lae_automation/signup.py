@@ -43,7 +43,7 @@ def lookup_product(config, productcode):
 
 
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
-           seed, secretsfile, logfilename, configpath='../lae_automation_config.json',
+           seed, secretsfile, logfilename, configpath='../secret_config/lae_automation_config.json',
            serverinfopath=None, ec2secretpath=None, clock=None):
     config = Config(configpath)
     myclock = clock or reactor
@@ -96,7 +96,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
 
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
-                   secretsfile, logfilename, configpath='../lae_automation_config.json',
+                   secretsfile, logfilename, configpath='../secret_config/lae_automation_config.json',
                    serverinfopath=None, ec2secretpath=None, clock=None):
     config = Config(configpath)
     useraccesskeyid = oldsecrets['access_key_id']
@@ -118,8 +118,8 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                   bucketname, oldsecrets, amiimageid, instancesize,
                   customer_name, customer_email, customer_keyinfo, stdout, stderr,
                   secretsfile, config, serverinfopath=None, ec2secretpath=None, clock=None):
-    serverinfopath = serverinfopath or '../serverinfo.csv'
-    ec2secretpath = ec2secretpath or '../ec2secret'
+    serverinfopath = serverinfopath or '../secret_config/serverinfo.csv'
+    ec2secretpath = ec2secretpath or '../secret_config/ec2secret'
     myclock = clock or reactor
 
     ec2accesskeyid = str(config.other['ec2_access_key_id'])

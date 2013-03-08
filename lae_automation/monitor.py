@@ -189,7 +189,7 @@ SMTP_USERNAME = FROM_EMAIL
 SMTP_USERNAME2 = ''
 
 
-def send_monitoring_report(errors, password_path='../smtppassword'):
+def send_monitoring_report(errors, password_path='../secret_config/smtppassword'):
     password = FilePath(password_path).getContent().strip()
 
     if errors:

@@ -14,6 +14,6 @@ if len(sys.argv) < 3:
 
 publichost = sys.argv[1]
 timestamp = sys.argv[2]
-ec2keyfilename = "../EC2adminkeys2.pem"
+ec2keyfilename = "../secret_config/EC2adminkeys2.pem"
 
 record_secrets(FilePath('..'), publichost, timestamp, ec2keyfilename, sys.stdout, sys.stderr)

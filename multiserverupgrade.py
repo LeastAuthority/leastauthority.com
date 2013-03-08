@@ -11,10 +11,9 @@ from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParse
 
 
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
-configpath='../lae_automation_config.json'
-config = Config(configpath)
+config = Config()
 
-ec2secretpath='../ec2secret'
+ec2secretpath='../secret_config/ec2secret'
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 

@@ -15,7 +15,7 @@ from lae_util.streams import LoggingTeeStream
 #The incident gatherer's furl is a secret, so it is obtained from lae_automation_config.
 #The stats gatherer's furl is a secret, so it is obtained from lae_automation_config.
 from lae_automation.config import Config
-config = Config('../lae_automation_config.json')
+config = Config()
 incident_gatherer_furl = str(config.other['incident_gatherer_furl'])
 stats_gatherer_furl = str(config.other['stats_gatherer_furl'])
 
