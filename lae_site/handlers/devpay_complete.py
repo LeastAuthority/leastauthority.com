@@ -337,8 +337,9 @@ successful_activationkeys = None
 
 def start(basefp):
     global flappcommand, all_activationkeys, successful_activationkeys
+    
 
-    signup_furl_fp = basefp.child(SIGNUP_FURL_FILE)
+    signup_furl_fp = basefp.child('secret_config').child(SIGNUP_FURL_FILE)
     activation_requests_fp = basefp.child(ACTIVATION_REQUESTS_FILE)
     signups_fp = basefp.child(SIGNUPS_FILE)
 
