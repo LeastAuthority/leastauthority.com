@@ -118,7 +118,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                   bucketname, oldsecrets, amiimageid, instancesize,
                   customer_name, customer_email, customer_keyinfo, stdout, stderr,
                   secretsfile, config, serverinfopath=None, ec2secretpath=None, clock=None):
-    serverinfopath = serverinfopath or '../secret_config/serverinfo.csv'
+    serverinfopath = serverinfopath or '../serverinfo.csv'
     ec2secretpath = ec2secretpath or '../secret_config/ec2secret'
     myclock = clock or reactor
 

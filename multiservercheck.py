@@ -19,7 +19,7 @@ config = Config()
 ec2secretpath='../secret_config/ec2secret'
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
-serverinfocsvpath = '../secret_config/serverinfo.csv'
+serverinfocsvpath = '../serverinfo.csv'
 lasterrorspath = '../lasterrors.txt'
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
