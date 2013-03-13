@@ -1,4 +1,5 @@
-import urllib
+import subprocess, pwd, os, urllib
+
 from twisted.internet import reactor, task, defer
 from twisted.python.filepath import FilePath
 
@@ -12,7 +13,7 @@ from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint
 from txaws.credentials import AWSCredentials
 
-import subprocess, pwd, os
+
 
 class PublicKeyMismatch(Exception):
     pass
