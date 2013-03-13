@@ -1,17 +1,21 @@
-
 import urllib
-from twisted.internet import reactor, task
+from twisted.internet import reactor, task, defer
+from twisted.python.filepath import FilePath
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
-from lae_automation.aws.queryapi import xml_parse, xml_find
+from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_consoleoutput, \
+    wait_for_EC2_properties, TimeoutError
 
 from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint
 from txaws.credentials import AWSCredentials
 
+import subprocess, pwd, os
 
+class PublicKeyMismatch(Exception):
+    pass
 
 def activate_user_account_desktop(activationkey, producttoken, stdout, stderr):
     """
@@ -40,12 +44,12 @@ def activate_user_account_desktop(activationkey, producttoken, stdout, stderr):
     d.addCallback(activated)
     return d
 
-
 # delay between starting an instance and setting its tags
 SET_TAGS_DELAY_TIME = 5
 
-def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size, bucket_name,
-                        keypair_name, instance_name, stdout, stderr, clock=None):
+
+def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size,
+                        bucket_name, keypair_name, instance_name, stdout, stderr, clock=None):
     """
     @param creds: a txaws.service.AWSCredentials object
     @param ami_image_id: string identifying the AMI
@@ -123,6 +127,94 @@ def dump_instance_information(instance, stderr):
             print >>stderr, '  %s = %r' % (attr, getattr(instance, attr))
 
 
+def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri, addressparser,
+                                      polling_interval, total_wait_time, stdout, stderr, instance_id):
+    """
+    Theory of Operation:  What the function intends.
+    When a new ssh connection is established it is possible for a recipient-other-than-the-intended
+    (a M.an I.n T.he M.iddle) to offer a counterfeit encryption key to the Connector.  This would enable
+    the MITM to read the contents of the ssh traffic the Connector intended to transmit confidentially.
+
+    If the Connector has an alternate connection (side-channel) to the intended recipient the Connector
+    can check that the encryption key presented to it, is the same in both channels.  This means that an
+    attacker would have to control both channels to undetectably deceive the Connector.
+
+    Theory of Operation:  How the function accomplishes its intention.
+    When Least Authority (the "Connector") generates a new EC2 instance using the AWS REST interface it
+    communicates over an https channel.  This means that Least Authority _COULD_ be assured by a
+    'Certificate Authority' that 'AWS' is the initial recipient of Least Authority's confidential
+    requests.
+
+    Subsequent to initial generation, Least Authority uses ssh to communicate with its EC2s.
+
+    When Least Authority establishes an initial ssh connection with an EC2 instance, it has
+    generated a second, unauthenticated channel.  Least Authority uses the first, over-https,
+    channel to obtain a copy of the ssh public key fingerprint that AWS asserts will be used
+    by the new EC2.
+
+    (NOTE: Although 'Least Authority' uses an https endpoint, i.e. protocol, certificate checking is
+    not yet implemented so we do _not_ yet have cryptographic assurance of the authenticity of the
+    AWS REST API provider.)
+
+    The User that owns the Least Authority process then obtains the over-https public key
+    fingerprint, uses it to check the pubkey offered over the ssh channel, and store it in its
+    .ssh/known_hosts file, along with the hashed identity of the host. (This is not a 'security'
+    check since, the over https fingerprint is not authenticated.)
+
+    @param ec2accesskeyid:  An identifier AWS uses to lookup our credentials.
+    @param ec2secretkey:    The symmetric secret we use to sign our queries.
+    @param endpoint_uri:    An endpoint is a URL that is the entry point for a web service.
+    @param addressparser:   An object that is referred to by an EC2 client and used to parse
+    data returned from queries.
+    @param polling_interval: An int that sets how long to wait between repeated queries.
+    @param total_wait_time:  The total time allotted to a query type (same for both fingerprint
+    and IP retrievals).
+    @param instance_id:      An AWS internal id of an EC2.
+    """
+    d = wait_for_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, polling_interval,
+                                   total_wait_time, stdout, stderr, instance_id)
+
+    def _got_fingerprintfromconsole(fingerprint):
+        fingerprint_from_AWS = fingerprint
+        d1 = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, addressparser,
+                                     polling_interval, total_wait_time, stdout, stderr, instance_id)
+
+        def _got_IPfromAWS(IP_tuple):
+            IP_from_AWS = IP_tuple[0][0]
+            return wait_for_pubkeyfp_from_keyscan(IP_from_AWS, polling_interval, total_wait_time, stdout)
+
+        d1.addCallback(_got_IPfromAWS)
+
+        def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, pubkey_data, IP_from_AWS) ):
+            if fingerprint_from_AWS != fingerprint_from_keyscan:
+                raise PublicKeyMismatch
+
+            pubkey_filename = 'sshpubkey_'+IP_from_AWS
+            pubkey_filepath = FilePath(pubkey_filename)
+            pubkey_filepath.setContent(pubkey_data)
+            sshkeygen_hash_call = ('ssh-keygen', '-H', '-f', pubkey_filename)
+            sp = subprocess.Popen(sshkeygen_hash_call)
+            if sp.wait() != 0:
+                raise subprocess.CalledProcessError
+
+            hashed_filecontents = pubkey_filepath.getContent()
+            username = pwd.getpwuid(os.getuid())[0]
+            known_hosts_filepath = FilePath('/home').child(username).child('.ssh').child('known_hosts')
+            known_hosts = known_hosts_filepath.getContent()
+            new_known_hosts = known_hosts + hashed_filecontents
+            known_hosts_filepath.setContent(new_known_hosts)
+            return IP_from_AWS
+
+        d1.addCallback(_verifyfp_and_write_pubkey)
+        return d1
+
+    d.addCallback(_got_fingerprintfromconsole)
+    def printer(x):
+        print >> stdout, "return from _got_fingerprintfromconsole is: %s" % (x,)
+        return x
+    d.addCallback(printer)
+    return d
+
 def create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
                        producttoken=None, location=None):
     if location is None:
@@ -192,3 +284,50 @@ def verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken,
         return active
     d.addCallback(verified)
     return d
+
+
+def wait_for_pubkeyfp_from_keyscan(targetIP, polling_interval, total_wait_time, stdout):
+    """
+    Uses the keyscan utility to repeatedly scan an IP until the target either responds, or the
+    scan times out.
+    """
+    def _wait(remaining_time):
+        print >> stdout, "About to call get_pubkeyfp_from_keyscan."
+        d = defer.succeed(get_pubkeyfp_from_keyscan(targetIP, stdout))
+        def _maybe_again(res):
+            if res:
+                return res
+            if remaining_time <= 0:
+                print >>stdout, "Timed out waiting for ssh-keyscan."
+                raise TimeoutError()
+            print >>stdout, "Waiting %d seconds before repeating ssh-keyscan..." % (polling_interval,)
+            return task.deferLater(reactor, polling_interval, _wait, remaining_time - polling_interval)
+        d.addCallback(_maybe_again)
+        return d
+    return _wait(total_wait_time)
+
+
+def get_pubkeyfp_from_keyscan(targetIP, stdout):
+    """
+    Return the targetIP's ssh pubkey fingerprint, and key.
+    Because of the interface to ssh-keygen this function creates files locally.
+    """
+    pubkey_filename = 'sshpubkey_'+targetIP
+    pubkey_filepath = FilePath(pubkey_filename)
+    output = pubkey_filepath.open('w')
+    keyscan_call = ('ssh-keyscan', '-H', targetIP)
+    sp = subprocess.Popen(keyscan_call, stdout=output, stderr=subprocess.PIPE)
+    if sp.wait() != 0:
+        raise subprocess.CalledProcessError
+    if pubkey_filepath.getContent() == '':
+        return None
+    pubkey = pubkey_filepath.getContent()
+    print >> stdout, "pubkey is:\n%s" % pubkey
+    keygen_call = ('ssh-keygen', '-q', '-l', '-f', pubkey_filename)
+    sp2 = subprocess.Popen(keygen_call, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                           stdin=sp.stdout)
+    if sp2.wait() != 0:
+        raise subprocess.CalledProcessError
+    spoutput = sp2.stdout.read()
+    fingerprint = spoutput.split()[1]
+    return fingerprint, pubkey, targetIP
