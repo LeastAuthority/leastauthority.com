@@ -83,7 +83,6 @@ else:
 
 
 def xml_parse(text):
-    #print >>sys.stderr, text
     try:
         return XML(text)
     except xml_exceptions, e:
@@ -179,12 +178,12 @@ def get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, parser, *inst
     client = EC2Client(creds=ec2creds, endpoint=endpoint, parser=parser)
     return client.describe_instances(*instance_ids)
 
-
 class TimeoutError(Exception):
     pass
 
 
-def wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint, parser, poll_time, wait_time, stdout, stderr, *instance_ids):
+def wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint, parser, poll_time, wait_time,
+                            stdout, stderr, *instance_ids):
     def _wait(remaining_time):
         d = get_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint, parser, *instance_ids)
         def _maybe_again(res):
@@ -194,6 +193,79 @@ def wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint, parser, poll
                 print >>stdout, "Timed out waiting for EC2 instance addresses."
                 raise TimeoutError()
             print >>stdout, "Waiting %d seconds before address request..." % (poll_time,)
+            return task.deferLater(reactor, poll_time, _wait, remaining_time - poll_time)
+        d.addCallback(_maybe_again)
+        return d
+    return _wait(wait_time)
+
+
+class EC2ConsoleClient(EC2Client):
+    """
+    This subclass adds functionality for handling the "console" data produced by AWS upon EC2 launch.
+    This data copies output as it would appear to a human monitoring startup on terminal.
+    We obtain the ssh pub key fingerprint from this data.
+    """
+    def __init__(self,**kwargs):
+        super(EC2ConsoleClient, self).__init__(**kwargs)
+
+    def describe_console_output(self, instance_id):
+        """Describe the console output for a single instance."""
+        InstanceIDParam= {"InstanceId": instance_id}
+        query = self.query_factory(
+            action="GetConsoleOutput", creds=self.creds,
+            endpoint=self.endpoint, other_params=InstanceIDParam)
+        d = query.submit()
+        return d.addCallback(self.parser.describe_console_output)
+
+
+class ConsoleOutputParser(txaws_ec2_Parser):
+    def describe_console_output(self, xml_bytes):
+        doc = xml_parse(xml_bytes)
+        consoleoutput = xml_find(doc, u'output').text.decode('base64')
+        pubkeyfingerp = hostpubkeyextractor(consoleoutput)
+        return pubkeyfingerp
+
+
+def hostpubkeyextractor(consoletext):
+    listoflines = consoletext.split('\n')
+    begin = False
+    end = False
+    for line in listoflines:
+        if 'BEGIN SSH HOST KEY FINGERPRINTS' in line:
+            begin = True
+            continue
+        if 'END SSH HOST KEY FINGERPRINTS' in line:
+            end = True
+            continue
+        if begin and not end and 'RSA' in line:
+            pubkeyfp_line =  "%s"%line.split('ec2:')[1].strip()
+            pubkeyfp = pubkeyfp_line.split()[1]
+            return pubkeyfp
+
+
+def get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_id):
+    """
+    Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
+    """
+    consoleparser = ConsoleOutputParser()
+    ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)
+    endpoint = AWSServiceEndpoint(uri=endpoint_uri)
+    client = EC2ConsoleClient(creds=ec2creds, endpoint=endpoint, parser=consoleparser)
+    return client.describe_console_output(instance_id)
+
+
+def wait_for_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint, poll_time, wait_time,
+                               stdout, stderr, instance_id):
+    def _wait(remaining_time):
+        print >> stdout, "About to call get_EC2_consoleoutput with instance_id: %s" % instance_id
+        d = get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint, instance_id)
+        def _maybe_again(res):
+            if res:
+                return res
+            if remaining_time <= 0:
+                print >>stdout, "Timed out waiting for EC2 instance console output."
+                raise TimeoutError()
+            print >>stdout, "Waiting %d seconds before console output request..." % (poll_time,)
             return task.deferLater(reactor, poll_time, _wait, remaining_time - poll_time)
         d.addCallback(_maybe_again)
         return d
