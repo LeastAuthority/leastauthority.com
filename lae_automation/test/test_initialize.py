@@ -51,7 +51,7 @@ class InitializationTests (TestCase):
     def test_verify_and_store_serverssh_pubkey(self):
         self.mockwaitfor_console.side_effect = lambda *args: defer.succeed('NONMATCHING FINGERPRINT_FROM_CONSOLE')
         self.mockwaitfor_EC2prop.side_effect = lambda *args: defer.succeed((('IPfromAWS', 'XXX'), 'XXX'))
-        self.mockwaitfor_keyscan.return_value = ('NONMATCHING FINGERPRINT_FROM_KEYSCAN', 'PUBKEY', 'sshpubkey_IPfromAWS', 'IPfromAWS')
+        self.mockwaitfor_keyscan.return_value = ('NONMATCHING FINGERPRINT_FROM_KEYSCAN', 'HASHED_PUBKEY', 'IPfromAWS')
 
         mismatchfailure = Failure(PublicKeyMismatch)
         argtuple = ('ec2accesskeyid', 'ec2secretkey', 'endpoint_uri', 'addressparser',

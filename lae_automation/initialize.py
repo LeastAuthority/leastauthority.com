@@ -188,19 +188,13 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
 
         d1.addCallback(_got_IPfromAWS)
 
-        def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, pubkey_data, pubkey_filename, IP_from_AWS) ):
+        def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, hashed_pubkey, IP_from_AWS) ):
             if fingerprint_from_AWS != fingerprint_from_keyscan:
                 raise PublicKeyMismatch
 
-            sshkeygen_hash_call = ('ssh-keygen', '-H', '-f', pubkey_filename)
-            sp = subprocess.Popen(sshkeygen_hash_call)
-            if sp.wait() != 0:
-                raise subprocess.CalledProcessError
-
-            hashed_filecontents = FilePath(pubkey_filename).getContent().rstrip('\n') + '\n'
             known_hosts_filepath = FilePath(os.path.expandpath('~')).child('.ssh').child('known_hosts')
             known_hosts = known_hosts_filepath.getContent().rstrip('\n') + '\n'
-            new_known_hosts = known_hosts + hashed_filecontents
+            new_known_hosts = known_hosts + hashed_pubkey
             known_hosts_filepath.setContent(new_known_hosts)
             return IP_from_AWS
 
@@ -307,13 +301,24 @@ def wait_for_and_store_pubkeyfp_from_keyscan(targetIP, polling_interval, total_w
     return _wait(total_wait_time)
 
 
+PUBKEY_DIR = 'pubkeys'
+
 def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     """
-    Return the targetIP's ssh pubkey fingerprint, and key.
-    Because of the interface to ssh-keygen this function creates files locally.
+    Return the host's (ssh pubkey fingerprint, hashed public key, targetIP).
+    Because of the interface to ssh-keygen, this function creates files locally
+    under PUBKEY_DIR.
     """
+    pubkey_dir = FilePath(PUBKEY_DIR)
+    try:
+        pubkey_dir.makedirs()
+    except OSError, e:
+        if e.errno != os.errno.EEXIST:
+            raise
+
     pubkey_filename = 'sshpubkey_'+targetIP
-    pubkey_filepath = FilePath(pubkey_filename)
+    pubkey_filepath = pubkey_dir.child(pubkey_filename)
+    pubkey_relpath = os.path.join(PUBKEY_DIR, pubkey_filename)
     output = pubkey_filepath.open('w')
     keyscan_call = ('ssh-keyscan', '-H', targetIP)
     sp = subprocess.Popen(keyscan_call, stdout=output, stderr=subprocess.PIPE)
@@ -324,11 +329,19 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     pubkey = pubkey_filepath.getContent()
     print >>stdout, "pubkey is:\n%s" % (pubkey,)
 
-    keygen_call = ('ssh-keygen', '-q', '-l', '-f', pubkey_filename)
+    keygen_call = ('ssh-keygen', '-q', '-l', '-f', pubkey_relpath)
     sp2 = subprocess.Popen(keygen_call, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            stdin=sp.stdout)
     if sp2.wait() != 0:
         raise subprocess.CalledProcessError
     spoutput = sp2.stdout.read()
     fingerprint = spoutput.split()[1]
-    return (fingerprint, pubkey, pubkey_filename, targetIP)
+
+    sshkeygen_hash_call = ('ssh-keygen', '-H', '-f', pubkey_relpath)
+    sp = subprocess.Popen(sshkeygen_hash_call)
+    if sp.wait() != 0:
+        raise subprocess.CalledProcessError
+
+    hashed_pubkey = pubkey_filepath.getContent().rstrip('\n') + '\n'
+
+    return (fingerprint, hashed_pubkey, targetIP)
