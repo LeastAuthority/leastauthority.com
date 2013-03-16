@@ -205,8 +205,8 @@ class EC2ConsoleClient(EC2Client):
     This data copies output as it would appear to a human monitoring startup on terminal.
     We obtain the ssh pub key fingerprint from this data.
     """
-    def __init__(self,**kwargs):
-        super(EC2ConsoleClient, self).__init__(**kwargs)
+    def __init__(self, *args, **kwargs):
+        super(EC2ConsoleClient, self).__init__(*args, **kwargs)
 
     def describe_console_output(self, instance_id):
         """Describe the console output for a single instance."""
@@ -238,14 +238,14 @@ def hostpubkeyextractor(consoletext):
             end = True
             continue
         if begin and not end and 'RSA' in line:
-            pubkeyfp_line =  "%s"%line.split('ec2:')[1].strip()
+            pubkeyfp_line = str(line).partition('ec2:')[2].strip()
             pubkeyfp = pubkeyfp_line.split()[1]
             return pubkeyfp
 
 
 def get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_id):
     """
-    Reference: http://docs.amazonwebservices.com/AWSEC2/latest/APIReference/index.html?ApiReference-query-DescribeInstances.html
+    Reference: http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-GetConsoleOutput.html
     """
     consoleparser = ConsoleOutputParser()
     ec2creds = AWSCredentials(ec2accesskeyid, ec2secretkey)

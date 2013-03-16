@@ -6,6 +6,14 @@ from twisted.python.filepath import FilePath
 from lae_automation.aws.queryapi import AddressParser
 from lae_automation.initialize import verify_and_store_serverssh_pubkey
 
+
+if len(sys.argv) < 2:
+    print "Usage: python compare_ssh_pubkeys.py INSTANCE_ID"
+    print "Happy comparing!"
+    sys.exit(1)
+
+instance_id = sys.argv[1]
+
 config = Config()
 ec2secretpath = '../secret_config/ec2secret'
 
@@ -26,7 +34,7 @@ def eb(f):
 
 d = verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
                                       AddressParser(), POLLING_INTERVAL, WAIT_TIME,
-                                      sys.stdout, sys.stderr, sys.argv[1])
+                                      sys.stdout, sys.stderr, instance_id)
 
 d.addErrback(eb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))

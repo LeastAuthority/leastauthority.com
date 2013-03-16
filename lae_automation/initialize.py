@@ -1,4 +1,5 @@
-import subprocess, pwd, os, urllib
+
+import subprocess, os, urllib
 
 from twisted.internet import reactor, task, defer
 from twisted.python.filepath import FilePath
@@ -182,26 +183,23 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
 
         def _got_IPfromAWS(IP_tuple):
             IP_from_AWS = IP_tuple[0][0]
-            return wait_for_pubkeyfp_from_keyscan(IP_from_AWS, polling_interval, total_wait_time, stdout)
+            # This also stores the pubkey in the file sshpubkey_<IP_from_AWS>.
+            return wait_for_and_store_pubkeyfp_from_keyscan(IP_from_AWS, polling_interval, total_wait_time, stdout)
 
         d1.addCallback(_got_IPfromAWS)
 
-        def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, pubkey_data, IP_from_AWS) ):
+        def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, pubkey_data, pubkey_filename, IP_from_AWS) ):
             if fingerprint_from_AWS != fingerprint_from_keyscan:
                 raise PublicKeyMismatch
 
-            pubkey_filename = 'sshpubkey_'+IP_from_AWS
-            pubkey_filepath = FilePath(pubkey_filename)
-            pubkey_filepath.setContent(pubkey_data)
             sshkeygen_hash_call = ('ssh-keygen', '-H', '-f', pubkey_filename)
             sp = subprocess.Popen(sshkeygen_hash_call)
             if sp.wait() != 0:
                 raise subprocess.CalledProcessError
 
-            hashed_filecontents = pubkey_filepath.getContent()
-            username = pwd.getpwuid(os.getuid())[0]
-            known_hosts_filepath = FilePath('/home').child(username).child('.ssh').child('known_hosts')
-            known_hosts = known_hosts_filepath.getContent()
+            hashed_filecontents = FilePath(pubkey_filename).getContent().rstrip('\n') + '\n'
+            known_hosts_filepath = FilePath(os.path.expandpath('~')).child('.ssh').child('known_hosts')
+            known_hosts = known_hosts_filepath.getContent().rstrip('\n') + '\n'
             new_known_hosts = known_hosts + hashed_filecontents
             known_hosts_filepath.setContent(new_known_hosts)
             return IP_from_AWS
@@ -287,14 +285,14 @@ def verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken,
     return d
 
 
-def wait_for_pubkeyfp_from_keyscan(targetIP, polling_interval, total_wait_time, stdout):
+def wait_for_and_store_pubkeyfp_from_keyscan(targetIP, polling_interval, total_wait_time, stdout):
     """
     Uses the keyscan utility to repeatedly scan an IP until the target either responds, or the
     scan times out.
     """
     def _wait(remaining_time):
-        print >> stdout, "About to call get_pubkeyfp_from_keyscan."
-        d = defer.succeed(get_pubkeyfp_from_keyscan(targetIP, stdout))
+        print >>stdout, "About to call get_and_store_pubkeyfp_from_keyscan."
+        d = defer.succeed(get_and_store_pubkeyfp_from_keyscan(targetIP, stdout))
         def _maybe_again(res):
             if res:
                 return res
@@ -308,7 +306,7 @@ def wait_for_pubkeyfp_from_keyscan(targetIP, polling_interval, total_wait_time, 
     return _wait(total_wait_time)
 
 
-def get_pubkeyfp_from_keyscan(targetIP, stdout):
+def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     """
     Return the targetIP's ssh pubkey fingerprint, and key.
     Because of the interface to ssh-keygen this function creates files locally.
@@ -331,4 +329,4 @@ def get_pubkeyfp_from_keyscan(targetIP, stdout):
         raise subprocess.CalledProcessError
     spoutput = sp2.stdout.read()
     fingerprint = spoutput.split()[1]
-    return fingerprint, pubkey, targetIP
+    return (fingerprint, pubkey, pubkey_filename, targetIP)
