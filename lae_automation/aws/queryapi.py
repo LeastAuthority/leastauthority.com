@@ -210,7 +210,7 @@ class EC2ConsoleClient(EC2Client):
 
     def describe_console_output(self, instance_id):
         """Describe the console output for a single instance."""
-        InstanceIDParam= {"InstanceId": instance_id}
+        InstanceIDParam = {"InstanceId": instance_id}
         query = self.query_factory(
             action="GetConsoleOutput", creds=self.creds,
             endpoint=self.endpoint, other_params=InstanceIDParam)
@@ -257,7 +257,7 @@ def get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_i
 def wait_for_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint, poll_time, wait_time,
                                stdout, stderr, instance_id):
     def _wait(remaining_time):
-        print >> stdout, "About to call get_EC2_consoleoutput with instance_id: %s" % instance_id
+        print >> stdout, "About to call get_EC2_consoleoutput with instance_id: %s" % (instance_id,)
         d = get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint, instance_id)
         def _maybe_again(res):
             if res:
