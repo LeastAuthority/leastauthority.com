@@ -6,7 +6,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
-from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_consoleoutput, \
+from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, \
     wait_for_EC2_properties, TimeoutError
 
 from txaws.ec2.client import EC2Client
@@ -173,7 +173,7 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
     and IP retrievals).
     @param instance_id:      An AWS internal id of an EC2.
     """
-    d = wait_for_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, polling_interval,
+    d = wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, endpoint_uri, polling_interval,
                                    total_wait_time, stdout, stderr, instance_id)
 
     def _got_fingerprintfromconsole(fingerprint):
@@ -329,7 +329,7 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     pubkey = pubkey_filepath.getContent()
     print >>stdout, "pubkey is:\n%s" % (pubkey,)
 
-    keygen_call = ('ssh-keygen', '-q', '-l', '-f', pubkey_relpath)
+    keygen_call = ('ssh-keygen', '-l', '-f', pubkey_relpath)
     sp2 = subprocess.Popen(keygen_call, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                            stdin=sp.stdout)
     if sp2.wait() != 0:

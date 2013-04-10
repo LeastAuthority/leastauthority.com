@@ -25,7 +25,7 @@ class InitializationTests (TestCase):
         return m
 
     def setUp(self):
-        self.mockwaitfor_console = self._patch_mock(lae_automation.initialize, 'wait_for_EC2_consoleoutput')
+        self.mockwaitfor_console = self._patch_mock(lae_automation.initialize, 'wait_for_EC2_sshfp')
         self.mockwaitfor_EC2prop = self._patch_mock(lae_automation.initialize, 'wait_for_EC2_properties')
         self.mockwaitfor_keyscan = self._patch_mock(lae_automation.initialize, 'wait_for_and_store_pubkeyfp_from_keyscan')
         self.mocklsc = self._patch_mock(lae_automation.initialize, 'LicenseServiceClient')

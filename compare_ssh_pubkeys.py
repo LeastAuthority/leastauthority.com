@@ -29,7 +29,7 @@ POLLING_INTERVAL = 5
 WAIT_TIME = 15
 
 def eb(f):
-    print >>sys.stderr, "Error returned from wait_for_EC2_consoleoutput invocation!"
+    print >>sys.stderr, "Error returned from verify_and_store_serverssh_pubkey invocation!"
     print >>sys.stderr, f
 
 d = verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,

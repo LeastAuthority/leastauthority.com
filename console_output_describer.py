@@ -3,7 +3,7 @@
 import sys, os
 from lae_automation.config import Config
 from twisted.python.filepath import FilePath
-from lae_automation.aws.queryapi import wait_for_EC2_consoleoutput
+from lae_automation.aws.queryapi import wait_for_EC2_sshfp
 
 
 if len(sys.argv) < 2:
@@ -29,14 +29,14 @@ POLLING_INTERVAL = 5
 WAIT_TIME = 15
 
 def eb(f):
-    print >>sys.stderr, "Error returned from wait_for_EC2_consoleoutput invocation!"
+    print >>sys.stderr, "Error returned from wait_for_EC2_sshfp invocation!"
     print >>sys.stderr, f
 
 def printer(x):
     print "x is %s" % (x,)
     return x
 
-d = wait_for_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
+d = wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
                                                      POLLING_INTERVAL, WAIT_TIME, sys.stdout, sys.stderr,
                                                      instance_id)
 
