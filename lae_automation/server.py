@@ -15,9 +15,6 @@ from lae_util.streams import LoggingTeeStream
 #The incident gatherer's furl is a secret, so it is obtained from lae_automation_config.
 #The stats gatherer's furl is a secret, so it is obtained from lae_automation_config.
 from lae_automation.config import Config
-config = Config()
-incident_gatherer_furl = str(config.other['incident_gatherer_furl'])
-stats_gatherer_furl = str(config.other['stats_gatherer_furl'])
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
@@ -304,8 +301,10 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, secret_key, user_token, product_token, bucket_name,
-                  oldsecrets, stdout, stderr, secretsfile):
+def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, 
+                              secret_key, user_token, product_token, bucket_name,
+                              oldsecrets, stdout, stderr, secretsfile, 
+                              configpath='../secret_config/lae_automation_config.json'):
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
@@ -318,14 +317,15 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
     internal_introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
 
+    config = Config(configpath)
     tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
                                       'publichost': publichost,
                                       'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
                                       'access_key_id': access_key_id,
                                       'bucket_name': bucket_name,
-                                      'incident_gatherer_furl': incident_gatherer_furl,
-                                      'stats_gatherer_furl': stats_gatherer_furl}
+                                      'incident_gatherer_furl': str(config.other['incident_gatherer_furl']), 
+                                      'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
     write(tahoe_cfg, '/home/customer/storageserver/tahoe.cfg')
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
     write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0440)

@@ -91,7 +91,9 @@ CONFIGFILEJSON = """{
   "admin_keypair_name":   "ADMINKEYS",
   "admin_privkey_path":   "ADMINKEYS.pem",
   "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem"
+  "monitor_privkey_path": "MONITORKEYS.pem",
+  "incident_gatherer_furl": "MOCK_incident_gatherer_furl",
+  "stats_gatherer_furl":    "MOCK_stats_gatherer_furl"
 }"""
 
 ZEROPRODUCT = """{

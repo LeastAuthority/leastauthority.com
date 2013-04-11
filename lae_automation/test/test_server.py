@@ -1,5 +1,6 @@
 from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
+from twisted.python.filepath import FilePath
 
 from lae_automation import server
 from lae_automation.server import api
@@ -7,6 +8,25 @@ from lae_automation.server import api
 
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
+
+# Vector data for the config file data:
+CONFIGFILEJSON = """{
+  "products": [
+    { "full_name":        "The test vector product.",
+      "product_code":     "ABCDEFGH",
+      "product_token":    "{ProductToken}TESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+      "ami_image_id":     "ami-testfbc2",
+      "instance_size":    "t1.testy"
+    }
+  ],
+  "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
+  "admin_keypair_name":   "ADMINKEYS",
+  "admin_privkey_path":   "ADMINKEYS.pem",
+  "monitor_pubkey_path":  "MONITORKEYS.pub",
+  "monitor_privkey_path": "MONITORKEYS.pem",
+  "incident_gatherer_furl": "MOCK_incident_gatherer_furl",
+  "stats_gatherer_furl":    "MOCK_stats_gatherer_furl"
+}"""
 
 def fifo(xs):
     xs.reverse()
@@ -32,6 +52,12 @@ class TestServerModule(TestCase):
             self.failUnlessEqual(self.WRITEARGS_FIFO.pop(), (value, remote_path, use_sudo, mode))
             return [remote_path]
         self.patch(server, 'write', call_write)
+
+        self.CONFIGFILEPATH = 'init_test_config.json'
+        FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
+
+    def tearDown(self):
+        FilePath(self.CONFIGFILEPATH).remove()
 
     def _check_all_done(self):
         self.failUnlessEqual(self.WHOAMI_FIFO, [])
@@ -147,8 +173,6 @@ class TestServerModule(TestCase):
         MSECRETSFILE = StringIO()
         INTERNALINTROFURL = 'pb://TUBID@LOCATION/SWISSNUM'
         from lae_automation.server import TAHOE_CFG_TEMPLATE
-        from lae_automation.server import incident_gatherer_furl
-        from lae_automation.server import stats_gatherer_furl
         from lae_automation.server import RESTART_SCRIPT
         test_tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': BUCKETNAME,
                                       'publichost': MHOSTNAME,
@@ -156,8 +180,8 @@ class TestServerModule(TestCase):
                                       'introducer_furl': INTERNALINTROFURL,
                                       'access_key_id': ACCESSKEYID,
                                       'bucket_name': BUCKETNAME,
-                                      'incident_gatherer_furl': incident_gatherer_furl,
-                                      'stats_gatherer_furl': stats_gatherer_furl}
+                                      'incident_gatherer_furl': "MOCK_incident_gatherer_furl",
+                                      'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
         self.WHOAMI_FIFO = []
         self.RUNARGS_FIFO = fifo([
                 ('rm -f /home/customer/introducer/introducer.furl', False, {}),
@@ -186,6 +210,6 @@ class TestServerModule(TestCase):
                 ])
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
                              SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
-                             STDOUT, STDERR, MSECRETSFILE)
+                             STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
         self._check_all_done()
 
