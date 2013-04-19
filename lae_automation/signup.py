@@ -6,7 +6,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
-    create_user_bucket, deploy_EC2_instance
+    create_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
 from lae_automation.aws.queryapi import wait_for_EC2_properties, AddressParser, TimeoutError
 from lae_automation.server import install_server, bounce_server, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
@@ -27,6 +27,8 @@ ADDRESS_WAIT_TIME = 5 * 60
 
 LISTEN_RETRIES = 5
 LISTEN_POLL_TIME = 15
+VASINTERVAL = .1
+VASTOTALWAIT = 600
 
 
 def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr,
@@ -157,29 +159,41 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             (publichost, privatehost) = addresses[0]
             print >>stdout, "The server's public address is %r." % (publichost,)
 
-            retries = LISTEN_RETRIES
-            while True:
-                try:
-                    install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr)
-                    break
-                except NotListeningError:
-                    retries -= 1
-                    if retries <= 0:
-                        print >>stdout, "Timed out waiting for EC2 instance to listen for ssh connections."
-                        raise TimeoutError()
-                    print >>stdout, "Waiting another %d seconds..." % (LISTEN_POLL_TIME)
-                    time.sleep(LISTEN_POLL_TIME)
-                    continue
+            d3 = verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
+                                                   publichost, VASINTERVAL, VASTOTALWAIT, stdout,
+                                                   stderr, instance.instance_id)
 
-            furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken,
-                                 producttoken, bucketname, oldsecrets, stdout, stderr, secretsfile)
+            def _got_sshfp(verified):
+                retries = LISTEN_RETRIES
+                while True:
+                    try:
+                        install_server(publichost, admin_privkey_path, monitor_pubkey,
+                                       monitor_privkey_path, stdout, stderr)
+                        break
+                    except NotListeningError:
+                        retries -= 1
+                        if retries <= 0:
+                            print >>stdout, "Timed out waiting for EC2 instance to listen for ssh connections."
+                            raise TimeoutError()
+                        print >>stdout, "Waiting another %d seconds..." % (LISTEN_POLL_TIME)
+                        time.sleep(LISTEN_POLL_TIME)
+                        continue
 
-            append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id, publichost)
+                furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid,
+                                     usersecretkey, usertoken, producttoken, bucketname, oldsecrets,
+                                     stdout, stderr, secretsfile)
 
-            d3 = defer.succeed(None)
-            if not oldsecrets:
-                d3.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo,
-                                                                    stdout, stderr))
+                append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id,
+                              publichost)
+                d4 = defer.succeed(None)
+                if not oldsecrets:
+                    d3.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name,
+                                                                        customer_email, furl,
+                                                                        customer_keyinfo,
+                                                                        stdout, stderr) )
+                return d4
+
+            d3.addCallback(_got_sshfp)
             return d3
         d2.addCallback(_got_addresses)
         return d2
