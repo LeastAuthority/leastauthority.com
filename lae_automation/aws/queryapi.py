@@ -256,8 +256,8 @@ def get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_i
 
 def wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, endpoint, poll_time, wait_time,
                                stdout, stderr, instance_id):
+    print >>stdout, "Attempting to get console data. Will try for %s seconds." % (wait_time,)
     def _wait(remaining_time):
-        print >> stdout, "About to call get_EC2_consoleoutput with instance_id: %s" % (instance_id,)
         d = get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint, instance_id)
         def _maybe_again(res):
             if res:
@@ -265,7 +265,6 @@ def wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, endpoint, poll_time, wait_t
             if remaining_time <= 0:
                 print >>stdout, "Timed out waiting for EC2 instance console output."
                 raise TimeoutError()
-            print >>stdout, "Waiting %d seconds before console output request..." % (poll_time,)
             return task.deferLater(reactor, poll_time, _wait, remaining_time - poll_time)
         d.addCallback(_maybe_again)
         return d
