@@ -3,6 +3,7 @@ from hashlib import sha1
 from base64 import b64encode
 
 from twisted.internet import reactor, task
+from twisted.python.filepath import FilePath
 from xml.parsers.expat import ExpatError
 from xml.etree import ElementTree
 from txaws.util import XML
@@ -221,13 +222,24 @@ class EC2ConsoleClient(EC2Client):
 class ConsoleOutputParser(txaws_ec2_Parser):
     def describe_console_output(self, xml_bytes):
         doc = xml_parse(xml_bytes)
-        consoleoutput = xml_find(doc, u'output').text.decode('base64')
-        pubkeyfingerp = hostpubkeyextractor(consoleoutput)
+        try:
+            consoleoutput = xml_find(doc, u'output').text.decode('base64')
+            instanceId = (xml_find(doc, u'instanceId').text).strip()
+        except ResponseParseError, response_error:
+            if '''Node not found: (u'output',)''' in response_error.args:
+                return None
+            raise
+
+        pubkeyfingerp = hostpubkeyextractor(consoleoutput, instanceId)
         return pubkeyfingerp
 
 
-def hostpubkeyextractor(consoletext):
-    listoflines = consoletext.split('\n')
+def hostpubkeyextractor(consoletext, instanceId):
+    curdirfp = FilePath('.')
+    parentdir = curdirfp.parent()
+    consdump_fp = parentdir.child('logs').child('consoledumps').child(instanceId)
+    consdump_fp.setContent(consoletext)
+    listoflines = consoletext.splitlines()
     begin = False
     end = False
     for line in listoflines:
