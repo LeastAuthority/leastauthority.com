@@ -1,4 +1,3 @@
-
 from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
@@ -153,7 +152,8 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(header_dict['Authorization'],
                                  'AWS TESTAAAAAAAAAAAAAAAA:NlnzOWOmMCut8/Opl26UpAAiIhE=')
             self.failUnlessEqual(header_dict['x-amz-security-token'],
-                                 '{UserToken}TESTUSERTOKEN%s==,{ProductToken}TESTPRODUCTTOKEN%s=' % ('A'*385, 'A'*295))
+                                 '{UserToken}TESTUSERTOKEN%s==,{ProductToken}TESTPRODUCTTOKEN%s=' % \
+                                 ('A'*385, 'A'*295))
             self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
             return defer.succeed('Completed devpay bucket creation submission.')
         self.patch(S3_Query, 'submit', call_s3_query_submit)
@@ -180,7 +180,8 @@ class TestSignupModule(TestCase):
 
         from lae_automation.server import NotListeningError
         self.first = True
-        def call_install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout, stderr):
+        def call_install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path,
+                                stdout, stderr):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             if self.first:
@@ -188,8 +189,9 @@ class TestSignupModule(TestCase):
                 raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
-        def call_bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid, usersecretkey, usertoken, producttoken,
-                               bucket_name, oldsecrets, stdout, stderr, secretsfile):
+        def call_bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid,
+                               usersecretkey, usertoken, producttoken, bucket_name, oldsecrets,
+                               stdout, stderr, secretsfile):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(privatehost, '0.0.0.1')
@@ -202,8 +204,8 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
         self.patch(signup, 'bounce_server', call_bounce_server)
 
-        def call_send_signup_confirmation(publichost, customer_name, customer_email, furl, customer_keyinfo,
-                                          stdout, stderr):
+        def call_send_signup_confirmation(publichost, customer_name, customer_email, furl,
+                                          customer_keyinfo, stdout, stderr):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(customer_name, 'MNAME')
             self.failUnlessEqual(customer_email, 'MEMAIL')
@@ -244,7 +246,8 @@ class TestSignupModule(TestCase):
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          self.SERVERINFOPATH, self.EC2SECRETPATH)
         return d
 
     def test_no_products(self):
@@ -261,8 +264,9 @@ class TestSignupModule(TestCase):
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.signup,
-                              MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                              MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
+                              MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, 
+                              stderr, MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                              self.SERVERINFOPATH, self.EC2SECRETPATH)
 
     def test_timeout_verify(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -276,12 +280,14 @@ class TestSignupModule(TestCase):
         MSECRETSFILE = 'MSECRETSFILE'
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
-        def call_verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout, stderr):
+        def call_verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout,
+                                     stderr):
             return defer.succeed(False)
         self.patch(signup, 'verify_user_account', call_verify_user_account)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -304,12 +310,14 @@ class TestSignupModule(TestCase):
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         from lae_automation.aws import queryapi
-        def call_get_EC2_properties(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, parser, *instance_ids):
+        def call_get_EC2_properties(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, parser,
+                                    *instance_ids):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -337,7 +345,8 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'install_server', call_install_server)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):

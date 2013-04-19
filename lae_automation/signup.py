@@ -29,7 +29,8 @@ LISTEN_RETRIES = 5
 LISTEN_POLL_TIME = 15
 
 
-def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, *instance_ids):
+def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr,
+                           *instance_ids):
     return wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, AddressParser(),
                                    POLL_TIME, ADDRESS_WAIT_TIME, stdout, stderr, *instance_ids)
 
@@ -42,8 +43,9 @@ def lookup_product(config, productcode):
     return ps[0]
 
 
-def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout, stderr,
-           seed, secretsfile, logfilename, configpath='../secret_config/lae_automation_config.json',
+def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout,
+           stderr, seed, secretsfile, logfilename,
+           configpath='../secret_config/lae_automation_config.json',
            serverinfopath=None, ec2secretpath=None, clock=None):
     config = Config(configpath)
     myclock = clock or reactor
@@ -65,7 +67,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
         usertoken = adpr.usertoken
 
         def _wait_until_verified(how_long_secs):
-            d3 = verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout, stderr)
+            d3 = verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout,
+                                     stderr)
             def _maybe_again(res):
                 if res:
                     print >>stdout, "Subscription verified."
@@ -74,29 +77,35 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                     print >>stdout, "Timed out waiting for verification of subscription."
                     raise TimeoutError()
                 print >>stdout, "Waiting another %d seconds..." % (POLL_TIME,)
-                return task.deferLater(myclock, POLL_TIME, _wait_until_verified, how_long_secs - POLL_TIME)
+                return task.deferLater(myclock, POLL_TIME, _wait_until_verified,
+                                       how_long_secs - POLL_TIME)
             d3.addCallback(_maybe_again)
             return d3
 
         d2 = _wait_until_verified(CC_VERIFICATION_TIME)
 
-        d2.addCallback(lambda ign: create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
+        d2.addCallback(lambda ign: create_user_bucket(useraccesskeyid, usersecretkey, usertoken,
+                                                      bucketname, stdout, stderr,
                                                       producttoken=producttoken, location=location))
 
         # We could deploy and configure the instance in parallel with the above wait and delete it
         # if necessary, but let's keep it simple and sequential.
-        d2.addCallback(lambda ign: deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
-                                                 bucketname, None, amiimageid, instancesize,
-                                                 customer_name, customer_email, customer_keyinfo, stdout, stderr,
-                                                 secretsfile, config, serverinfopath, ec2secretpath, clock=myclock))
+        d2.addCallback(lambda ign: deploy_server(useraccesskeyid, usersecretkey, usertoken,
+                                                 producttoken, bucketname, None, amiimageid,
+                                                 instancesize, customer_name, customer_email,
+                                                 customer_keyinfo, stdout, stderr, secretsfile,
+                                                 config, serverinfopath, ec2secretpath,
+                                                 clock=myclock))
         return d2
     d.addCallback(_activated)
-    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr))
+    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfilename, stdout,
+                                               stderr))
     return d
 
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
-                   secretsfile, logfilename, configpath='../secret_config/lae_automation_config.json',
+                   secretsfile, logfilename,
+                   configpath='../secret_config/lae_automation_config.json',
                    serverinfopath=None, ec2secretpath=None, clock=None):
     config = Config(configpath)
     useraccesskeyid = oldsecrets['access_key_id']
@@ -109,7 +118,8 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
                       bucketname, oldsecrets, amiimageid, instancesize,
                       "someone", customer_email, None, stdout, stderr,
                       secretsfile, config, serverinfopath, ec2secretpath, clock)
-    d.addErrback(lambda f: send_notify_failure(f, "someone", customer_email, logfilename, stdout, stderr))
+    d.addErrback(lambda f: send_notify_failure(f, "someone", customer_email, logfilename, stdout,
+                                               stderr))
     return d
 
 

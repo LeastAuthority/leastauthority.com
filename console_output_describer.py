@@ -36,9 +36,8 @@ def printer(x):
     print "x is %s" % (x,)
     return x
 
-d = wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
-                                                     POLLING_INTERVAL, WAIT_TIME, sys.stdout, sys.stderr,
-                                                     instance_id)
+d = wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, POLLING_INTERVAL, WAIT_TIME,
+                       sys.stdout, sys.stderr, instance_id)
 
 d.addCallbacks(printer, eb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))

@@ -1,4 +1,3 @@
-
 import subprocess, os, urllib
 
 from twisted.internet import reactor, task, defer
@@ -134,16 +133,18 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
     """
     Theory of Operation:  What the function intends.
     When a new ssh connection is established it is possible for a recipient-other-than-the-intended
-    (a M.an I.n T.he M.iddle) to offer a counterfeit encryption key to the Connector.  This would enable
-    the MITM to read the contents of the ssh traffic the Connector intended to transmit confidentially.
+    (a M.an I.n T.he M.iddle) to offer a counterfeit encryption key to the Connector.  This would
+    enable the MITM to read the contents of the ssh traffic the Connector intended to transmit
+    confidentially.
 
-    If the Connector has an alternate connection (side-channel) to the intended recipient the Connector
-    can check that the encryption key presented to it, is the same in both channels.  This means that an
-    attacker would have to control both channels to undetectably deceive the Connector.
+    If the Connector has an alternate connection (side-channel) to the intended recipient the
+    Connector can check that the encryption key presented to it, is the same in both channels.
+    This means that an attacker would have to control both channels to undetectably deceive the
+    Connector.
 
     Theory of Operation:  How the function accomplishes its intention.
-    When Least Authority (the "Connector") generates a new EC2 instance using the AWS REST interface it
-    communicates over an https channel.  This means that Least Authority _COULD_ be assured by a
+    When Least Authority (the "Connector") generates a new EC2 instance using the AWS REST interface
+    it communicates over an https channel.  This means that Least Authority _COULD_ be assured by a
     'Certificate Authority' that 'AWS' is the initial recipient of Least Authority's confidential
     requests.
 
