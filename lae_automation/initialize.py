@@ -6,7 +6,7 @@ from twisted.python.filepath import FilePath
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
 from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, \
-    wait_for_EC2_properties, TimeoutError
+    TimeoutError
 
 from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
@@ -128,8 +128,9 @@ def dump_instance_information(instance, stderr):
             print >>stderr, '  %s = %r' % (attr, getattr(instance, attr))
 
 
-def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri, addressparser,
-                                      polling_interval, total_wait_time, stdout, stderr, instance_id):
+def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri, pub_ipaddress,
+                                      polling_interval, total_wait_time, stdout, stderr,
+                                      instance_id):
     """
     Theory of Operation:  What the function intends.
     When a new ssh connection is established it is possible for a recipient-other-than-the-intended
@@ -179,34 +180,23 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
 
     def _got_fingerprintfromconsole(fingerprint):
         fingerprint_from_AWS = fingerprint
-        d1 = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, addressparser,
-                                     polling_interval, total_wait_time, stdout, stderr, instance_id)
+        d1 = wait_for_and_store_pubkeyfp_from_keyscan(pub_ipaddress, polling_interval,
+                                                      total_wait_time, stdout)
 
-        def _got_IPfromAWS(IP_tuple):
-            IP_from_AWS = IP_tuple[0][0]
-            # This also stores the pubkey in the file sshpubkey_<IP_from_AWS>.
-            return wait_for_and_store_pubkeyfp_from_keyscan(IP_from_AWS, polling_interval, total_wait_time, stdout)
-
-        d1.addCallback(_got_IPfromAWS)
-
-        def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, hashed_pubkey, IP_from_AWS) ):
+        def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, hashed_pubkey) ):
             if fingerprint_from_AWS != fingerprint_from_keyscan:
                 raise PublicKeyMismatch
-
+            print >>stdout, "The ssh public key on the server has fingerprint: %s" % (fingerprint_from_keyscan,)
             known_hosts_filepath = FilePath(os.path.expanduser('~')).child('.ssh').child('known_hosts')
             known_hosts = known_hosts_filepath.getContent().rstrip('\n') + '\n'
             new_known_hosts = known_hosts + hashed_pubkey
             known_hosts_filepath.setContent(new_known_hosts)
-            return IP_from_AWS
+            return True #XXX
 
         d1.addCallback(_verifyfp_and_write_pubkey)
         return d1
 
     d.addCallback(_got_fingerprintfromconsole)
-    def printer(x):
-        print >>stdout, "return from _got_fingerprintfromconsole is: %s" % (x,)
-        return x
-    d.addCallback(printer)
     return d
 
 
@@ -327,8 +317,6 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
         raise subprocess.CalledProcessError
     if pubkey_filepath.getContent() == '':
         return None
-    pubkey = pubkey_filepath.getContent()
-    print >>stdout, "pubkey is:\n%s" % (pubkey,)
 
     keygen_call = ('ssh-keygen', '-l', '-f', pubkey_relpath)
     sp2 = subprocess.Popen(keygen_call, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
@@ -345,4 +333,4 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
 
     hashed_pubkey = pubkey_filepath.getContent().rstrip('\n') + '\n'
 
-    return (fingerprint, hashed_pubkey, targetIP)
+    return (fingerprint, hashed_pubkey)
