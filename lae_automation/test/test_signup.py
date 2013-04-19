@@ -268,6 +268,11 @@ class TestSignupModule(TestCase):
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
         self.patch(signup, 'VASTOTALWAIT', 0)
 
+        from lae_automation.aws import queryapi
+        def call_hostpubkeyextractor(consoletext, instanceId):
+            return MOCKSERVERSSHFP
+        self.patch(queryapi, 'hostpubkeyextractor', call_hostpubkeyextractor)
+
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
                           MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
                           self.SERVERINFOPATH, self.EC2SECRETPATH)
