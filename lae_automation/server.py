@@ -3,7 +3,7 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-import os, sys, base64, simplejson
+import os, sys, base64, simplejson, subprocess
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 

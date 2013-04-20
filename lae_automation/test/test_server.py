@@ -56,9 +56,6 @@ class TestServerModule(TestCase):
         self.CONFIGFILEPATH = 'init_test_config.json'
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
 
-    def tearDown(self):
-        FilePath(self.CONFIGFILEPATH).remove()
-
     def _check_all_done(self):
         self.failUnlessEqual(self.WHOAMI_FIFO, [])
         self.failUnlessEqual(self.RUNARGS_FIFO, [])
@@ -67,6 +64,7 @@ class TestServerModule(TestCase):
 
     def tearDown(self):
         self._check_all_done()
+        FilePath(self.CONFIGFILEPATH).remove()
 
     def test_initialize_statmover_source(self):
         MHOSTNAME = '0.0.0.0'
