@@ -528,7 +528,8 @@ if __name__ == '__main__':
     main()
 """
 
-def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path, sinkname_suffix, collection_names):
+def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path, 
+                                sinkname_suffix, collection_names):
     EMITCONFIG = EMITCONFIG_TEMPLATE % (sinkname_suffix, '//'.join(collection_names))
     # Set the initial state (make this function idempotent)
     set_host_and_key(publichost, admin_privkey_path, username="ubuntu")

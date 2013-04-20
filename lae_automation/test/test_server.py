@@ -34,6 +34,10 @@ def fifo(xs):
 
 class TestServerModule(TestCase):
     def setUp(self):
+        self.WHOAMI_FIFO = []
+        self.RUNARGS_FIFO = []
+        self.SUDOARGS_FIFO = []
+        self.WRITEARGS_FIFO = []
         def call_api_run(argstring, pty, **kwargs):
             self.failUnlessEqual(self.RUNARGS_FIFO.pop(), (argstring, pty, kwargs))
             if argstring == 'whoami':
@@ -73,13 +77,14 @@ class TestServerModule(TestCase):
         MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
         MPATHTOSTATMOVER = '../'+server.INSTALL_STATMOVER_PACKAGE
 
+        import subprocess
         def call_subprocess_check_output(arglist):
             self.failUnlessEqual(arglist[0], "scp")
             self.failUnlessEqual(arglist[1], "-i")
             self.failUnlessEqual(arglist[2], MONITORPRIVKEYPATH)
             self.failUnlessEqual(arglist[3], MPATHTOSTATMOVER)
             self.failUnlessEqual(arglist[4], "monitor@"+MHOSTNAME+":")
-        self.patch(server.subprocess, "check_output", call_subprocess_check_output)
+        self.patch(subprocess, "check_output", call_subprocess_check_output)
 
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'ubuntu', 'monitor'])
         self.RUNARGS_FIFO = fifo([
@@ -250,5 +255,4 @@ class TestServerModule(TestCase):
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
                              SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
                              STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
-        self._check_all_done()
 
