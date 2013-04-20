@@ -61,6 +61,9 @@ class NotListeningError(Exception):
 INSTALL_TXAWS_VERSION = "0.2.1.post4"
 INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
+INSTALL_STATMOVER_VERSION = "2012-11-16"
+INSTALL_STATMOVER_PACKAGE = "statmover-%s.tar.gz" % (INSTALL_STATMOVER_VERSION,)
+INSTALL_SMCLIENT_VERSION  = "5.2012.11.16.01.20.28-f9d0951c3b11"
 
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
@@ -74,7 +77,7 @@ def sudo(argstring, **kwargs):
 
 def set_host_and_key(publichost, ssh_private_keyfile, username="ubuntu"):
     api.env.host_string = '%s@%s' % (username, publichost)
-    api.env.reject_unknown_hosts = False  # FIXME allows MITM attacks
+    api.env.reject_unknown_hosts = True  # FIXME allows MITM attacks FIXED!
     api.env.key_filename = ssh_private_keyfile
     api.env.abort_on_prompts = True
 
@@ -382,6 +385,185 @@ shares.total = 1
     secretsfile.flush()
 
     return external_introducer_furl
+
+# The value '60000' is the maximum resolution in the x-dimension that a statmover
+# chart can be zoomed to.  It is in units of milliseconds.  Since our emission 
+# source emits once per minute zooming to a higher resolution has no utility, and
+# can be confusing.  Therefore we set this value to match our emission rate.
+# i.e. 60000 milliseconds = 1 minute
+SETUPMETRICTEMPLATE = """setup-metric GAUGE Kilobytes 60000 %s %s"""
+
+def provision_rss_sink(sink_name_suffix, collection_names):
+    """we use this function to provision a new sink at statmover."""
+    run(SETUPMETRICTEMPLATE % (sink_name_suffix, ' '.join(collection_names)))
+
+
+EMITCONFIG_TEMPLATE = """[
+    {
+      "resolution": 60000,
+      "type": "metric",
+      "name": "%s//%s"
+    }
+]
+"""
+
+CRONEMISSIONSCRIPT = """#!/bin/sh
+PATH=/usr/local/bin:${PATH}
+cd /home/monitor/statmover/
+/home/monitor/statmover/generatevalues.py
+"""
+
+GENERATESCRIPT = """#! /usr/bin/env python
+
+import subprocess, time, os
+import simplejson as json
+from twisted.python.filepath import FilePath
+
+STORAGESERVERPIDFILEPATH = '/home/customer/storageserver/twistd.pid'
+EVENTEMISSIONSCONFIGFILEPATH = './eventemissions_config.json'
+
+# Adapted from lae_automation/config.py (davidsarah)
+def get_emission_list(jsonconfigfile):
+    if type(jsonconfigfile) is str:
+        configFile = open(jsonconfigfile, 'r')
+    try:
+        fpos = configFile.tell()
+        emitlist = json.load(configFile)
+    except json.decoder.JSONDecodeError, e:
+        configFile.seek(fpos)
+        data = configFile.read()
+        e.args = tuple(e.args + (configFile, repr(data),))
+        raise
+    finally:
+        configFile.close()
+
+    assert isinstance(emitlist, list)
+    # I added the bits about making sure there was nothing "extra".  All-in-all it's pretty strict.
+    freshlist = []
+    for eventemit in emitlist:
+        cleandict = {}
+        assert isinstance(eventemit, dict), eventemit
+        for field in ("resolution", "type", "name"):
+            assert field in eventemit, eventemit
+            cleandict[field] = str(eventemit.pop(field))
+            assert isinstance(cleandict[field], str), field
+        assert len(eventemit) == 0, eventemit
+        freshlist.append(cleandict)
+    return freshlist
+
+# adapted from pyutil/memutil.py (zooko)
+class NotSupportedException(Exception):
+    pass
+
+def get_mem_used(process_id_int):
+    '''
+    This only works on Linux, and only if the /proc/$PID/statm output is the
+    same as that in linux kernel 2.6.  Also `os.getpid()' must work.
+    @return: tuple of (res, virt) used by this process
+    '''
+    try:
+        import resource
+    except ImportError:
+        raise NotSupportedException
+    # sample output from cat /proc/$PID/statm:
+    # 14317 3092 832 279 0 2108 0
+    a = os.popen("cat /proc/%s/statm 2>/dev/null" % process_id_int).read().split()
+    if not a:
+        raise NotSupportedException
+    return (int(a[1]) * resource.getpagesize(), int(a[0]) * resource.getpagesize(),)
+
+# copied from nejucomo
+def make_emit_string(name, time, interval, typename, value):
+    return json.dumps(make_emit_structure(name, time, interval, typename, value))+'\n'
+
+# copied from nejucomo
+def make_emit_structure(name, time, interval, typename, value):
+    if typename == 'metric':
+        assert type(value) is int, 'metric emit values must be integers, not %r' % (type(value),)
+        typecode = 1
+        valuestructure = {'value': value}
+
+    elif typename == 'annotation':
+        assert type(value) is unicode, 'annotation emit values must be unicode, not %r' % (type(value),)
+        typecode = 3
+        valuestructure = {'text': value}
+
+    else:
+        assert False, 'Unknown typename not supported: %r' % (typename,)
+
+    return [
+        'EventEmit',
+        {'name': name,
+         'type': typecode,
+         'time': time,
+         'resolution': interval,
+         typename: valuestructure}]
+
+def get_pid(stringpath_to_pidfile):
+    pidstring = FilePath(stringpath_to_pidfile).getContent()
+    assert isinstance(pidstring, str), pidstring
+    pidint = int(pidstring)
+    return pidint
+
+def main():
+    emiteventlist = get_emission_list(EVENTEMISSIONSCONFIGFILEPATH)
+    PID = get_pid(STORAGESERVERPIDFILEPATH)
+    for event_to_emit in emiteventlist:
+        if 'rss' in event_to_emit['name']:
+            kbofrss = get_mem_used(PID)[0]/1000
+            emit_time = int(time.time())
+            emitstring = make_emit_string(str( event_to_emit['name'] ),
+                                          int( emit_time*1000 ),
+                                          int( event_to_emit['resolution'] ),
+                                          str( event_to_emit['type'] ),
+                                          int( kbofrss )  )
+            fname = 'emissionlogs/%s' % emit_time
+            fh = open(fname, 'w')
+            fh.write(emitstring)
+            fh.close()
+            retcode = subprocess.check_call('emit-client --tee --format json'.split(), stdin=open(fname,'r'))
+            assert retcode == 0, retcode
+
+if __name__ == '__main__':
+    main()
+"""
+
+def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path, sinkname_suffix, collection_names):
+    EMITCONFIG = EMITCONFIG_TEMPLATE % (sinkname_suffix, '//'.join(collection_names))
+    # Set the initial state (make this function idempotent)
+    set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
+    with cd('/home/monitor'):
+        sudo('rm -rf statmover* /home/monitor/.satur* /home/monitor/ctab /home/monitor/emissionscript.sh')
+
+    # Setup up directory structure and scp statmover tarball into it
+    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
+    path_to_statmover = '../'+INSTALL_STATMOVER_PACKAGE
+    scpstring = 'scp -i %s %s monitor@%s:' % (monitor_privkey_path, path_to_statmover, publichost)
+    subprocess.check_output(scpstring.split())
+    run('tar -xzvf %s' % (INSTALL_STATMOVER_PACKAGE,))
+    run('mv /home/monitor/statmover/config /home/monitor/.saturnaliaclient')
+
+    # Install the statmover client
+    set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
+    with cd('/home/monitor/statmover/saturnaliaclient-%s' % (INSTALL_SMCLIENT_VERSION,)):
+        sudo('python ./setup.py install')
+
+    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
+    # Use the freshly installed setup-metric (part of the client) to provision a sink for this SSEC2
+    provision_rss_sink(sinkname_suffix, collection_names)
+    # Set up to supply (statmover type-)"source" data to the emit-client
+    run('mkdir -p /home/monitor/statmover/emissionlogs')
+
+    write(GENERATESCRIPT, '/home/monitor/statmover/generatevalues.py')
+    with cd('/home/monitor/statmover/'):
+        run('chmod u+x generatevalues.py')
+
+    write(EMITCONFIG, '/home/monitor/statmover/eventemissions_config.json')
+    # Setup cron for user "monitor" to run every minute sending data to emit-client.
+    write(CRONEMISSIONSCRIPT, '/home/monitor/emissionscript.sh')
+    run('chmod u+x /home/monitor/emissionscript.sh')
+    write('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab')
+    run('crontab /home/monitor/ctab')
 
 
 def restore_secrets(secrets, stdout, stderr):

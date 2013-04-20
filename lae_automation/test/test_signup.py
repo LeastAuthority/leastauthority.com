@@ -269,6 +269,15 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
+        def call_initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path, suffixname, COLLECTIONNAMES):
+            self.failUnlessEqual(publichost, '0.0.0.0')
+            self.failUnlessEqual(monitor_privkey_path, 'MONITORKEYS.pem')
+            self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
+            self.failUnlessEqual(COLLECTIONNAMES[0], 'i-MOCKEC2INSTANCEID')
+            self.failUnlessEqual(COLLECTIONNAMES[1], 'SSEC2s')
+            self.failUnlessEqual(suffixname, 'storageserver/rss')
+        self.patch(signup, 'initialize_statmover_source', call_initialize_statmover_source)
+
         from lae_automation.aws import queryapi
         def call_hostpubkeyextractor(consoletext, instanceId):
             return MOCKSERVERSSHFP
