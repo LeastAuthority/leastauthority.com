@@ -77,7 +77,7 @@ def sudo(argstring, **kwargs):
 
 def set_host_and_key(publichost, ssh_private_keyfile, username="ubuntu"):
     api.env.host_string = '%s@%s' % (username, publichost)
-    api.env.reject_unknown_hosts = True
+    api.env.reject_unknown_hosts = True  # FIXME allows MITM attacks FIXED!
     api.env.key_filename = ssh_private_keyfile
     api.env.abort_on_prompts = True
 
