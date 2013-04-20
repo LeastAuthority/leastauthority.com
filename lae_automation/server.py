@@ -61,9 +61,9 @@ class NotListeningError(Exception):
 INSTALL_TXAWS_VERSION = "0.2.1.post4"
 INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
-INSTALL_STATMOVER_VERSION = "2012-11-16"
+INSTALL_STATMOVER_VERSION = "2013-04-20T02_25_53+0000" #XXX Add unittest to make sure ver is correct
 INSTALL_STATMOVER_PACKAGE = "statmover-%s.tar.gz" % (INSTALL_STATMOVER_VERSION,)
-INSTALL_SMCLIENT_VERSION  = "5.2012.11.16.01.20.28-f9d0951c3b11"
+INSTALL_SMCLIENT_VERSION  = "3.2012.07.03.18.15.19-5e73c911653e"#XXX old:"5.2012.11.16.01.20.28-f9d0951c3b11"
 
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
@@ -538,7 +538,7 @@ def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_
 
     # Setup up directory structure and scp statmover tarball into it
     set_host_and_key(publichost, monitor_privkey_path, username="monitor")
-    path_to_statmover = '../'+INSTALL_STATMOVER_PACKAGE
+    path_to_statmover = '../secret_config/'+INSTALL_STATMOVER_PACKAGE
     scpstring = 'scp -i %s %s monitor@%s:' % (monitor_privkey_path, path_to_statmover, publichost)
     subprocess.check_output(scpstring.split())
     run('tar -xzvf %s' % (INSTALL_STATMOVER_PACKAGE,))
