@@ -27,8 +27,8 @@ ADDRESS_WAIT_TIME = 5 * 60
 
 LISTEN_RETRIES = 5
 LISTEN_POLL_TIME = 15
-VASINTERVAL = .1
-VASTOTALWAIT = 600
+VERIFY_POLL_TIME = 5
+VERIFY_TOTAL_WAIT = 600
 
 
 def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr,
@@ -160,10 +160,10 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             print >>stdout, "The server's public address is %r." % (publichost,)
 
             d3 = verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
-                                                   publichost, VASINTERVAL, VASTOTALWAIT, stdout,
+                                                   publichost, VERIFY_POLL_TIME, VERIFY_TOTAL_WAIT, stdout,
                                                    stderr, instance.instance_id)
 
-            def _got_sshfp(verified):
+            def _got_sshfp(ignored):
                 retries = LISTEN_RETRIES
                 while True:
                     try:
@@ -192,7 +192,6 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                                                                         customer_keyinfo,
                                                                         stdout, stderr) )
                 return d4
-
             d3.addCallback(_got_sshfp)
             return d3
         d2.addCallback(_got_addresses)

@@ -266,7 +266,8 @@ class TestSignupModule(TestCase):
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-        self.patch(signup, 'VASTOTALWAIT', 0)
+        self.patch(signup, 'VERIFY_POLL_TIME', .1)
+        self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
         from lae_automation.aws import queryapi
         def call_hostpubkeyextractor(consoletext, instanceId):
@@ -366,7 +367,8 @@ class TestSignupModule(TestCase):
         MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-        self.patch(signup, 'VASTOTALWAIT', 0)
+        self.patch(signup, 'VERIFY_POLL_TIME', .1)
+        self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
         from lae_automation.aws import queryapi
         def call_get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_id):

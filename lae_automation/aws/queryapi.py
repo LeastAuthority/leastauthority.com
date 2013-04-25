@@ -223,26 +223,24 @@ class ConsoleOutputParser(txaws_ec2_Parser):
     def describe_console_output(self, xml_bytes):
         doc = xml_parse(xml_bytes)
         try:
-            consoleoutput = xml_find(doc, u'output').text.decode('base64')
-            instanceId = (xml_find(doc, u'instanceId').text).strip()
-        except ResponseParseError, response_error:
-            if '''Node not found: (u'output',)''' in response_error.args:
-                return None
-            raise
-
-        pubkeyfingerp = hostpubkeyextractor(consoleoutput, instanceId)
-        return pubkeyfingerp
+            consoleoutput_node = xml_find(doc, u'output')
+        except ResponseParseError:
+            return None
+        consoletext = consoleoutput_node.text.decode('base64')
+        instanceId = (xml_find(doc, u'instanceId').text).strip()
+        pubkeyfingerprint = hostpubkeyextractor(consoletext, instanceId)
+        return pubkeyfingerprint
 
 
 def hostpubkeyextractor(consoletext, instanceId):
     curdirfp = FilePath('.')
     parentdir = curdirfp.parent()
-    consdump_fp = parentdir.child('logs').child('consoledumps').child(instanceId)
-    consdump_fp.setContent(consoletext)
-    listoflines = consoletext.splitlines()
+    consoledump_fp = parentdir.child('logs').child('consoledumps').child(instanceId)
+    consoledump_fp.setContent(consoletext)
+    lines = consoletext.splitlines()
     begin = False
     end = False
-    for line in listoflines:
+    for line in lines:
         if 'BEGIN SSH HOST KEY FINGERPRINTS' in line:
             begin = True
             continue
