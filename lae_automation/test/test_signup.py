@@ -169,8 +169,8 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(header_dict['Authorization'],
                                  'AWS TESTAAAAAAAAAAAAAAAA:NlnzOWOmMCut8/Opl26UpAAiIhE=')
             self.failUnlessEqual(header_dict['x-amz-security-token'],
-                                 '{UserToken}TESTUSERTOKEN%s==,{ProductToken}TESTPRODUCTTOKEN%s=' % \
-                                 ('A'*385, 'A'*295))
+                                 '{UserToken}TESTUSERTOKEN%s==,{ProductToken}TESTPRODUCTTOKEN%s=' 
+                                 % ('A'*385, 'A'*295))
             self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
             return defer.succeed('Completed devpay bucket creation submission.')
         self.patch(S3_Query, 'submit', call_s3_query_submit)

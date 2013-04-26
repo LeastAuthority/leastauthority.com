@@ -233,8 +233,8 @@ class ConsoleOutputParser(txaws_ec2_Parser):
 
 
 def hostpubkeyextractor(consoletext, instanceId):
-    curdirfp = FilePath('.')
-    parentdir = curdirfp.parent()
+    currentdir_fp = FilePath('.')
+    parentdir = currentdir_fp.parent()
     consoledump_fp = parentdir.child('logs').child('consoledumps').child(instanceId)
     consoledump_fp.setContent(consoletext)
     lines = consoletext.splitlines()
