@@ -186,7 +186,7 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
         def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, hashed_pubkey) ):
             if fingerprint_from_AWS != fingerprint_from_keyscan:
                 raise PublicKeyMismatch()
-            print >>stdout, "The ssh public key on the server has fingerprint: %s" % (fingerprint_from_keyscan,)
+            print >>stderr, "The ssh public key on the server has fingerprint: %s" % (fingerprint_from_keyscan,)
             known_hosts_filepath = FilePath(os.path.expanduser('~')).child('.ssh').child('known_hosts')
             known_hosts = known_hosts_filepath.getContent().rstrip('\n') + '\n'
             new_known_hosts = known_hosts + hashed_pubkey
