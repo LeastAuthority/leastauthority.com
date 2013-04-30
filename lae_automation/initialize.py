@@ -276,7 +276,7 @@ def wait_for_and_store_pubkeyfp_from_keyscan(targetIP, polling_interval, total_w
     scan times out.
     """
     def _wait(remaining_time):
-        print >>stdout, "About to call get_and_store_pubkeyfp_from_keyscan."
+        print >>stdout, "Checking server ssh public key..."
         d = defer.succeed(get_and_store_pubkeyfp_from_keyscan(targetIP, stdout))
         def _maybe_again(res):
             if res:
