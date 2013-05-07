@@ -59,7 +59,7 @@ class NotListeningError(Exception):
     pass
 
 INSTALL_TXAWS_VERSION = "0.2.1.post4"
-INSTALL_TXAWS_URL = "https://leastauthority.com/static/patches/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
+INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
 
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,

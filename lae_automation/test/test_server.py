@@ -70,7 +70,7 @@ class TestServerModule(TestCase):
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
         self.RUNARGS_FIFO = fifo([
             ('whoami', False, {}),
-            ('wget https://leastauthority.com/static/patches/txAWS-0.2.1.post4.tar.gz', False, {}),
+            ('wget https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-0.2.1.post4.tar.gz', False, {}),
             ('tar -xzvf txAWS-0.2.1.post4.tar.gz', False, {}),
             ('whoami', False, {}),
             ('whoami', False, {}),
