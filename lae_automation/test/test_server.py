@@ -75,7 +75,7 @@ class TestServerModule(TestCase):
         MINSTANCEID = 'i-MOCKEC2INSTANCEID'
         ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
         MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
-        MPATHTOSTATMOVER = '../'+server.INSTALL_STATMOVER_PACKAGE
+        MPATHTOSTATMOVER = '../secret_config/'+server.INSTALL_STATMOVER_PACKAGE
 
         import subprocess
         def call_subprocess_check_output(arglist):
