@@ -3,7 +3,6 @@ from hashlib import sha1
 from base64 import b64encode
 
 from twisted.internet import reactor, task
-from twisted.python.filepath import FilePath
 from xml.parsers.expat import ExpatError
 from xml.etree import ElementTree
 from txaws.util import XML
@@ -233,10 +232,6 @@ class ConsoleOutputParser(txaws_ec2_Parser):
 
 
 def hostpubkeyextractor(consoletext, instanceId):
-    currentdir_fp = FilePath('.')
-    parentdir = currentdir_fp.parent()
-    consoledump_fp = parentdir.child('logs').child('consoledumps').child(instanceId)
-    consoledump_fp.setContent(consoletext)
     lines = consoletext.splitlines()
     begin = False
     end = False
