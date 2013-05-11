@@ -161,8 +161,8 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
             print >>stdout, "The server's public address is %r." % (publichost,)
 
             d3 = verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
-                                                   publichost, VERIFY_POLL_TIME, VERIFY_TOTAL_WAIT, stdout,
-                                                   stderr, instance.instance_id)
+                                                   publichost, VERIFY_POLL_TIME, VERIFY_TOTAL_WAIT, 
+                                                   stdout, stderr, instance.instance_id)
 
             def _got_sshfp(ignored):
                 retries = LISTEN_RETRIES
