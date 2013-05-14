@@ -79,7 +79,7 @@ by email to <a href="mailto:support@leastauthority.com">&lt;support@leastauthori
 Happy Cloud Storing!
 </p>
 <p>
-The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
+The Least Authority Enterprises team (Zooko, Daira and Za)
 </p>
 <hr>
 </body>
