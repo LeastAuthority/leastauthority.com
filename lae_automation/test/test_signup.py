@@ -96,13 +96,14 @@ CONFIGFILEJSON = """{
       "instance_size":    "t1.testy"
     }
   ],
-  "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
-  "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem",
-  "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem",
+  "ec2_access_key_id":      "TESTAAAAAAAAAAAAAAAA",
+  "admin_keypair_name":     "ADMINKEYS",
+  "admin_privkey_path":     "ADMINKEYS.pem",
+  "monitor_pubkey_path":    "MONITORKEYS.pub",
+  "monitor_privkey_path":   "MONITORKEYS.pem",
   "incident_gatherer_furl": "MOCK_incident_gatherer_furl",
-  "stats_gatherer_furl":    "MOCK_stats_gatherer_furl"
+  "stats_gatherer_furl":    "MOCK_stats_gatherer_furl",
+  "sinkname_suffix":        "unitteststorageserver/rss"
 }"""
 
 ZEROPRODUCT = """{
@@ -268,6 +269,15 @@ class TestSignupModule(TestCase):
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
+
+        def call_initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path, suffixname, COLLECTIONNAMES):
+            self.failUnlessEqual(publichost, '0.0.0.0')
+            self.failUnlessEqual(monitor_privkey_path, 'MONITORKEYS.pem')
+            self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
+            self.failUnlessEqual(COLLECTIONNAMES[0], 'i-MOCKEC2INSTANCEID')
+            self.failUnlessEqual(COLLECTIONNAMES[1], 'SSEC2s')
+            self.failUnlessEqual(suffixname, 'unitteststorageserver/rss')
+        self.patch(signup, 'initialize_statmover_source', call_initialize_statmover_source)
 
         from lae_automation.aws import queryapi
         def call_hostpubkeyextractor(consoletext, instanceId):
