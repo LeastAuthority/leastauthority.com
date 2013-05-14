@@ -130,7 +130,6 @@ class TestServerModule(TestCase):
         self.SUDOARGS_FIFO = fifo([
             ('apt-get update', False, {}),
             ('apt-get dist-upgrade -y', False, {}),
-            ('dpkg -P consolekit', False, {}),
             ('apt-get install -y python-dev', False, {}),
             ('apt-get install -y python-setuptools', False, {}),
             ('apt-get install -y exim4-base', False, {}),

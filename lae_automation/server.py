@@ -131,7 +131,6 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
     sudo_apt_get('dist-upgrade -y')
-    sudo("dpkg -P consolekit")
 
     print >>stdout, "Rebooting server..."
     api.reboot(60)
@@ -222,9 +221,7 @@ def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_t
 
 def update_packages(publichost, admin_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
-    print >>stdout, "Removing unneeded packages..."
-    sudo("dpkg -P consolekit")
-
+    pass
 
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
