@@ -34,6 +34,10 @@ def fifo(xs):
 
 class TestServerModule(TestCase):
     def setUp(self):
+        self.WHOAMI_FIFO = []
+        self.RUNARGS_FIFO = []
+        self.SUDOARGS_FIFO = []
+        self.WRITEARGS_FIFO = []
         def call_api_run(argstring, pty, **kwargs):
             self.failUnlessEqual(self.RUNARGS_FIFO.pop(), (argstring, pty, kwargs))
             if argstring == 'whoami':
@@ -56,15 +60,57 @@ class TestServerModule(TestCase):
         self.CONFIGFILEPATH = 'init_test_config.json'
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
 
-    def tearDown(self):
-        FilePath(self.CONFIGFILEPATH).remove()
-
     def _check_all_done(self):
         self.failUnlessEqual(self.WHOAMI_FIFO, [])
         self.failUnlessEqual(self.RUNARGS_FIFO, [])
         self.failUnlessEqual(self.SUDOARGS_FIFO, [])
         self.failUnlessEqual(self.WRITEARGS_FIFO, [])
 
+    def tearDown(self):
+        self._check_all_done()
+        FilePath(self.CONFIGFILEPATH).remove()
+
+    def test_initialize_statmover_source(self):
+        MHOSTNAME = '0.0.0.0'
+        MINSTANCEID = 'i-MOCKEC2INSTANCEID'
+        ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
+        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
+        MPATHTOSTATMOVER = '../secret_config/'+server.INSTALL_STATMOVER_PACKAGE
+
+        import subprocess
+        def call_subprocess_check_output(arglist):
+            self.failUnlessEqual(arglist[0], "scp")
+            self.failUnlessEqual(arglist[1], "-i")
+            self.failUnlessEqual(arglist[2], MONITORPRIVKEYPATH)
+            self.failUnlessEqual(arglist[3], MPATHTOSTATMOVER)
+            self.failUnlessEqual(arglist[4], "monitor@"+MHOSTNAME+":")
+        self.patch(subprocess, "check_output", call_subprocess_check_output)
+
+        self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'ubuntu', 'monitor'])
+        self.RUNARGS_FIFO = fifo([
+            ('whoami', False, {}),
+            ('whoami', False, {}),
+            ('tar -xzvf %s' % (server.INSTALL_STATMOVER_PACKAGE,), False, {}),
+            ('mv /home/monitor/statmover/config /home/monitor/.saturnaliaclient', False, {}),
+            ('whoami', False, {}),
+            ('whoami', False, {}),
+            (server.SETUPMETRICTEMPLATE % ('storageserver/rss', ' '.join([MINSTANCEID, 'SSEC2s'])), False, {}),
+            ("mkdir -p /home/monitor/statmover/emissionlogs", False, {}),
+            ("chmod u+x generatevalues.py", False, {}),
+            ("chmod u+x /home/monitor/emissionscript.sh", False, {}),
+            ("crontab /home/monitor/ctab", False, {})
+        ])
+        self.SUDOARGS_FIFO = fifo([
+            ('rm -rf statmover* .saturnalia* ctab emissionscript.sh', False, {}),
+            ('python ./setup.py install', False, {})
+        ])
+        self.WRITEARGS_FIFO = fifo([
+            (server.GENERATESCRIPT, '/home/monitor/statmover/generatevalues.py', False, None),
+            (server.EMITCONFIG_TEMPLATE % ('storageserver/rss',MINSTANCEID+'//SSEC2s'), '/home/monitor/statmover/eventemissions_config.json', False, None),
+            (server.CRONEMISSIONSCRIPT, '/home/monitor/emissionscript.sh', False, None),
+            ('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab', False, None)
+        ])
+        server.initialize_statmover_source(MHOSTNAME, MONITORPRIVKEYPATH, ADMINPRIVKEYPATH, "storageserver/rss", [MINSTANCEID, 'SSEC2s'])
 
     def test_install_server(self):
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
@@ -117,7 +163,6 @@ class TestServerModule(TestCase):
         STDERR = StringIO()
 
         server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
-        self._check_all_done()
 
     def test_create_account(self):
         ACCOUNT_NAMES_AND_KEYS = [('customer', None),
@@ -145,7 +190,6 @@ class TestServerModule(TestCase):
                 self.WRITEARGS_FIFO = fifo([(pubkey, '/home/%s/.ssh/authorized_keys' % acct_name, True, None)])
 
             server.create_account(acct_name, pubkey, STDOUT, STDERR)
-            self._check_all_done()
 
     def test_bounce_server(self):
         def call_set_host_and_key(publichost, admin_privkey_path, username):
@@ -211,5 +255,4 @@ class TestServerModule(TestCase):
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
                              SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
                              STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
-        self._check_all_done()
 
