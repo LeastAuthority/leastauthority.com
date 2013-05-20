@@ -94,7 +94,7 @@ class TestServerModule(TestCase):
             ('mv /home/monitor/statmover/config /home/monitor/.saturnaliaclient', False, {}),
             ('whoami', False, {}),
             ('whoami', False, {}),
-            (server.SETUPMETRICTEMPLATE % ('storageserver/rss', ' '.join([MINSTANCEID, 'SSEC2s'])), False, {}),
+            (server.SETUPMETRIC_TEMPLATE % (60000, 'storageserver/rss', ' '.join([MINSTANCEID, 'SSEC2s'])), False, {}),
             ("mkdir -p /home/monitor/statmover/emissionlogs", False, {}),
             ("chmod u+x generatevalues.py", False, {}),
             ("chmod u+x /home/monitor/emissionscript.sh", False, {}),
@@ -106,7 +106,7 @@ class TestServerModule(TestCase):
         ])
         self.WRITEARGS_FIFO = fifo([
             (server.GENERATESCRIPT, '/home/monitor/statmover/generatevalues.py', False, None),
-            (server.EMITCONFIG_TEMPLATE % ('storageserver/rss',MINSTANCEID+'//SSEC2s'), '/home/monitor/statmover/eventemissions_config.json', False, None),
+            (server.EMITCONFIG_TEMPLATE % (60000, 'storageserver/rss',MINSTANCEID+'//SSEC2s'), '/home/monitor/statmover/eventemissions_config.json', False, None),
             (server.CRONEMISSIONSCRIPT, '/home/monitor/emissionscript.sh', False, None),
             ('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab', False, None)
         ])

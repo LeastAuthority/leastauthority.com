@@ -389,16 +389,17 @@ shares.total = 1
 # source emits once per minute zooming to a higher resolution has no utility, and
 # can be confusing.  Therefore we set this value to match our emission rate.
 # i.e. 60000 milliseconds = 1 minute
-SETUPMETRICTEMPLATE = """setup-metric GAUGE Kilobytes 60000 %s %s"""
+SETUPMETRIC_TEMPLATE = """setup-metric GAUGE Kilobytes %d %s %s"""
+RESOLUTION_MILLISECONDS = 60000
 
 def provision_rss_sink(sink_name_suffix, collection_names):
     """we use this function to provision a new sink at statmover."""
-    run(SETUPMETRICTEMPLATE % (sink_name_suffix, ' '.join(collection_names)))
+    run(SETUPMETRIC_TEMPLATE % (RESOLUTION_MILLISECONDS, sink_name_suffix, ' '.join(collection_names)))
 
 
 EMITCONFIG_TEMPLATE = """[
     {
-      "resolution": 60000,
+      "resolution": %d,
       "type": "metric",
       "name": "%s//%s"
     }
@@ -528,7 +529,7 @@ if __name__ == '__main__':
 
 def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
                                 sinkname_suffix, collection_names):
-    EMITCONFIG = EMITCONFIG_TEMPLATE % (sinkname_suffix, '//'.join(collection_names))
+    EMITCONFIG = EMITCONFIG_TEMPLATE % (RESOLUTION_MILLISECONDS, sinkname_suffix, '//'.join(collection_names))
     # Set the initial state (make this function idempotent)
     set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
     with cd('/home/monitor'):
