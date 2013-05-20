@@ -397,7 +397,7 @@ def provision_rss_sink(sink_name_suffix, collection_names):
     run(SETUPMETRIC_TEMPLATE % (RESOLUTION_MILLISECONDS, sink_name_suffix, ' '.join(collection_names)))
 
 
-EMITCONFIG_TEMPLATE = """[
+EMIT_CONFIG_TEMPLATE = """[
     {
       "resolution": %d,
       "type": "metric",
@@ -406,20 +406,20 @@ EMITCONFIG_TEMPLATE = """[
 ]
 """
 
-CRONEMISSIONSCRIPT = """#!/bin/sh
+CRON_EMISSION_SCRIPT = """#!/bin/sh
 PATH=/usr/local/bin:${PATH}
 cd /home/monitor/statmover/
 /home/monitor/statmover/generatevalues.py
 """
 
-GENERATESCRIPT = """#! /usr/bin/env python
+GENERATE_SCRIPT = """#! /usr/bin/env python
 
 import subprocess, time, os
 import simplejson as json
 from twisted.python.filepath import FilePath
 
-STORAGESERVERPIDFILEPATH = '/home/customer/storageserver/twistd.pid'
-EVENTEMISSIONSCONFIGFILEPATH = './eventemissions_config.json'
+STORAGESERVER_PID_PATH = '/home/customer/storageserver/twistd.pid'
+EVENT_EMITS_CONFIG_PATH = './eventemissions_config.json'
 
 # Adapted from lae_automation/config.py (davidsarah)
 def get_emission_list(jsonconfigfile):
@@ -437,7 +437,6 @@ def get_emission_list(jsonconfigfile):
         configFile.close()
 
     assert isinstance(emitlist, list)
-    # I added the bits about making sure there was nothing "extra".  All-in-all it's pretty strict.
     freshlist = []
     for eventemit in emitlist:
         cleandict = {}
@@ -446,7 +445,7 @@ def get_emission_list(jsonconfigfile):
             assert field in eventemit, eventemit
             cleandict[field] = str(eventemit.pop(field))
             assert isinstance(cleandict[field], str), field
-        assert len(eventemit) == 0, eventemit
+        assert len(eventemit) == 0, eventemit #Check to see there aren't unexpected fields.
         freshlist.append(cleandict)
     return freshlist
 
@@ -505,8 +504,8 @@ def get_pid(stringpath_to_pidfile):
     return pidint
 
 def main():
-    emiteventlist = get_emission_list(EVENTEMISSIONSCONFIGFILEPATH)
-    PID = get_pid(STORAGESERVERPIDFILEPATH)
+    emiteventlist = get_emission_list(EVENT_EMITS_CONFIG_PATH)
+    PID = get_pid(STORAGESERVER_PID_PATH)
     for event_to_emit in emiteventlist:
         if 'rss' in event_to_emit['name']:
             kbofrss = get_mem_used(PID)[0]/1000 #Perhaps change to emitting bytes.
@@ -529,7 +528,7 @@ if __name__ == '__main__':
 
 def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
                                 sinkname_suffix, collection_names):
-    EMITCONFIG = EMITCONFIG_TEMPLATE % (RESOLUTION_MILLISECONDS, sinkname_suffix, '//'.join(collection_names))
+    EMIT_CONFIG = EMIT_CONFIG_TEMPLATE % (RESOLUTION_MILLISECONDS, sinkname_suffix, '//'.join(collection_names))
     # Set the initial state (make this function idempotent)
     set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
     with cd('/home/monitor'):
@@ -554,13 +553,13 @@ def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_
     # Set up to supply (statmover type-)"source" data to the emit-client
     run('mkdir -p /home/monitor/statmover/emissionlogs')
 
-    write(GENERATESCRIPT, '/home/monitor/statmover/generatevalues.py')
+    write(GENERATE_SCRIPT, '/home/monitor/statmover/generatevalues.py')
     with cd('/home/monitor/statmover/'):
         run('chmod u+x generatevalues.py')
 
-    write(EMITCONFIG, '/home/monitor/statmover/eventemissions_config.json')
+    write(EMIT_CONFIG, '/home/monitor/statmover/eventemissions_config.json')
     # Setup cron for user "monitor" to run every minute sending data to emit-client.
-    write(CRONEMISSIONSCRIPT, '/home/monitor/emissionscript.sh')
+    write(CRON_EMISSION_SCRIPT, '/home/monitor/emissionscript.sh')
     run('chmod u+x /home/monitor/emissionscript.sh')
     write('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab')
     run('crontab /home/monitor/ctab')

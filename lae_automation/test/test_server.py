@@ -105,9 +105,9 @@ class TestServerModule(TestCase):
             ('python ./setup.py install', False, {})
         ])
         self.WRITEARGS_FIFO = fifo([
-            (server.GENERATESCRIPT, '/home/monitor/statmover/generatevalues.py', False, None),
-            (server.EMITCONFIG_TEMPLATE % (60000, 'storageserver/rss',MINSTANCEID+'//SSEC2s'), '/home/monitor/statmover/eventemissions_config.json', False, None),
-            (server.CRONEMISSIONSCRIPT, '/home/monitor/emissionscript.sh', False, None),
+            (server.GENERATE_SCRIPT, '/home/monitor/statmover/generatevalues.py', False, None),
+            (server.EMIT_CONFIG_TEMPLATE % (60000, 'storageserver/rss',MINSTANCEID+'//SSEC2s'), '/home/monitor/statmover/eventemissions_config.json', False, None),
+            (server.CRON_EMISSION_SCRIPT, '/home/monitor/emissionscript.sh', False, None),
             ('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab', False, None)
         ])
         server.initialize_statmover_source(MHOSTNAME, MONITORPRIVKEYPATH, ADMINPRIVKEYPATH, "storageserver/rss", [MINSTANCEID, 'SSEC2s'])
