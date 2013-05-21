@@ -456,8 +456,8 @@ class NotSupportedException(Exception):
 def get_mem_used(process_id_int):
     '''
     This only works on Linux, and only if the /proc/$PID/statm output is the
-    same as that in linux kernel 2.6.  Also `os.getpid()' must work.
-    @return: tuple of (res, virt) used by this process
+    same as that in linux kernel 2.6.
+    @return: tuple of (bytes of rss memory, bytes of virtual memory) used by this process
     '''
     try:
         import resource
