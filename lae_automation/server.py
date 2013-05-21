@@ -488,7 +488,7 @@ def make_emit_structure(name, time, interval, typename, value):
         typecode = 3
         valuestructure = {'text': value}
     else:
-        assert False, 'Unknown typename not supported: %r' % (typename,)
+        raise NotSupportedException( 'Unknown typename not supported: %r' % (typename,) )
 
     return [
         'EventEmit',
