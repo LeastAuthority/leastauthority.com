@@ -483,12 +483,10 @@ def make_emit_structure(name, time, interval, typename, value):
         assert type(value) is int, 'metric emit values must be integers, not %r' % (type(value),)
         typecode = 1
         valuestructure = {'value': value}
-
     elif typename == 'annotation':
         assert type(value) is unicode, 'annotation emit values must be unicode, not %r' % (type(value),)
         typecode = 3
         valuestructure = {'text': value}
-
     else:
         assert False, 'Unknown typename not supported: %r' % (typename,)
 
