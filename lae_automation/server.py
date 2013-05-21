@@ -461,14 +461,17 @@ def get_mem_used(process_id_int):
     '''
     try:
         import resource
-    except ImportError:
-        raise NotSupportedException
+    except ImportError, e:
+        raise NotSupportedException(e)
     # sample output from cat /proc/$PID/statm:
     # 14317 3092 832 279 0 2108 0
     a = os.popen("cat /proc/%s/statm 2>/dev/null" % process_id_int).read().split()
     if not a:
-        raise NotSupportedException
-    return (int(a[1]) * resource.getpagesize(), int(a[0]) * resource.getpagesize(),)
+        raise NotSupportedException(a)
+    virtual_mem_in_page_units = int(a[0])
+    resident_set_size_in_page_units = int(a[1])
+    return (resident_set_size_in_page_units * resource.getpagesize(), 
+            virtual_mem_in_page_units * resource.getpagesize())
 
 # copied from nejucomo
 def make_emit_string(name, time, interval, typename, value):
