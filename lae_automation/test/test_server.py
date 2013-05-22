@@ -67,7 +67,6 @@ class TestServerModule(TestCase):
         self.failUnlessEqual(self.WRITEARGS_FIFO, [])
 
     def tearDown(self):
-        self._check_all_done()
         FilePath(self.CONFIGFILEPATH).remove()
 
     def test_initialize_statmover_source(self):
@@ -111,6 +110,7 @@ class TestServerModule(TestCase):
             ('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab', False, None)
         ])
         server.initialize_statmover_source(MHOSTNAME, MONITORPRIVKEYPATH, ADMINPRIVKEYPATH, "storageserver/rss", [MINSTANCEID, 'SSEC2s'])
+        self._check_all_done()
 
     def test_install_server(self):
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
@@ -162,6 +162,8 @@ class TestServerModule(TestCase):
         STDERR = StringIO()
 
         server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
+        self._check_all_done()
+
 
     def test_create_account(self):
         ACCOUNT_NAMES_AND_KEYS = [('customer', None),
@@ -189,6 +191,8 @@ class TestServerModule(TestCase):
                 self.WRITEARGS_FIFO = fifo([(pubkey, '/home/%s/.ssh/authorized_keys' % acct_name, True, None)])
 
             server.create_account(acct_name, pubkey, STDOUT, STDERR)
+        self._check_all_done()
+
 
     def test_bounce_server(self):
         def call_set_host_and_key(publichost, admin_privkey_path, username):
@@ -254,4 +258,5 @@ class TestServerModule(TestCase):
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
                              SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
                              STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
+        self._check_all_done()
 
