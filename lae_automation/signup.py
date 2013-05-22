@@ -9,7 +9,7 @@ from lae_automation.initialize import activate_user_account_desktop, verify_user
     create_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
 from lae_automation.aws.queryapi import wait_for_EC2_properties, AddressParser, TimeoutError
 from lae_automation.server import install_server, bounce_server, NotListeningError, \
-initialize_statmover_source
+    initialize_statmover_source
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 from lae_util.servers import append_record
 
@@ -146,6 +146,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
     monitor_privkey_path = str(config.other['monitor_privkey_path'])
     sinkname_suffix = str(config.other['sinkname_suffix'])
 
+    # XXX Here's where we decide whether the new signup goes to a new EC2.
     d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
                             instancesize, bucketname, admin_keypair_name, instancename,
                             stdout, stderr)
@@ -185,8 +186,10 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                                      usersecretkey, usertoken, producttoken, bucketname, oldsecrets,
                                      stdout, stderr, secretsfile)
 
+                # XXX We'll have to ammend this:
                 initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
                                             sinkname_suffix, [instance.instance_id, 'SSEC2s'])
+                # XXX We probably need to rethink this:
                 append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id,
                               publichost)
                 d4 = defer.succeed(None)
