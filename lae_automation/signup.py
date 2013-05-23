@@ -194,7 +194,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                               publichost)
                 d4 = defer.succeed(None)
                 if not oldsecrets:
-                    d3.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name,
+                    d4.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name,
                                                                         customer_email, furl,
                                                                         customer_keyinfo,
                                                                         stdout, stderr) )
