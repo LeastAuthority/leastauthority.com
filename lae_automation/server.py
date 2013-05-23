@@ -519,6 +519,7 @@ def main():
             fname = 'emissionlogs/%s' % emit_time
             fh = open(fname, 'w')
             fh.write(emitstring)
+            fh.write('\\n')
             fh.close()
             retcode = subprocess.check_call('emit-client --tee --format json'.split(), stdin=open(fname,'r'))
             assert retcode == 0, retcode
