@@ -192,6 +192,8 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                 # XXX We probably need to rethink this:
                 append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id,
                               publichost)
+
+                print >stderr, "Signup done."
                 d4 = defer.succeed(None)
                 if not oldsecrets:
                     d4.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name,
