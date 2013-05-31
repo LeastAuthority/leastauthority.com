@@ -116,6 +116,25 @@ def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id
     return d
 
 
+def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size,
+                              bucket_name, keypair_name, instance_name, stdout, stderr, clock=None):
+    d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id,
+                        instance_size, bucket_name, keypair_name, instance_name,
+                        stdout, stderr)
+
+    def _deployed(instance):
+        SERVERACCESSDELAY_TIME = 230
+        print >>stdout, "instance is %s" % instance
+        print >>stdout, "Waiting %d seconds for the server to be ready..." % (SERVERACCESSDELAY_TIME,)
+        d1 = task.deferLater(reactor, SERVERACCESSDELAY_TIME, verify_and_store_serverssh_pubkey, 
+                             ec2accesskeyid, ec2secretkey, endpoint_uri, AddressParser(), 5, 20, 
+                             sys.stdout, sys.stderr, instance.instance_id)
+        return d1
+
+    d.addCallback(_deployed)
+    return d
+    
+
 def dump_instance_information(instance, stderr):
     if not isinstance(instance, Instance):
         print >>stderr, "not an instance: %r" % (instance,)
