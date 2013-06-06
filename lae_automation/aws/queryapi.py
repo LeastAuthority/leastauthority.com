@@ -199,6 +199,12 @@ def wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint, parser, poll
     return _wait(wait_time)
 
 
+def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, poll_time,
+                           wait_on_address_time, *instance_ids):
+    return wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, AddressParser(),
+                                   poll_time, wait_on_address_time, stdout, stderr, *instance_ids)
+
+
 class EC2ConsoleClient(EC2Client):
     """
     This subclass adds functionality for handling the "console" data produced by AWS upon EC2 launch.

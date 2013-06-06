@@ -7,7 +7,7 @@ from twisted.python.filepath import FilePath
 from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
     create_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
-from lae_automation.aws.queryapi import wait_for_EC2_properties, AddressParser, TimeoutError
+from lae_automation.aws.queryapi import TimeoutError, wait_for_EC2_addresses
 from lae_automation.server import install_server, bounce_server, NotListeningError, \
     initialize_statmover_source
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
@@ -30,12 +30,6 @@ LISTEN_RETRIES = 5
 LISTEN_POLL_TIME = 15
 VERIFY_POLL_TIME = 5
 VERIFY_TOTAL_WAIT = 600
-
-
-def wait_for_EC2_addresses(ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr,
-                           *instance_ids):
-    return wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri, AddressParser(),
-                                   POLL_TIME, ADDRESS_WAIT_TIME, stdout, stderr, *instance_ids)
 
 
 def lookup_product(config, productcode):
@@ -154,8 +148,8 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
     def _deployed(instance):
         print >>stdout, "Waiting %d seconds for the server to be ready..." % (ADDRESS_DELAY_TIME,)
         d2 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
-                             ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr,
-                             instance.instance_id)
+                             ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr, POLL_TIME,
+                             ADDRESS_WAIT_TIME, instance.instance_id)
 
         def _got_addresses(addresses):
             assert len(addresses) == 1, addresses
