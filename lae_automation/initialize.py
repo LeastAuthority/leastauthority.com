@@ -5,8 +5,8 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
-from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, \
-    TimeoutError
+from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError, \
+     wait_for_EC2_addresses
 
 from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
@@ -118,18 +118,28 @@ def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id
 
 def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size,
                               bucket_name, keypair_name, instance_name, stdout, stderr, clock=None):
+    myclock = clock or reactor
     d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id,
                         instance_size, bucket_name, keypair_name, instance_name,
                         stdout, stderr)
 
     def _deployed(instance):
-        SERVERACCESSDELAY_TIME = 230
+        ADDRESS_DELAY_TIME = 75
+        POLL_TIME = 30
+        ADDRESS_WAIT_TIME = 5 * 60
+        d1 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
+                             ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, POLL_TIME,
+                             ADDRESS_WAIT_TIME, instance.instance_id)
         print >>stdout, "instance is %s" % instance
-        print >>stdout, "Waiting %d seconds for the server to be ready..." % (SERVERACCESSDELAY_TIME,)
-        d1 = task.deferLater(reactor, SERVERACCESSDELAY_TIME, verify_and_store_serverssh_pubkey, 
-                             ec2accesskeyid, ec2secretkey, endpoint_uri, AddressParser(), 5, 20, 
-                             sys.stdout, sys.stderr, instance.instance_id)
-        return d1
+        def  _got_addresses(address):
+            CONSOLE_ACCESS_DELAY_TIME = 155
+            print >>stdout, "Waiting %d seconds for the server to be ready..." % (CONSOLE_ACCESS_DELAY_TIME,)
+            d2 = task.deferLater(reactor, CONSOLE_ACCESS_DELAY_TIME, verify_and_store_serverssh_pubkey, 
+                                 ec2accesskeyid, ec2secretkey, endpoint_uri, address, 5, 20, 
+                                 stdout, stderr, instance.instance_id)
+            return d2
+            
+        d1.addCallback(_got_addresses)
 
     d.addCallback(_deployed)
     return d
