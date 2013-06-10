@@ -339,6 +339,61 @@ postfix	postfix/main_mailer_type select	No configuration"""
             run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
+def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, stdout, stderr):
+    """
+    This is the code that sets up the infrastructure server.
+    """
+    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
+    api.env.reject_unknown_hosts = True
+    api.env.key_filename = admin_privkey_path
+    api.env.abort_on_prompts = True
+    print >>stdout, "Updating server..."
+    #marlowe when this function is being evaluated, stdout gets multiple "debconf: blah blah" errors
+    #how can we fix these?
+    postfixdebconfstring="""# General type of mail configuration:
+# Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
+postfix	postfix/main_mailer_type select	No configuration"""
+    sudo_apt_get('update')
+    sudo_apt_get('-y dist-upgrade')
+    sudo_apt_get('-y autoremove')
+    print >>stdout, "Rebooting server..."
+    api.reboot(60) 
+    print >>stdout, "Installing dependencies..."
+    sudo_apt_get('install -y python-dev')
+    sudo_apt_get('install -y python-setuptools')
+    sudo_apt_get('install -y git-core')
+    sudo_apt_get('install -y nginx')
+    sudo_apt_get('install -y authbind')
+    sudo_apt_get('install -y python-jinja2')
+    sudo_apt_get('install -y python-nevow')    
+    sudo_apt_get('install -y python-dateutil')    
+    sudo_apt_get('install -y fabric')    
+    sudo_easy_install('foolscap')
+    write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
+    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
+    sudo_apt_get('install -y postfix')
+    sudo_apt_get('install -y darcs')
+    run('/usr/bin/git init --bare /home/ubuntu/.recovery')
+    remote_name = publichost
+    remote_add_string = 'git remote add %s ubuntu@%s:/home/ubuntu/.recovery' % (remote_name, publichost)
+    print >>stdout, "source_git_directory is %s" % (source_git_directory,)
+    subprocess.check_call(remote_add_string.split(), cwd=source_git_directory)
+    remote_push_string = 'git push -v --all %s' % (remote_name,)
+    subprocess.check_call(remote_push_string.split(), cwd=source_git_directory)
+    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
+    sudo('/usr/bin/git clone /home/ubuntu/.recovery /home/website')
+    create_account('website', None, stdout, stderr)    
+    sudo('chown --recursive website:website /home/website')
+    sudo('chown website:website /home/website/.ssh/authorized_keys')
+    sudo('chmod 400 /home/website/.ssh/authorized_keys')
+    sudo('chmod 700 /home/website/.ssh/')
+    run('wget %s' % (INSTALL_TXAWS_URL,))
+    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
+    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
+        sudo('python ./setup.py install')
+    with cd('/home/website/leastauthority.com'):
+        sudo('./runsite.sh')
+
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
