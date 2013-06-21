@@ -28,7 +28,7 @@ d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
                             POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, sys.stderr)
 
 def update_known_hosts(publichost):
-    arg_list = ['ssh', '-o', 'StrictHostKeyChecking=no', '-i', monitor_privkey_path, 'monitor@%s' % (publichost,), 'exit']
+    arg_list = ['ssh', '-o','HostKeyAlgorithms=ecdsa-sha2-nistp256,ssh-rsa', '-o', 'StrictHostKeyChecking=no', '-i', monitor_privkey_path, 'monitor@%s' % (publichost,), 'exit']
     process = subprocess.Popen(arg_list)
     retval = process.wait()
     if retval != 0:
