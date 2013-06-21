@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-"""This script launches a new EC2 instance, and provisions it with a version of the Least Authority 
-code base.  Finally it launches the webserver specified in that code.
+"""This script:
+(1) launches a new EC2 instance
+(2) provisions it with a version of the Least Authority code base
+(3) launches the webserver specified in that code.
 
 Configuration Options:
-  To select a particular version of the Least Authority code base, one can specify a git commit SHA1 
-by assigning the default encoded SHA1 to the variable "COMMITSHA1".  This functionality is not yet 
-implemented.XXX
+  To select a particular version of the Least Authority code base, one can specify a git tag by assigning to the variable "COMMIT_TAG".  
+
   AWS credentials, ami parameters (e.g. size and ami id) and metadata to associate with the instance 
 (e.g. instance name) are parsed from the lae_automation_config.json configuration file.
   The "source_git_directory" must be the absolute path (as a string) of a git repository containing 
@@ -19,10 +20,10 @@ from lae_automation.initialize import deploy_infrastructure_EC2
 from lae_automation.server import install_infrastructure_server 
 from lae_automation.signup import EC2_ENDPOINT
 
-COMMITSHA1 = "SHA1commithash" #change to a commit hash. As stub use SsUE.
+COMMIT_TAG = "SHA1commithash" #change to a commit hash. As stub use SsUE.
 configpath='../secret_config/lae_automation_config.json'
 
-config = Config(COMMITSHA1, sys.argv[1], configpath) #sys.argv[1] 'testing' is used to index which 'type' of code to provision perhaps it will be extended to take developer names, or to provision specialized EC2s (e.g. infrastructure vs SSEC2), or perhaps it's unnecessary complexity.
+config = Config(COMMIT_TAG, sys.argv[1], configpath) #sys.argv[1] 'testing' is used to index which 'type' of code to provision perhaps it will be extended to take developer names, or to provision specialized EC2s (e.g. infrastructure vs SSEC2), or perhaps it's unnecessary complexity.
 
 #Configuration copied from most recent product
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
@@ -31,11 +32,11 @@ ami_image_id = str(config.products[-1]['ami_image_id'])
 instancesize = str(config.products[-1]['instance_size']) #quite small ~.5 GiB of RAM
 
 #Configuration which is specific to the test account
-ec2accesskeyid = str(config.deployment[COMMITSHA1]['ec2_access_key_id'])
-admin_keypair_name = str(config.deployment[COMMITSHA1]['testing_keypair_name'])
-admin_privkey_path = str(config.deployment[COMMITSHA1]['testing_privkey_path'])
-ec2secretpath = str(config.deployment[COMMITSHA1]['ec2_test_secret_path'])
-instancename = str(config.deployment[COMMITSHA1]['instance_name'])
+ec2accesskeyid = str(config.deployment[COMMIT_TAG]['ec2_access_key_id'])
+admin_keypair_name = str(config.deployment[COMMIT_TAG]['testing_keypair_name'])
+admin_privkey_path = str(config.deployment[COMMIT_TAG]['testing_privkey_path'])
+ec2secretpath = str(config.deployment[COMMIT_TAG]['ec2_test_secret_path'])
+instancename = str(config.deployment[COMMIT_TAG]['instance_name'])
 
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
@@ -55,7 +56,7 @@ def eb(x):
 d = deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, ami_image_id, instancesize, 'infrastructure', admin_keypair_name, 'infrastructure', sys.stdout, sys.stderr)
     
 d.addCallbacks(printer, eb)
-d.addCallbacks(lambda IP_from_verification: install_infrastructure_server(IP_from_verification, admin_privkey_path, source_git_directory, COMMITSHA1, sys.stdout, sys.stderr), eb)
+d.addCallbacks(lambda IP_from_verification: install_infrastructure_server(IP_from_verification, admin_privkey_path, source_git_directory, COMMIT_TAG, sys.stdout, sys.stderr), eb)
 d.addCallbacks(printer, eb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 from twisted.internet import reactor
