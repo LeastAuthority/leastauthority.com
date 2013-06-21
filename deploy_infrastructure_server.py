@@ -20,16 +20,16 @@ from lae_automation.initialize import deploy_infrastructure_EC2
 from lae_automation.server import install_infrastructure_server 
 from lae_automation.signup import EC2_ENDPOINT
 
-COMMIT_TAG = "SHA1commithash" #change to a commit hash. As stub use SsUE.
+COMMIT_TAG = "SHA1commithash" 
 configpath='../secret_config/lae_automation_config.json'
 
-config = Config(COMMIT_TAG, sys.argv[1], configpath) #sys.argv[1] 'testing' is used to index which 'type' of code to provision perhaps it will be extended to take developer names, or to provision specialized EC2s (e.g. infrastructure vs SSEC2), or perhaps it's unnecessary complexity.
+config = Config(COMMIT_TAG, sys.argv[1], configpath)
 
 #Configuration copied from most recent product
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
 ami_image_id = str(config.products[-1]['ami_image_id']) 
 
-instancesize = str(config.products[-1]['instance_size']) #quite small ~.5 GiB of RAM
+instancesize = str(config.products[-1]['instance_size'])
 
 #Configuration which is specific to the test account
 ec2accesskeyid = str(config.deployment[COMMIT_TAG]['ec2_access_key_id'])
@@ -40,7 +40,7 @@ instancename = str(config.deployment[COMMIT_TAG]['instance_name'])
 
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
-source_git_directory = '/home/arc/leastauthorityenchilada' #Currently hardcoded (obviously!). This is the repo that will provide code to provision the EC2 with a Least Authority infrastructure server.
+source_git_directory = '/home/production_backup/disasterrecovery/'
 
 def printer(x):
     """This handy function let's us see what's going on between calls in the callback chain."""
@@ -53,10 +53,16 @@ def eb(x):
     print >> sys.stderr, x
 
 
-d = deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, ami_image_id, instancesize, 'infrastructure', admin_keypair_name, 'infrastructure', sys.stdout, sys.stderr)
+d = deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, ami_image_id, instancesize,
+                              'infrastructure', admin_keypair_name, 'infrastructure', sys.stdout, 
+                              sys.stderr)
     
 d.addCallbacks(printer, eb)
-d.addCallbacks(lambda IP_from_verification: install_infrastructure_server(IP_from_verification, admin_privkey_path, source_git_directory, COMMIT_TAG, sys.stdout, sys.stderr), eb)
+d.addCallbacks(lambda IP_from_verification: install_infrastructure_server(IP_from_verification, 
+                                                                          admin_privkey_path, 
+                                                                          source_git_directory, 
+                                                                          COMMIT_TAG, sys.stdout, 
+                                                                          sys.stderr), eb)
 d.addCallbacks(printer, eb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 from twisted.internet import reactor
