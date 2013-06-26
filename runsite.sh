@@ -1,7 +1,5 @@
 #!/bin/sh
-
-set -e
-cd $(readlink -f $(dirname $0))
+cd /home/webmaster/website/leastauthority.com
 flappserver restart `pwd`/flapp
 sleep 2
 cmd="python -u `pwd`/lae_site/main.py"
