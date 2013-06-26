@@ -17,30 +17,31 @@ import sys, os
 from lae_automation.config import Config
 from twisted.python.filepath import FilePath
 from lae_automation.initialize import deploy_infrastructure_EC2 
-from lae_automation.server import install_infrastructure_server 
 from lae_automation.signup import EC2_ENDPOINT
 
-COMMIT_TAG = "SHA1commithash" 
+COMMIT_TAG = sys.argv[1] 
 configpath='../secret_config/lae_automation_config.json'
 
-config = Config(COMMIT_TAG, sys.argv[1], configpath)
+config = Config(configpath)
 
 #Configuration copied from most recent product
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
 ami_image_id = str(config.products[-1]['ami_image_id']) 
 
 instancesize = str(config.products[-1]['instance_size'])
+ec2accesskeyid = str(config.other['ec2_access_key_id'])
+admin_keypair_name = str(config.other['admin_keypair_name'])
+admin_privkey_path = str(config.other['admin_privkey_path'])
+ec2secretpath = str(config.other['ec2_secret_path'])
 
+print config.other['deployment']
 #Configuration which is specific to the test account
-ec2accesskeyid = str(config.deployment[COMMIT_TAG]['ec2_access_key_id'])
-admin_keypair_name = str(config.deployment[COMMIT_TAG]['testing_keypair_name'])
-admin_privkey_path = str(config.deployment[COMMIT_TAG]['testing_privkey_path'])
-ec2secretpath = str(config.deployment[COMMIT_TAG]['ec2_test_secret_path'])
-instancename = str(config.deployment[COMMIT_TAG]['instance_name'])
+
+instancename = str(config.other['deployment'][COMMIT_TAG]['instance_name'])
 
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
-source_git_directory = '/home/production_backup/disasterrecovery/'
+source_git_directory = '/home/production_backup/disasterrecovery/.git'
 
 def printer(x):
     """This handy function let's us see what's going on between calls in the callback chain."""
@@ -54,17 +55,13 @@ def eb(x):
 
 
 d = deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, ami_image_id, instancesize,
-                              'infrastructure', admin_keypair_name, 'infrastructure', sys.stdout, 
+                              'infrastructure', admin_keypair_name, 'infrastructure', 
+                              admin_privkey_path, source_git_directory, COMMIT_TAG, sys.stdout, 
                               sys.stderr)
     
+
 d.addCallbacks(printer, eb)
-d.addCallbacks(lambda IP_from_verification: install_infrastructure_server(IP_from_verification, 
-                                                                          admin_privkey_path, 
-                                                                          source_git_directory, 
-                                                                          COMMIT_TAG, sys.stdout, 
-                                                                          sys.stderr), eb)
-d.addCallbacks(printer, eb)
-d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
+#d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 from twisted.internet import reactor
 
 reactor.run() 
