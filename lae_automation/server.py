@@ -171,7 +171,8 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     print >>stdout, "Finished server installation."
 
 
-def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, stdout, stderr):
+def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, reference_tag, 
+                                  stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
     """
@@ -180,8 +181,6 @@ def install_infrastructure_server(publichost, admin_privkey_path, source_git_dir
     api.env.key_filename = admin_privkey_path
     api.env.abort_on_prompts = True
     print >>stdout, "Updating server..."
-    #marlowe when this function is being evaluated, stdout gets multiple "debconf: blah blah" errors
-    #how can we fix these?
     postfixdebconfstring="""# General type of mail configuration:
 # Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
 postfix	postfix/main_mailer_type select	No configuration"""
@@ -189,7 +188,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo_apt_get('-y dist-upgrade')
     sudo_apt_get('-y autoremove')
     print >>stdout, "Rebooting server..."
-    api.reboot(60) 
+    api.reboot(300) 
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev')
     sudo_apt_get('install -y python-setuptools')
@@ -207,23 +206,38 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo_apt_get('install -y darcs')
     run('/usr/bin/git init --bare /home/ubuntu/.recovery')
     remote_name = publichost
-    remote_add_string = 'git remote add %s ubuntu@%s:/home/ubuntu/.recovery' % (remote_name, publichost)
+    remote_add_list = ['/usr/bin/git', 
+                       '--git-dir=%s' % (source_git_directory,), 
+                       'remote', 
+                       'add',
+                       remote_name, 
+                       'ubuntu@%s:/home/ubuntu/.recovery' % (publichost,)]
     print >>stdout, "source_git_directory is %s" % (source_git_directory,)
-    subprocess.check_call(remote_add_string.split(), cwd=source_git_directory)
-    remote_push_string = 'git push -v --all %s' % (remote_name,)
-    subprocess.check_call(remote_push_string.split(), cwd=source_git_directory)
+    subprocess.check_call(remote_add_list, cwd=source_git_directory)
+    remote_push_list = ['/usr/bin/git', 
+                        '--git-dir=%s' % (source_git_directory,), 
+                        'push',
+                        remote_name,
+                        reference_tag]
+    subprocess.check_call(remote_push_list, cwd=source_git_directory)
     api.env.host_string = '%s@%s' % ('ubuntu', publichost)
-    sudo('/usr/bin/git clone /home/ubuntu/.recovery /home/website')
-    create_account('website', None, stdout, stderr)    
-    sudo('chown --recursive website:website /home/website')
-    sudo('chown website:website /home/website/.ssh/authorized_keys')
-    sudo('chmod 400 /home/website/.ssh/authorized_keys')
-    sudo('chmod 700 /home/website/.ssh/')
+    create_account('webmaster', None, stdout, stderr)    
+    sudo('chown --recursive webmaster:webmaster /home/webmaster')
+    sudo('chown webmaster:webmaster /home/webmaster/.ssh/authorized_keys')
+    sudo('chmod 400 /home/webmaster/.ssh/authorized_keys')
+    sudo('chmod 700 /home/webmaster/.ssh/')
+    with cd('/home/webmaster'):
+        sudo('mkdir website')
+    with cd('/home/webmaster/website'):
+        sudo('/usr/bin/git init')
+        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % reference_tag)
+        sudo('/usr/bin/git checkout FETCH_HEAD')
+        sudo('/usr/bin/git checkout -b master')
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
-    with cd('/home/website/leastauthority.com'):
+    with cd('/home/webmaster/website/leastauthority.com'):
         sudo('./runsite.sh')
 
 INTRODUCER_PORT = '12345'
@@ -594,8 +608,12 @@ def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_
     # Setup up directory structure and scp statmover tarball into it
     set_host_and_key(publichost, monitor_privkey_path, username="monitor")
     path_to_statmover = '../secret_config/'+INSTALL_STATMOVER_PACKAGE
-    scpstring = 'scp -i %s %s monitor@%s:' % (monitor_privkey_path, path_to_statmover, publichost)
-    subprocess.check_output(scpstring.split())
+    scp_list = ['scp',
+                '-i',
+                monitor_privkey_path,
+                path_to_statmover,
+                'monitor@%s:' % (publichost,)]
+    subprocess.check_output(scp_list)
     run('tar -xzvf %s' % (INSTALL_STATMOVER_PACKAGE,))
     run('mv /home/monitor/statmover/config /home/monitor/.saturnaliaclient')
 
