@@ -3,6 +3,7 @@ import subprocess, os, urllib
 from twisted.internet import reactor, task, defer
 from twisted.python.filepath import FilePath
 
+from lae_automation.server import install_infrastructure_server
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
 from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError, \
@@ -117,7 +118,8 @@ def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id
 
 
 def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size,
-                              bucket_name, keypair_name, instance_name, stdout, stderr, clock=None):
+                              bucket_name, keypair_name, instance_name, admin_privkey_path, 
+                              git_repository, commit_tag, stdout, stderr, clock=None):
     myclock = clock or reactor
     d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id,
                         instance_size, bucket_name, keypair_name, instance_name,
@@ -131,14 +133,23 @@ def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_im
                              ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, POLL_TIME,
                              ADDRESS_WAIT_TIME, instance.instance_id)
         print >>stdout, "instance is %s" % instance
-        def  _got_addresses(address):
+        def  _got_addresses(addresses):
             CONSOLE_ACCESS_DELAY_TIME = 155
+            address = addresses[0][0]
             print >>stdout, "Waiting %d seconds for the server to be ready..." % (CONSOLE_ACCESS_DELAY_TIME,)
             d2 = task.deferLater(reactor, CONSOLE_ACCESS_DELAY_TIME, verify_and_store_serverssh_pubkey, 
                                  ec2accesskeyid, ec2secretkey, endpoint_uri, address, 5, 20, 
                                  stdout, stderr, instance.instance_id)
+
+            def _pubkey_verified(ignore):
+                install_infrastructure_server(address, admin_privkey_path, git_repository, 
+                                              commit_tag, stdout, stderr)
+                
+
+            d2.addCallback(_pubkey_verified)
+
             return d2
-            
+
         d1.addCallback(_got_addresses)
 
     d.addCallback(_deployed)
