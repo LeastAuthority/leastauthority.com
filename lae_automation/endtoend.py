@@ -104,7 +104,7 @@ class EndToEndChecker(PollMixin):
         def _connected_to_server():
             ns._connected_servers = frozenset([s.get_longname() for s in storage_broker.get_connected_servers()])
             return len(ns._connected_servers) > 0
-        d.addCallback(lambda ign: self.poll(_connected_to_server))
+        d.addCallback(lambda ign: self.poll(_connected_to_server, pollinterval=0.5, timeout=10))
 
         def _check_connections(ign):
             if server_nodeid not in ns._connected_servers:
