@@ -49,8 +49,9 @@ def render_all(template_path=None, output_path=None, static_path=None):
                 with codecs.open(output_path + '/' + relative_path, 'w', 'utf-8') as render_file:
                     for line in template.render():
                         render_file.write(line)
-    subprocess.check_call(['scp', '-r', static_path, output_path])
-    print "Moved over static files."
-    subprocess.check_call(['python', '-m', 'SimpleHTTPServer', '8001'], cwd=os.getcwd() + '/' + output_path)
+    if not os.path.isdir(output_path + 'static'):
+        subprocess.check_call(['ln', '-s', '../' + static_path, 'static'], cwd=os.getcwd() + '/' + output_path)
+    print "Made symlink to static files."
+    subprocess.check_call(['python', '-m', 'SimpleHTTPServer', '8002'], cwd=os.getcwd() + '/' + output_path)
 if __name__ == "__main__":
     render_all(*sys.argv[1:])
