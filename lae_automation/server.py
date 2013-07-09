@@ -220,7 +220,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     print >>stdout, "Finished server installation."
 
 def run_git(command):
-    return run('/usr/bin/git %s' % (command,))
+    run('/usr/bin/git %s' % (command,))
 
 GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
 cd %s || exit
@@ -234,16 +234,12 @@ git push hub
 """
 
 def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
-    "FIXME: make this idempotent (?)"
     if live_path.endswith('/') or not live_path.startswith('/'):
         raise Exception("live_path must be absolute and not end with /")
     hub_path = "%s.git" % (live_path,)
     run_git('init --bare %s' % (hub_path,))
     run_git('init %s' % (live_path,))
-    if 'hub' in run_git( '--git-dir %s/.git remote' % (live_path,) ):
-        print "removing existing remote"
-        run_git('--git-dir %s/.git remote rm hub' % (live_path,))
-    run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
+    run_git('--git-dir %s/.git remote add hub %s', (live_path, hub_path))
     update_hook_path = '%s/hooks/post-update' % (hub_path,)
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
     run('chmod +x %s' % (update_hook_path,))
@@ -251,96 +247,16 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     write(GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE, live_commit_hook_path)
     run('chmod +x %s' % (live_commit_hook_path,))
 
-    print "live_path is %s" % (live_path,)
+    print >>stdout, "live_path is %s" % (live_path,)
     local_git_push = ['/usr/bin/git', 
                         '--git-dir=%s' % (local_repo_path,), 
                         'push',
-                        'website@%s:%s' % (hostname, hub_path),
+                        'ubuntu@%s:%s' % (hostname, hub_path),
                         '%s:master' % (src_ref,)]
-    subprocess.check_call(local_git_push)    
+    subprocess.check_call(local_git_push, cwd=local_repo_path)    
 
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo, 
-                                  la_commit_hash, secretconf_repo, sc_commit_hash, 
-                                  stdout, stderr):
-    """
-    This is the code that sets up the infrastructure server.
-    This is intended to be idempotent.
-
-    Known sources of non-idempotence:
-        - setup_git_deploy
-    """
-    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
-    api.env.reject_unknown_hosts = True
-    api.env.key_filename = admin_privkey_path
-    api.env.abort_on_prompts = True
-    print >>stdout, "Updating server..."
-    postfixdebconfstring="""# General type of mail configuration:
-# Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
-postfix	postfix/main_mailer_type select	No configuration"""
-    sudo_apt_get('update')
-    sudo_apt_get('-y dist-upgrade')
-    sudo_apt_get('-y autoremove')
-    print >>stdout, "Rebooting server..."
-    api.reboot(300)
-    print >>stdout, "Installing dependencies..."
-    sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 python-nevow '
-                 'python-dateutil fabric python-foolscap python-twisted-mail python-six '
-                 'python-unidecode python-tz python-docutils python-markdown python-pip')
-    # From:  https://stripe.com/docs/libraries
-    sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
-    write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
-    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
-    sudo_apt_get('install -y postfix')
-    sudo_apt_get('install -y darcs')
-
-#    sudo_apt_get('install -y nginx')
-#    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
-#    sudo('rm /etc/nginx/sites-enabled/default')
-#    sudo('service nginx restart')
-
-    run('wget https://pypi.python.org/packages/source/p/pelican/pelican-3.2.2.tar.gz')
-    run('tar zxf pelican-3.2.2.tar.gz')
-    with cd('pelican-3.2.2'):
-        sudo('python setup.py install')
-
-    create_account('website', website_pubkey, stdout, stderr)
-
-    sudo_apt_get('install -y authbind')
-    sudo('touch /etc/authbind/byport/{443,80}')
-    sudo('chown website:root /etc/authbind/byport/{443,80}')
-    sudo('chmod 744 /etc/authbind/byport/{443,80}')
-
-    run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
-    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
-    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
-        sudo('python ./setup.py install')
-
-    # patch twisted to send intermediate certs, cf. https://github.com/LeastAuthority/leastauthority.com/issues/6
-    sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
-
-    set_host_and_key(publichost, admin_privkey_path, 'website')
-    setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
-    setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
-
-
-    with cd('/home/website/'):
-        if not files.exists('signup_logs'):
-            run('mkdir signup_logs')
-        if not files.exists('secrets'):
-            run('mkdir secrets')
-
-    with cd('/home/website/secret_config'):
-        run('chmod 400 *pem')
-
-    with cd('/home/website/leastauthority.com'):
-        # FIXME: make idempotent
-        if not files.exists('/home/website/leastauthority.com/flapp'):
-            run('flappserver create /home/website/leastauthority.com/flapp')
-            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
-        run('./runsite.sh')
-
-def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, commit_hash, 
-                                  stdout, stderr):
+                                  la_commit_hash, secretconf_repo, sc_commit_hash, stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
     """
@@ -381,26 +297,10 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('chown website:root /etc/authbind/byports/{443,80}')
     sudo('chmod 744 /etc/authbind/byports/{443,80}')
     
-    run('/usr/bin/git init --bare /home/ubuntu/.recovery')
-    print >>stdout, "source_git_directory is %s" % (source_git_directory,)
-    subprocess.check_call(remote_add_list, cwd=source_git_directory)
-    remote_push_list = ['/usr/bin/git', 
-                        '--git-dir=%s' % (source_git_directory,), 
-                        'push',
-                        'ubuntu@%s:/home/ubuntu/.recovery' % (publichost,),
-                        commit_hash]
-    subprocess.check_call(remote_push_list, cwd=source_git_directory)
-    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
-    create_account('website', None, stdout, stderr)    
-    sudo('chown --recursive website:website /home/website')
-    sudo('chown website:website /home/website/.ssh/authorized_keys')
-    sudo('chmod 400 /home/website/.ssh/authorized_keys')
-    sudo('chmod 700 /home/website/.ssh/')
-    with cd('/home/website'):
-        sudo('/usr/bin/git init')
-        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % commit_hash)
-        sudo('/usr/bin/git checkout FETCH_HEAD')
-        sudo('/usr/bin/git checkout -b master')
+    create_account('website', website_pubkey, stdout, stderr)
+    set_host_and_key(publichost, admin_privkey_path, 'website')
+    setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
+    setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
 
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
