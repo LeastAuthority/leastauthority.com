@@ -339,7 +339,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
             run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
-def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, reference_tag, 
+def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, commit_hash, 
                                   stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
@@ -388,7 +388,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
                         '--git-dir=%s' % (source_git_directory,), 
                         'push',
                         'ubuntu@%s:/home/ubuntu/.recovery' % (publichost,),
-                        reference_tag]
+                        commit_hash]
     subprocess.check_call(remote_push_list, cwd=source_git_directory)
     api.env.host_string = '%s@%s' % ('ubuntu', publichost)
     create_account('website', None, stdout, stderr)    
@@ -398,7 +398,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('chmod 700 /home/website/.ssh/')
     with cd('/home/website'):
         sudo('/usr/bin/git init')
-        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % reference_tag)
+        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % commit_hash)
         sudo('/usr/bin/git checkout FETCH_HEAD')
         sudo('/usr/bin/git checkout -b master')
 
