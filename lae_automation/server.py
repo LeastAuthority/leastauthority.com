@@ -1,3 +1,4 @@
+
 """
 -- The EC2Admin public keys, corresponding to the EC2Admin private keys they specify will live on the web server.
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
@@ -54,6 +55,55 @@ enabled = false
 enabled = false
 local.directory =
 """
+
+NGINX_CONFIG = """# You may add here your                                                                                             
+# server {                                                                                                          
+#       ...                                                                                                         
+# }                                                                                                                 
+# statements for each of your virtual hosts                                                                         
+                                                                                                                    
+server {                                                                                                            
+    listen 8443 default ssl;                                                                                        
+    server_name leastauthority.com;                                                                                 
+    ssl on;                                                                                                         
+    ssl_certificate /home/website/keys/server.crt;                                                                  
+    ssl_certificate_key /home/website/keys/server.key;                                                              
+                                                                                                                    
+    ssl_session_cache    shared:SSL:10m;                                                                            
+    ssl_session_timeout 10000m;                                                                                     
+                                                                                                                    
+    ssl_protocols SSLv3 TLSv1;                                                                                      
+    ssl_ciphers RC4-SHA:AES128-SHA:DHE-DSS-AES128-SHA:DHE-RSA-AES128-SHA:AES256-SHA:DHE-DSS-AES256-SHA:DHE-RSA-AES25
+6-SHA;                                                                                                              
+    ssl_prefer_server_ciphers on;                                                                                   
+                                                                                                                    
+    add_header Strict-Transport-Security max-age=100000;                                                            
+                                                                                                                    
+    add_header  Cache-Control public;                                                                               
+    expires 30d;                                                                                                    
+                                                                                                                    
+    gzip on;                                                                                                        
+    gzip_static on;                                                                                                 
+    gzip_comp_level 9;                                                                                              
+    gzip_types *;                                                                                                   
+                                                                                                                    
+    access_log /home/website/mailman/server.log;                                                                    
+                                                                                                                    
+    # match https://leastauthority.com:8443/cgi-bin/mailman/listinfo/*                                              
+    # and ask thttpd to run the CGI for us                                                                          
+    location /cgi-bin {                                                                                             
+        expires off;                                                                                                
+        include proxy_params;                                                                                       
+        proxy_pass http://127.0.0.1:8581;                                                                           
+    }                                                                                                               
+    location /images/mailman {                                                                                      
+        alias /var/lib/mailman/icons;                                                                               
+    }                                                                                                               
+    location /pipermail {                                                                                           
+        alias /var/lib/mailman/archives/public;                                                                     
+        autoindex on;                                                                                               
+    }                                                                                                               
+}"""
 
 class NotListeningError(Exception):
     pass
@@ -193,8 +243,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo_apt_get('install -y python-dev')
     sudo_apt_get('install -y python-setuptools')
     sudo_apt_get('install -y git-core')
-    sudo_apt_get('install -y nginx')
-    sudo_apt_get('install -y authbind')
     sudo_apt_get('install -y python-jinja2')
     sudo_apt_get('install -y python-nevow')    
     sudo_apt_get('install -y python-dateutil')    
@@ -204,6 +252,17 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
     sudo_apt_get('install -y postfix')
     sudo_apt_get('install -y darcs')
+
+    sudo_apt_get('install -y nginx')
+    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
+    sudo('rm /etc/nginx/sites-enabled/default')
+    sudo('service nginx restart')
+    
+    sudo_apt_get('install -y authbind')
+    sudo('touch /etc/authbind/byports/{443,80}')
+    sudo('chown website:root /etc/authbind/byports/{443,80}')
+    sudo('chmod 744 /etc/authbind/byports/{443,80}')
+    
     run('/usr/bin/git init --bare /home/ubuntu/.recovery')
     remote_name = publichost
     remote_add_list = ['/usr/bin/git', 
@@ -221,24 +280,25 @@ postfix	postfix/main_mailer_type select	No configuration"""
                         reference_tag]
     subprocess.check_call(remote_push_list, cwd=source_git_directory)
     api.env.host_string = '%s@%s' % ('ubuntu', publichost)
-    create_account('webmaster', None, stdout, stderr)    
-    sudo('chown --recursive webmaster:webmaster /home/webmaster')
-    sudo('chown webmaster:webmaster /home/webmaster/.ssh/authorized_keys')
-    sudo('chmod 400 /home/webmaster/.ssh/authorized_keys')
-    sudo('chmod 700 /home/webmaster/.ssh/')
-    with cd('/home/webmaster'):
-        sudo('mkdir website')
-    with cd('/home/webmaster/website'):
+    create_account('website', None, stdout, stderr)    
+    sudo('chown --recursive website:website /home/website')
+    sudo('chown website:website /home/website/.ssh/authorized_keys')
+    sudo('chmod 400 /home/website/.ssh/authorized_keys')
+    sudo('chmod 700 /home/website/.ssh/')
+    with cd('/home/website'):
         sudo('/usr/bin/git init')
         sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % reference_tag)
         sudo('/usr/bin/git checkout FETCH_HEAD')
         sudo('/usr/bin/git checkout -b master')
+
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
-    with cd('/home/webmaster/website/leastauthority.com'):
-        sudo('./runsite.sh')
+    with cd('/home/website/leastauthority.com'):
+        run('flappserver create /home/website/leastauthority.com/flapp')
+        run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 > /home/website/secret_config/signup.furl')
+        run('./runsite.sh')
 
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
