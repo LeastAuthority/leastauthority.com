@@ -220,9 +220,44 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
 
     print >>stdout, "Finished server installation."
 
+def run_git(command):
+    run('/usr/bin/git %s' % (command,))
 
-def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, commit_hash, 
-                                  stdout, stderr):
+GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
+cd %s || exit
+unset GIT_DIR
+git pull hub master
+exec git update-server-info
+"""
+
+GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE = """#!/bin/bash
+git push hub
+"""
+
+def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
+    if live_path.endswith('/') or not live_path.startswith('/'):
+        raise Exception("live_path must be absolute and not end with /")
+    hub_path = "%s.git" % (live_path,)
+    run_git('init --bare %s' % (hub_path,))
+    run_git('init %s' % (live_path,))
+    run_git('--git-dir %s/.git remote add hub %s', (live_path, hub_path))
+    update_hook_path = '%s/hooks/post-update' % (hub_path,)
+    write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
+    run('chmod +x %s' % (update_hook_path,))
+    live_commit_hook_path = '%s/.git/hooks/post-commit' % (live_path,)
+    write(GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE, live_commit_hook_path)
+    run('chmod +x %s' % (live_commit_hook_path,))
+
+    print >>stdout, "live_path is %s" % (live_path,)
+    local_git_push = ['/usr/bin/git', 
+                        '--git-dir=%s' % (local_repo_path,), 
+                        'push',
+                        'ubuntu@%s:%s' % (hostname, hub_path),
+                        '%s:master' % (src_ref,)]
+    subprocess.check_call(local_git_push, cwd=local_repo_path)    
+
+def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo, 
+                                  la_commit_hash, secretconf_repo, sc_commit_hash, stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
     """
@@ -263,26 +298,10 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('chown website:root /etc/authbind/byports/{443,80}')
     sudo('chmod 744 /etc/authbind/byports/{443,80}')
     
-    run('/usr/bin/git init --bare /home/ubuntu/.recovery')
-    print >>stdout, "source_git_directory is %s" % (source_git_directory,)
-    subprocess.check_call(remote_add_list, cwd=source_git_directory)
-    remote_push_list = ['/usr/bin/git', 
-                        '--git-dir=%s' % (source_git_directory,), 
-                        'push',
-                        'ubuntu@%s:/home/ubuntu/.recovery' % (publichost,),
-                        commit_hash]
-    subprocess.check_call(remote_push_list, cwd=source_git_directory)
-    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
-    create_account('website', None, stdout, stderr)    
-    sudo('chown --recursive website:website /home/website')
-    sudo('chown website:website /home/website/.ssh/authorized_keys')
-    sudo('chmod 400 /home/website/.ssh/authorized_keys')
-    sudo('chmod 700 /home/website/.ssh/')
-    with cd('/home/website'):
-        sudo('/usr/bin/git init')
-        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % commit_hash)
-        sudo('/usr/bin/git checkout FETCH_HEAD')
-        sudo('/usr/bin/git checkout -b master')
+    create_account('website', website_pubkey, stdout, stderr)
+    set_host_and_key(publichost, admin_privkey_path, 'website')
+    setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
+    setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
 
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
