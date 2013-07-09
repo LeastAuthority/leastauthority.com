@@ -356,7 +356,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo_apt_get('-y dist-upgrade')
     sudo_apt_get('-y autoremove')
     print >>stdout, "Rebooting server..."
-    api.reboot(300) 
+    api.reboot(300)
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev')
     sudo_apt_get('install -y python-setuptools')
@@ -382,19 +382,12 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('chmod 744 /etc/authbind/byports/{443,80}')
     
     run('/usr/bin/git init --bare /home/ubuntu/.recovery')
-    remote_name = publichost
-    remote_add_list = ['/usr/bin/git', 
-                       '--git-dir=%s' % (source_git_directory,), 
-                       'remote', 
-                       'add',
-                       remote_name, 
-                       'ubuntu@%s:/home/ubuntu/.recovery' % (publichost,)]
     print >>stdout, "source_git_directory is %s" % (source_git_directory,)
     subprocess.check_call(remote_add_list, cwd=source_git_directory)
     remote_push_list = ['/usr/bin/git', 
                         '--git-dir=%s' % (source_git_directory,), 
                         'push',
-                        remote_name,
+                        'ubuntu@%s:/home/ubuntu/.recovery' % (publichost,),
                         reference_tag]
     subprocess.check_call(remote_push_list, cwd=source_git_directory)
     api.env.host_string = '%s@%s' % ('ubuntu', publichost)
