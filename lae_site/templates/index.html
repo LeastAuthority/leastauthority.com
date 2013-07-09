@@ -1,32 +1,52 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h3>Our First Product, Tahoe-LAFS-on-S3</h3>
-<p><em>Tahoe-LAFS-on-S3</em> is a reliable and scalable cloud storage back-end for use with the <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS.org</a> client software. Tahoe-LAFS is a Free Software, Open Source cloud storage system. It
-encrypts and cryptographically integrity-checks your files for
-<em>provider-independent security</em>. That means that the confidentiality
-and integrity of your files cannot be violated by anyone&#45;not even
-employees of the storage service provider.</p>
+<h3>Least Authority: Simple, <em>secure</em> storage services.</h3>
 
-<h4>What is it good for?</h4>
-<p>Securely backing up your data off-site. The <em>&quot;tahoe
-backup&quot;</em> command inspects your local filesystem for files that have
-changed since the last time you ran it. It uploads each file that
-has changed and it creates a directory in Tahoe-LAFS to hold the
-current version of each of the files. You can browse or access old
-versions just by browsing the old snapshot directories.</p>
+<h5>If you need an off-site backup solution or scalable storage for your application, Least Authority may be for you!</h5><br/>
 
-<h4>Where is the data stored?</h4>
-<p>
-Your data, encrypted, is stored on Amazon's Simple Storage Service
-(<a class="reference external" href="http://en.wikipedia.org/wiki/Amazon_S3">S3</a>), which is a convenient, reliable, and widely understood
-platform for storage.</p>
+<div class="features">
+<div class="row">
+    <div class="span3"><h4>Seriously confidential</h4>
+        <p>Neither the network, the cloud, nor Least Authority can ever read your data.</p></div>
+    <div class="span3"><h4>Robustly architected</h4>
+        <p>If one server or cloud provider goes down, your data is still safe and available.</p></div>
+    <div class="span3"><h4>Military-grade crypto</h4>
+        <p>something about how the crypto is super great</p>
+    </div>
+</div>
+<br/>
+<div class="row">
+    <div class="span3"><h4>Versioning</h4>
+        <p>Access previous revisions of your files easily.</p>
+    </div>
+    <div class="span3"><h4>Scales seamlessly</h4>
+        <p>All the benefits of the cloud, none of the worries.</p>
+    </div>
+    <div class="span3"><h4>Open source!</h4>
+        <p>Built with <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS</a>, a seven-year-old free software project.</p></div>
+</div>
+<br/>
+</div>
 
-<h4>Tahoe-LAFS-on-S3 Pricing</h4>
-<p>$1.00/GB/month*</p>
-<p class="small_italic">*Discounts are available for full-time students, educational institutions,
-libraries, non-profits, and open source projects.</p>
+<h3>Services</h3>
+<div class="services row">
+    <div class="span4">
+        <h5>Secure Backup Service</h5>
+        Just $50/month for up to 350 GB
+        <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
+    </div>
+    <div class="span4">
+        <h5>Application Storage Platform</h5>
+        Just $15/month plus $0.30/GB/month
+        <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
+    </div>
+    <!--<div class="span3">
+        <h4>Magic Folder</h4>
+        TBA
+    </div>-->
+</div>
 
-<div class="signup-button"><a href="/signup/">SIGN UP for the alpha program</a></div>
+<p class="help-text">Discounts are available for full-time students, educational institutions, libraries, non-profits, and open source projects.</p>
 {% endblock %}
 
