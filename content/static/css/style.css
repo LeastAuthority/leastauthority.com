@@ -33,8 +33,6 @@ h3 {
     font-size: 26px;
     letter-spacing: -1px;
     font-weight: normal;
-    padding-bottom: 0px;
-    margin-bottom: 0;
 }
 
 h4 {
@@ -42,8 +40,6 @@ h4 {
     font-size: 20px;
     letter-spacing: -1px;
     font-weight: normal;
-    padding-bottom: 0px;
-    margin-bottom: 0;
 }
 
 h5 {
@@ -73,6 +69,7 @@ a {
 
 a:hover {
     color: #666;
+    text-decoration: none;
 }
 
 p, blockquote, li {
@@ -109,13 +106,6 @@ tt {
     height: 90px;
 }
 
-#header_block {
-    height: 9px;
-    background-color: #d1d1d1;
-    background-image: url('/static/img/top-border.png');
-    background-repeat: repeat-x;
-}
-
 /*
  * Main Body
  */
@@ -143,6 +133,11 @@ tt {
     font-weight: bold;
     text-transform: uppercase;
 
+}
+
+#logo {
+    float: right;
+    padding-bottom: 10px;
 }
 
 /*
@@ -220,7 +215,7 @@ tt {
 }
 
 .help-text {
-    font-size: .8em;
+    font-size: .9em;
     color: #666;
     margin: 1em 10px;
 }
