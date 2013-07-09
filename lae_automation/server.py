@@ -221,7 +221,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     print >>stdout, "Finished server installation."
 
 
-def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, reference_tag, 
+def install_infrastructure_server(publichost, admin_privkey_path, source_git_directory, commit_hash, 
                                   stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
@@ -270,7 +270,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
                         '--git-dir=%s' % (source_git_directory,), 
                         'push',
                         'ubuntu@%s:/home/ubuntu/.recovery' % (publichost,),
-                        reference_tag]
+                        commit_hash]
     subprocess.check_call(remote_push_list, cwd=source_git_directory)
     api.env.host_string = '%s@%s' % ('ubuntu', publichost)
     create_account('website', None, stdout, stderr)    
@@ -280,7 +280,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('chmod 700 /home/website/.ssh/')
     with cd('/home/website'):
         sudo('/usr/bin/git init')
-        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % reference_tag)
+        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % commit_hash)
         sudo('/usr/bin/git checkout FETCH_HEAD')
         sudo('/usr/bin/git checkout -b master')
 
