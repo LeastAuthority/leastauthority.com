@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Products</h2>
+<div class="services row">
+    <div class="span3">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
+        <h4>Ponderosa</h4>
+        <h5>Remote Backup Service</h5>
+        Just $50/month for up to 350 GB
+        <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
+    </div>
+    <div class="span3">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
+        <h4>Alturas</h4>
+        <h5>Application Storage Platform</h5>
+        Just $15/month plus $0.30/GB/month
+        <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
+    </div>
+    <div class="span3">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
+        <h4>Magic Folder</h4>
+        <h5>Casual Cloud Storage</h5>
+        TBA
+        <div class="btn btn-danger btn-large btn-block disabled signup-button"><a class="disabled">Coming soon</a></div>
+    </div>
+</div>
+{% endblock %}
+

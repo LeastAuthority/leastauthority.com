@@ -1,52 +1,91 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h3>Least Authority: Simple, <em>secure</em> storage services.</h3>
 
-<h5>If you need an off-site backup solution or scalable storage for your application, Least Authority may be for you!</h5><br/>
+<div class="top-blurb">
+    <img src="http://placekitten.com/300/220" class="img-rounded" align="left">
+    <h2>Simple, <em>secure</em> storage services</h2>
+    <h4>Need an off-site backup solution?</h4> 
+    <h4>Need scalable storage for your application?</h4> 
+    <h4>Ponderosa or Alturas may be for you!</h4>
+    <br>
+    <div style="float: right;">
+    <a href="/products/" class="btn btn-caution btn-large">Learn more</a>
+    <a href="https://leastauthority.com/signup/alpha" class="btn btn-danger btn-large">Sign up!</a>
+    </div>
+</div>
+<br/>
+<div class="clearer"></div>
 
 <div class="features">
-<h3>Features</h3>
+<h2>Features</h2>
 <div class="row">
-    <div class="span3"><h4>Seriously confidential</h4>
-        <p>Neither the network, the cloud, nor Least Authority can ever read your data.</p></div>
-    <div class="span3"><h4>Robustly architected</h4>
-        <p>If one server or cloud provider goes down, your data is still safe and available.</p></div>
-    <div class="span3"><h4>Military-grade crypto</h4>
-        <p>something about how the crypto is super great</p>
+    <div class="span3">
+        <img src="" class="img-rounded">
+        <img src="http://placekitten.com/310/200" class="img-rounded">
+        <h3>Seriously confidential</h3>
+        <p>Your data is encrypted before it reaches the cloud, so neither the network, the cloud, nor Least Authority can ever read your data.</p></div>
+    <div class="span3">
+        <img src="http://placekitten.com/310/210" class="img-rounded">
+        <h3>Robustly architected</h3>
+        <p>Provider-independent security means if one server or cloud provider goes down, your data is still safe and available.</p></div>
+    <div class="span3">
+        <img src="http://placekitten.com/350/200" class="img-rounded">
+        <h3>Open source!</h3>
+        <p>Both the client-side and server-side software are based on the <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS</a> free software project.</p>
     </div>
 </div>
-<br/>
 <div class="row">
-    <div class="span3"><h4>Versioning</h4>
-        <p>Access previous revisions of your files easily.</p>
+    <div class="span3">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
+        <h3>Built-in versioning</h3>
+        <p>Built-in access to previous revisions of your files.</p>
     </div>
-    <div class="span3"><h4>Scales seamlessly</h4>
+    <div class="span3">
+        <img src="http://placekitten.com/300/210" class="img-rounded">
+        <h3>Scales seamlessly</h3>
         <p>All the benefits of the cloud, none of the worries.</p>
     </div>
-    <div class="span3"><h4>Open source!</h4>
-        <p>Built with <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS</a>, a seven-year-old free software project.</p></div>
-</div>
-<br/>
+    <div class="span3">
+        <img src="http://placekitten.com/350/220" class="img-rounded">
+        <h3>Easy to use</h3>
+        <p>If you are familiar with the command line and can write a cron job, you will find Ponderosa and Alturas a snap.</p>
+    </div>
 </div>
 
-<h3>Services</h3>
+<div class="row">
+    <div class="span9">
+        <a href="">Read more about how Least Authority File System (LAFS) architecture ensures your data's privacy and integrity.</a>
+    </div>
+</div>
+</div>
+<br>
+
+<h2>Services</h2>
 <div class="services row">
-    <div class="span4">
-        <h5>Secure Backup Service</h5>
+    <div class="span3">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
+        <h4>Ponderosa</h4>
+        <h5>Remote Backup Service</h5>
         Just $50/month for up to 350 GB
         <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
     </div>
-    <div class="span4">
+    <div class="span3">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
+        <h4>Alturas</h4>
         <h5>Application Storage Platform</h5>
         Just $15/month plus $0.30/GB/month
         <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
     </div>
-    <!--<div class="span3">
+    <div class="span3">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
         <h4>Magic Folder</h4>
+        <h5>Casual Cloud Storage</h5>
         TBA
-    </div>-->
+        <div class="btn btn-danger btn-large btn-block disabled signup-button"><a class="disabled">Coming soon</a></div>
+    </div>
 </div>
+<br>
 
 <p class="help-text">Discounts are available for full-time students, educational institutions, libraries, non-profits, and open source projects.</p>
 {% endblock %}
