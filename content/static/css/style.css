@@ -4,8 +4,48 @@
         url('/static/fonts/Prociono-Regular-webfont.eot'); /* IE9 */
 }
 
+@font-face {
+  font-family: 'Merriweather Sans';
+  src: local("Merriweather Sans"),
+  url('/static/fonts/MerriweatherSans-Light.otf'),
+  url('/static/fonts/merriweathersans-light-webfont.ttf'),
+  url('/static/fonts/merriweathersans-light-webfont.woff')
+  url('/static/fonts/merriweathersans-light-webfont.eot');
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: 'Merriweather Sans';
+  src: local("Merriweather Sans"),
+  url('/static/fonts/MerriweatherSans-Regular.otf'),
+  url('/static/fonts/merriweathersans-regular-webfont.ttf'),
+  url('/static/fonts/merriweathersans-regular-webfont.woff'),
+  url('/static/fonts/merriweathersans-regular-webfont.eot');
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Merriweather Sans';
+  src: local("Merriweather Sans"),
+  url('/static/fonts/MerriweatherSans-Bold.otf'),
+  url('/static/fonts/merriweathersans-bold-webfont.ttf'),
+  url('/static/fonts/merriweathersans-bold-webfont.woff'),
+  url('/static/fonts/merriweathersans-bold-webfont.eot');
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: 'Merriweather Sans';
+  src: local("Merriweather Sans"),
+  url('/static/fonts/MerriweatherSans-ExtraBold.otf'),
+  url('/static/fonts/merriweathersans-extrabold-webfont.ttf'),
+  url('/static/fonts/merriweathersans-extrabold-webfont.woff'),
+  url('/static/fonts/merriweathersans-extrabold-webfont.eot');
+  font-weight: 800;
+}
+
 body {
-    font-family: Arial, 'Helvetica Neue', HelveticaNeue, Helvetica, Arial, sans-serif;
+    font-family: Arial, 'Helvetica Neue', HelveticaNeue, Helvetica, sans-serif;
     font-size: 12pt;
     line-height: 1.8em;
     background-image: url('/static/img/back-tile.png');
@@ -27,7 +67,7 @@ h2 {
 h3, h4, h5{
     font-size: 1.5em;
     font-weight: 400;
-    font-family: 'Merriweather Sans', Helvetica, sans-serif;
+    font-family: 'Merriweather Sans', 'Helvetica Neue', HelveticaNeue, Helvetica, sans-serif;
     line-height: 1.5em;
 }
 
@@ -100,8 +140,30 @@ tt {
 /*
  * Sidebar
  */
+
+#sidebar-wrapper {
+    padding-right: 10px;
+}
+
+#logo {
+    float: right;
+    padding-bottom: 20px;
+}
+
+#side_bar hr {
+    height: 1px;
+    border-top: 1pt solid #999;
+    border-bottom: none;
+    margin: 0;
+    padding: 0;
+}
+
+#side_bar img {
+    width: 100%;
+}
+
 #main_nav {
-    margin-top: 20px;
+    margin-top: 15px;
 }
 
 #main_nav ul {
@@ -119,12 +181,6 @@ tt {
     text-transform: uppercase;
 
 }
-
-#logo {
-    float: right;
-    padding-bottom: 10px;
-}
-
 /*
  * Footer
  */
