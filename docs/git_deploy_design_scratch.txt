@@ -1,0 +1,110 @@
+git push hub live_commit:live_commit
+"""
+
+
+OBJECTIVE:
+    - be able to deploy production or testing infrastructure servers using the same process
+
+CURRENT STATUS:
+    - deploy_infrastructure_EC2 function takes path to "website" repository, aka "disaster recovery", and the commit identifier to use from it
+    - website repo:
+
+    - contains checkouts-sans-.git-directory (what is that  called? snapshot?) of two repos: leastauthority.com and secret_config
+
+    - also contains "keys" (including RapidSSL-signed cert), "secrets" (customer secrets), and possibly other necessary things which aren't in git anywhere else
+
+    - also contains sitelogs, bash_history, etc
+
+    - commits are made automatically by a cronjob
+
+    - secret_config has a "testing" branch with test credentials
+
+
+IMMEDIATE PROBLEM:
+    - website repo contains secret_config and customer secrets, both of which we do not want to deploy to testing
+
+PLAN:
+    - stop deploying using "disaster recovery" repo
+    - deploy from leastauthority.com and secret_config repos
+    - new data source (repository or something else?) for customer secrets
+
+      - do something like this: http://danbarber.me/using-git-for-deployment/
+
+http://joemaller.com/990/a-web-focused-git-workflow/
+
+Three things that need to be configured regardless of which repos we pull from, and whether the server is for testing or production:
+
+(1)  Setup and configuration the flappserver:
+    XXX flappserver create /home/website/leastauthority.com/flapp
+    XXX flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py |tail -1 > /home/website/secret_config/signup.furl
+    
+
+    
+(2) Configuration of nginx to not collide with the webserver (nginx is low-priority (in the test server), it's only necessary to completely test multservercheck.sh)
+    XXX /etc/nginx/sites-enabled/default
+
+    sudo_apt_get('install -y nginx')
+    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
+    sudo('rm /etc/nginx/sites-enabled/default')
+    sudo('service nginx restart')
+    sudo_apt_get('install -y authbind')
+    sudo_apt_get('install -y python-jinja2')
+    sudo_apt_get('install -y python-nevow')    
+
+
+(3) Configure authbind, so's we can access the necessary ports:
+    XXX /etc/authbind/byports/*
+    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
+    api.
+    sudo('touch /etc/authbind/byports/{443,80}')
+    sudo('chown website:root /etc/authbind/byports/{443,80}')
+    sudo('chmod 744 /etc/authbind/byports/{443,80}')
+
+
+Dependencies We Could Eliminate:
+    darcs
+    nginx <-- Talk about this!
+
+GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE= """#!/bin/bash
+git push hub live_commit:live_commit"""
+
+def run_git( command ):
+    run( '/usr/bin/git %s' % (command,))
+
+GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
+cd %s || exit
+git pull hub master
+exec git update-server-info
+"""
+def setup_git_deploy( hostname, live_path, local_repo_path, src_ref ):
+    if live_path.endswith('/') or not live_path.startswith('/'):
+        raise Exception("live_path must be absolute and not end with /")
+    hub_path = "%s.git" % (live_path,)
+    run_git('init --bare %s' % (hub_path,))
+    run_git('init %s' % (live_path,))
+    run_git('--git-dir %s/.git remote add hub %s', (live_path, hub_path))
+    update_hook_path = '%s/hooks/post-update' % (hub_path,)
+    write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
+
+     run('chmox +x %s' % (update_hook_path,))
+
+    print >>stdout, "live_path is %s" % (live_path,)
+    local_git_push = ['/usr/bin/git', 
+                        '--git-dir=%s' % (local_repo_path,), 
+                        'push',
+                        'ubuntu@%s:%s' % (hostname, hub_path),
+                        '%s:master' % (src_ref,)]
+    subprocess.check_call(local_git_push, cwd=local_repo_path)    
+
+[def deploy_infra]
+    create_account('website', None, stdout, stderr)    
+    sudo('chown --recursive website:website /home/website')
+    sudo('chown website:website /home/website/.ssh/authorized_keys')
+    sudo('chmod 400 /home/website/.ssh/authorized_keys')
+    sudo('chmod 700 /home/website/.ssh/')
+    with cd('/home/website'):
+        sudo('/usr/bin/git init')
+        sudo('/usr/bin/git fetch /home/ubuntu/.recovery %s' % reference_tag)
+        sudo('/usr/bin/git checkout FETCH_HEAD')
+        sudo('/usr/bin/git checkout -b master')
+
