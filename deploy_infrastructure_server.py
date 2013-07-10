@@ -5,7 +5,7 @@
 (3) launches the webserver specified in that code.
 
 Configuration Options:
-  To select a particular version of the Least Authority code base, one can specify a git tag by assigning to the variable "COMMIT_TAG".  
+  To select a particular version of the Least Authority code base, one can specify a reference".  
 
   AWS credentials, ami parameters (e.g. size and ami id) and metadata to associate with the instance 
 (e.g. instance name) are parsed from the lae_automation_config.json configuration file.
@@ -13,7 +13,7 @@ Configuration Options:
 the Least Authority code.
 
 """
-import sys, os 
+import sys, os, argparse 
 from lae_automation.config import Config
 from twisted.python.filepath import FilePath
 from lae_automation.initialize import deploy_infrastructure_EC2 
@@ -54,11 +54,10 @@ def eb(x):
     print >> sys.stderr, x
 
 
-d = deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, ami_image_id, instancesize,
-                              'infrastructure', admin_keypair_name, 'infrastructure', 
-                              admin_privkey_path, source_git_directory, COMMIT_TAG, sys.stdout, 
-                              sys.stderr)
-    
+d= deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size,
+                              bucket_name, keypair_name, instance_name, admin_privkey_path, 
+                              website_pubkey, leastauth_repo, la_commit_hash, secretconf_repo,
+                              sc_commit_hash, stdout, stderr, clock=None):
 
 d.addCallbacks(printer, eb)
 #d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
