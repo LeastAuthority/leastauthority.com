@@ -121,7 +121,7 @@ class TestServerModule(TestCase):
             ('whoami', False, {}),
             ('whoami', False, {}),
             ('rm -rf /home/customer/LAFS_source', False, {}),
-            ('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source', False, {}),
+            ('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend2 LAFS_source', False, {}),
             ('python ./setup.py build', False, {}),
             ('mkdir -p introducer storageserver', False, {}),
             ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
@@ -204,7 +204,7 @@ class TestServerModule(TestCase):
             self.failUnlessEqual(self.RUNARGS_FIFO.pop(), (argstring, pty, kwargs))
             if argstring == 'whoami':
                 return self.WHOAMI_FIFO.pop()
-            if argstring == 'cat /home/customer/introducer/introducer.furl':
+            if argstring == 'cat /home/customer/introducer/private/introducer.furl':
                 return INTERNALINTROFURL
         self.patch(api, 'run', call_api_run)
         MHOSTNAME = '0.0.0.0'
@@ -231,9 +231,9 @@ class TestServerModule(TestCase):
                                       'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
         self.WHOAMI_FIFO = []
         self.RUNARGS_FIFO = fifo([
-                ('rm -f /home/customer/introducer/introducer.furl', False, {}),
+                ('rm -f /home/customer/introducer/private/introducer.furl /home/customer/introducer/introducer.furl', False, {}),
                 ('LAFS_source/bin/tahoe restart introducer && sleep 5', False, {}),
-                ('cat /home/customer/introducer/introducer.furl', False, {}),
+                ('cat /home/customer/introducer/private/introducer.furl', False, {}),
                 ('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.', False, {}),
                 ('LAFS_source/bin/tahoe restart storageserver && sleep 5', False, {}),
                 ('ps -fC tahoe', False, {}),

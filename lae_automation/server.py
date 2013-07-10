@@ -65,6 +65,9 @@ INSTALL_STATMOVER_VERSION = "2013-04-20T02_25_53+0000"
 INSTALL_STATMOVER_PACKAGE = "statmover-%s.tar.gz" % (INSTALL_STATMOVER_VERSION,)
 INSTALL_SMCLIENT_VERSION  = "3.2012.07.03.18.15.19-5e73c911653e"
 
+INSTALL_TAHOE_LAFS_URL = "https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend2"
+
+
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
 # pty=False will cause fabric to echo stdin, but that's fine.
@@ -157,7 +160,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
 
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
-    run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
+    run('darcs get --lazy %s LAFS_source' % (INSTALL_TAHOE_LAFS_URL,))
 
     print >>stdout, "Building Tahoe-LAFS..."
     with cd('/home/customer/LAFS_source'):
@@ -311,11 +314,11 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     print >>stdout, "Starting introducer..."
-    run('rm -f /home/customer/introducer/introducer.furl')
+    run('rm -f /home/customer/introducer/private/introducer.furl /home/customer/introducer/introducer.furl')
     write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
     write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
     run('LAFS_source/bin/tahoe restart introducer && sleep 5')
-    internal_introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
+    internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
 
     config = Config(configpath)
