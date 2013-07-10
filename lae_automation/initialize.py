@@ -92,7 +92,8 @@ def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id
 
 def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size,
                               bucket_name, keypair_name, instance_name, admin_privkey_path, 
-                              git_repository, commit_tag, stdout, stderr, clock=None):
+                              website_pubkey, leastauth_repo, la_commit_hash, secretconf_repo,
+                              sc_commit_hash, stdout, stderr, clock=None):
     myclock = clock or reactor
     d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id,
                         instance_size, bucket_name, keypair_name, instance_name,
@@ -115,8 +116,9 @@ def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_im
                                  stdout, stderr, instance.instance_id)
 
             def _pubkey_verified(ignore):
-                install_infrastructure_server(address, admin_privkey_path, git_repository, 
-                                              commit_tag, stdout, stderr)
+                install_infrastructure_server(address, admin_privkey_path, website_pubkey, 
+                                              leastauth_repo, la_commit_hash, secretconf_repo, 
+                                              sc_commit_hash, stdout, stderr)
                 
 
             d2.addCallback(_pubkey_verified)
