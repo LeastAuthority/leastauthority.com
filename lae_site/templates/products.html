@@ -1,29 +1,42 @@
-{% extends 'base.html' %}
+{% extends '_base.html' %}
 
 {% block content %}
 <h2>Products</h2>
-<div class="services row">
-    <div class="span3">
+<div class="services row-fluid">
+    <div class="span6">
         <img src="http://placekitten.com/300/200" class="img-rounded">
-        <h4>Ponderosa</h4>
-        <h5>Remote Backup Service</h5>
+        <h4>Least-Authority Backup</h4>
+        <h5>Remote backup service</h5>
         Just $50/month for up to 350 GB
         <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
     </div>
-    <div class="span3">
+    <div class="span6">
         <img src="http://placekitten.com/300/200" class="img-rounded">
-        <h4>Alturas</h4>
-        <h5>Application Storage Platform</h5>
+        <h4>S4</h4>
+        <h5>Simple Secure Storage Service for applications</h5>
         Just $15/month plus $0.30/GB/month
         <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
     </div>
-    <div class="span3">
+</div>
+<br>
+<div class="services row-fluid">
+    <div class="span6">
+        <img src="http://placekitten.com/300/200" class="img-rounded">
+        <h4>RAIC</h4>
+        <h5>Redundant Array of Independent Clouds</h5>
+        TBA
+        <div class="btn btn-danger btn-large btn-block disabled signup-button"><a class="disabled">Coming soon</a></div>
+    </div>
+    <div class="span6">
         <img src="http://placekitten.com/300/200" class="img-rounded">
         <h4>Magic Folder</h4>
-        <h5>Casual Cloud Storage</h5>
+        <h5>Casual cloud storage</h5>
         TBA
         <div class="btn btn-danger btn-large btn-block disabled signup-button"><a class="disabled">Coming soon</a></div>
     </div>
 </div>
+<br>
+
+<p class="help-text">Discounts are available for full-time students, educational institutions, libraries, non-profits, and open source projects.</p>
 {% endblock %}
 
