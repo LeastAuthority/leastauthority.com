@@ -79,11 +79,11 @@ h2, h3, h4, h5 {
 
 a {
     text-decoration: none;
-    color: #ff0000;
+    color: #ec3b05;
 }
 
 a:hover {
-    color: #666;
+    color: rgb(189, 54, 47);
     text-decoration: none;
 }
 
@@ -152,6 +152,7 @@ tt {
 
 #main_nav {
     margin-top: 15px;
+    color: #999;
 }
 
 #main_nav ul {
@@ -171,7 +172,9 @@ tt {
 
 #main_nav li ul li{
     font-size: .7em;
+    line-height: 1.2em;
     font-weight: 300;
+    padding-bottom: 4px;
 }
 /*
  * Footer
@@ -222,38 +225,6 @@ tt {
     font-weight: 700;
     color: white;
  }
-
-.big-signup-button a {
-    display: inline-block;
-    font-size: 1.6em;
-    padding: 25px;
-    border-left: 4pt solid #f67777;
-    border-top: 4pt solid #f67777;
-    border-right: 4pt solid #cc0000;
-    border-bottom: 4pt solid #cc0000;
-    border-radius: 20px;
-    background: #f25050;
-    color: #300000;
-    margin: 0 10px 0 10px;
-}
-
-.big-signup-button a:hover {
-    border-left: 4pt solid #ff6666;
-    border-top: 4pt solid #ff6666;
-    border-right: 4pt solid #bf000c;
-    border-bottom: 4pt solid #bf000c;
-    background: #f92f2f;
-    color: #000;
-}
-
-.big-signup-button a:active {
-    border-left: 4pt solid #aa0000;
-    border-top: 4pt solid #aa0000;;
-    border-right: 4pt solid #ef3f3f;
-    border-bottom: 4pt solid #ef3f3f;
-    background: #ff0000;
-    color: #eee;
-}
 
 .help-text {
     font-size: .9em;
