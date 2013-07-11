@@ -34,9 +34,9 @@ def render_all(template_path=None, output_path=None, static_path=None):
         for f in files:
             # check that it's a template file
             if f[-5:] == '.html' and f[:1] != '_':
-                full_path = root + '/' + f
+                full_path = os.path.join(root,f)
                 # path relative to template_path
-                relative_path = full_path[len(template_path) + 1:]
+                relative_path = full_path[len(template_path):]
                 print "Rendering " + relative_path
                 # render the template
                 template = env.get_template(relative_path)
