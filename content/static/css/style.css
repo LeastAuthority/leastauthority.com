@@ -85,6 +85,7 @@ a {
 a:hover {
     color: rgb(189, 54, 47);
     text-decoration: none;
+    border-bottom: 1pt dotted rgb(189, 54, 47);
 }
 
 p, blockquote, li {
@@ -128,9 +129,12 @@ tt {
 /*
  * Sidebar
  */
+#side_bar a:hover {
+    border: none;
+}
 
-#sidebar-wrapper {
-    padding-right: 10px;
+#side_bar img {
+    width: 100%;
 }
 
 #logo {
@@ -138,21 +142,16 @@ tt {
     padding-bottom: 20px;
 }
 
-#side_bar hr {
-    height: 1px;
-    border-top: 1pt solid #999;
-    border-bottom: none;
-    margin: 0;
-    padding: 0;
-}
-
-#side_bar img {
-    width: 100%;
+#sidebar-wrapper {
+    padding-right: 10px;
 }
 
 #main_nav {
-    margin-top: 15px;
+    padding: 8px 8px 8px 0;
     color: #999;
+    background: #eee;
+    border-top: 1pt solid #999;
+    margin-bottom: 10px;
 }
 
 #main_nav ul {

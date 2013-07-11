@@ -13,12 +13,12 @@
 <body>
     <div class="container">
         <div id="main_wrap" class="row">
-            <div id="side_bar" class="span2">
+            <div id="side_bar" class="span3">
                 <div id="sidebar-wrapper">
                     <a href="/">
                         <img src="/static/img/logo-rev.png" id="logo" alt="Least Authority Enterprises logo">
                     </a>
-                    <hr class="clearer"></hr>
+                    <div class="clearer"></div>
                     <div id="main_nav">
                         <ul>
                             <li><a href="/products/">Products</a>
@@ -29,8 +29,8 @@
                                     <li>Magic Folder</li>
                                 </ul>
                             </li>
+                            <li><a href="/how_it_works/">How It Works</a></li>
                             <li><a href="/faq/">FAQ</a></li>
-                            <li><a href="/documentation/">Help & Docs</a></li>
                             <li><a href="/support/">Support</a></li>
                             <li><a href="/signup/">Sign Up</a></li>
                             <li><a href="/about_us/">About Us</a></li>
@@ -38,7 +38,7 @@
                     </div>
                 </div>
             </div>
-            <div id="main_content" class="span10">
+            <div id="main_content" class="span9">
                 {% block content %}{% endblock %}
             </div>
         </div>
