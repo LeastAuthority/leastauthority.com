@@ -8,8 +8,7 @@ import os, sys, base64, simplejson, subprocess
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
-import fabric
-from fabric import api
+from fabric import api, contrib
 from fabric.context_managers import cd
 from fabric.contrib import files
 
@@ -241,7 +240,7 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     hub_path = "%s.git" % (live_path,)
     run_git('init --bare %s' % (hub_path,))
     run_git('init %s' % (live_path,))
-    if fabric.contrib.files.exists( '%s/.git/refs/remotes/hub' % (live_path,) ):
+    if contrib.files.exists( '%s/.git/refs/remotes/hub' % (live_path,) ):
         run_git('--git-dir %s/.git remote rm hub %s' % (live_path, hub_path))
     run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
     update_hook_path = '%s/hooks/post-update' % (hub_path,)
@@ -313,7 +312,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
 
     with cd('/home/website/leastauthority.com'):
         #FIXME: make idempotent
-        if not fabric.contrib.files.exists('/home/website/leastauthority.com/flapp'):
+        if not contrib.files.exists('/home/website/leastauthority.com/flapp'):
             run('flappserver create /home/website/leastauthority.com/flapp')
             run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
