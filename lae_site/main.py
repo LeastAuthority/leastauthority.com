@@ -50,8 +50,8 @@ def main(basefp):
     logging.info('Listening on port %d...' % (port,))
     if ssl_enabled:
         logging.info('SSL/TLS is enabled (start with --nossl to disable).')
-        KEYFILE = '../keys/server.key'
-        CERTFILE = '../keys/server.crt'
+        KEYFILE = '../secret_config/rapidssl/server.key'
+        CERTFILE = '../secret_config/rapidssl/server.crt'
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
