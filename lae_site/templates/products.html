@@ -2,41 +2,108 @@
 
 {% block content %}
 <h2>Products</h2>
-<div class="services row-fluid">
-    <div class="span6">
-        <img src="http://placekitten.com/300/200" class="img-rounded">
-        <h4>Least-Authority Backup</h4>
-        <h5>Remote backup service</h5>
-        Just $50/month for up to 350 GB
-        <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
-    </div>
-    <div class="span6">
-        <img src="http://placekitten.com/300/200" class="img-rounded">
-        <h4>S4</h4>
-        <h5>Simple Secure Storage Service for applications</h5>
-        Just $15/month plus $0.30/GB/month
-        <div class="btn btn-danger btn-large btn-block signup-button"><a href="/signup/">Sign up now!</a></div>
-    </div>
-</div>
-<br>
-<div class="services row-fluid">
-    <div class="span6">
-        <img src="http://placekitten.com/300/200" class="img-rounded">
-        <h4>RAIC</h4>
-        <h5>Redundant Array of Independent Clouds</h5>
-        TBA
-        <div class="btn btn-danger btn-large btn-block disabled signup-button"><a class="disabled">Coming soon</a></div>
-    </div>
-    <div class="span6">
-        <img src="http://placekitten.com/300/200" class="img-rounded">
-        <h4>Magic Folder</h4>
-        <h5>Casual cloud storage</h5>
-        TBA
-        <div class="btn btn-danger btn-large btn-block disabled signup-button"><a class="disabled">Coming soon</a></div>
-    </div>
-</div>
+
+<h3>Product comparison</h3>
+<table id="product-comparison">
+    <thead>
+        <tr>
+        <th></th>
+            <th><h4>Least-Authority Backup</h4></th>
+            <th><h4>S4</h4></th>
+            <th><h4>Redundant Array of Independent Clouds</h4></th>
+            <th><h4>Magic Folder</h4></th>
+        </tr>
+        <tr class="subhead">
+        <th>Description:</th>
+            <th><h5>Secure cloud backup service</h5></th>
+            <th><h5>Application cloud storage</h5></th>
+            <th><h5>Multi-cloud add-on</h5></th>
+            <th><h5>Casual file sync</h5></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+        <th>Availability:</th>
+            <td><a href="/signup/"><strong>Sign up now!</strong></a></td>
+            <td><a href="/signup/"><strong>Sign up now!</strong></a></td>
+            <td><a href="/signup/">Coming soon</a></td>
+            <td><a href="/signup/">Coming soon</a></td>
+        </tr>
+        <tr>
+        <th>Price:</th>
+            <td>$50/month<br>
+                for 350 GB</td>
+            <td>$15/month<br>
+                plus $0.30/GB/month</td>
+            <td>TBA</td>
+            <td>TBA</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>End-to-end security:</th>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Back up your files:</th>
+            <td>&#10003;</td>
+            <td>&nbsp;</td>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Use cloud storage in your app:</th>
+            <td>&nbsp;</td>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Automatic syncing ("Like Dropbox™"):</th>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&#10003;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Amazon S3 backend</th>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+            <td>&#10003;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Microsoft Azure backend</th>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&#10003;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Rackspace backend</th>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&#10003;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Google backend</th>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&#10003;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr class="checkboxes">
+        <th>Hewlett-Packard backend</th>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&#10003;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </tbody>
+</table>
 <br>
 
-<p class="help-text">Discounts are available for full-time students, educational institutions, libraries, non-profits, and open source projects.</p>
+<p class="help-text">* Discounts are available for full-time students, educational institutions, libraries, non-profits, and open source projects.</p>
 {% endblock %}
-
