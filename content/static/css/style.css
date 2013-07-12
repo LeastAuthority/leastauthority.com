@@ -304,4 +304,9 @@ tt {
 
 .btn {
     border-radius: 15px;
+    background: #fdfdfd;
+}
+
+.btn-danger {
+    background: #ec3b05;
 }
