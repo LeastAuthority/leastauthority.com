@@ -325,3 +325,25 @@ tt {
 .btn-danger {
     background: #ec3b05;
 }
+
+.quickfacts {
+    font-size: 1.2em;
+}
+
+.glowquotes {
+    font-style: italic;
+    font-size: 1.3em;
+}
+
+.quote {
+    margin-top: 10px;
+    font-size: 5em;
+}
+
+.leftquote {
+    text-align: right;
+}
+
+.rightquote {
+    margin-top: 1em;
+}
