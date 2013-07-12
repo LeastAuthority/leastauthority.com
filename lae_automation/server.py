@@ -8,6 +8,7 @@ import os, sys, base64, simplejson, subprocess
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
+import fabric
 from fabric import api
 from fabric.context_managers import cd
 
@@ -241,9 +242,8 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     hub_path = "%s.git" % (live_path,)
     run_git('init --bare %s' % (hub_path,))
     run_git('init %s' % (live_path,))
-    with api.settings(warn_only=True):
+    if fabric.contrib.files.exists( '%s/.git/refs/remotes/hub' % (live_path,) ):
         run_git('--git-dir %s/.git remote rm hub %s' % (live_path, hub_path))
-
     run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
     update_hook_path = '%s/hooks/post-update' % (hub_path,)
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
