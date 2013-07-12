@@ -7,49 +7,65 @@
 {% block about %}
 <p>Need off-site backups but want to avoid exposing your data to hackers, wiretaps, or various governmental entities? Least-Authority Backup is a <strong>simple off-site backup system</strong> for <strong>security-conscious individuals and businesses</strong>.</p>
 <a href="https://leastauthority.com/signup/" class="btn btn-danger btn-large">Sign up!</a>
-    <h3>Just <strong>$50/month</strong> for up to 350 GB.</h3>
+    <h4>Just <strong>$50/month</strong> for up to 350 GB.</h4>
     <p class="help-text">If you go over 350 GB, no worries--we'll work something out.<br>Discounts are available for full-time students, educational institutions, libraries, non-profits, and open source projects.</p>
 {% endblock %}
 
 {% block features %}
+
 <h3>Features</h3>
 <div class="row-fluid">
+    <div class="span2">
+        <img src="/static/img/secure.png">
+    </div>
     <div class="span4">
-        <img src="" class="img-rounded">
-        <img src="http://placekitten.com/100/100" class="img-rounded">
         <h4>Seriously confidential</h4>
         <p>Your data is encrypted before it reaches the cloud, so neither the network, the cloud, nor Least Authority can ever read your data.</p></div>
+    <div class="span2">
+        <img src="/static/img/robustness.png">
+    </div>
     <div class="span4">
-        <img src="http://placekitten.com/310/210" class="img-rounded">
         <h4>Robustly architected</h4>
         <p>Provider-independent security means if one server or cloud provider goes down, your data is still safe and available.</p></div>
+</div>
+<br>
+<div class="row-fluid">
+    <div class="span2">
+        <img src="/static/img/opensource.png">
+    </div>
     <div class="span4">
-        <img src="http://placekitten.com/350/200" class="img-rounded">
         <h4>Open source!</h4>
         <p>Both the client-side and server-side software are based on the <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS</a> free software project.</p>
     </div>
-</div>
-<div class="row-fluid">
+    <div class="span2">
+        <img src="/static/img/scaling.png">
+    </div>
     <div class="span4">
-        <img src="http://placekitten.com/300/210" class="img-rounded">
         <h4>Scales seamlessly</h4>
         <p>Currently built on top of <a href="https://aws.amazon.com/s3/">Amazon S3</a>; the <a href="/products/">upcoming RAIC add-on</a> will support <a href="http://www.windowsazure.com">Microsoft Azure</a>, <a href="http://www.rackspace.com/cloud/">Rackspace</a>, <a href="https://cloud.google.com/">Google</a>, and <a href="https://www.hpcloud.com/">Hewlett-Packard</a> as well.</p>
     </div>
+</div>
+<br>
+<div class="row-fluid">
+    <div class="span2">
+        <img src="/static/img/versions.png">
+    </div>
     <div class="span4">
-        <img src="http://placekitten.com/300/200" class="img-rounded">
         <h4>Built-in versioning</h4>
         <p>Easy access to previous revisions of your data.</p>
     </div>
+    <div class="span2">
+        <img src="/static/img/heart.png">
+    </div>
     <div class="span4">
-        <img src="http://placekitten.com/350/220" class="img-rounded">
         <h4>Easy to use</h4>
         <p>If you are familiar with the command line and can write a cron job, Least-Authority Backup will be a snap.</p>
     </div>
 </div>
-
+<br>
 <div class="row-fluid">
     <div class="span12">
-        <a href="/how_it_works/"><strong>Read more about how Least Authority File System (LAFS) architecture ensures your data's privacy and integrity.</strong></a>
+        <strong><a href="/how_it_works/">Read more</a> about how Least Authority File System (LAFS) architecture ensures your data's privacy and integrity.</strong>
     </div>
 </div>
 {% endblock %}
