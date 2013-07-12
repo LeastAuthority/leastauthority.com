@@ -235,12 +235,16 @@ git push hub
 """
 
 def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
+    "FIXME: make this idempotent (?)"
     if live_path.endswith('/') or not live_path.startswith('/'):
         raise Exception("live_path must be absolute and not end with /")
     hub_path = "%s.git" % (live_path,)
     run_git('init --bare %s' % (hub_path,))
     run_git('init %s' % (live_path,))
-    run_git('--git-dir %s/.git remote add hub %s', (live_path, hub_path))
+    with api.settings(warn_only=True):
+        run_git('--git-dir %s/.git remote rm hub %s' % (live_path, hub_path))
+
+    run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
     update_hook_path = '%s/hooks/post-update' % (hub_path,)
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
     run('chmod +x %s' % (update_hook_path,))
@@ -248,18 +252,22 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     write(GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE, live_commit_hook_path)
     run('chmod +x %s' % (live_commit_hook_path,))
 
-    print >>stdout, "live_path is %s" % (live_path,)
+    print "live_path is %s" % (live_path,)
     local_git_push = ['/usr/bin/git', 
                         '--git-dir=%s' % (local_repo_path,), 
                         'push',
-                        'ubuntu@%s:%s' % (hostname, hub_path),
+                        'website@%s:%s' % (hostname, hub_path),
                         '%s:master' % (src_ref,)]
-    subprocess.check_call(local_git_push, cwd=local_repo_path)    
+    subprocess.check_call(local_git_push)    
 
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo, 
                                   la_commit_hash, secretconf_repo, sc_commit_hash, stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
+    This is intended to be idempotent.
+
+    Known sources of non-idempotence:
+        - setup_git_deploy
     """
     api.env.host_string = '%s@%s' % ('ubuntu', publichost)
     api.env.reject_unknown_hosts = True
@@ -275,41 +283,40 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Rebooting server..."
     api.reboot(300)
     print >>stdout, "Installing dependencies..."
-    sudo_apt_get('install -y python-dev')
-    sudo_apt_get('install -y python-setuptools')
-    sudo_apt_get('install -y git-core')
-    sudo_apt_get('install -y python-jinja2')
-    sudo_apt_get('install -y python-nevow')    
-    sudo_apt_get('install -y python-dateutil')    
-    sudo_apt_get('install -y fabric')    
+    sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 '
+                            'python-nevow python-dateutil fabric')
     sudo_easy_install('foolscap')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
     sudo_apt_get('install -y postfix')
     sudo_apt_get('install -y darcs')
 
-    sudo_apt_get('install -y nginx')
-    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
-    sudo('rm /etc/nginx/sites-enabled/default')
-    sudo('service nginx restart')
-    
-    sudo_apt_get('install -y authbind')
-    sudo('touch /etc/authbind/byports/{443,80}')
-    sudo('chown website:root /etc/authbind/byports/{443,80}')
-    sudo('chmod 744 /etc/authbind/byports/{443,80}')
+#    sudo_apt_get('install -y nginx')
+#    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
+#    sudo('rm /etc/nginx/sites-enabled/default')
+#    sudo('service nginx restart')
     
     create_account('website', website_pubkey, stdout, stderr)
+
+    sudo_apt_get('install -y authbind')
+    sudo('touch /etc/authbind/byport/{443,80}')
+    sudo('chown website:root /etc/authbind/byport/{443,80}')
+    sudo('chmod 744 /etc/authbind/byport/{443,80}')
+    
+    run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
+    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
+    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
+        sudo('python ./setup.py install')
+
     set_host_and_key(publichost, admin_privkey_path, 'website')
     setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
     setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
 
-    run('wget %s' % (INSTALL_TXAWS_URL,))
-    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
-    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
-        sudo('python ./setup.py install')
     with cd('/home/website/leastauthority.com'):
-        run('flappserver create /home/website/leastauthority.com/flapp')
-        run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 > /home/website/secret_config/signup.furl')
+        #FIXME: make idempotent
+        if not fabric.contrib.files.exists('/home/website/leastauthority.com/flapp'):
+            run('flappserver create /home/website/leastauthority.com/flapp')
+            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
 INTRODUCER_PORT = '12345'
