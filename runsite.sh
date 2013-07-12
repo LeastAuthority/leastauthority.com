@@ -1,5 +1,5 @@
 #!/bin/sh
-cd /home/webmaster/website/leastauthority.com
+cd /home/website/leastauthority.com
 flappserver restart `pwd`/flapp
 sleep 2
 cmd="python -u `pwd`/lae_site/main.py"
