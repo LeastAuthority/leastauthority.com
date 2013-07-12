@@ -250,7 +250,7 @@ tt {
     font-size: 1.2em;
 }
 
-.about p {
+.about p:not(.help-text) {
     font-weight: 300;
     font-size: 1.2em;
 }
@@ -266,4 +266,42 @@ tt {
 
 .features img {
     height: 100px;
+}
+
+#product-comparison {
+    border-collapse: separate;
+    border-spacing: 2px 6px;
+    *border-collapse: expression('separate', cellSpacing = '10px');
+    font-size: .9em;
+}
+
+#product-comparison tbody th, #product-comparison thead {
+    text-align: left;
+}
+
+#product-comparison thead th {
+    vertical-align: top;
+    padding: 0;
+}
+
+#product-comparison thead th, #product-comparison tbody td {
+    width: 200px;
+}
+
+#product-comparison tbody th {
+    width: 100px;
+}
+
+#product-comparison tbody td {
+    background: #eee;
+    padding: 0 4px;
+    text-align: center;
+}
+
+#product-comparison .checkboxes td {
+    font-size: 1.8em;
+}
+
+.btn {
+    border-radius: 15px;
 }
