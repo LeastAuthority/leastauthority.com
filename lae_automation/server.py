@@ -67,8 +67,8 @@ server {
     listen 8443 default ssl;                                                                                        
     server_name leastauthority.com;                                                                                 
     ssl on;                                                                                                         
-    ssl_certificate /home/website/keys/server.crt;                                                                  
-    ssl_certificate_key /home/website/keys/server.key;                                                              
+    ssl_certificate /home/website/secret_config/rapidssl/server.crt;                                                                  
+    ssl_certificate_key /home/website/secret_config/rapidssl/server.key;                                                              
                                                                                                                     
     ssl_session_cache    shared:SSL:10m;                                                                            
     ssl_session_timeout 10000m;                                                                                     
