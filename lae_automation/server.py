@@ -222,7 +222,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     print >>stdout, "Finished server installation."
 
 def run_git(command):
-    run('/usr/bin/git %s' % (command,))
+    return run('/usr/bin/git %s' % (command,))
 
 GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
 cd %s || exit
@@ -242,7 +242,8 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     hub_path = "%s.git" % (live_path,)
     run_git('init --bare %s' % (hub_path,))
     run_git('init %s' % (live_path,))
-    if files.exists( '%s/.git/refs/remotes/hub' % (live_path,) ):
+    if 'hub' in run_git( '--git-dir %s/.git remote' % (live_path,) ):
+        print "removing existing remote"
         run_git('--git-dir %s/.git remote rm hub' % (live_path,))
     run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
     update_hook_path = '%s/hooks/post-update' % (hub_path,)
