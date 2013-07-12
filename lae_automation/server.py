@@ -243,7 +243,7 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     run_git('init --bare %s' % (hub_path,))
     run_git('init %s' % (live_path,))
     if files.exists( '%s/.git/refs/remotes/hub' % (live_path,) ):
-        run_git('--git-dir %s/.git remote rm hub %s' % (live_path, hub_path))
+        run_git('--git-dir %s/.git remote rm hub' % (live_path,))
     run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
     update_hook_path = '%s/hooks/post-update' % (hub_path,)
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
