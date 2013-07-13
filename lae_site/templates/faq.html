@@ -9,8 +9,8 @@
     <li><a href="#cost">How much do the services cost?</a></li>
     <li><a href="#size-limits">Are there limits on how much data I can store?</a></li>
     <li><a href="#delete-files">Can I delete old files to save space?</a></li>
-    <li><a href="#what-is-tahoe">What is Tahoe-LAFS?</a></li>
-    <li><a href="#tahoe-vs-lae">What is the relationship between Least Authority Enterprises and the Tahoe-LAFS open source project?</a></li>
+    <li><a href="#what-is-lafs">What is LAFS?</a></li>
+    <li><a href="#lafs-vs-lae">What is the relationship between Least Authority Enterprises and the LAFS open source project?</a></li>
     <li><a href="#start">How do I start?</a></li>
 </ul>
 
@@ -18,7 +18,7 @@
 <p>It is good for securely backing up your data off-site. The <em>&quot;tahoe
 backup&quot;</em> command inspects your local filesystem for files that have
 changed since the last time you ran it. It uploads each file that
-has changed and it creates a directory in Tahoe-LAFS to hold the
+has changed and it creates a directory in LAFS to hold the
 current &quot;snapshot&quot;—the current version of each of the files. You can
 browse or access old versions just by browsing the old snapshot
 directories.</p>
@@ -49,7 +49,7 @@ libraries, non-profits, and open source projects.</p>
 <p>There are no architectural limits on the total data you can store, but there is currently a
 limit on the size of an individual file. Files larger than about 100 MB might
 fail to upload. All upload failures, including failures caused by this, are
-shown in your Tahoe-LAFS client software, so you'll know if this happens to
+shown in your LAFS client software, so you'll know if this happens to
 you.</p>
 <p>We are working on lifting this limitation and will keep you informed about
 our progress.</p>
@@ -61,25 +61,25 @@ the space in your S3 bucket, so you still get charged for it.</p>
 <p>We are working on fixing this issue and will keep you informed about our
 progress.</p>
 
-<h4><a name="what-is-tahoe"></a>What is Tahoe-LAFS?</h4>
+<h4><a name="what-is-lafs"></a>What is LAFS?</h4>
 
-<p>Tahoe-LAFS is a Free Software, Open Source cloud storage system. "LAFS" stands for Least Authority File System. Tahoe-LAFS encrypts and cryptographically integrity-checks your files for end-to-end,
+<p>LAFS is a Free Software, Open Source cloud storage system. "LAFS" stands for Least Authority File System. LAFS encrypts and cryptographically integrity-checks your files for end-to-end,
 <em>provider-independent security</em>. That means that the confidentiality
 and integrity of your files cannot be violated by anyone—not even
 employees of the storage service provider. For more information see
-<a class="reference external" href="https://tahoe-lafs.org">Tahoe-LAFS.org</a>.</p>
-<p>The Tahoe-LAFS project comes with complete source code, including
+<a class="reference external" href="https://tahoe-lafs.org">the LAFS website</a>.</p>
+<p>The LAFS project comes with complete source code, including
 client and server. If you use <em>Least-Authority Backup</em> or <em>S4</em> then
-you need to run only the Tahoe-LAFS client software—we provide the
+you need to run only the LAFS client software—we provide the
 cloud. However, Least Authority's services are completely open
 and transparent so that you always have the option to migrate your
-data to another service provider or to your own private Tahoe-LAFS
+data to another service provider or to your own private LAFS
 cloud.</p>
 
-<h4><a name="tahoe-vs-lae"></a>What is the relationship between Least Authority Enterprises and the Tahoe-LAFS open source project?</h4>
+<h4><a name="lafs-vs-lae"></a>What is the relationship between Least Authority Enterprises and the LAFS open source project?</h4>
 <p>
 Zooko Wilcox-O'Hearn, founder and CEO of Least Authority Enterprises, was one
-of the inventors of Tahoe-LAFS. Least Authority Enterprises contributes all
+of the inventors of LAFS. Least Authority Enterprises contributes all
 of the code we write to the free/open source project. We believe that's the
 best thing for our customers.</p>
 
