@@ -283,8 +283,8 @@ postfix	postfix/main_mailer_type select	No configuration"""
     api.reboot(300)
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 '
-                            'python-nevow python-dateutil fabric')
-    sudo_easy_install('foolscap')
+                            'python-nevow python-dateutil fabric python-foolscap')
+    #sudo_easy_install('foolscap')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
     sudo_apt_get('install -y postfix')
