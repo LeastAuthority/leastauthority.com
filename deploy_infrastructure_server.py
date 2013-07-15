@@ -17,11 +17,13 @@ from lae_automation.signup import EC2_ENDPOINT
 from lae_automation.server import install_infrastructure_server
 from twisted.internet import defer
 
-parser = argparse.ArgumentParser(description="Deploy a new infrastructure server.\nYou must specify each necessary repository-and-reference (e.g. leastauthority.com-and-SHA1) as an ordered pair of path_to_repository, and reference to the specific commit you want deployed.")
+parser = argparse.ArgumentParser(description="Deploy a new infrastructure server. You must specify each necessary repository-and-reference (e.g. leastauthority.com-and-SHA1) as an ordered pair of path_to_repository, and reference to the specific commit you want deployed.")
 
-parser.add_argument("leastauthority_com_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit.\nFirst: the absolute path to the git repository which contains the leastauthority.com code to deploy.\nSecond: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
+parser.add_argument("instance_name", type=str, help="How this instance is referred to e.g. via AWS console.")
 
-parser.add_argument("secrets_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit.\nFirst: the absolute path to the git repository which contains the secret_config code to deploy.\nSecond: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
+parser.add_argument("leastauthority_com_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit. First: the absolute path to the git repository which contains the leastauthority.com code to deploy. Second: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
+
+parser.add_argument("secrets_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit. First: the absolute path to the git repository which contains the secret_config code to deploy. Second: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
 
 exc_group = parser.add_mutually_exclusive_group()
 exc_group.add_argument('--existing_host', type=str)
@@ -37,6 +39,7 @@ secret_conf_repo_path = args.secrets_version_ID[0]
 secrets_commit_ref = args.secrets_version_ID[1]
 existing_host = args.existing_host
 new_host = args.new_host
+instance_name = args.instance_name
 
 # XXX configpath is a function of the secret_config repo specified in the arguments!
 
@@ -63,8 +66,6 @@ print config.other['deployment']
 #Configuration which is specific to the test account
 
 COMMIT_TAG = '2013-06-20'
-
-instance_name = str(config.other['deployment'][COMMIT_TAG]['instance_name'])
 
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
