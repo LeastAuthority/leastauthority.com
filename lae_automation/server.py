@@ -260,7 +260,8 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     subprocess.check_call(local_git_push)    
 
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo, 
-                                  la_commit_hash, secretconf_repo, sc_commit_hash, stdout, stderr):
+                                  la_commit_hash, secretconf_repo, sc_commit_hash, 
+                                  stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
     This is intended to be idempotent.
