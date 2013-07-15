@@ -318,7 +318,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
         #FIXME: make idempotent
         if not files.exists('/home/website/leastauthority.com/flapp'):
             run('flappserver create /home/website/leastauthority.com/flapp')
-            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 > /home/website/secret_config/signup.furl')
+            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
 INTRODUCER_PORT = '12345'
