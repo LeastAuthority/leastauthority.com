@@ -220,7 +220,7 @@ tt {
     color: #666;
 }
 
-.profile_block p {
+.profile_block p, .product-briefs p {
     line-height: 1.5em;
 }
 /*
