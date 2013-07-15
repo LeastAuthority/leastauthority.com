@@ -310,6 +310,9 @@ postfix	postfix/main_mailer_type select	No configuration"""
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
 
+    # patch twisted to send intermediate certs, cf. https://github.com/LeastAuthority/leastauthority.com/issues/6
+    sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
+
     set_host_and_key(publichost, admin_privkey_path, 'website')
     setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
     setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
