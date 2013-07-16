@@ -1,5 +1,5 @@
 
-import logging, pprint, sys, traceback
+import logging, pprint, sys, traceback, re
 from urllib import quote
 from cgi import escape as htmlEscape
 
@@ -9,11 +9,16 @@ from twisted.web.server import NOT_DONE_YET
 from lae_util.flapp import FlappCommand
 from lae_util.servers import append_record
 
+from lae_site.handlers.web import env
 
+
+EMAILS_FILE              = 'emails.csv'
 DEVPAY_COMPLETIONS_FILE  = 'devpay_completions.csv'
 ACTIVATION_REQUESTS_FILE = 'activation_requests.csv'
 SIGNUPS_FILE             = 'signups.csv'
 SIGNUP_FURL_FILE         = 'signup.furl'
+
+VALID_EMAIL_RE = re.compile(".*@.*")
 
 
 def html(title, body):
@@ -237,6 +242,13 @@ def get_full_name(productcode, products):
     return matches[0]
 
 
+def get_full_name_from_short_name(short_name, products):
+    matches = [p['full_name'] for p in products if p['short_name'] == short_name]
+    if len(matches) != 1:
+        return "Unknown"
+    return matches[0]
+
+
 class HandlerBase(Resource):
     def __init__(self, out=None, *a, **kw):
         Resource.__init__(self, *a, **kw)
@@ -279,6 +291,28 @@ class HandlerBase(Resource):
         # URL-encoding with the set of safe-characters below will work for all these cases.
         # Note that the safe set must include characters that are valid in email addresses.
         return quote(arg, safe=' !#$()*+-./:=?@^_`{|}~')
+
+
+class CollectEmailHandler(HandlerBase):
+    def __init__(self, basefp, products, out=None):
+        HandlerBase.__init__(self, out=out)
+        self.basefp = basefp
+        self.products = products
+
+    def render(self, request):
+        print >>self.out, "Yay, another potential customer:", request.args
+        email = self.get_arg(request, 'Email')
+        productname = self.get_arg(request, 'ProductName')
+        productfullname = get_full_name_from_short_name(productname, self.products)
+
+        append_record(self.basefp.child(EMAILS_FILE), email, productname)
+
+        request.setResponseCode(200)
+        if email and VALID_EMAIL_RE.match(email):
+            tmpl = env.get_template('valid_email.html')
+        else:
+            tmpl = env.get_template('invalid_email.html')
+        return tmpl.render(productname=productname, productfullname=productfullname).encode('utf-8')
 
 
 class DevPayPurchaseHandler(HandlerBase):
