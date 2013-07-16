@@ -85,7 +85,7 @@ h5 {
 
 a, a:visited, a.btn {
     text-decoration: none;
-    color: #ec3b05;
+    color: #ec291f;
 }
 
 a:hover:not(.btn), a:hover:not(img) {
@@ -96,7 +96,7 @@ a:hover:not(.btn), a:hover:not(img) {
 
 a:active {
     text-decoration: none;
-    color: #ec3b05;
+    color: #ec291f;
 }
 
 
@@ -239,7 +239,7 @@ tt {
 }
 
 .btn-danger {
-    background: #ec3b05;
+    background: #ec291f;
 }
 
 .form-inline .btn {
