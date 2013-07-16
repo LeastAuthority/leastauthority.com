@@ -2,12 +2,12 @@
 
 {% block content %}
 <h1>Simple, <em>secure</em> storage services.</h1>
-<div class="row-fluid product-briefs">
+<div class="row-fluid product-briefs top-area">
     <div class="span12">
-        <h3><a href="/product_backup">Least-Authority Backup</a></h3>
         <div class="row-fluid">
             <div class="span3 product-image-left"><a href="/product_backup"><img src="/static/img/backup.png"></a></div>
             <div class="span9">
+                <h3><a href="/products/least_authority_backup/">Least-Authority Backup</a></h3>
             <p>Least Authority Backup is an <strong>off-site backup system</strong> for security-conscious individuals and businesses.</p>
             <a href="/product_backup" class="btn btn-large">Learn more</a>
             <a href="/queries_backup" class="btn btn-danger btn-large signup-button">Sign up!</a>
@@ -17,24 +17,44 @@
 </div>
 <br>
 
-<h3>Serious about security</h3>
-<div class="row-fluid quickfacts">
-    <div class="span4">
-        Built using <a href="http://tahoe-lafs.org">LAFS</a>, a <strong>free and open source software project</strong> with over 40 contributors over seven years and funded by a <strong>DARPA research grant</strong>.
+<h3>Features</h3>
+<div class="row-fluid">
+    <div class="span2">
+        <img src="/static/img/secure.png">
+        <!--Icon based on Secure designed by Charlene Chen from The Noun Project, CC-BY -->
     </div>
     <div class="span4">
-        The underlying <a href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/about.rst">Least Authority File System (LAFS) architecture</a> is the 
-        first decentralized storage system
-         with <strong>truly end-to-end, provider-independent security</strong>.
+        <h4>Seriously confidential</h4>
+        <p>Your data is encrypted before it reaches the cloud, so neither the network, the cloud, nor Least Authority can ever read your data.</p></div>
+    <div class="span2">
+        <img src="/static/img/robustness.png">
+        <!--Icon based on Servers designed by Jaime Carrion from The Noun Project, CC-BY -->
     </div>
     <div class="span4">
-        Recommended by the US <strong><a href="http://www.whitehouse.gov/cybersecurity/comprehensive-national-cybersecurity-initiative">Comprehensive National Cybersecurity Initiative (CNCI)</a></strong> in its 2009 <a href="http://www.qinetiq-na.com/Collateral/Documents/English-US/InTheNews_docs/National_Cyber_Leap_Year_Summit_2009_Co-Chairs_Report.pdf">Report on National Cyber Leap Year Summit [PDF]</a>.
+        <h4>Robustly architected</h4>
+        <p>Provider-independent security means if one server or cloud provider goes down, your data is still safe and available.</p></div>
+</div>
+<br>
+<div class="row-fluid">
+    <div class="span2">
+        <img src="/static/img/opensource.png">
+    </div>
+    <div class="span4">
+        <h4>Open source!</h4>
+        <p>Both the client-side and server-side software are based on the <a class="reference external" href="http://tahoe-lafs.org">LAFS</a> free and open source software project.</p>
+    </div>
+    <div class="span2">
+        <img src="/static/img/heart.png">
+    </div>
+    <div class="span4">
+        <h4>Easy to use</h4>
+        <p>If you are familiar with the command line and can write a cron job, Least-Authority Backup will be a snap.</p>
     </div>
 </div>
 <br>
 <div class="row-fluid">
     <div class="span12">
-        <a href="/how_it_works" style="float: right;">Read more about how our products work and what makes them so secure &raquo;</a>
+        <a href="/how_it_works" style="float: right;">Read more about how our products work &raquo;</a>
     </div>
 </div>
 <br>
@@ -53,7 +73,7 @@
 </div>
 </br>
 
-<h2>Other products</h2>
+<h3>Other products</h3>
 <div class="row-fluid product-briefs">
     <div class="span4">
         <h3><a href="/product_s4">S4</a></h3>
@@ -71,16 +91,16 @@
         <div class="row-fluid">
             <div class="span3 product-image-left"><img src="/static/img/raic.png" class="img-rounded"></div>
             <div class="span9">
-            <p>Redundant Array of Independent Clouds (RAIC) will be a <strong>multi-cloud add-on</strong> to our Least-Authority Backup and S4 products.</p>
+            <p>Redundant Array of Independent Clouds (RAIC) will be a <strong>multi-cloud add-on</strong> to our other products.</p>
             </div>
         </div>
         <a href="/queries_raic" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
     </div>
     <div class="span4">
-        <h3><a href="/queries_magicfolder">Magic Folder -- Casual file syncing</a></h3>
+        <h3><a href="/queries_magicfolder">Magic Folder</a></h3>
         <div class="row-fluid">
             <div class="span3 product-image-left"><img src="/static/img/magicfolder.png" align="left" class="img-rounded"></div>
-            <div class="span9"><p>Magic Folder will be a "Dropbox-esque", consumer-friendly <strong>file-syncing</strong> utility.</p></div>
+            <div class="span9"><p>Magic Folder will be a "Dropbox-esque", friendly <strong>file-syncing</strong> utility.</p></div>
         </div>
         <a href="/queries_magicfolder" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
     </div>
