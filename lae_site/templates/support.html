@@ -1,24 +1,26 @@
-{% extends 'base.html' %}
+{% extends '_base.html' %}
 
 {% block content %}
-<h3>Product Support</h3>
-<p>The quickest way to receive product support is via IRC.  The project developers
+<h2>Support</h2>
+<p>If this is your first time using LAFS, you will want to read <a href="/howtoconfigure/">our beginning configuration documentation</a>.</p>
+
+<p>General Least-Authority Backup and S4 questions and answers can be found on the <a href="/faq/">Frequently Asked Questions</a> page.</p>
+
+<p>If you have further questions about setting up your client or other issues, the quickest way to receive product support is via IRC.  The project developers
 can be found on <a target="_blank" href="http://freenode.net">irc.freenode.net</a>
-in the channel #leastauthority.
-There, you can find support for product setup, sign up, and technical inquiries.
+in the channel #leastauthority. There, you can find help for product setup, sign up, and technical inquiries.
 </p>
 
 <p>For general product support questions, product inquiries, billing, or general questions,
-please send a message to <a href="mailto:info@leastauthority.com">info@leastauthority.com</a>
-with the subject "Product Support" and you will be contacted as soon as possible.
+please send a message to <a href="mailto:info@leastauthority.com">info@leastauthority.com</a> with the subject "Product Support" and you will be contacted as soon as possible.
 </p>
 
 <h3>Transparency</h3>
 <p>The Python source code for this website, our automation and monitoring scripts,
-and our fork of <a href="https://tahoe-lafs.org">Tahoe-LAFS</a> to support Amazon S3
+and our fork of <a href="https://tahoe-lafs.org">LAFS</a> to support Amazon S3
 are all open-sourced under the
 <a href="https://leastauthority.com/static/source/ticket999-S3-backend/README.txt">same
-licenses as Tahoe-LAFS itself</a>. The S3 backend depends on a fork of the
+licenses as LAFS itself</a>. The S3 backend depends on a fork of the
 <a href="https://launchpad.net/txaws">txaws</a> library that is open-sourced under
 the MIT / X / Expat License.
 </p>
@@ -30,7 +32,6 @@ and then use:</p>
   darcs get --lazy https://leastauthority.com/static/source/leastauthority.com
   darcs get --lazy https://leastauthority.com/static/source/monitors
 </pre>
-<p>The patches to txaws are at
-&lt;<a href="https://leastauthority.com/static/patches">https://leastauthority.com/static/patches</a>&gt;.
+<p>The patches to txaws are at <a href="https://leastauthority.com/static/patches">https://leastauthority.com/static/patches</a>.
 </p>
 {% endblock %}

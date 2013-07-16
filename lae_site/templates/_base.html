@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Least Authority</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/static/css/bootstrap-responsive.min.css" rel="stylesheet" media="screen">
+    <link rel="stylesheet" type="text/css" title="Default style" href="/static/css/style.css">
+    <link href="/static/img/icon.png" rel="shortcut icon">
+    <link rel="canonical" href="http://leastauthority.com/">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="description" content="Least Authority Enterprises">
+</head>
+<!-- Piwik -->
+<script type="text/javascript"> 
+  var _paq = _paq || [];
+  _paq.push(['trackPageView']);
+  _paq.push(['enableLinkTracking']);
+  (function() {
+    var u="https://analytics.leastauthority.com/piwik/";
+    _paq.push(['setTrackerUrl', u+'piwik.php']);
+    _paq.push(['setSiteId', 1]);
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0]; g.type='text/javascript';
+    g.defer=true; g.async=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+  })();
+
+</script>
+<noscript><p><img src="http://analytics.leastauthority.com/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p></noscript>
+<!-- End Piwik Code -->
+<body>
+    <div class="container">
+        <div id="main_wrap" class="row">
+            <div id="side_bar" class="span3">
+                <div id="sidebar-wrapper">
+                    <a href="/">
+                        <img src="/static/img/logo-rev.png" id="logo" alt="Least Authority Enterprises logo">
+                    </a>
+                    <div class="clearer"></div>
+                    <div id="main_nav">
+                        <ul>
+                            <li><a href="/products/">Products</a>
+                                <ul>
+                                    <li><a href="/products/least_authority_backup/">Least-Authority Backup</a></li>
+                                    <li><a href="/products/s4/">S4</a></li>
+                                    <li>RAIC</li>
+                                    <li>Magic Folder</li>
+                                </ul>
+                            </li>
+                            <li><a href="/how_it_works/">How It Works</a></li>
+                            <li><a href="/faq/">FAQ</a></li>
+                            <li><a href="/support/">Support</a></li>
+                            <li><a href="/signup/">Sign Up</a></li>
+                            <li><a href="/about_us/">About Us</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div id="main_content" class="span9">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+    <div id="footer_wrap">
+        <div id="footer" class="container">
+            <div id="copy">
+                <span>&copy; 2011 Least Authority Enterprises</span>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

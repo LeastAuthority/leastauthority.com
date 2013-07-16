@@ -1,32 +1,79 @@
-{% extends 'base.html' %}
+{% extends '_base.html' %}
 
 {% block content %}
-<h3>Our First Product, Tahoe-LAFS-on-S3</h3>
-<p><em>Tahoe-LAFS-on-S3</em> is a reliable and scalable cloud storage back-end for use with the <a class="reference external" href="http://tahoe-lafs.org">Tahoe-LAFS.org</a> client software. Tahoe-LAFS is a Free Software, Open Source cloud storage system. It
-encrypts and cryptographically integrity-checks your files for
-<em>provider-independent security</em>. That means that the confidentiality
-and integrity of your files cannot be violated by anyone&#45;not even
-employees of the storage service provider.</p>
+<h1>Simple, <em>secure</em> storage services.</h1>
+<div class="row-fluid product-briefs">
+    <div class="span6">
+        <h3><a href="/products/least_authority_backup/">Least-Authority Backup</a></h3>
+        <div class="product-image-left"><a href="/products/least_authority_backup/"><img src="http://placekitten.com/200/200" align="left" class="img-rounded"></a></div>
+        <p>Least Authority Backup is an <strong>off-site backup system</strong> for security-conscious individuals and businesses. Encryption, integrity checks, and duplication make sure that your data is safe and confidential.</p>
+        <div class="clearer"></div>
+        <a href="/products/least_authority_backup/" class="btn btn-large">Learn more</a>
+        <a href="https://leastauthority.com/queries/backup/" class="btn btn-danger btn-large signup-button">Sign up!</a>
+    </div>
+    <div class="span6">
+        <h3><a href="/products/s4/">S4</a></h3>
+        <div class="product-image-left"><a href="/products/s4/"><img src="http://placekitten.com/200/200" align="left" class="img-rounded"></a></div>
+        <p>Simple Secure Storage Service (S4) is a <strong>secure cloud storage solution</strong> for application developers. It enables you to take advantage of the flexibility and scalability of cloud storage providers without enabling those companies or their partners to read your data.</p>
+        <div class="clearer"></div>
+        <a href="/products/s4/" class="btn btn-large">Learn more</a>
+        <a href="https://leastauthority.com/queries/s4/" class="btn btn-danger btn-large signup-button">Sign up!</a>
+    </div>
+</div>
+<br>
 
-<h4>What is it good for?</h4>
-<p>Securely backing up your data off-site. The <em>&quot;tahoe
-backup&quot;</em> command inspects your local filesystem for files that have
-changed since the last time you ran it. It uploads each file that
-has changed and it creates a directory in Tahoe-LAFS to hold the
-current version of each of the files. You can browse or access old
-versions just by browsing the old snapshot directories.</p>
+<h3>Serious about security</h3>
+<div class="row-fluid quickfacts">
+    <div class="span4">
+        Built using <a href="http://tahoe-lafs.org">LAFS</a>, a <strong>free and open source software project</strong> with over 40 contributors over seven years and funded by a <strong>DARPA research grant</strong>.
+    </div>
+    <div class="span4">
+        The underlying <a href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/about.rst">Least Authority File System (LAFS) architecture</a> is the 
+        first decentralized storage system
+         with <strong>truly end-to-end, provider-independent security</strong>.
+    </div>
+    <div class="span4">
+        Recommended by the US <strong><a href="http://www.whitehouse.gov/cybersecurity/comprehensive-national-cybersecurity-initiative">Comprehensive National Cybersecurity Initiative (CNCI)</a></strong> in its 2009 <a href="http://www.qinetiq-na.com/Collateral/Documents/English-US/InTheNews_docs/National_Cyber_Leap_Year_Summit_2009_Co-Chairs_Report.pdf">Report on National Cyber Leap Year Summit [PDF]</a>.
+    </div>
+</div>
+<br>
+<div class="row-fluid">
+    <div class="span12">
+        <a href="/how_it_works/" style="float: right;">Read more about how our products work and what makes them so secure &raquo;</a>
+    </div>
+</div>
+<br>
 
-<h4>Where is the data stored?</h4>
-<p>
-Your data, encrypted, is stored on Amazon's Simple Storage Service
-(<a class="reference external" href="http://en.wikipedia.org/wiki/Amazon_S3">S3</a>), which is a convenient, reliable, and widely understood
-platform for storage.</p>
+<h3>User reviews</h3>
+<div class="row-fluid">
+    <div class="span2">
+        <div class="quote leftquote">&#8220;</div>
+    </div>
+    <div class="span8 glowquotes">
+        Since 1997…I've tried lots of hardware/software RAID solutions, backup schemes, and so on, and LAFS is simply amazing.
+    </div>
+    <div class="span2">
+        <div class="quote rightquote">&#8221;</div>
+    </div>
+</div>
+</br>
 
-<h4>Tahoe-LAFS-on-S3 Pricing</h4>
-<p>$1.00/GB/month*</p>
-<p class="small_italic">*Discounts are available for full-time students, educational institutions,
-libraries, non-profits, and open source projects.</p>
-
-<h5><a href="/signup/">SIGN UP</a> for the Alpha Program</h5>
+<h2>Forthcoming products</h2>
+<div class="row-fluid product-briefs">
+    <div class="span6">
+        <h3><a href="/products/">Redundant Array of Independent Clouds (RAIC)</a></h3>
+        <div class="product-image-left"><img src="http://placekitten.com/200/200" align="left" class="img-rounded"></div>
+        <p>Blurb about the product.</p>
+        <div class="clearer"></div>
+        <a href="https://leastauthority.com/queries/raic/" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
+    </div>
+    <div class="span6">
+        <h3><a href="/products/">Magic Folder -- Casual file syncing</a></h3>
+        <div class="product-image-left"><img src="http://placekitten.com/200/200" align="left" class="img-rounded"></div>
+        <p>Blurb about the product.</p>
+        <div class="clearer"></div>
+        <a href="https://leastauthority.com/queries/magicfolder/" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
+    </div>
+</div>
 {% endblock %}
 
