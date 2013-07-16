@@ -258,6 +258,18 @@ tt {
     clear: both;
 }
 
+.top-area {
+    font-size: 1.2em;
+}
+
+.top-area p {
+    font-size: 1em;
+}
+
+/* * *
+Product page
+* * */
+
 .product-image img {
     margin: 0 0 10px 10px;
 }
@@ -333,10 +345,6 @@ tt {
 
 #product-comparison .checkboxes td {
     font-size: 1.8em;
-}
-
-.quickfacts {
-    font-size: 1em;
 }
 
 .glowquotes {
