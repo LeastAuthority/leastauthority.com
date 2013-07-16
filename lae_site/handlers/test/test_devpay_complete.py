@@ -64,8 +64,39 @@ class Handlers(TestCase):
     def setUp(self):
         self.patch(devpay_complete, 'FlappCommand', MockFlappCommand)
         self.basefp = FilePath('.')
+        remove_if_possible(self.basefp.child("emails.csv"))
         remove_if_possible(self.basefp.child("activation_requests.csv"))
         remove_if_possible(self.basefp.child("signups.csv"))
+
+
+    def test_collectemailhandler(self):
+        out = StringIO()
+        config = Config(StringIO(SITE_CONFIG_JSON))
+
+        d = devpay_complete.start(self.basefp)
+        d.addCallback(lambda ign:
+                      self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
+                                         "POST", Email=["fred@example.com"], ProductName=["product"]))
+
+        def _finished_valid( (req, output) ):
+            self.failUnlessEqual(req.responsecode, OK)
+            self.failUnlessIn('Thank you for your interest in Yummy cloud hotness for everyone!', output)
+            self.failUnlessIn('<a href="/signup/product">', output)
+            self.failUnlessIn("fred@example.com,product\n",
+                              FilePath("emails.csv").getContent())
+        d.addCallback(_finished_valid)
+
+        d.addCallback(lambda ign:
+                      self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
+                                         "POST", Email=["blah"], ProductName=["product"]))
+
+        def _finished_invalid( (req, output) ):
+            self.failUnlessEqual(req.responsecode, OK)
+            self.failUnlessIn('Thank you for your interest in Yummy cloud hotness for everyone, but', output)
+            self.failUnlessIn('<a href="/">', output)
+            self.failUnlessIn("blah,product\n",
+                              FilePath("emails.csv").getContent())
+        d.addCallback(_finished_invalid)
 
     def _test_devpaypurchasehandler(self, method):
         out = StringIO()
