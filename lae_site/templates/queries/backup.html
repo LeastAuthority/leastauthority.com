@@ -1,12 +1,7 @@
-{% extends '_base.html' %}
+{% extends 'queries/_queries_base.html' %}
 
-{% block content %}
-<h2>Sign up for Least-Authority Backup</h2>
+{% block product_name %}Least-Authority Backup{% endblock %}
 
+{% block copy %}
 <p>Due to high demand, we have implemented a queue for new Least-Authority Backup signups. Please enter your email address and we will contact you soon with instructions for how to subscribe and get started!</p>
-<form class="form-inline">
-<input type="text" placeholder="Email address">
-<button type="submit" class="btn">Submit</button>
-</form>
-{% endblock %}
-
+{% endblock copy %}
