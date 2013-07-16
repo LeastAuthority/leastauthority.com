@@ -5,8 +5,9 @@
 
 {% block copy %}
 {% endblock copy %}
-<form class="form-inline">
-<input type="text" placeholder="Email address">
-<button type="submit" class="btn">Submit</button>
+<form action="/collect-email" method="post" enctype="multipart/form-data" class="form-inline">
+    <input type="text" name="Email" placeholder="Email address">
+    <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
+    <button type="submit" class="btn">Submit</button>
 </form>
 {% endblock %}
