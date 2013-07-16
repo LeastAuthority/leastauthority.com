@@ -4,7 +4,7 @@ from twisted.web.static import File
 from twisted.web.util import redirectTo
 from twisted.web.resource import Resource
 
-from lae_site.handlers.devpay_complete import DevPayPurchaseHandler, ActivationRequestHandler
+from lae_site.handlers.devpay_complete import CollectEmailHandler, DevPayPurchaseHandler, ActivationRequestHandler
 from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
 
@@ -12,6 +12,7 @@ from lae_site.handlers.web import JinjaHandler
 def make_site(basefp, config):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
+    resource.putChild('collect-email', CollectEmailHandler(basefp, config.products))
     resource.putChild('signup', SignupHandler(config.products))
     resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
     resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
