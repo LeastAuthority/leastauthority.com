@@ -22,11 +22,11 @@ class Site(TestCase):
 
         (req, resp) = self._mock_request(site, '/', 'GET')
         req.setResponseCode.assert_called_with(OK)
-        self.failUnlessIn("<em>provider-independent security</em>", resp)
+        self.failUnlessIn("Simple, <em>secure</em> storage services", resp)
 
         (req, resp) = self._mock_request(site, '/support', 'GET')
         req.setResponseCode.assert_called_with(OK)
-        self.failUnlessIn("<h3>Product Support</h3>", resp)
+        self.failUnlessIn("<h2>Support</h2>", resp)
 
         (req, resp) = self._mock_request(site, '/noexist', 'GET')
         req.setResponseCode.assert_called_with(NOT_FOUND)
