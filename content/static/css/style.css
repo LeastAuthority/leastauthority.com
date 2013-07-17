@@ -350,8 +350,15 @@ Product page
 .glowquotes {
     font-style: italic;
     font-size: 1.3em;
+    height: 6em;
 }
-
+/*
+.glowquotes div {
+    transition: opacity .25s ease-in-out;
+   -moz-transition: opacity .25s ease-in-out;
+   -webkit-transition: opacity .25s ease-in-out;
+}
+*/
 .quote {
     margin-top: 10px;
     font-size: 5em;
@@ -362,5 +369,5 @@ Product page
 }
 
 .rightquote {
-    margin-top: 1em;
+    margin-top: .8em;
 }
