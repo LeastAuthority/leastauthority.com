@@ -1,5 +1,29 @@
 {% extends '_base.html' %}
 
+{% block scripts %}
+<script src="/static/js/jquery-1.10.2.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('.glowquotes div').hide();
+        QUOTECOUNT = $('.glowquotes div').length;
+        CURRENTQUOTE = 0;
+        $($('.glowquotes div')[CURRENTQUOTE]).show();
+
+        var glowSwitch = function(){;
+            var glowquotes = $('.glowquotes div');
+            $(glowquotes[CURRENTQUOTE]).hide(600);
+            CURRENTQUOTE++;
+            if (CURRENTQUOTE >= QUOTECOUNT) {
+                CURRENTQUOTE = 0;
+            }
+            $(glowquotes[CURRENTQUOTE]).show(400);
+        };
+
+        var quoteSwitcher = window.setInterval(glowSwitch, 5000);
+    });
+</script>
+{% endblock %}
+
 {% block content %}
 <h1>Simple, <em>secure</em> storage services.</h1>
 <div class="row-fluid product-briefs top-area">
@@ -66,7 +90,31 @@
         <div class="quote leftquote">&#8220;</div>
     </div>
     <div class="span8 glowquotes">
-        Since 1997…I've tried lots of hardware/software RAID solutions, backup schemes, and so on, and LAFS is simply amazing.
+        <div>
+            I was positively amazed about how easy it is to install and how well it works.
+            <br>— Johannes Nix
+        </div>
+        <div>
+            I've been very impressed with Tahoe-LAFS, both the underlying concepts and ideas and the implementation. It's fast, reliable, and has been making steady progress.
+            <br><em>— Mourad De Clerck</em>
+        </div>
+        <div>
+            “When it comes to support for open source, you guys are amazing. Many
+open source projects could aspire to be that good.”
+            <br>— Tony Arcieri
+        </div>
+        <div>
+            It's very well designed, a pleasure to see such a system.
+            <br>— Geoffroy Couprie
+        </div>
+        <div>
+            You develop an application the way it is meant to be developed.
+            <br>— Patrick McDonald
+        </div>
+        <div>
+            “LAFS is an amazing piece of work!”
+            <br>— Pål Ruud
+        </div>
     </div>
     <div class="span2">
         <div class="quote rightquote">&#8221;</div>
