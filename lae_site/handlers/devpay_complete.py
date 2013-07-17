@@ -18,7 +18,7 @@ ACTIVATION_REQUESTS_FILE = 'activation_requests.csv'
 SIGNUPS_FILE             = 'signups.csv'
 SIGNUP_FURL_FILE         = 'signup.furl'
 
-VALID_EMAIL_RE = re.compile(".*@.*")
+VALID_EMAIL_RE = re.compile("[^@]+@[^@]+")
 
 
 def html(title, body):
