@@ -32,6 +32,8 @@ def main(stdin, stdout, stderr, seed, secretsfile, logfilename):
         raise
 
 if __name__ == '__main__':
+    defer.setDebugging(True)
+
     basefp = FilePath('..')
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (format_iso_time(time.time()).replace(':', ''), seed)
