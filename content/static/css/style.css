@@ -119,6 +119,20 @@ tt {
     font-size: 13px;
 }
 
+.left {
+    float: left;
+    margin: 0 10px 10px 0;
+}
+
+.right {
+    float: right;
+    margin: 0 0 10px 10px;
+}
+
+.container {
+    max-width: 1000px;
+}
+
 /*
  * Style Classes
  */
@@ -127,68 +141,53 @@ tt {
     font-size: .8em;
     font-style: italic;
 }
+/*
+ * Nav
+ */
 
+.nav, #logo {
+    height: 50px;
+}
+ .nav {
+    width: 100%;
+    position: fixed;
+    top: 0;
+    right: 0px;
+    left: 0px;
+    z-index: 1030;
+    margin-bottom: 0px;
+    background: rgba(255,255,255,.85);
+    background: #eee;
+    padding: 5px 0;
+    text-transform: uppercase;
+    box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.1);
+  }
+
+.nav ul, .nav ul li {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    font-size: 1.1em;
+    font-weight: bold;
+    height: 100%;
+}
+
+.nav ul li a {
+    height: 100%;
+    padding: 0 15px;
+}
 /*
  * Main Body
  */
 
 #main_wrap {
-    margin-top: 20px;
+    margin-top: 70px;
 }
 
 #main_content {
     min-height: 550px;
 }
 
-/*
- * Sidebar
- */
-#side_bar a:hover {
-    border: none;
-}
-
-#side_bar img {
-    width: 100%;
-}
-
-#logo {
-    float: right;
-    padding-bottom: 20px;
-}
-
-#sidebar-wrapper {
-    padding-right: 10px;
-}
-
-#main_nav {
-    padding: 8px 8px 8px 0;
-    color: #999;
-    background: #eee;
-    border-top: 1pt solid #ccc;
-    margin-bottom: 10px;
-}
-
-#main_nav ul {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-}
-
-#main_nav ul li {
-    text-align: right;
-    line-height: 1.5em;
-    font-size: 1.3em;
-    font-weight: 700;
-    font-family: 'Merriweather Sans', 'Helvetica Neue', HelveticaNeue, Helvetica, sans-serif;
-    text-transform: uppercase;
-}
-
-#main_nav li ul li{
-    font-size: .7em;
-    line-height: 1.2em;
-    font-weight: 300;
-    padding-bottom: 4px;
-}
 /*
  * Footer
  */
