@@ -348,13 +348,14 @@ Product page
     font-size: 1.3em;
     height: 7.5em;
 }
-/*
-.glowquotes div {
-    transition: opacity .25s ease-in-out;
-   -moz-transition: opacity .25s ease-in-out;
-   -webkit-transition: opacity .25s ease-in-out;
+
+.glowquotes .credit {
+    float: right;
+    font-style: normal;
+    font-size: .9em;
+    margin-left: 3em;
 }
-*/
+
 .quote {
     margin-top: 10px;
     font-size: 5em;
