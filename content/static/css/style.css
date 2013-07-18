@@ -72,6 +72,12 @@ h2 strong {
     font-weight: 800;
 }
 
+h3.section-header {
+    line-height: 1em;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+}
+
 h4, h5 {
     font-size: 1.2em;
     font-weight: 300;
@@ -158,7 +164,7 @@ tt {
     padding: 8px 8px 8px 0;
     color: #999;
     background: #eee;
-    border-top: 1pt solid #999;
+    border-top: 1pt solid #ccc;
     margin-bottom: 10px;
 }
 
@@ -299,6 +305,15 @@ Product page
 .features img {
     max-height: 130px;
     margin: 0 auto;
+}
+
+.highlight {
+    background: rgba(255,255,255,.7);
+    padding: 10px;
+    margin-left: -10px;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
 }
 
 #product-comparison {
