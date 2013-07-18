@@ -58,7 +58,7 @@ h1, h2, h3, h4, h5 {
 
 h1, h2 {
     color: #000;
-    font-size: 1.8em;
+    font-size: 1.6em;
     font-weight: 700;
     letter-spacing: -1px;
 }
@@ -220,7 +220,7 @@ tt {
     color: #666;
 }
 
-.profile_block p, .product-briefs p {
+.profile_block p {
     line-height: 1.5em;
 }
 /*
@@ -243,7 +243,18 @@ tt {
 }
 
 .form-inline .btn {
-    margin-bottom: 0;
+    margin-bottom: -5px;
+}
+
+.big-signup-form input {
+    width: 20em;
+}
+
+.signup-form input {
+    margin-top: 10px;
+    margin-bottom: 5px;
+    font-size: 1.2em;
+    height: 1.6em;
 }
 
  /*  *  */
@@ -258,33 +269,18 @@ tt {
     clear: both;
 }
 
-.top-area {
-    font-size: 1.2em;
-}
-
-.top-area p {
-    font-size: 1em;
-}
-
 /* * *
 Product page
 * * */
 
-.product-image img {
-    margin: 0 0 10px 10px;
-}
-
-.product-image-left img {
-    margin: 0 10px 10px 0;
-}
-
-.about {
-    margin-bottom: 20px;
-}
-
-.about p:not(.help-text) {
+.top-area p:not(.help-text) {
     font-weight: 300;
     font-size: 1.2em;
+    line-height: 1.5em;
+}
+
+.price {
+    margin-top: 20px;
 }
 
 .features {

@@ -25,143 +25,125 @@
 {% endblock %}
 
 {% block content %}
-<h1>Simple, <em>secure</em> storage services.</h1>
-<div class="row-fluid product-briefs top-area">
-    <div class="span12">
-        <div class="row-fluid">
-            <div class="span3 product-image-left"><a href="/product_backup"><img src="/static/img/backup.png"></a></div>
-            <div class="span9">
-                <h3><a href="/products/least_authority_backup/">Least-Authority Backup</a></h3>
-                <p>Least Authority Backup is an <strong>off-site backup system</strong> for security-conscious individuals and businesses. <a href="/product_backup">Learn more &raquo;</a></p>
-                <p><a href="/queries_backup" class="btn btn-danger btn-large signup-button">Sign up!</a></p>
-            </div>
-        </div>
+
+{% block tagline %}
+    <h1>Simple, <em>secure</em> storage services.</h1>
+{% endblock %}
+
+<div class="row-fluid">
+    <div class="span2"><a href="/product_backup/"><img src="/static/img/backup.png"></a></div>
+    <div class="span10 top-area">
+        <h2><a href="/product_backup/">Least-Authority Backup</a></h2>
+        <p>Least Authority Backup is an <strong>secure off-site backup system</strong> for individuals and businesses. <a href="/product_backup/">Learn more &raquo;</a></p>
+        <h3>Just <strong>$50/month</strong> for up to 350 GB.</h3>
+        {% include '_signup_form.html' %}
+        {% block more_price %}{% endblock %}
     </div>
 </div>
 <br>
 
 <h3>Features</h3>
-<div class="row-fluid">
-    <div class="span2">
-        <img src="/static/img/secure.png">
-        <!--Icon based on Secure designed by Charlene Chen from The Noun Project, CC-BY -->
-    </div>
-    <div class="span4">
-        <h4>Seriously confidential</h4>
-        <p>Your data is encrypted before it reaches the cloud, so neither the network, the cloud, nor Least Authority can ever read your data.</p>
-    </div>
-    <div class="span2">
-        <img src="/static/img/robustness.png">
-        <!--Icon based on Servers designed by Jaime Carrion from The Noun Project, CC-BY -->
-    </div>
-    <div class="span4">
-        <h4>Robustly architected</h4>
-        <p>Provider-independent security means if one server or cloud provider goes down, your data is still safe and available.</p>
-    </div>
-</div>
-<br>
-<div class="row-fluid">
-    <div class="span2">
-        <img src="/static/img/opensource.png">
-    </div>
-    <div class="span4">
-        <h4>Open source!</h4>
-        <p>Both the client-side and server-side software are based on the <a class="reference external" href="http://tahoe-lafs.org">LAFS</a> free and open source software project.</p>
-    </div>
-    <div class="span2">
-        <img src="/static/img/heart.png">
-    </div>
-    <div class="span4">
-        <h4>Easy to use</h4>
-        <p>If you are familiar with the command line and can write a cron job, Least-Authority Backup will be a snap.</p>
-    </div>
-</div>
+{% include '_features.html' %}
 <br>
 <div class="row-fluid">
     <div class="span12">
-        <a href="/how_it_works" style="float: right;">Read more about how our products work &raquo;</a>
+        <a href="/how_it_works/" style="float: right;">Read more about how our products work &raquo;</a>
     </div>
 </div>
 <br>
 
-<h3>User reviews</h3>
-<br>
-<div class="row-fluid">
-    <div class="span2">
-        <div class="quote leftquote">&#8220;</div>
+{% block more_stuff %}
+    <h3>User reviews</h3>
+    <br>
+    <div class="row-fluid">
+        <div class="span2">
+            <div class="quote leftquote">&#8220;</div>
+        </div>
+        <div class="span8 glowquotes">
+            <div>
+                I was positively amazed about how easy it is to install and how well it works.
+                <br>— Johannes Nix
+            </div>
+            <div>
+                I've been very impressed with Tahoe-LAFS, both the underlying concepts and ideas and the implementation. It's fast, reliable, and has been making steady progress.
+                <br><em>— Mourad De Clerck</em>
+            </div>
+            <div>
+                <span>[W]e wish to highlight the Tahoe [LAFS] grid file system[...] Wider deployment of this type of file storage system would have an immediate impact on the quality of modern data protection.</span>
+                <br><em>— Comprehensive National Cybersecurity Initiative (CNCI), <a href="http://www.cyber.st.dhs.gov/docs/National_Cyber_Leap_Year_Summit_2009_Co-Chairs_Report.pdf">Report on National Cyber Leap Year Summit 2009</a></em>
+            </div>
+            <div>
+                When it comes to support for open source, you guys are amazing. Many open source projects could aspire to be that good.
+                <br>— Tony Arcieri
+            </div>
+            <div>
+                It's very well designed, a pleasure to see such a system.
+                <br>— Geoffroy Couprie
+            </div>
+            <div>
+                You develop an application the way it is meant to be developed.
+                <br>— Patrick McDonald
+            </div>
+            <div>
+                LAFS is an amazing piece of work!
+                <br>— Pål Ruud
+            </div>
+        </div>
+        <div class="span2">
+            <div class="quote rightquote">&#8221;</div>
+        </div>
     </div>
-    <div class="span8 glowquotes">
-        <div>
-            I was positively amazed about how easy it is to install and how well it works.
-            <br>— Johannes Nix
-        </div>
-        <div>
-            I've been very impressed with Tahoe-LAFS, both the underlying concepts and ideas and the implementation. It's fast, reliable, and has been making steady progress.
-            <br><em>— Mourad De Clerck</em>
-        </div>
-        <div>
-            <span>[W]e wish to highlight the Tahoe [LAFS] grid file system[...] Wider deployment of this type of file storage system would have an immediate impact on the quality of modern data protection.</span>
-            <br><em>— Comprehensive National Cybersecurity Initiative (CNCI), <a href="http://www.cyber.st.dhs.gov/docs/National_Cyber_Leap_Year_Summit_2009_Co-Chairs_Report.pdf">Report on National Cyber Leap Year Summit 2009</a></em>
-        </div>
-        <div>
-            When it comes to support for open source, you guys are amazing. Many open source projects could aspire to be that good.
-            <br>— Tony Arcieri
-        </div>
-        <div>
-            It's very well designed, a pleasure to see such a system.
-            <br>— Geoffroy Couprie
-        </div>
-        <div>
-            You develop an application the way it is meant to be developed.
-            <br>— Patrick McDonald
-        </div>
-        <div>
-            LAFS is an amazing piece of work!
-            <br>— Pål Ruud
-        </div>
-    </div>
-    <div class="span2">
-        <div class="quote rightquote">&#8221;</div>
-    </div>
-</div>
-</br>
+    </br>
 
-<h3>Other products</h3>
-<div class="row-fluid product-briefs">
-    <div class="span6">
-        <h3><a href="/queries_s4">S4</a> &mdash; Coming soon</h3>
-        <div class="row-fluid">
-            <div class="span3 product-image-left"><a href="/products/s4/"><img src="/static/img/s4.png" class="img-rounded"></a></div>
-            <div class="span9">
-                <p>Simple Secure Storage Service (S4) will be a <strong>secure cloud storage solution</strong> for application developers.
-                <a href="/product_s4">Learn more &raquo;</a></p>
+    <h3>Forthcoming products</h3>
+    <div class="row-fluid product-briefs">
+        <div class="span6">
+            <h3><a href="/queries_s4/">S4</a></h3>
+            <div class="row-fluid">
+                <div class="span3 product-image-left"><a href="/queries_s4/"><img src="/static/img/s4.png" class="img-rounded"></a></div>
+                <div class="span9">
+                    <p>Simple Secure Storage Service (S4) will be a <strong>secure cloud storage solution</strong> for application developers.</p>
+                </div>
             </div>
+            <form action="/collect-email" method="post" enctype="multipart/form-data" class="signup-form beta-signup-form form-inline">
+                <input type="text" name="Email" placeholder="Email address">
+                <input type="hidden" name="ProductName" value="s4">
+                <a type="submit" class="btn btn-danger btn-large signup-button">Sign up for alpha</a>
+            </form>
         </div>
-        <a href="/queries_s4" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
-    </div>
-    <div class="span6">
-        <h3><a href="/queries_raic">RAIC</a> &mdash; Coming soon</h3>
-        <div class="row-fluid">
-            <div class="span3 product-image-left"><img src="/static/img/raic.png" class="img-rounded"></div>
-            <div class="span9">
-            <p>Redundant Array of Independent Clouds (RAIC) will be a <strong>multi-cloud add-on</strong> to our other products.</p>
+        <div class="span6">
+            <h3><a href="/queries_raic/">RAIC</a></h3>
+            <div class="row-fluid">
+                <div class="span3 product-image-left"><a href="/queries_raic/"><img src="/static/img/raic.png" class="img-rounded"></a></div>
+                <div class="span9">
+                <p>Redundant Array of Independent Clouds (RAIC) will be a <strong>multi-cloud add-on</strong> to our other products.</p>
+                </div>
             </div>
+            <form action="/collect-email" method="post" enctype="multipart/form-data" class="signup-form beta-signup-form form-inline">
+                <input type="text" name="Email" placeholder="Email address">
+                <input type="hidden" name="ProductName" value="raic">
+                <a type="submit" class="btn btn-danger btn-large signup-button">Sign up for alpha</a>
+            </form>
         </div>
-        <a href="/queries_raic" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
     </div>
-</div>
-<br>
-<div class="row-fluid product-briefs">
-    <div class="span6">
-        <h3><a href="/queries_magicfolder">Magic Folder</a> &mdash; Coming soon</h3>
-        <div class="row-fluid">
-            <div class="span3 product-image-left"><img src="/static/img/magicfolder.png" align="left" class="img-rounded"></div>
-            <div class="span9"><p>Magic Folder will be a "Dropbox-esque", friendly <strong>file-syncing</strong> utility.</p></div>
+    <br>
+    <div class="row-fluid product-briefs">
+        <div class="span6">
+            <h3><a href="/queries_magicfolder/">Magic Folder</a></h3>
+            <div class="row-fluid">
+                <div class="span3 product-image-left"><a href="/queries_magicfolder/"><img src="/static/img/magicfolder.png" align="left" class="img-rounded"></a></div>
+                <div class="span9"><p>Magic Folder will be a "Dropbox-esque", friendly <strong>file-syncing</strong> utility.</p></div>
+            </div>
+            <form action="/collect-email" method="post" enctype="multipart/form-data" class="signup-form beta-signup-form form-inline">
+                <input type="text" name="Email" placeholder="Email address">
+                <input type="hidden" name="ProductName" value="magicfolder">
+                <a type="submit" class="btn btn-danger btn-large signup-button">Sign up for alpha</a>
+            </form>
         </div>
-        <p><a href="/queries_magicfolder" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a></p>
+        <div class="span6">
+        </div>
     </div>
-    <div class="span6">
-    </div>
-</div>
+{% endblock %}
+
 {% endblock %}
 
