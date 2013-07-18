@@ -3,11 +3,7 @@
 {% block content %}
 <h2>Sign up for {% block product_name %}{% endblock %}</h2>
 
-{% block copy %}
-{% endblock copy %}
-<form action="/collect-email" method="post" enctype="multipart/form-data" class="form-inline">
-    <input type="text" name="Email" placeholder="Email address">
-    <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
-    <button type="submit" class="btn">Submit</button>
-</form>
+    {% block copy %}
+    {% endblock copy %}
+    {% include '_signup_form.html' %}
 {% endblock %}
