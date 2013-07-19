@@ -1,59 +1,13 @@
 {% extends '_base.html' %}
 
 {% block content %}
+
 <h2>Products</h2>
 
-<div class="row-fluid">
-    <div class="span2">
-        <div class="product-image-left"><a href="/product_backup"><img src="/static/img/backup.png"></a></div>
-    </div>
-    <div class="span10">
-        <h3><a href="/product_backup">Least-Authority Backup</a></h3>
-        <p>Least Authority Backup is an <strong>off-site backup system</strong> for security-conscious individuals and businesses. Encryption, integrity checks, and duplication make sure that your data is safe and confidential.</p>
-        <div class="clearer"></div>
-        <a href="/product_backup" class="btn btn-large">Learn more</a>
-        <a href="/queries_backup" class="btn btn-danger btn-large signup-button">Sign up!</a>
-    </div>
+<div class="highlight">
+    {% include '_product_list.html' %}
 </div>
-<div class="row-fluid">
-    <div class="span2">
-        <div class="product-image-left"><a href="/product_s4"><img src="/static/img/s4.png" class="img-rounded"></a></div>
-    </div>
-    <div class="span10">
-        <h3><a href="/product_s4">S4</a></h3>
-        <p>Simple Secure Storage Service (S4) is a <strong>secure cloud storage solution</strong> for application developers. It enables you to take advantage of the flexibility and scalability of cloud storage providers without enabling those companies or their partners to read your data.</p>
-        <div class="clearer"></div>
-        <a href="/product_s4" class="btn btn-large">Learn more</a>
-        <a href="/queries_s4" class="btn btn-danger btn-large signup-button">Sign up!</a>
-    </div>
-</div>
-
-<div class="row-fluid">
-    <div class="span2">
-        <div class="product-image-left"><img src="/static/img/raic.png" class="img-rounded"></div>
-    </div>
-    <div class="span10">
-        <h3>Redundant Array of Independent Clouds</h3>
-        <h5>Coming soon!</h5>
-        <p>Blurb about the product.</p>
-        <div class="clearer"></div>
-        <a href="/queries_raic" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
-    </div>
-</div>
-
-<div class="row-fluid">
-    <div class="span2">
-        <div class="product-image-left"><img src="/static/img/magicfolder.png" class="img-rounded"></div>
-    </div>
-    <div class="span10">
-        <h3>Magic Folder</h3>
-        <h5>Coming soon!</h5>
-        <p>Blurb about the product.</p>
-        <div class="clearer"></div>
-        <a href="/queries_magicfolder" class="btn btn-danger btn-large signup-button">Sign up for alpha testing</a>
-    </div>
-</div>
-
+<br>
 <h3>Product comparison</h3>
 <table id="product-comparison">
     <thead>
@@ -83,7 +37,7 @@
         <tr>
         <th>Availability:</th>
             <td><a href="/queries_backup"><strong>Sign up now!</strong></a></td>
-            <td><a href="/queries_s4"><strong>Sign up now!</strong></a></td>
+            <td><a href="/queries_s4">Coming soon</a></td>
             <td><a href="/queries_raic">Coming soon</a></td>
             <td><a href="/queries_magicfolder">Coming soon</a></td>
         </tr>
@@ -91,8 +45,7 @@
         <th>Price:</th>
             <td>$50/month<br>
                 for 350 GB*</td>
-            <td>$15/month<br>
-                plus $0.30/GB/month*</td>
+            <td>TBA</td>
             <td>TBA</td>
             <td>TBA</td>
         </tr>
