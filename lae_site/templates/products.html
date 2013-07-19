@@ -2,13 +2,15 @@
 
 {% block product_slug %}backup{% endblock %}
 {% block content %}
-
+<section>
 <h2>Products</h2>
 
 <div class="highlight">
     {% include '_product_list.html' %}
 </div>
-<br>
+</section>
+
+<section>
 <h3>Product comparison</h3>
 <table id="product-comparison">
     <thead>
@@ -103,4 +105,5 @@
 </table>
 
 <p class="help-text">* Discounts are available for full-time students, educational institutions, libraries, non-profits, and free and open source projects.</p>
+</section>
 {% endblock %}
