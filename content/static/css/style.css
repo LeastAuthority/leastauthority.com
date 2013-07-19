@@ -69,10 +69,6 @@ h1 {
     font-weight: 400;
 }
 
-h2 {
-    margin-top: 10px;
-}
-
 h3.section-header {
     line-height: 1em;
     margin-bottom: 20px;
@@ -152,7 +148,7 @@ tt {
 
 .nav {
     width: 100%;
-    margin-bottom: 0px;
+    margin-bottom: 20px;
     padding: 5px 0 10px 0;
 }
 
