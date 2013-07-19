@@ -30,7 +30,7 @@
 {% endblock %}
 
 {% block content %}
-
+<section>
 <div class="highlight">
 
 {% block tagline %}
@@ -53,11 +53,14 @@
     </div>
 </div>
 </div>
-<br>
+</section>
 
+<section>
 <h3 class="section-header">Features</h3>
 {% include '_features.html' %}
-<br>
+</section>
+
+<section>
 <div class="row-fluid highlight">
     <div class="span2 offset1">
         <img src="/static/img/antiprism.png">
@@ -72,10 +75,10 @@
         </div>
     </div>
 </div>
-<br>
+</section>
 
 {% block reviews %}
-
+    <section>
     <h3 class="section-header">User reviews</h3>
     <br>
     <div class="row-fluid">
@@ -116,9 +119,9 @@
             <div class="quote rightquote">&#8221;</div>
         </div>
     </div>
-    <br>
+    <section>
 {% endblock %}
-
+    <section>
     <h3>Screenshots</h3>
     <br>
 
@@ -127,12 +130,14 @@
     <p>Send us your email address and we'll contact you with payment and setup instructions!</p>
     {% include '_signup_form.html' %}
     </div>
-    <br>
+    </section>
 
 {% block more_products %}
+    <section>
     <h3 class="section-header">Forthcoming products</h3>
 
     {% include '_product_list.html' %}
+</section>
 {% endblock %}
 
 
