@@ -61,6 +61,7 @@ h1, h2 {
     font-size: 1.6em;
     font-weight: 700;
     letter-spacing: -1px;
+    margin-bottom: 20px;
 }
 
 h1 {
@@ -68,8 +69,8 @@ h1 {
     font-weight: 400;
 }
 
-h2 strong {
-    font-weight: 800;
+h2 {
+    margin-top: 10px;
 }
 
 h3.section-header {
@@ -129,8 +130,12 @@ tt {
     margin: 0 0 10px 10px;
 }
 
+.site-container {
+    padding: 0 20px 50px 20px;
+}
+
 .container {
-    max-width: 1000px;
+    max-width: 980px;
 }
 
 /*
@@ -145,75 +150,68 @@ tt {
  * Nav
  */
 
-.nav, #logo {
-    height: 50px;
-}
- .nav {
+.nav {
     width: 100%;
-    position: fixed;
-    top: 0;
-    right: 0px;
-    left: 0px;
-    z-index: 1030;
     margin-bottom: 0px;
-    background: rgba(255,255,255,.85);
-    background: #eee;
-    padding: 5px 0;
-    text-transform: uppercase;
-    box-shadow: 0px 1px 10px rgba(0, 0, 0, 0.1);
-  }
+    padding: 5px 0 10px 0;
+}
 
-.nav ul, .nav ul li {
+.navlinks, .navlinks li {
     display: inline-block;
     margin: 0;
     padding: 0;
     font-size: 1.1em;
     font-weight: bold;
     height: 100%;
+    text-transform: uppercase;
 }
 
-.nav ul li a {
-    height: 100%;
-    padding: 0 15px;
+.navlinks li a {
+    display: inline-block;
+    padding: 35px 10px 25px 10px;
 }
 /*
  * Main Body
  */
 
-#main_wrap {
-    margin-top: 70px;
-}
-
 #main_content {
-    min-height: 550px;
+    min-height: 650px;
 }
 
 /*
  * Footer
  */
 #footer_wrap {
-    margin-top: 50px;
+    margin-top: 0;
     border-top: #eee;
-    background-image: url('/static/img/drop-shad.png');
-    background-repeat: repeat-x;
     background-color: #e3e3e3;
     height: 60px;
+    font-size: .8em;
 }
 
 #copy {
-    font-size: 12px;
     color: #aaa;
     text-align: right;
-    padding: 20px 0 0 0;
+    padding: 15px 0 0 0;
 }
 
+#footer .navlinks a {
+    color: #999;
+    padding: 20px 10px 0 10px;
+    font-weight: normal;
+    text-transform: none;
+}
+
+#footer .navlinks a:hover {
+    color: #333;
+}
 
 /*
  * Profile Blocks (/about_us/)
  */
 
 .profile_block {
-    margin-top: 20px;
+    margin: 20px 0 0 0;
 }
 .profile_block h5 {
     padding: 0;
@@ -307,12 +305,12 @@ Product page
 }
 
 .highlight {
-    background: rgba(255,255,255,.7);
-    padding: 10px;
-    margin-left: -10px;
-    -webkit-border-radius: 5px;
+    background: white;
+    padding: 10px 20px 10px 20px;
+    margin: 0 -20px;
+/*    -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
-    border-radius: 5px;
+    border-radius: 5px;*/
 }
 
 #product-comparison {
@@ -328,7 +326,7 @@ Product page
 
 #product-comparison thead th {
     vertical-align: top;
-    padding: 0;
+    padding: 0 10px 0 0
 }
 
 #product-comparison thead th, #product-comparison tbody td {

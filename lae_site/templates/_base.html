@@ -30,40 +30,37 @@
 <body>
     <div class="nav">
         <div class="container">
-            <a class="brand" href="/">
-                <img src="/static/img/la-logo.png" id="logo" alt="Least Authority Enterprises logo">
-            </a>
-            <ul class="navlinks">
-                <li class="active"><a href="/">Home</a></li>
-                <li><a href="/products/">Products</a></li>
-                <li><a href="/how_it_works/">How It Works</a></li>
-                <li><a href="/faq/">FAQ</a></li>
-                <li><a href="https://leastauthority.zendesk.com">Support</a></li>
-                <li><a href="/about_us/">About Us</a></li>
-            </ul>
+            <div class="row-fluid">
+                <div class="span3">
+                    <a class="brand" href="/">
+                        <img src="/static/img/la-logo.png" id="logo" alt="Least Authority Enterprises logo">
+                    </a>
+                </div>
+                <div class="span9">
+                    {% include '_navlinks.html' %}
+                </div>
+            </div>
       </div>
     </div>
-    <div class="container">
-        <div id="main_wrap" class="row-fluid">
-            <!--
-                <ul>
-                    <li><a href="/product_backup/">Least-Authority Backup</a></li>
-                    <li>S4</li>
-                    <li>RAIC</li>
-                    <li>Magic Folder</li>
-                </ul>
-            -->
-            <div id="main_content" class="span12">
-                {% block content %}{% endblock %}
+    <div class="container site-container">
+        <div class="container">
+            <div id="main_wrap" class="row-fluid">
+                <div id="main_content" class="span12">
+                    {% block content %}{% endblock %}
+                </div>
             </div>
         </div>
     </div>
     <div id="footer_wrap">
         <div id="footer" class="container">
-            <div id="copy">
-                <span>&copy; 2011 Least Authority Enterprises</span>
+            <div class="row-fluid">
+                <div class="span9">
+                    {% include '_navlinks.html' %}
+                </div>
+                <div id="copy" class="span3">
+                    <span>&copy; 2011 Least Authority Enterprises</span>
+                </div>
             </div>
-
         </div>
     </div>
 </body>
