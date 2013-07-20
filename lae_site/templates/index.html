@@ -33,17 +33,18 @@
 <section>
 <div class="highlight">
 
-{% block tagline %}
-    <div class="row-fluid">
-        <div class="span12">
-          <h1>Simple, secure cloud storage.</h1>
-        </div>
-    </div>
-{% endblock %}
-
 <div class="row-fluid">
     <div class="span4"><a href="/product_s4/"><img src="/static/img/s4.png"></a></div>
     <div class="span8 top-area">
+
+        {% block tagline %}
+            <div class="row-fluid">
+                <div class="span12">
+                  <h1>Simple, secure cloud storage.</h1>
+                </div>
+            </div>
+        {% endblock %}
+        
         <h2><a href="/product_s4/">Simple Secure Storage Service (S4)</a></h2>
         <p>S4 is Least Authority's <strong>secure off-site backup system</strong> for individuals and businesses. {% block learn_more %}<a href="/product_s4/">Learn more &raquo;</a>{% endblock %}</p>
         <p>With S4, we can never see your data, and you can always see our code. <a href="/how_it_works/">Learn how it works &raquo;</a></p>
@@ -67,7 +68,7 @@
     </div>
     <div class="span8">
         <h3>Anti-<a href="https://en.wikipedia.org/wiki/PRISM_%28surveillance_program%29">PRISM</a></h3>
-        <p>S4 is only for command-line fans for now, but it's the best way to back up your files without letting spies add them to their collection.</p>
+        <p>S4 is the best way to back up your files without letting spies add them to their collection.</p>
         <div class="row-fluid">
             <div class="span12">
                 <a href="/how_it_works/" style="float: right;">Read more about how our products work &raquo;</a>
