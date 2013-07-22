@@ -1,0 +1,111 @@
+{% extends '_base.html' %}
+
+{% block content %}
+<h2>Subscribe to S4</h2>
+
+  <!--<script src="https://checkout.stripe.com/v2/checkout.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
+
+  <button id="customButton" class="btn btn-danger btn-large signup-button">Purchase</button>
+
+  <script>
+    $('#customButton').click(function(){
+      var token = function(res){
+        var $input = $('<input type=hidden name=stripeToken />').val(res.id);
+        $('form').append($input).submit();
+      };
+
+      StripeCheckout.open({
+        key:         'pk_test_GhLIkGyZQCw5gfzQSGpygNQT',
+        address:     false,
+        amount:      5000,
+        currency:    'usd',
+        name:        'Least Authority',
+        description: 'S4 subscription ($50/month)',
+        image:       "static/img/s4.png",
+        panelLabel:  'Checkout',
+        token:       token
+      });
+
+      return false;
+    });
+  </script>-->
+
+<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+<script type="text/javascript">
+  // This identifies your website in the createToken call below
+  Stripe.setPublishableKey('pk_test_GhLIkGyZQCw5gfzQSGpygNQT');
+  // ...
+  jQuery(function($) {
+      $('#payment-form').submit(function(event) {
+        var $form = $(this);
+
+        // Disable the submit button to prevent repeated clicks
+        $form.find('button').prop('disabled', true);
+
+        Stripe.createToken($form, stripeResponseHandler);
+
+        // Prevent the form from submitting with the default action
+        return false;
+      });
+    });
+
+  var stripeResponseHandler = function(status, response) {
+  var $form = $('#payment-form');
+
+  if (response.error) {
+    // Show the errors on the form
+    $form.find('.payment-errors').text(response.error.message);
+    $form.find('button').prop('disabled', false);
+  } else {
+    // token contains id, last4, and card type
+    var token = response.id;
+    // Insert the token into the form so it gets submitted to the server
+    $form.append($('<input type="hidden" name="stripeToken" />').val(token));
+    // and submit
+    $form.get(0).submit();
+  }
+};
+</script>
+
+<div class="row-fluid">
+  <div class="span6">
+  <form action="" method="POST" id="payment-form" class="form-inline">
+    <span class="payment-errors"></span>
+
+    <div class="form-row">
+      <label><span>Email address:</span></label> 
+      <input type="email" name="Email" autofocus>
+    </div>
+      <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
+    
+    <div class="form-row">
+      <label>
+        <span>Card number:</span>
+      </label>
+        <input type="number" maxlength="20" size="20" data-stripe="number"/>
+    </div>
+
+    <div class="form-row">
+      <label>
+        <span>CVC:</span>
+      </label>
+      <input type="number" maxlength="4" size="4" data-stripe="cvc"/>
+    </div>
+    <div class="form-row">
+      <label>
+        <span>Expiration (MM/YYYY):</span>
+      </label>
+        <input type="number" maxlength="2" size="2" data-stripe="exp-month"/>
+        <span> / </span><input type="number" maxlength="4" size="4" data-stripe="exp-year"/>
+    </div>
+
+    <div>
+         <button type="submit" class="btn btn-danger btn-large signup-button">Purchase</button>
+    </div>
+  </form>
+  </div>
+</div>
+
+
+{% endblock %}
