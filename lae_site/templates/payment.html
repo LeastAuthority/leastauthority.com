@@ -83,7 +83,7 @@
       <label>
         <span>Card number:</span>
       </label>
-        <input type="number" maxlength="20" size="20" data-stripe="number"/>
+        <input type="number" maxlength="20" size="20" placeholder="**** **** **** ****" data-stripe="number"/>
     </div>
 
     <div class="form-row">
@@ -91,16 +91,15 @@
         <span>CVC:</span>
       </label>
       <input type="number" maxlength="4" size="4" data-stripe="cvc"/>
-    </div>
-    <div class="form-row">
-      <label>
-        <span>Expiration (MM/YYYY):</span>
+      &nbsp;
+      <label> 
+        <span>Expiration:</span>
       </label>
-        <input type="number" maxlength="2" size="2" data-stripe="exp-month"/>
-        <span> / </span><input type="number" maxlength="4" size="4" data-stripe="exp-year"/>
+        <input type="number" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month"/>
+        <span> / </span><input type="number" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year"/>
     </div>
 
-    <div>
+    <div class="form-row">
          <button type="submit" class="btn btn-danger btn-large signup-button">Purchase</button>
     </div>
   </form>
