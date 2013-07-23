@@ -7,9 +7,37 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key, NotListeningError
 from lae_automation.aws.queryapi import pubIPextractor
+from lae_automation.aws.devpay_s3client import DevPayS3Client
 from lae_util.send_email import send_plain_email
 from lae_util.servers import append_record
 from lae_util.timestamp import parse_iso_time
+
+from txaws.credentials import AWSCredentials
+
+def check_user_bucket(access_key_id, secret_key, user_token, bucket_name, stdout, stderr,
+                      product_token):
+
+    print >>stderr, ('access_key_id = %r\n'
+                     'secret_key = %r\n'
+                     'user_token = %r\n'
+                     'product_token = %r\n'
+                     'bucket_name = %r\n'
+                     % (access_key_id, secret_key, user_token, product_token, bucket_name))
+
+    usercreds = AWSCredentials(access_key_id, secret_key)
+    client = DevPayS3Client(creds=usercreds, usertoken=user_token, producttoken=product_token)
+
+    query = client.query_factory(
+        action="GET", creds=client.creds, endpoint=client.endpoint,
+        bucket=bucket_name)
+    d = query.submit()
+
+    def bucket_checked(res):
+        print >>stdout, "S3 bucket checked."
+        print >>stderr, repr(res)
+
+    d.addCallback(bucket_checked)
+    return d
 
 
 # Anything printed to stderr counts as a notifiable problem.
