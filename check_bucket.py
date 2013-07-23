@@ -17,24 +17,17 @@ if len(sys.argv) < 1:
 
 print
 
-secrets = simplejson.load(FilePath(sys.argv[1]).open())
+raw_secrets = simplejson.load(FilePath(sys.argv[1]).open())
 
-
-for key in secrets.keys():
-    if key not in ['access_key_id', 
-                   'secret_key', 
-                   'user_token', 
-                   'bucket_name', 
-                   'product_token']:
-        secrets.pop(key)
+secrets = {}
+for key in ['access_key_id', 
+            'secret_key', 
+            'user_token', 
+            'bucket_name', 
+            'product_token']:
+    secrets[key] = raw_secrets[key]
 secrets['stdout'] = sys.stdout
 secrets['stderr'] = sys.stderr
-#print secrets
-
-#usersecretkey = sys.argv[2]
-#usertoken = sys.argv[3]
-#producttoken = sys.argv[4]
-#bucketname = sys.argv[5]
 
 def cb(x):
     print 'Callbacks fired, and check_user_bucket returned:'
