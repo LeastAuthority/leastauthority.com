@@ -32,39 +32,44 @@ def main(stdin, stdout, stderr, seed, secretsfile, logfilename):
         raise
 
 if __name__ == '__main__':
-    defer.setDebugging(True)
+    try:
+        defer.setDebugging(True)
+        basefp = FilePath('..')
+        seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
+        logfilename = "%s-%s" % (format_iso_time(time.time()).replace(':', ''), seed)
 
-    basefp = FilePath('..')
-    seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
-    logfilename = "%s-%s" % (format_iso_time(time.time()).replace(':', ''), seed)
+        secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+        logfile = basefp.child('signup_logs').child(logfilename).open('a+')
+        stdin = sys.stdin
+        stdout = LoggingTeeStream(sys.stdout, logfile, '>')
+        stderr = LoggingTeeStream(sys.stderr, logfile, '')
 
-    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
-    logfile = basefp.child('signup_logs').child(logfilename).open('a+')
-    stdin = sys.stdin
-    stdout = LoggingTeeStream(sys.stdout, logfile, '>')
-    stderr = LoggingTeeStream(sys.stderr, logfile, '')
+        # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
+        # It does have a way to disable that, but not (easily) to redirect it.
+        sys.stdout = stderr
 
-    # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
-    # It does have a way to disable that, but not (easily) to redirect it.
-    sys.stdout = stderr
+        def _close(res):
+            stdout.flush()
+            stderr.flush()
+            secretsfile.close()
+            logfile.close()
+            return res
+        def _err(f):
+            print >>stderr, str(f)
+            if hasattr(f.value, 'response'):
+                print >>stderr, f.value.response
+            print >>stdout, "%s: %s" % (f.value.__class__.__name__, f.value)
+            return f
 
-    def _close(res):
-        stdout.flush()
-        stderr.flush()
-        secretsfile.close()
-        logfile.close()
-        return res
-    def _err(f):
-        print >>stderr, str(f)
-        if hasattr(f.value, 'response'):
-            print >>stderr, f.value.response
-        print >>stdout, "%s: %s" % (f.value.__class__.__name__, f.value)
-        return f
-
-    d = defer.succeed(None)
-    d.addCallback(lambda ign: main(stdin, stdout, stderr, seed, secretsfile, logfilename))
-    d.addErrback(_err)
-    d.addBoth(_close)
-    d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
-    reactor.run()
+        d = defer.succeed(None)
+        d.addCallback(lambda ign: main(stdin, stdout, stderr, seed, secretsfile, logfilename))
+        d.addErrback(_err)
+        d.addBoth(_close)
+        d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
+        reactor.run()
+    except Exception:
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+        sys.stderr.flush()
+        os._exit(1)
 
