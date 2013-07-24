@@ -188,6 +188,8 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
                 raise PublicKeyMismatch()
             print >>stderr, "The ssh public key on the server has fingerprint: %s" % (fingerprint_from_keyscan,)
             known_hosts_filepath = FilePath(os.path.expanduser('~')).child('.ssh').child('known_hosts')
+            if not known_hosts_filepath.exists():
+                known_hosts_filepath.create()
             known_hosts = known_hosts_filepath.getContent().rstrip('\n') + '\n'
             new_known_hosts = known_hosts + hashed_pubkey
             known_hosts_filepath.setContent(new_known_hosts)
