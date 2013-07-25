@@ -78,7 +78,6 @@ def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, s
             print >>stdout, "Bulletin sent."
     def _error(f):
         print >>stdout, "Sending of bulletin e-mail failed."
-        print >>stdout, "Please contact <info@leastauthority.com> to make sure that we have your correct e-mail address."
         print >>stderr, str(f)
         return f
     d.addCallbacks(_sent, _error)

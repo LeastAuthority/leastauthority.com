@@ -1,6 +1,8 @@
 
-import time, simplejson
+import time
+from collections import namedtuple
 
+from twisted.internet import defer
 from twisted.application import service
 from twisted.python.filepath import FilePath
 
@@ -9,59 +11,31 @@ from allmydata.client import Client
 from allmydata.monitor import Monitor
 from allmydata.mutable.publish import MutableData
 
+from lae_util import Namespace
 from lae_util.timestamp import format_iso_time
+from lae_automation.server import read_secrets_file, write_secrets_file, InvalidSecrets
 
 
 class CheckFailed(Exception):
     pass
 
 
-class Namespace:
-    pass
+SecretsFile = namedtuple('SecretsFile', ['filepath', 'secrets'])
 
 
-def check_end_to_end(secretsfile, stderr, create_test_uri=False):
+def check_server_end_to_end(secretsfp, secrets, stdout, stderr, recreate_test_file=False, timestamp=None):
     checker = EndToEndChecker()
-    return checker.check(secretsfile, stderr, create_test_uri)
+    return checker.check(secretsfp, secrets, stdout, stderr, recreate_test_file, timestamp)
 
 
 class EndToEndChecker(PollMixin):
-    def __init__(self):
-        pass
+    """This is a class only in order to use PollMixin."""
 
-    def check(self, secretsfile, stderr, create_test_uri=False):
-        timestamp = format_iso_time(time.time())
+    def check(self, secretsfp, secrets, stdout, stderr, recreate_test_file=False, timestamp=None):
+        if timestamp is None:
+            timestamp = format_iso_time(time.time())
 
-        try:
-            secrets_json = secretsfile.getContent()
-        except Exception, e:
-            raise CheckFailed("Error for %r: could not read secrets file: %s" % (secretsfile.path, e))
-
-        try:
-            secrets = simplejson.loads(secrets_json)
-        except Exception, e:
-            # Don't include the message of e since we can't be sure it doesn't contain secrets.
-            # The exception class name should be safe.
-            raise CheckFailed("Error for %r: could not parse secrets file: %s" % (secretsfile.path, e.__class__.__name__))
-
-        d = self._do_check(secretsfile, secrets, stderr, timestamp, create_test_uri)
-        return d
-
-    def _do_check(self, secretsfile, secrets, stderr, timestamp, create_test_uri):
-        if 'publichost' not in secrets:
-            raise CheckFailed("Error for %r: no publichost available" % (secretsfile.path))
         publichost = secrets['publichost']
-
-        if 'external_introducer_furl' not in secrets:
-            raise CheckFailed("Error for %s: no introducer FURL available" % (publichost,))
-        external_introducer_furl = secrets['external_introducer_furl']
-
-        if 'server_nodeid' not in secrets:
-            raise CheckFailed("Error for %s: no server node ID available" % (publichost,))
-        server_nodeid = secrets['server_nodeid']
-
-        if 'test_uri' not in secrets and not create_test_uri:
-            print >>stderr, "Warning for %s: no test URI available" % (publichost,)
 
         client_dir = FilePath("monitoring_client")
         try:
@@ -70,13 +44,21 @@ class EndToEndChecker(PollMixin):
             if not client_dir.exists():
                 raise
 
+        # The logs and incidents are sometimes interesting, but we don't want them to cause a space leak,
+        # so delete the *last* run's logs before each run.
+        log_dir_path = client_dir.child('logs').path
+        try:
+            fileutil.rm_dir(log_dir_path)
+        except OSError, e:
+            print >>stderr, "Warning: couldn't remove log directory %r\n%s" % (log_dir_path, e)
+
         tahoe_cfg = ("[node]\n"
                      "nickname = LeastAuthority monitoring client\n"
                      "web.port = tcp:0:interface=127.0.0.1\n"   # make sure the client doesn't listen on an external interface
                      "[client]\n"
                      "introducer.furl = %s\n"
                      "[storage]\n"
-                     "enabled = false\n" % (external_introducer_furl))
+                     "enabled = false\n" % (secrets['external_introducer_furl']))
         client_dir.child("tahoe.cfg").setContent(tahoe_cfg)
 
         # Run the client in-process.
@@ -87,9 +69,9 @@ class EndToEndChecker(PollMixin):
         storage_broker = client.get_storage_broker()
 
         def _print(res, s):
-            print >>stderr, s
+            print >>stdout, s
             if res:
-                print >>stderr, res
+                print >>stdout, res
             return res
 
         # Wait until the client is connected to the introducer.
@@ -107,6 +89,7 @@ class EndToEndChecker(PollMixin):
         d.addCallback(lambda ign: self.poll(_connected_to_server, pollinterval=0.5, timeout=10))
 
         def _check_connections(ign):
+            server_nodeid = secrets['server_nodeid']
             if server_nodeid not in ns._connected_servers:
                 raise CheckFailed("Error for %s: not connected to the expected server %r" % (publichost, server_nodeid))
 
@@ -115,23 +98,25 @@ class EndToEndChecker(PollMixin):
                 print >>stderr, "Warning for %s: connected to unexpected server(s) %r" % (publichost, unexpected_servers)
         d.addCallback(_check_connections)
 
-        if create_test_uri:
+        if 'test_uri' not in secrets or recreate_test_file:
+            d.addCallback(_print, "Creating test file for %s..." % (publichost,))
             d.addCallback(lambda ign: client.create_mutable_file(contents="Monitoring at _"))
             def _created(node):
                 secrets['test_uri'] = node.get_write_uri()
-                self._write_secrets(secretsfile, secrets)
+                write_secrets_file(secretsfp, secrets)
             d.addCallback(_created)
             def _create_err(f):
                 raise CheckFailed("Error for %s: could not create test file: %s" % (publichost, f))
             d.addErrback(_create_err)
 
         def _do_test_write(ign):
-            # We already warned about the case of (no test URI and not create_test_uri) above.
             if 'test_uri' in secrets:
                 node = client.create_node_from_uri(secrets['test_uri'])
                 monitor = Monitor()
 
-                d2 = node.check(monitor, verify=True)
+                d2 = defer.succeed(None)
+                d2.addCallback(_print, "Checking test file for %s..." % (publichost,))
+                d2.addCallback(lambda ign: node.check(monitor, verify=True))
                 def _verified(res):
                     if not res.is_healthy:
                         print >>stderr, "Warning for %s: test file is unhealthy: %s" % (publichost, res.get_summary())
@@ -163,8 +148,63 @@ class EndToEndChecker(PollMixin):
         d.addBoth(_stop_client)
         return d
 
-    def _write_secrets(self, secretsfile, secrets):
-        if 'test_uri' not in secrets:
-            raise AssertionError("test_uri not set for %r" % (secretsfile.path,))
-        secrets_json = simplejson.dumps(secrets) + "\n"
-        secretsfile.setContent(secrets_json)
+
+class DictOfLists(dict):
+    def add(self, key, value):
+        if key in self:
+            self[key].append(value)
+        else:
+            self[key] = [value]
+
+    def remove(self, key, value):
+        if not key in self:
+            return
+        self[key].remove(value)
+        if not self[key]:
+            del self[key]
+
+
+def read_secrets_dir(secretsdirfp, stdout, stderr):
+    all_secrets_by_bucket = DictOfLists()
+    all_secrets_by_host = DictOfLists()
+
+    if not secretsdirfp.isdir():
+        print >>stderr, "Error: Secrets directory not found at %r" % (secretsdirfp.path,)
+    else:
+        print >>stdout, "Reading secrets files..."
+        secretsfps = secretsdirfp.children()
+
+        # We use the bucket name to identify servers that were launched on behalf of the same customer.
+        # It is normal for there to be secrets that do not correspond to a running server; these
+        # should not cause warnings, because other checks will have warned that the server is not
+        # running if it was expected to be.
+
+        for secretsfp in secretsfps:
+            if secretsfp.getsize() > 0:
+                try:
+                    host_secrets = read_secrets_file(secretsfp)
+                except InvalidSecrets, e:
+                    print >>stderr, str(e)
+                else:
+                    sf = SecretsFile(filepath=secretsfp, secrets=host_secrets)
+                    all_secrets_by_bucket.add(host_secrets['bucket_name'], sf)
+                    all_secrets_by_host.add(host_secrets['publichost'], sf)
+
+    def _filename(sf): return sf.filepath.basename()
+
+    def _sort_and_print_duplicates(all_secrets, key_description):
+        secrets_by_key = {}
+        for (key, candidate_set) in sorted(all_secrets.items()):
+            # Sort the candidates by filename, which corresponds to the order of ISO 8601 UTC timestamps.
+            candidates = sorted(candidate_set, key=_filename)
+            secrets_by_key[key] = candidates[-1]
+
+            if len(candidates) > 1:
+                print >>stderr, "Multiple secrets files match %s %r:" % (key_description, key)
+                for sf in candidates:
+                    print >>stderr, "  %s" % (_filename(sf),)
+
+        return secrets_by_key
+
+    _sort_and_print_duplicates(all_secrets_by_bucket, 'bucket')
+    return _sort_and_print_duplicates(all_secrets_by_host, 'host')

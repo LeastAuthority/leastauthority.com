@@ -21,9 +21,11 @@ ec2accesskeyid = str(config.other['ec2_access_key_id'])
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 serverinfocsvpath = '../serverinfo.csv'
 lasterrorspath = '../lasterrors.txt'
+secretsdirpath = '../secrets'
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
+stdout = sys.stdout
 stderr = StringIO()
 
 serverinfotuple = read_serverinfo(serverinfocsvpath)
@@ -37,16 +39,25 @@ lasterrorsfp = FilePath(lasterrorspath)
 if lasterrorsfp.exists():
     lasterrors = lasterrorsfp.getContent()
 
+secretsdirfp = FilePath(secretsdirpath)
+try:
+    from lae_automation import endtoend
+    secrets_by_host = endtoend.read_secrets_dir(secretsdirfp, stdout, stderr)
+except ImportError:
+    import traceback
+    traceback.print_exc(stderr)
+    secrets_by_host = {}
+
 POLL_TIME = 10
 ADDRESS_WAIT_TIME = 60
 
 d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
                             ServerInfoParser(('launchTime', 'instanceId'), ('dnsName', 'instanceState.name')),
-                            POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, stderr)
+                            POLL_TIME, ADDRESS_WAIT_TIME, stdout, stderr)
 
-d.addCallback(lambda remoteproperties: compare_servers_to_local(remoteproperties, localstate, sys.stdout, stderr))
+d.addCallback(lambda remoteproperties: compare_servers_to_local(remoteproperties, localstate, stdout, stderr))
 
-d.addCallback(lambda host_list: check_servers(host_list, monitor_privkey_path, sys.stdout, stderr))
+d.addCallback(lambda host_list: check_servers(host_list, monitor_privkey_path, secrets_by_host, stdout, stderr))
 
 def cb(x):
     if isinstance(x, Failure):

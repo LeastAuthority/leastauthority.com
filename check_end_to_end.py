@@ -5,17 +5,23 @@ import os, sys
 from twisted.internet import defer, reactor
 from twisted.python.filepath import FilePath
 
-from lae_automation.endtoend import check_end_to_end
+from lae_automation.server import read_secrets_file
+from lae_automation.endtoend import check_server_end_to_end
 
 
 if __name__ == '__main__':
-    if len(sys.argv) < 2 or (len(sys.argv) >= 3 and sys.argv[2] != "--create-test-uri"):
-        print "Usage: python check_end_to_end.py SECRETS_PATH [--create-test-uri]"
+    if len(sys.argv) < 2 or (len(sys.argv) >= 3 and sys.argv[2] != "--recreate"):
+        print "Usage: python check_end_to_end.py SECRETS_PATH [--recreate]"
+        print "Options:"
+        print "  --recreate    creates a new test file even if one already existed."
+        print
         print "Happy end-to-end checking!"
         sys.exit(1)
 
-    secretsfile = FilePath(sys.argv[1])
-    create_test_uri = (len(sys.argv) >= 3)
+    secretsfp = FilePath(sys.argv[1])
+    secrets = read_secrets_file(secretsfp)
+    recreate_test_file = (len(sys.argv) >= 3)
+    stdout = sys.stdout
     stderr = sys.stderr
 
     def _err(f):
@@ -26,7 +32,7 @@ if __name__ == '__main__':
         return f
 
     d = defer.succeed(None)
-    d.addCallback(lambda ign: check_end_to_end(secretsfile, stderr, create_test_uri))
+    d.addCallback(lambda ign: check_server_end_to_end(secretsfp, secrets, stdout, stderr, recreate_test_file))
     d.addErrback(_err)
     d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
     reactor.run()

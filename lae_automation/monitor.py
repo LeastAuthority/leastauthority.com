@@ -3,6 +3,7 @@ import time, traceback
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
+from twisted.internet import defer
 from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key, NotListeningError
@@ -14,7 +15,7 @@ from lae_util.timestamp import parse_iso_time
 
 # Anything printed to stderr counts as a notifiable problem.
 
-def check_server(publichost, monitor_privkey_path, stdout, stderr):
+def check_server_by_login(publichost, monitor_privkey_path, stdout, stderr):
     try:
         set_host_and_key(publichost, monitor_privkey_path, username="monitor")
 
@@ -62,13 +63,36 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
         return False
 
 
-def check_servers(host_list, monitor_privkey_path, stdout, stderr):
-    success = True
+def check_servers(host_list, monitor_privkey_path, secrets_by_host, stdout, stderr, do_end_to_end=True, recreate_test_file=False):
+    d = defer.succeed(True)
     for publichost in host_list:
-        print >>stdout, "Checking %r..." % (publichost,)
-        success = check_server(publichost, monitor_privkey_path, stdout, stderr) and success
+        def _check_by_login(success_so_far, publichost=publichost):
+            print >>stdout, "Checking %r..." % (publichost,)
+            return check_server_by_login(publichost, monitor_privkey_path, stdout, stderr) and success_so_far
 
-    return success
+        def _check_end_to_end(success_so_far, publichost=publichost):
+            if publichost not in secrets_by_host:
+                print >>stdout, "Error for %s: No secrets file found." % (publichost,)
+                return False
+
+            from lae_automation import endtoend
+            sf = secrets_by_host[publichost]
+            d = endtoend.check_server_end_to_end(sf.filepath, sf.secrets, stdout, stderr,
+                                                 recreate_test_file=recreate_test_file)
+            d.addCallback(lambda res: res and success_so_far)
+            return d
+
+        def _err(f):
+            print f
+            return False
+
+        d.addCallback(_check_by_login)
+        d.addErrback(_err)
+        if do_end_to_end:
+            d.addCallback(_check_end_to_end)
+            d.addErrback(_err)
+
+    return d
 
 
 def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, now=None):
@@ -82,8 +106,8 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
         if not localstate.has_key(rpt_instance_id):
             # unknown instance
             launch_time = parse_iso_time(rpt_launch_time)
-            if now - launch_time < 10*60:
-                print >>stdout, ("Note: Ignoring unknown %s instance %s at %s because it was launched less than 10 minutes ago at %s."
+            if now - launch_time < 15*60:
+                print >>stdout, ("Note: Ignoring unknown %s instance %s at %s because it was launched less than 15 minutes ago at %s."
                                  % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
             else:
                 print >>stderr, ("Warning: The %s instance %s at %s launched at %s is not in the list of known servers."

@@ -127,6 +127,7 @@ class TestSignupModule(TestCase):
         self.SERVERINFOPATH = 'mock_serverinfo.csv'
         self.EC2SECRETPATH = 'mock_ec2secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
+        self.SECRETSPATH = 'test_secrets'
 
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
         FilePath(self.SERVERINFOPATH).setContent('')
@@ -214,7 +215,7 @@ class TestSignupModule(TestCase):
 
         def call_bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid,
                                usersecretkey, usertoken, producttoken, bucket_name, oldsecrets,
-                               stdout, stderr, secretsfile):
+                               stdout, stderr, secretsfp):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(privatehost, '0.0.0.1')
@@ -224,7 +225,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(producttoken, '{ProductToken}TESTPRODUCTTOKEN%s='%('A'*295,))
             self.failUnlessEqual(bucket_name, 'lae-abcdefgh-MSEED')
             self.failUnlessEqual(oldsecrets, None)
-            self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
+            self.failUnlessEqual(secretsfp, FilePath(self.SECRETSPATH))
         self.patch(signup, 'bounce_server', call_bounce_server)
 
         def call_send_signup_confirmation(publichost, customer_name, customer_email, furl,
@@ -265,7 +266,7 @@ class TestSignupModule(TestCase):
         stdout = StringIO()
         stderr = StringIO()
         MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
+        MSECRETSFP = FilePath(self.SECRETSPATH)
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
@@ -285,7 +286,7 @@ class TestSignupModule(TestCase):
         self.patch(queryapi, 'hostpubkeyextractor', call_hostpubkeyextractor)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          MSEED, MSECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                           self.SERVERINFOPATH, self.EC2SECRETPATH)
         return d
 
@@ -298,13 +299,13 @@ class TestSignupModule(TestCase):
         stdout = StringIO()
         stderr = StringIO()
         MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
+        MSECRETSFP = FilePath(self.SECRETSPATH)
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.signup,
                               MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                              MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                              MSEED, MSECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                               self.SERVERINFOPATH, self.EC2SECRETPATH)
 
     def test_timeout_verify(self):
@@ -316,7 +317,7 @@ class TestSignupModule(TestCase):
         stdout = StringIO()
         stderr = StringIO()
         MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
+        MSECRETSFP = FilePath(self.SECRETSPATH)
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         def call_verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout,
@@ -325,7 +326,7 @@ class TestSignupModule(TestCase):
         self.patch(signup, 'verify_user_account', call_verify_user_account)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          MSEED, MSECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                           self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
@@ -345,7 +346,7 @@ class TestSignupModule(TestCase):
         stdout = StringIO()
         stderr = StringIO()
         MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
+        MSECRETSFP = FilePath(self.SECRETSPATH)
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
 
         from lae_automation.aws import queryapi
@@ -355,7 +356,7 @@ class TestSignupModule(TestCase):
         self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          MSEED, MSECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                           self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
@@ -375,7 +376,7 @@ class TestSignupModule(TestCase):
         stdout = StringIO()
         stderr = StringIO()
         MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
+        MSECRETSFP = FilePath(self.SECRETSPATH)
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
@@ -386,7 +387,7 @@ class TestSignupModule(TestCase):
         self.patch(queryapi, 'get_EC2_consoleoutput', call_get_EC2_consoleoutput)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          MSEED, MSECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                           self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
