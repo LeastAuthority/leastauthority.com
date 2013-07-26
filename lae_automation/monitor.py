@@ -3,6 +3,7 @@ import time, traceback
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
+from twisted.internet import defer
 from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key, NotListeningError
@@ -14,15 +15,23 @@ from lae_util.timestamp import parse_iso_time
 
 # Anything printed to stderr counts as a notifiable problem.
 
-def check_server(publichost, monitor_privkey_path, stdout, stderr):
+def check_server_by_login(publichost, monitor_privkey_path, stdout, stderr):
+    print >>stdout
+    print >>stdout, "Logging in to %s..." % (publichost,)
+    bucket_name = None
     try:
         set_host_and_key(publichost, monitor_privkey_path, username="monitor")
+
+        tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
+        config = SafeConfigParser()
+        config.readfp(StringIO(tahoe_cfg))
+        bucket_name = config.get('storage', 's3.bucket')
 
         psout = run('ps -fC tahoe || true')
         pslines = psout.splitlines()
         if not pslines[0].startswith("UID"):
             print >>stderr, "Error: Host %s unexpected ps output %r.\n" % (publichost, psout)
-            return False
+            return (bucket_name, False)
 
         nodes = []
         for line in pslines[1:]:
@@ -35,40 +44,66 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
             if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
                     cmd[2] in ('start', 'restart') and cmd[3] in ('introducer', 'storageserver')):
                 print >>stderr, "Error: Host %s unexpected command %r." % (publichost, " ".join(cmd))
-                return False
+                return (bucket_name, False)
             nodes.append(cmd[3])
 
         nodes.sort()
         if nodes != ['introducer', 'storageserver']:
-            print >>stderr, "Error: Host %s expected nodes are not running. Actual nodes are %r." % (publichost, nodes)
-            return False
+            print >>stderr, "Error for %s: Expected nodes are not running. Actual nodes are %r." % (publichost, nodes)
+            return (bucket_name, False)
 
-        tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
-        config = SafeConfigParser()
-        config.readfp(StringIO(tahoe_cfg))
-        s3host = config.get('storage', 's3.bucket') + '.s3.amazonaws.com'
+        s3host = bucket_name + '.s3.amazonaws.com'
         nslookup = run('nslookup ' + s3host)
         if not 'answer:' in nslookup:
-            print >>stderr, "Error: Host %s was not able to resolve %r:\n%r" % (publichost, s3host, nslookup)
-            return False
+            print >>stderr, "Error for %s: Server is not able to resolve %r:\n%r" % (publichost, s3host, nslookup)
+            return (bucket_name, False)
 
-        return True
+        return (bucket_name, True)
     except NotListeningError:
         print >>stderr, "Error: Host %s is not listening." % (publichost,)
-        return False
+        return (bucket_name, False)
     except (Exception, SystemExit):
         print >>stderr, "Exception while checking host %s:" % (publichost,)
         traceback.print_exc(file=stderr)
-        return False
+        return (bucket_name, False)
 
 
-def check_servers(host_list, monitor_privkey_path, stdout, stderr):
-    success = True
+def check_servers(host_list, monitor_privkey_path, secrets_by_bucket, secrets_by_host, stdout, stderr,
+                  skip_end_to_end=False, recreate_test_file=False):
+    d = defer.succeed(True)
     for publichost in host_list:
-        print >>stdout, "Checking %r..." % (publichost,)
-        success = check_server(publichost, monitor_privkey_path, stdout, stderr) and success
+        def _check_host(success_so_far, publichost=publichost):
+            (bucket_name, successful_login) = check_server_by_login(publichost, monitor_privkey_path, stdout, stderr)
 
-    return success
+            if skip_end_to_end:
+                d = defer.succeed(True)
+            else:
+                if publichost in secrets_by_host:
+                    sf = secrets_by_host[publichost]
+                    if bucket_name is not None and sf.secrets['bucket_name'] != bucket_name:
+                        print >>stderr, ("Warning for %s: Configured bucket name %r does not match\n  %r recorded in secrets file %r."
+                                         % (publichost, bucket_name, sf.secrets['bucket_name'], sf.filepath.basename()))
+                elif bucket_name in secrets_by_bucket:
+                    print >>stderr, ("Warning for %s: Secrets file could not be found by host;\n  used bucket name %r to find it at %r."
+                                     % (publichost, bucket_name, sf.filepath.basename()))
+                    sf = secrets_by_bucket[publichost]
+                else:
+                    print >>stdout, "Error for %s: No secrets file found." % (publichost,)
+                    return False
+
+                from lae_automation import endtoend
+                d = endtoend.check_server_end_to_end(sf.filepath, sf.secrets, stdout, stderr,
+                                                     recreate_test_file=recreate_test_file)
+
+            d.addCallback(lambda res: res and successful_login and success_so_far)
+            return d
+        def _err(f):
+            #print >>stderr, str(f)
+            return False
+        d.addCallback(_check_host)
+        d.addErrback(_err)
+
+    return d
 
 
 def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, now=None):
@@ -82,8 +117,8 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
         if not localstate.has_key(rpt_instance_id):
             # unknown instance
             launch_time = parse_iso_time(rpt_launch_time)
-            if now - launch_time < 10*60:
-                print >>stdout, ("Note: Ignoring unknown %s instance %s at %s because it was launched less than 10 minutes ago at %s."
+            if now - launch_time < 15*60:
+                print >>stdout, ("Note: Ignoring unknown %s instance %s at %s because it was launched less than 15 minutes ago at %s."
                                  % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
             else:
                 print >>stderr, ("Warning: The %s instance %s at %s launched at %s is not in the list of known servers."

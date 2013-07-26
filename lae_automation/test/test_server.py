@@ -134,7 +134,7 @@ class TestServerModule(TestCase):
             ('apt-get install -y python-setuptools', False, {}),
             ('apt-get install -y exim4-base', False, {}),
             ('apt-get install -y darcs', False, {}),
-            ('easy_install foolscap', False, {}),
+            ('apt-get install -y python-foolscap', False, {}),
             ('python ./setup.py install', False, {}),
             ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
             ('mkdir -p /home/customer/.ssh/', False, {}),
@@ -217,7 +217,7 @@ class TestServerModule(TestCase):
         BUCKETNAME = 'foooooo'
         STDOUT = StringIO()
         STDERR = StringIO()
-        MSECRETSFILE = StringIO()
+        MSECRETSFP = FilePath('test_bounce_server_secrets')
         INTERNALINTROFURL = 'pb://TUBID@LOCATION/SWISSNUM'
         from lae_automation.server import TAHOE_CFG_TEMPLATE
         from lae_automation.server import RESTART_SCRIPT
@@ -257,6 +257,8 @@ class TestServerModule(TestCase):
                 ])
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
                              SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
-                             STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
+                             STDOUT, STDERR, MSECRETSFP, self.CONFIGFILEPATH)
+        self.failUnless(MSECRETSFP.exists())
+        MSECRETSFP.remove()
         self._check_all_done()
 

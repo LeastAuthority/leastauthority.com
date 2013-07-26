@@ -29,7 +29,7 @@ if __name__ == '__main__':
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (format_iso_time(time.time()).replace(':', ''), seed)
 
-    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+    secretsfp = basefp.child('secrets').child(logfilename)
     logfile = basefp.child('signup_logs').child(logfilename).open('a+')
     stdin = sys.stdin
     stdout = LoggingTeeStream(sys.stdout, logfile, '>')
@@ -42,7 +42,6 @@ if __name__ == '__main__':
     def _close(res):
         stdout.flush()
         stderr.flush()
-        secretsfile.close()
         logfile.close()
         return res
     def _err(f):
@@ -54,7 +53,7 @@ if __name__ == '__main__':
 
     d = defer.succeed(None)
     d.addCallback(lambda ign: replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
-                                             secretsfile, logfilename))
+                                             secretsfp, logfilename))
     d.addErrback(_err)
     d.addBoth(_close)
     d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
