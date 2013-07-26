@@ -107,15 +107,6 @@ p, blockquote, li {
     font-size: 15px;
 }
 
-pre {
-    font-size: 13px;
-}
-
-tt {
-    font-family: monospace;
-    font-size: 13px;
-}
-
 .left {
     float: left;
     margin: 0 10px 10px 0;
@@ -309,10 +300,34 @@ Product page
     background: white;
     padding: 10px 20px 10px 20px;
     margin: 0 -20px;
-/*    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;*/
 }
+
+/* howto instructions */
+
+.howto .row-fluid {
+    margin-bottom: 15px;
+}
+
+.howto .number {
+    font-size: 1.7em;
+    display: inline-block;
+    width: 35px;
+}
+
+.howto p, pre {
+    margin-left: 35px;
+}
+
+pre, tt {
+    font-family: monospace;
+    font-size: 1em;
+}
+
+tt {
+    background: #eee;
+}
+
+/* product comparison table */
 
 #product-comparison {
     border-collapse: separate;
@@ -355,6 +370,8 @@ Product page
     font-size: 1.8em;
 }
 
+/* glow quotes */
+
 .glowquotes {
     font-style: italic;
     font-size: 1.3em;
@@ -380,3 +397,4 @@ Product page
 .rightquote {
     margin-top: .8em;
 }
+
