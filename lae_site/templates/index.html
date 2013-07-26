@@ -32,7 +32,6 @@
 {% block content %}
 <section>
 <div class="highlight">
-
 {% block tagline %}
     <div class="row-fluid">
         <div class="span12">
@@ -41,17 +40,17 @@
     </div>
 {% endblock %}
 
-<div class="row-fluid">
-    <div class="span4"><a href="/product_s4/"><img src="/static/img/s4.png"></a></div>
-    <div class="span8 top-area">
-        <h2><a href="/product_s4/">Simple Secure Storage Service (S4)</a></h2>
-        <p>S4 is Least Authority's <strong>secure off-site backup system</strong> for individuals and businesses. {% block learn_more %}<a href="/product_s4/">Learn more &raquo;</a>{% endblock %}</p>
-        <p>With S4, we can never see your data, and you can always see our code. <a href="/product_s4/#how_it_works">Learn how it works &raquo;</a></p>
-        <p>Just <strong>$50/month</strong> for up to 350 GB.</p>
-        {% include '_signup_form.html' %}
-        {% block more_price %}{% endblock %}
+    <div class="row-fluid">
+        <div class="span4"><a href="/product_s4/"><img src="/static/img/s4.png"></a></div>
+        <div class="span8 top-area">
+            <h2><a href="/product_s4/">Simple Secure Storage Service (S4)</a></h2>
+            <p>S4 is Least Authority's <strong>secure off-site backup system</strong> for individuals and businesses.</p>
+            <p>With S4, we can never see your data, and you can always see our code. <a href="/product_s4/#how_it_works">Learn more &raquo;</a></p>
+            <p>Just <strong>$50/month</strong> for up to 350 GB.</p>
+            {% include '_signup_form.html' %}
+            {% block more_price %}{% endblock %}
+        </div>
     </div>
-</div>
 </div>
 </section>
 
@@ -62,17 +61,39 @@
 
 <section>
 <div class="row-fluid highlight">
-    <div class="span2 offset1">
-        <img src="/static/img/antiprism.png">
-    </div>
-    <div class="span8">
-        <h3>Anti-<a href="https://en.wikipedia.org/wiki/PRISM_%28surveillance_program%29">PRISM</a></h3>
-        <p>S4 is only for command-line fans for now, but it's the best way to back up your files without letting spies add them to their collection.</p>
+    <div class="span12">
+        <h3 class="section-header">What makes us different?</h3>
+        <br>
         <div class="row-fluid">
-            <div class="span12">
-                <a href="/how_it_works/" style="float: right;">Read more about how our products work &raquo;</a>
+
+        <span class="span6">
+            <div class="row-fluid">
+                <span class="span4">
+                    <img src="/static/img/antiprism.png">
+                </span>
+                <span class="span8">
+            <h4>100% client-side encryption</h4>
+            <p>Unlike all the widely-used, <a href="https://en.wikipedia.org/wiki/PRISM_%28surveillance_program%29">PRISM</a>-compatible services out there, S4 does client-side encryption on every file. The server doesn't have the ability to spy on or untraceably modify your files even if it tries!</p>
+                </span>
             </div>
+        </span>
+
+        <span class="span6">
+            <div class="row-fluid">
+                <span class="span4">
+                    <img src="/static/img/opensource.png">
+                </span>
+                <span class="span8">
+            <h4>Open source transparency</h4>
+            <p>Unlike other client-side-encryption services like <a href="https://www.tarsnap.com/">Tarsnap</a> and <a href="https://spideroak.com/">SpiderOak</a>, S4 is free, open source software. Anyone can <a href="https://github.com/tahoe-lafs/tahoe-lafs">read the code</a> and confirm that it doesn't have secret backdoors. Unlike users of <a href="http://www.guardian.co.uk/technology/2013/jun/20/skype-nsa-access-user-data">Skype</a> or <a href="http://www.wired.com/threatlevel/2007/11/encrypted-e-mai/">Hushmail</a>, you don't have to take our word for it that your backups are secure.</p>
+                </span>
+            </div>
+        </span>
         </div>
+        <br>
+        <h4>Unlike anyone else, S4 offers <strong><em>verifiable</em> end-to-end security</strong>. <a href="/product_s4/#how_it_works">Read more about how S4 works &raquo;</a></h4>
+        <br>
+    </span>
     </div>
 </div>
 </section>
@@ -121,7 +142,7 @@
     </div>
     <section>
 {% endblock %}
-    <section>
+<!--     <section>
     <h3>Screenshots</h3>
     </section>
 
@@ -131,7 +152,7 @@
     <p>Send us your email address and we'll contact you with payment and setup instructions!</p>
     {% include '_signup_form.html' %}
     </div>
-    </section>
+    </section> -->
 
 {% block more_products %}
     <section>
