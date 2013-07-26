@@ -309,13 +309,13 @@ Product page
 }
 
 .howto .number {
-    font-size: 1.7em;
+    font-size: 1.6em;
     display: inline-block;
-    width: 35px;
+    width: 30px;
 }
 
 .howto p, pre {
-    margin-left: 35px;
+    margin-left: 30px;
 }
 
 pre, tt {
