@@ -62,7 +62,6 @@ stderr = sys.stderr
 print config.other['deployment']
 #Configuration which is specific to the test account
 
-COMMIT_TAG = '2013-06-20'
 
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
