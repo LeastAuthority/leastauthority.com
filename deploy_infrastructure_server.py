@@ -5,11 +5,13 @@
 (3) provisions it with a version of the secret_config repository
 (4) launches the webserver specified in those repositories
 
-  AWS credentials, ami parameters (e.g. size and ami id) and metadata to associate with the instance 
-(e.g. instance name) are parsed from the lae_automation_config.json configuration file.
+Some AWS credentials are parsed from the lae_automation_config.json
+configuration file.
 """
 
-import sys, os, argparse 
+import sys, argparse
+#import os
+
 from lae_automation.config import Config
 from twisted.python.filepath import FilePath
 from lae_automation.initialize import deploy_infrastructure_EC2 
@@ -17,21 +19,35 @@ from lae_automation.signup import EC2_ENDPOINT
 from lae_automation.server import install_infrastructure_server
 from twisted.internet import defer
 
-parser = argparse.ArgumentParser(description="Deploy a new infrastructure server. You must specify each necessary repository-and-reference (e.g. leastauthority.com-and-SHA1) as an ordered pair of path_to_repository, and reference to the specific commit you want deployed.")
+parser = argparse.ArgumentParser(description="\
+Deploy a new infrastructure server. You must specify each necessary \
+repository-and-reference (e.g. leastauthority.com-and-SHA1) as a space-delimited \
+pair of path_to_repository, and reference to the specific commit hash you want \
+deployed.")
 
-parser.add_argument("ec2secret_paths", help="This space delimited ordered parameter pair consists of two parts:  First: path to the ec2 provisioning secret which authorizes the infrastructure server.  Second: the path to the key id file.", nargs=2)
+parser.add_argument("instance_size", help="\
+The instance size to use for the new server (e.g. 't1.micro' or 'm1.small').")
 
-parser.add_argument("leastauthority_com_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit. First: the absolute path to the git repository which contains the leastauthority.com code to deploy. Second: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
+parser.add_argument("leastauthority_com_version_ID", help="\
+This space-delimited pair specifies a commit, and consists of:  First: the absolute \
+path to the git repository that contains the leastauthority.com code to deploy. \
+Second: the reference to the specific commit hash, within that repository, that \
+will be deployed.", nargs=2)
 
-parser.add_argument("secrets_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit. First: the absolute path to the git repository which contains the secret_config code to deploy. Second: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
+parser.add_argument("secrets_version_ID", help="\
+This space-delimited pair specifies a commit, and consists of:  First: the absolute \
+path to the git repository that contains the secret_config code to deploy. \
+Second: the reference to the specific commit, within that repository, that will \
+be deployed.", nargs=2)
 
 exc_group = parser.add_mutually_exclusive_group()
 exc_group.add_argument('--existing_host', type=str)
-exc_group.add_argument('--new_host', type=str, help="How this instance is referred to e.g. via AWS console.")
+exc_group.add_argument('--new_host', type=str, help="\
+How this instance will be referred to, e.g. in the AWS console.")
 
 args = parser.parse_args()
-print "args: %s" % args
-print "args.leastauthority_com_version_ID[0]: %s" % args.leastauthority_com_version_ID[0]
+print "args: %s" % (args,)
+print
 
 ec2secretpath = args.ec2secret_paths[0]
 ec2accesskeyidpath = args.ec2secret_paths[1]
@@ -61,8 +77,6 @@ stdout = sys.stdout
 stderr = sys.stderr
 
 print config.other['deployment']
-#Configuration which is specific to the test account
-
 ec2accesskeyid = FilePath(ec2accesskeyidpath).getContent().strip()
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
@@ -73,8 +87,8 @@ def printer(x):
 
 def eb(x):
     """This handy function let's us see what's going on between errors in the callback chain."""
-    print >> sys.stderr, "Error returned ?"
-    print >> sys.stderr, x
+    print >>sys.stderr, "Error returned"
+    print >>sys.stderr, x
 
 if existing_host:
     d = defer.succeed(install_infrastructure_server(
