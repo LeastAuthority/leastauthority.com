@@ -25,6 +25,14 @@ repository-and-reference (e.g. leastauthority.com-and-SHA1) as a space-delimited
 pair of path_to_repository, and reference to the specific commit hash you want \
 deployed.")
 
+parser.add_argument("ec2secret_paths", help="\
+This space-delimited pair consists of two parts:  First: path to the EC2 provisioning \
+secret that authorizes deployment of the infrastructure server.  Second: the path \
+to the access key id file.", nargs=2)
+
+parser.add_argument("ami_image_id", help="\
+The AMI image ID to use for the new server.")
+
 parser.add_argument("instance_size", help="\
 The instance size to use for the new server (e.g. 't1.micro' or 'm1.small').")
 
@@ -51,6 +59,8 @@ print
 
 ec2secretpath = args.ec2secret_paths[0]
 ec2accesskeyidpath = args.ec2secret_paths[1]
+ami_image_id = args.ami_image_id
+instance_size = args.instance_size
 leastauthority_repo_path = args.leastauthority_com_version_ID[0]
 leastauth_commit_ref = args.leastauthority_com_version_ID[1]
 secret_conf_repo_path = args.secrets_version_ID[0]
@@ -64,10 +74,6 @@ configpath='../secret_config/lae_automation_config.json'
 
 config = Config(configpath)
 
-#Configuration copied from most recent product
-#https://en.wikipedia.org/wiki/Amazon_Machine_Image
-ami_image_id = str(config.products[-1]['ami_image_id']) 
-instance_size = str(config.products[-1]['instance_size'])
 keypair_name = str(config.other['admin_keypair_name'])
 admin_privkey_path = str(config.other['admin_privkey_path'])
 endpoint_uri = EC2_ENDPOINT
