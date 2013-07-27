@@ -76,7 +76,6 @@ website_pubkey = None
 stdout = sys.stdout
 stderr = sys.stderr
 
-print config.other['deployment']
 ec2accesskeyid = FilePath(ec2accesskeyidpath).getContent().strip()
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
