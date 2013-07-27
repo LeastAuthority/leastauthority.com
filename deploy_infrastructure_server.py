@@ -1,18 +1,15 @@
 #!/usr/bin/env python
-"""This script:
-(1) launches a new EC2 instance
-(2) provisions it with a version of the leastauthority.com repository
-(3) provisions it with a version of the secret_config repository
-(4) launches the webserver specified in those repositories
-
-Some AWS credentials are parsed from the lae_automation_config.json
-configuration file.
+"""
+This script:
+(1) launches a new EC2 instance;
+(2) provisions it with a version of the leastauthority.com repository;
+(3) provisions it with a version of the secret_config repository;
+(4) launches the webserver specified in those repositories.
 """
 
 import sys, argparse
 #import os
 
-from lae_automation.config import Config
 from twisted.python.filepath import FilePath
 from lae_automation.initialize import deploy_infrastructure_EC2 
 from lae_automation.signup import EC2_ENDPOINT
@@ -35,6 +32,13 @@ The AMI image ID to use for the new server.")
 
 parser.add_argument("instance_size", help="\
 The instance size to use for the new server (e.g. 't1.micro' or 'm1.small').")
+
+parser.add_argument("admin_keypair_name", help="\
+The name of the keypair (as configured in the AWS account) for the new server.\
+This is unused if --existing_host is specified.")
+
+parser.add_argument("admin_privkey_path", help="\
+The path to the private key (.pem) file of the keypair for the new server.")
 
 parser.add_argument("leastauthority_com_version_ID", help="\
 This space-delimited pair specifies a commit, and consists of:  First: the absolute \
@@ -61,6 +65,8 @@ ec2secretpath = args.ec2secret_paths[0]
 ec2accesskeyidpath = args.ec2secret_paths[1]
 ami_image_id = args.ami_image_id
 instance_size = args.instance_size
+admin_keypair_name = args.admin_keypair_name
+admin_privkey_path = args.admin_privkey_path
 leastauthority_repo_path = args.leastauthority_com_version_ID[0]
 leastauth_commit_ref = args.leastauthority_com_version_ID[1]
 secret_conf_repo_path = args.secrets_version_ID[0]
@@ -68,14 +74,6 @@ secrets_commit_ref = args.secrets_version_ID[1]
 existing_host = args.existing_host
 new_host = args.new_host
 
-# XXX configpath is a function of the secret_config repo specified in the arguments!
-
-configpath='../secret_config/lae_automation_config.json'
-
-config = Config(configpath)
-
-keypair_name = str(config.other['admin_keypair_name'])
-admin_privkey_path = str(config.other['admin_privkey_path'])
 endpoint_uri = EC2_ENDPOINT
 bucket_name = 'dummy'
 website_pubkey = None
@@ -104,7 +102,7 @@ if existing_host:
 elif new_host:
     d = deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri,
                                   ami_image_id, instance_size, bucket_name,
-                                  keypair_name, new_host,
+                                  admin_keypair_name, new_host,
                                   admin_privkey_path, website_pubkey,
                                   leastauthority_repo_path,
                                   leastauth_commit_ref,
