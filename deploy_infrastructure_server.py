@@ -19,6 +19,8 @@ from twisted.internet import defer
 
 parser = argparse.ArgumentParser(description="Deploy a new infrastructure server. You must specify each necessary repository-and-reference (e.g. leastauthority.com-and-SHA1) as an ordered pair of path_to_repository, and reference to the specific commit you want deployed.")
 
+parser.add_argument("ec2secret_path", help="The path to the ec2 provisioning secret which authorizes the infrastructure server.")
+
 parser.add_argument("leastauthority_com_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit. First: the absolute path to the git repository which contains the leastauthority.com code to deploy. Second: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
 
 parser.add_argument("secrets_version_ID", help="This ordered parameter-pair consists of two parts, which are sufficient to specify a commit. First: the absolute path to the git repository which contains the secret_config code to deploy. Second: the reference to the specific commit, within that repository, which will be deployed.", nargs=2)
@@ -31,6 +33,7 @@ args = parser.parse_args()
 print "args: %s" % args
 print "args.leastauthority_com_version_ID[0]: %s" % args.leastauthority_com_version_ID[0]
 
+ec2secretpath = args.ec2secret_path
 leastauthority_repo_path = args.leastauthority_com_version_ID[0]
 leastauth_commit_ref = args.leastauthority_com_version_ID[1]
 secret_conf_repo_path = args.secrets_version_ID[0]
@@ -52,7 +55,6 @@ instance_size = str(config.products[-1]['instance_size'])
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 keypair_name = str(config.other['admin_keypair_name'])
 admin_privkey_path = str(config.other['admin_privkey_path'])
-ec2secretpath = str(config.other['ec2_secret_path'])
 endpoint_uri = EC2_ENDPOINT
 bucket_name = 'dummy'
 website_pubkey = None
@@ -61,7 +63,6 @@ stderr = sys.stderr
 
 print config.other['deployment']
 #Configuration which is specific to the test account
-
 
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
