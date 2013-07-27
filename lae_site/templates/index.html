@@ -11,15 +11,15 @@
 
         var glowSwitch = function(){;
             var glowquotes = $('.glowquotes div');
-            $(glowquotes[CURRENTQUOTE]).hide(600);
+            $(glowquotes[CURRENTQUOTE]).hide(800);
             CURRENTQUOTE++;
             if (CURRENTQUOTE >= QUOTECOUNT) {
                 CURRENTQUOTE = 0;
             }
-            $(glowquotes[CURRENTQUOTE]).show(400);
+            $(glowquotes[CURRENTQUOTE]).show(800);
         };
 
-        var quoteSwitcher = window.setInterval(glowSwitch, 6000);
+        var quoteSwitcher = window.setInterval(glowSwitch, 8000);
     });
 </script>
 {% endblock %}
@@ -115,7 +115,7 @@
                 <br><span class="credit">— Mourad De Clerck</span>
             </div>
             <div style="display: none;">
-                <span>[W]e wish to highlight the Tahoe [LAFS] grid file system[...] Wider deployment of this type of file storage system would have an immediate impact on the quality of modern data protection.</span>
+                <span>Wider deployment of this type of file storage system [LAFS] would have an immediate impact on the quality of modern data protection.</span>
                 <br><span class="credit">— Comprehensive National Cybersecurity Initiative (CNCI), <em><a href="http://www.cyber.st.dhs.gov/docs/National_Cyber_Leap_Year_Summit_2009_Co-Chairs_Report.pdf">Report on National Cyber Leap Year Summit 2009</a></em></span>
             </div>
             <div style="display: none;">
@@ -140,7 +140,6 @@
         </div>
     </div>
     <section>
-        <br>
 {% endblock %}
 <!--     <section>
     <h3>Screenshots</h3>
