@@ -134,6 +134,7 @@ def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_im
                              ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, POLL_TIME,
                              ADDRESS_WAIT_TIME, instance.instance_id)
         print >>stdout, "instance is %s" % instance
+        print >>stdout, "waiting for addresses..."
         def  _got_addresses(addresses):
             CONSOLE_ACCESS_DELAY_TIME = 155
             address = addresses[0][0]
