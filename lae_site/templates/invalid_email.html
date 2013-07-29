@@ -7,8 +7,10 @@
 Thank you for your interest in {{ productfullname }}, but the email address you entered
 does not seem to be valid.
 </p>
-<p>
-Please <a href="/">go back</a> and try again.
-</p>
+<form action="/collect-email" method="post" enctype="multipart/form-data" class="big-signup-form signup-form form-inline">
+    <input type="text" name="Email" placeholder="Email address">
+    <input type="hidden" name="ProductName" value="{{ productname }}">
+    <button type="submit" class="btn btn-danger btn-large signup-button">Try again!</button>
+</form>
 
 {% endblock %}
