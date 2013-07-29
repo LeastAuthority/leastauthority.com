@@ -24,8 +24,6 @@
 </script>
 {% endblock %}
 
-{% block product_slug %}backup{% endblock %}
-
 {% block include_backup %}
 {% endblock %}
 
@@ -47,7 +45,7 @@
             <p>S4 is Least Authority's <strong>verifiably secure off-site backup system</strong> for individuals and businesses.</p>
             <p>With S4, we can never see your data, and you can always see our code. <a href="/product_s4/#how_it_works">Learn more &raquo;</a></p>
             <p>Just <strong>$50/month</strong> for up to 350 GB.</p>
-            {% include '_signup_form.html' %}
+            {% include '_signup_for_s4.html' %}
             {% block more_price %}{% endblock %}
         </div>
     </div>
@@ -141,17 +139,6 @@
     </div>
     <section>
 {% endblock %}
-<!--     <section>
-    <h3>Screenshots</h3>
-    </section>
-
-    <section>
-    <div class="highlight">
-    <h3>Get started with S4</h3>
-    <p>Send us your email address and we'll contact you with payment and setup instructions!</p>
-    {% include '_signup_form.html' %}
-    </div>
-    </section> -->
 
 {% block more_products %}
     <section>

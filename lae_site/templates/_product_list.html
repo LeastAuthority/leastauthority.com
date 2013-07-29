@@ -8,7 +8,7 @@
                     <p style="font-size: 1.2em;">S4 is Least Authority's <strong>secure off-site backup system</strong> for individuals and businesses.</p>
                     <p style="font-size: 1.2em;"><strong>Available now!</strong></p>
                     <p style="font-size: 1.2em;">Just <strong>$50/month</strong> for up to 350 GB.</p>
-                    {% include '_signup_form.html' %}
+                    {% include '_signup_for_s4.html' %}
                 </div>
             </div>
         </div>
@@ -24,11 +24,7 @@
             <p>Redundant Array of Independent Clouds (RAIC) will be a <strong>multi-cloud add-on</strong> to our other products.</p>
             </div>
         </div>
-        <form action="/collect-email" method="post" enctype="multipart/form-data" class="signup-form beta-signup-form form-inline">
-            <input type="text" name="Email" placeholder="Email address">
-            <input type="hidden" name="ProductName" value="raic">
-            <button type="submit" class="btn btn-danger btn-large signup-button">Sign up for alpha</button>
-        </form>
+        {% include '_signup_for_raic.html' %}
     </div>
     <div class="span6">
         <h3><a href="/queries_magicfolder/">Magic Folder</a></h3>
@@ -36,10 +32,6 @@
             <div class="span3"><a href="/queries_magicfolder/"><img src="/static/img/magicfolder.png" align="left" class="img-rounded"></a></div>
             <div class="span9"><p>Magic Folder will be a "Dropbox-esque", friendly <strong>file-syncing</strong> utility.</p></div>
         </div>
-        <form action="/collect-email" method="post" enctype="multipart/form-data" class="signup-form beta-signup-form form-inline">
-            <input type="text" name="Email" placeholder="Email address">
-            <input type="hidden" name="ProductName" value="magicfolder">
-            <button type="submit" class="btn btn-danger btn-large signup-button">Sign up for alpha</button>
-        </form>
+        {% include '_signup_for_magicfolder.html' %}
     </div>
 </div>
