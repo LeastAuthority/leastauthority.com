@@ -17,7 +17,9 @@ def make_site(basefp, config):
     resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
     resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
 
-    return Site(resource, logPath=basefp.child('sitelogs').path)
+    site = Site(resource, logPath=basefp.child('sitelogs').path)
+    site.displayTracebacks = False
+    return site
 
 
 EXPECTED_DOMAIN = 'leastauthority.com'
@@ -51,4 +53,6 @@ class RedirectToHTTPS(Resource):
 
 
 def make_redirector_site(port):
-    return Site(RedirectToHTTPS(port))
+    site = Site(RedirectToHTTPS(port))
+    site.displayTracebacks = False
+    return site
