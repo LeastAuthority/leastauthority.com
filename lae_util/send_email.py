@@ -7,6 +7,17 @@ from twisted.internet.reactor import connectTCP
 from twisted.mail.smtp import messageid, rfc822date, ESMTPSenderFactory
 
 
+SENDER_DOMAIN = "leastauthority.com"
+FROM_EMAIL = "info@leastauthority.com"
+FROM_ADDRESS = "Least Authority <%s>" % (FROM_EMAIL,)
+SUPPORT_ADDRESS = "Least Authority Support <support@leastauthority.com>"
+USER_AGENT = "Least Authority e-mail sender"
+
+SMTP_HOST = "smtp.googlemail.com"
+SMTP_PORT = 25
+SMTP_USERNAME = FROM_EMAIL
+
+
 def send_plain_email(smtphost, username, password, fromEmail, toEmail, content, headers,
                      senderDomainName=None, port=25, requireSSL=True):
     requireAuth = bool(password)
