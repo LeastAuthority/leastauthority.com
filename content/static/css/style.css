@@ -181,3 +181,50 @@ tt {
     font-style: italic;
     font-size: 16px;
 }
+
+/*
+ * Signup page
+ */
+
+.signup-button a {
+    display: inline-block;
+    font-size: 1.6em;
+    padding: 25px;
+    border-left: 4pt solid #f67777;
+    border-top: 4pt solid #f67777;
+    border-right: 4pt solid #cc0000;
+    border-bottom: 4pt solid #cc0000;
+    border-radius: 20px;
+    background: #f25050;
+    color: #300000;
+    font-weight: bold;
+    margin: 0 10px 0 10px;
+}
+
+.signup-button a:hover {
+    border-left: 4pt solid #ff6666;
+    border-top: 4pt solid #ff6666;
+    border-right: 4pt solid #bf000c;
+    border-bottom: 4pt solid #bf000c;
+    background: #f92f2f;
+    color: #000;
+}
+
+.signup-button a:active {
+    border-left: 4pt solid #aa0000;
+    border-top: 4pt solid #aa0000;;
+    border-right: 4pt solid #ef3f3f;
+    border-bottom: 4pt solid #ef3f3f;
+    background: #ff0000;
+    color: #eee;
+}
+
+.help-text {
+    font-size: .8em;
+    color: #666;
+    margin: 1em 10px;
+}
+
+.clearer {
+    clear: both;
+}
