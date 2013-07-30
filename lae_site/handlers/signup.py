@@ -2,6 +2,8 @@
 from twisted.web.util import Redirect
 from twisted.web.resource import Resource
 
+from lae_site.handlers.web import env
+
 
 class SignupHandler(Resource):
     isLeaf = 0
