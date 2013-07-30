@@ -12,3 +12,8 @@ class SignupHandler(Resource):
         self.putChild('', Redirect('/products'))
         for product in self.products:
             self.putChild(str(product['short_name']), Redirect(str(product['signup_url'])))
+
+    def render_GET(self, request):
+        tmpl = env.get_template('products.html')
+        request.setResponseCode(200)
+        return tmpl.render().encode('utf-8', 'replace')
