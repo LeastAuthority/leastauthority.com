@@ -180,9 +180,10 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                                      usersecretkey, usertoken, producttoken, bucketname, oldsecrets,
                                      stdout, stderr, secretsfile)
 
-                # XXX We'll have to ammend this:
-                initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
-                                            sinkname_suffix, [instance.instance_id, 'SSEC2s'])
+                # Disabled for now.
+                #initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
+                #                            sinkname_suffix, [instance.instance_id, 'SSEC2s'])
+
                 # XXX We probably need to rethink this:
                 append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id,
                               publichost)
