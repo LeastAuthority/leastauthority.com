@@ -92,25 +92,40 @@
 
     <p>Here's how it works:</p>
 
-    <img src="static/img/network-and-reliance-topology.png">
+    <img src="/static/img/network-and-reliance-topology.png">
 
-<p>A "storage grid" is made up of a number of storage servers. A storage server has direct attached storage (typically one or more hard disks). A "gateway" uses the storage servers and provides access to the filesystem over HTTP(S) or (S)FTP.
+<p>A "storage grid" is made up of one or more storage servers. In the case of S4, the grid has one server
+which is run by Least Authority, and configured to store its data in Amazon S3. A "gateway" uses the storage
+servers and provides access to the filesystem over HTTP(S) or (S)FTP.
 
-<p>Users do not rely on storage servers to provide confidentiality nor integrity for their data -- instead all of the data is encrypted and integrity-checked by the gateway, so that the servers can neither read nor modify the contents of the files.</p>
+<p>Users do not rely on storage servers to provide confidentiality nor integrity for their data -- instead all
+of the data is encrypted and integrity-checked by the gateway, so that the servers can neither read nor modify
+the contents of the files. Users do rely on storage servers for availability.</p>
 
-<p>Users do rely on (some) storage servers for availability. The ciphertext is erasure-coded into N shares distributed across at least H distinct storage servers (the default value for N is 10 and for H is 7) so that it can be recovered from any K of these servers (the default value of K is 3). Therefore only the failure of H-K+1 (with the defaults, 5) servers can make the data unavailable.</p>
+<p>In the typical deployment mode each user runs her own gateway on her own machine. This way she relies on
+her own machine for the confidentiality and integrity of the data.</p>
 
-<p>In the typical deployment mode each user runs her own gateway on her own machine. This way she relies on her own machine for the confidentiality and integrity of the data.</p>
-
-<p>An alternate deployment mode is that the gateway runs on a remote machine and the user connects to it over HTTPS or SFTP. This means that the operator of the gateway can view and modify the user's data (the user relies on the gateway for confidentiality and integrity), but the advantage is that the user can access the filesystem with a client that doesn't have the gateway software installed, such as an Internet kiosk or cell phone.</p>
+<p>An alternate deployment mode is that the gateway runs on a remote machine and the user connects to it over
+HTTPS or SFTP. This means that the operator of the gateway can view and modify the user's data (the user relies
+on the gateway for confidentiality and integrity), but the advantage is that the user can access the filesystem
+with a client that doesn't have the gateway software installed, such as a cell phone.</p>
 
 <p><a href="http://bigasterisk.com/tahoe-playground/">Here is an interactive demonstration of LAFS</a> storing and recovering a file.</p>
 
-<p>LAFS also supports access control. In LAFS, there are two kinds of files: immutable and mutable. When you upload a file to the storage grid you can choose which kind of file it will be in the grid. Immutable files can't be modified once they have been uploaded. A mutable file can be modified by someone with read-write access to it. A user can have read-write access to a mutable file or read-only access to it, or no access to it at all.</p>
+<p>LAFS also supports access control. In LAFS, there are two kinds of files: immutable and mutable. When you
+upload a file to the storage grid you can choose which kind of file it will be in the grid. Immutable files
+can't be modified once they have been uploaded. A mutable file can be modified by someone with read-write access
+to it. A user can have read-write access to a mutable file or read-only access to it, or no access to it at all.</p>
 
-<p>A user who has read-write access to a mutable file or directory can give another user read-write access to that file or directory, or they can give read-only access to that file or directory. A user who has read-only access to a file or directory can give another user read-only access to it.</p>
+<p>A user who has read-write access to a mutable file or directory can give another user read-write access to that
+file or directory, or they can give read-only access to that file or directory. A user who has read-only access
+to a file or directory can give another user read-only access to it.</p>
 
-<p>When linking a file or directory into a parent directory, you can use a read-write link or a read-only link. If you use a read-write link, then anyone who has read-write access to the parent directory can gain read-write access to the child, and anyone who has read-only access to the parent directory can gain read-only access to the child. If you use a read-only link, then anyone who has either read-write or read-only access to the parent directory can gain read-only access to the child.</p>
+<p>When linking a file or directory into a parent directory, you can use a read-write link or a read-only link.
+If you use a read-write link, then anyone who has read-write access to the parent directory can gain read-write
+access to the child, and anyone who has read-only access to the parent directory can gain read-only access to
+the child. If you use a read-only link, then anyone who has either read-write or read-only access to the parent
+directory can gain read-only access to the child.</p>
 
 <p>For more technical detail, please see the <a href="https://tahoe-lafs.org/trac/tahoe-lafs/wiki/Doc">LAFS project's docs page</a>.</p>
 </section>
