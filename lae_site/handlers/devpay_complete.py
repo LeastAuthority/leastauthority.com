@@ -3,11 +3,15 @@ import logging, pprint, sys, traceback, re
 from urllib import quote
 from cgi import escape as htmlEscape
 
+from twisted.internet import defer
+from twisted.python.filepath import FilePath
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 
 from lae_util.flapp import FlappCommand
 from lae_util.servers import append_record
+from lae_util.send_email import send_plain_email, \
+     SENDER_DOMAIN, FROM_EMAIL, FROM_ADDRESS, SUPPORT_ADDRESS, USER_AGENT, SMTP_HOST, SMTP_PORT, SMTP_USERNAME
 
 from lae_site.handlers.web import env
 
@@ -234,6 +238,37 @@ it manually if possible, and email you when that is done or if we need more info
 </html>
 """
 
+AUTOREPLY_EMAIL_SUBJECT = "Thank you for your interest in %(full_product_name)s"
+
+AUTOREPLY_NOT_READY_EMAIL_BODY = """Hello,
+
+We've received your request to sign up for %(full_product_name)s.
+When we're ready to sign you up, we'll send another email.
+
+If you have any questions in the meantime, please email them to
+<support@LeastAuthority.com>.
+
+Thanks for your patience.
+
+--\x20
+The Least Authority Enterprises team
+"""
+
+AUTOREPLY_READY_EMAIL_BODY = """Hello,
+
+We've received your request to sign up for %(full_product_name)s.
+
+Please go to %(signup_url)s to confirm your sign up and
+payment details with Amazon Payments.
+
+If you have any questions, please email them to <support@LeastAuthority.com>.
+
+Thanks!
+
+--\x20
+The Least Authority Enterprises team
+"""
+
 
 def get_full_name(productcode, products):
     matches = [p['full_name'] for p in products if p['product_code'] == productcode]
@@ -301,11 +336,61 @@ class CollectEmailHandler(HandlerBase):
         append_record(self.basefp.child(EMAILS_FILE), email, productname)
 
         request.setResponseCode(200)
+
         if email and VALID_EMAIL_RE.match(email):
             tmpl = env.get_template('valid_email.html')
+            (start, _, rest) = tmpl.render(productname=productname, productfullname=productfullname).encode('utf-8').partition("MAGIC")
+            request.write(start)
+
+            d = defer.succeed(None)
+            d.addCallback(lambda ign: send_autoreply(email, productfullname, None))
+            def _sent(ign):
+                request.write("We've sent you an email to check that your address is working, and we'll be in contact "
+                              "again when we're ready to sign you up.")
+                request.write(rest)
+            def _error(f):
+                request.write("We weren't able to send email to the address you provided. This could be a problem on "
+                              "our end, but please check the address. We've recorded the address anyway so that we can "
+                              "try again manually.")
+                request.write(rest)
+                print >>self.out, str(f)
+            d.addCallbacks(_sent, _error)
+            d.addBoth(lambda ign: request.finish())
+            def _err(f):
+                print >>self.out, str(f)
+            d.addErrback(_err)
+            return NOT_DONE_YET
         else:
             tmpl = env.get_template('invalid_email.html')
-        return tmpl.render(productname=productname, productfullname=productfullname).encode('utf-8')
+            return tmpl.render(productname=productname, productfullname=productfullname).encode('utf-8')
+
+
+def send_autoreply(customer_email, full_product_name, signup_url, password_path='../secret_config/smtppassword'):
+    password = FilePath(password_path).getContent().strip()
+
+    # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
+    # but I'm being cautious for now since I haven't reviewed email.mime.text.MIMEText to make sure that's safe.
+    if signup_url is None:
+        content = AUTOREPLY_NOT_READY_EMAIL_BODY % {
+                   "full_product_name": full_product_name,
+                  }
+    else:
+        content = AUTOREPLY_READY_EMAIL_BODY % {
+                   "full_product_name": full_product_name,
+                   "signup_url": signup_url,
+                  }
+
+    headers = {
+               "From": FROM_ADDRESS,
+               "Reply-To": SUPPORT_ADDRESS,
+               "Subject": AUTOREPLY_EMAIL_SUBJECT % {"full_product_name": full_product_name},
+               "User-Agent": USER_AGENT,
+               "Content-Type": 'text/plain; charset="utf-8"',
+              }
+
+    d = send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, customer_email,
+                         content, headers, SENDER_DOMAIN, SMTP_PORT)
+    return d
 
 
 class DevPayPurchaseHandler(HandlerBase):
@@ -364,7 +449,7 @@ successful_activationkeys = None
 
 def start(basefp):
     global flappcommand, all_activationkeys, successful_activationkeys
-    
+
     signup_furl_fp = basefp.child('secret_config').child(SIGNUP_FURL_FILE)
     activation_requests_fp = basefp.child(ACTIVATION_REQUESTS_FILE)
     signups_fp = basefp.child(SIGNUPS_FILE)

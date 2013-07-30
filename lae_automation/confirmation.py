@@ -2,7 +2,8 @@
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
 
-from lae_util.send_email import send_plain_email
+from lae_util.send_email import send_plain_email, \
+     SENDER_DOMAIN, FROM_EMAIL, FROM_ADDRESS, USER_AGENT, SMTP_HOST, SMTP_PORT, SMTP_USERNAME
 
 
 CONFIRMATION_EMAIL_SUBJECT = "Your sign-up to Tahoe-LAFS-on-S3 is complete"
@@ -53,15 +54,6 @@ Good luck!
 signup.py
 """
 
-
-SENDER_DOMAIN = "leastauthority.com"
-FROM_EMAIL = "info@leastauthority.com"
-FROM_ADDRESS = "Least Authority Enterprises <%s>" % (FROM_EMAIL,)
-USER_AGENT = "Least Authority Enterprises e-mail sender"
-
-SMTP_HOST = "smtp.googlemail.com"
-SMTP_PORT = 25
-SMTP_USERNAME = FROM_EMAIL
 
 NOTIFY_FAILURE_EMAIL = "support@leastauthority.com"
 
