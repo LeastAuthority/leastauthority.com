@@ -242,13 +242,6 @@ def get_full_name(productcode, products):
     return matches[0]
 
 
-def get_full_name_from_short_name(short_name, products):
-    matches = [p['full_name'] for p in products if p['short_name'] == short_name]
-    if len(matches) != 1:
-        return "Unknown"
-    return matches[0]
-
-
 class HandlerBase(Resource):
     def __init__(self, out=None, *a, **kw):
         Resource.__init__(self, *a, **kw)
@@ -303,7 +296,7 @@ class CollectEmailHandler(HandlerBase):
         print >>self.out, "Yay, another potential customer:", request.args
         email = self.get_arg(request, 'Email')
         productname = self.get_arg(request, 'ProductName')
-        productfullname = get_full_name_from_short_name(productname, self.products)
+        productfullname = self.get_arg(request, 'ProductFullName')
 
         append_record(self.basefp.child(EMAILS_FILE), email, productname)
 

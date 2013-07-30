@@ -76,11 +76,12 @@ class Handlers(TestCase):
         d = devpay_complete.start(self.basefp)
         d.addCallback(lambda ign:
                       self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
-                                         "POST", Email=["fred@example.com"], ProductName=["product"]))
+                                         "POST", Email=["fred@example.com"], ProductName=["product"],
+                                         ProductFullName=["Yummy cloud hotness"]))
 
         def _finished_valid( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
-            self.failUnlessIn('Thank you for your interest in Yummy cloud hotness for everyone!', output)
+            self.failUnlessIn('Thank you for your interest in Yummy cloud hotness!', output)
             self.failUnlessIn('<a href="/signup/product">', output)
             self.failUnlessIn("fred@example.com,product\n",
                               FilePath("emails.csv").getContent())
@@ -88,11 +89,12 @@ class Handlers(TestCase):
 
         d.addCallback(lambda ign:
                       self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
-                                         "POST", Email=["blah"], ProductName=["product"]))
+                                         "POST", Email=["blah"], ProductName=["product"],
+                                         ProductFullName=["Yummy cloud hotness"]))
 
         def _finished_invalid( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
-            self.failUnlessIn('Thank you for your interest in Yummy cloud hotness for everyone, but', output)
+            self.failUnlessIn('Thank you for your interest in Yummy cloud hotness, but', output)
             self.failUnlessIn('<a href="/">', output)
             self.failUnlessIn("blah,product\n",
                               FilePath("emails.csv").getContent())
