@@ -176,14 +176,14 @@ section {
     margin-top: 0;
     border-top: #eee;
     background-color: #e3e3e3;
-    height: 60px;
     font-size: .8em;
 }
 
 #copy {
     color: #aaa;
     text-align: right;
-    padding: 15px 0 0 0;
+    padding: 15px 0;
+    float: right;
 }
 
 #footer .navlinks a {
