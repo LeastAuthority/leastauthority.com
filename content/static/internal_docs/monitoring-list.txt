@@ -1,0 +1,88 @@
+TODO: document how mailman was set up on theta:
+ * sudo apt-get install mailman
+ * sudo apt-get install postfix
+ * sudo apt-get install nginx
+ * sudo apt-get install thttpd
+
+sudo /etc/init.d/mailman start
+sudo /etc/init.d/postfix start
+sudo /etc/init.d/nginx start
+sudo thttpd -C /etc/thttpd/thttpd.conf
+
+crontab for website:
+# m h  dom mon dow   command
+@reboot /home/website/leastauthority.com/start.sh
+*/10 * * * * /home/website/leastauthority.com/multiservercheck.sh &> /dev/null
+
+postfix has config file
+
+/etc/thttpd/thttpd.conf:
+# NOTE: on leastauthority.com, we're only using thttpd to serve CGIs for
+# mailman. This one just listens on 127.0.0.1:8581 and does nothing but run
+# /var/lib/cgi-bin/mailman/*
+
+# This file is for thttpd processes created by /etc/init.d/thttpd.
+# Commentary is based closely on the thttpd(8) 2.25b manpage, by Jef Poskanzer.
+
+# Specifies an alternate port number to listen on.
+port=8581
+
+# Specifies a directory to chdir() to at startup. This is merely a convenience -
+# you could just as easily do a cd in the shell script that invokes the program.
+dir=/usr/lib
+
+# Do a chroot() at initialization time, restricting file access to the program's
+# current directory. If chroot is the compiled-in default (not the case on
+# Debian), then nochroot disables it. See thttpd(8) for details.
+nochroot
+#chroot
+[...]
+# Specifies a hostname to bind to, for multihoming. The default is to bind to
+# all hostnames supported on the local machine. See thttpd(8) for details.
+host=127.0.0.1
+
+/etc/nginx/sites-enabled/default:
+server {
+   listen 8443 default ssl;
+    server_name leastauthority.com;
+    ssl on;
+    ssl_certificate /home/website/leastauthority.com/keys/server.crt;
+    ssl_certificate_key /home/website/leastauthority.com/keys/server.key;
+    ssl_session_timeout 20m;
+    ssl_protocols SSLv3 TLSv1;
+    ssl_ciphers RSA:HIGH;
+    ssl_prefer_server_ciphers on;
+
+    access_log /home/website/mailman/server.log;
+
+    # match https://leastauthority.com:8443/cgi-bin/mailman/listinfo/*
+    # and ask thttpd to run the CGI for us
+    location /cgi-bin {
+        expires off;
+        include proxy_params;
+        proxy_pass http://127.0.0.1:8581;
+    }
+    location /images/mailman {
+        alias /var/lib/mailman/icons;
+    }
+    location /pipermail {
+        alias /var/lib/mailman/archives/public;
+        autoindex on;
+    }
+}
+
+/etc/mailman/mm_cfg.py:
+#-------------------------------------------------------------
+# If you change these, you have to configure your http server
+# accordingly (Alias and ScriptAlias directives in most httpds)
+DEFAULT_URL_PATTERN = 'https://%s:8443/cgi-bin/mailman/'
+PRIVATE_ARCHIVE_URL = '/cgi-bin/mailman/private'
+IMAGE_LOGOS         = '/images/mailman/'
+
+#-------------------------------------------------------------
+# Default domain for email addresses of newly created MLs
+DEFAULT_EMAIL_HOST = 'leastauthority.com'
+#-------------------------------------------------------------
+# Default host for web interface of newly created MLs
+DEFAULT_URL_HOST   = 'leastauthority.com'
+
