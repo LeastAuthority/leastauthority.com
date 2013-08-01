@@ -6,7 +6,7 @@ from lae_util.send_email import send_plain_email, \
      SENDER_DOMAIN, FROM_EMAIL, FROM_ADDRESS, USER_AGENT, SMTP_HOST, SMTP_PORT, SMTP_USERNAME
 
 
-CONFIRMATION_EMAIL_SUBJECT = "Your sign-up to Tahoe-LAFS-on-S3 is complete"
+CONFIRMATION_EMAIL_SUBJECT = "Your Simple Secure Storage Service is Activated"
 
 CONFIRMATION_EMAIL_BODY = """Hello %(customer_name)s,
 
