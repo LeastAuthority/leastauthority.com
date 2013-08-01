@@ -137,7 +137,7 @@ class Handlers(TestCase):
         def _finished( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn("<title>Activation requested</title>", output)
-            self.failUnlessIn("Your sign-up is complete.", output)
+            self.failUnlessIn("Your Simple Secure Storage Service has been activated", output)
             self.failUnlessIn(",ACTIVATIONKEY,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",
                               FilePath("activation_requests.csv").getContent())
             self.failUnlessIn(",success,ACTIVATIONKEY,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",
@@ -189,7 +189,7 @@ class Handlers(TestCase):
         def _finished_error( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn("<title>Activation requested</title>", output)
-            self.failUnlessIn("We weren't able to complete your sign-up automatically", output)
+            self.failUnlessIn("We weren't able to complete your account activation automatically", output)
             self.failUnlessIn(",ACTIVATIONKEY4,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",
                               FilePath("activation_requests.csv").getContent())
             self.failUnlessIn(",failure,ACTIVATIONKEY4,PRODUCTCODE,Joe %26 Mildred,joe+mildred@example.org,===BEGIN BLAH===\n",

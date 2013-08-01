@@ -38,7 +38,7 @@ def html(title, body):
 
 
 ACTIVATION_FORM_HTML = """<p>
-Your sign up is not quite finished; to complete it and activate your account,
+The activation of your account is not quite finished; to complete it,
 please tell us the name and email address you want us to use to communicate
 with you. We will not resell or pass on this email address, and will only use it
 in connection with your account, and to send you occasional announcements of new
@@ -96,9 +96,9 @@ The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
 """
 
 # TODO: allow customizing the text per-product.
-DEVPAY_RESPONSE_HAVE_CODES_HTML = html("Request activation for Simple Secure Storage Service", """
+DEVPAY_RESPONSE_HAVE_CODES_HTML = html("Activation for Simple Secure Storage Service", """
 <p>
-Thank you for requesting to sign up for Simple Secure Storage Service!
+Thank you for starting to activate your Simple Secure Storage Service!
 </p>
 """ + ACTIVATION_FORM_HTML)
 
@@ -106,9 +106,9 @@ Thank you for requesting to sign up for Simple Secure Storage Service!
 # In that case, the easiest way to get those codes is for the user to click on
 # the 'Go to Application' link, so tell them to do that, rather than requiring
 # them to paste in the code(s).
-DEVPAY_RESPONSE_MISSING_CODE_HTML = html("Request activation for Simple Secure Storage Service", """
+DEVPAY_RESPONSE_MISSING_CODE_HTML = html("Activation for Simple Secure Storage Service", """
 <p>
-Thank you for requesting to sign up for Simple Secure Storage Service!
+Thank you for starting to activate your Simple Secure Storage Service!
 </p>
 <p>
 Please follow the link above that says "click here to get activation
@@ -212,7 +212,7 @@ about your sign-up, please contact
 
 SUCCEEDED_HTML = """</pre>
 <p>
-Your sign-up is complete. Welcome to the alpha programme!
+Your Simple Secure Storage Service has been activated!
 </p>
 <p>
 Please go to
@@ -230,8 +230,9 @@ You will also shortly get a confirmation email at the address you provided.
 
 FAILED_HTML = """</pre>
 <p>
-We weren't able to complete your sign-up automatically, but don't worry, we'll finish
-it manually if possible, and email you when that is done or if we need more information.
+We weren't able to complete your account activation automatically, but don't worry,
+we'll finish it manually if possible, and email you when that is done or if we need
+more information.
 </p>
 <hr>
 </body>
