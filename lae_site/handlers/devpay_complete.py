@@ -85,10 +85,10 @@ provider-independent security means that you don't need to tell us any secrets a
 If this form does not work for any reason, you can also send the same information
 by email to <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
 <p>
-Happy Cloud Storing!
+Happy Simple Secure Storing!
 </p>
 <p>
-The Least Authority Enterprises team (Zooko, Daira and Za)
+The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
 </p>
 <hr>
 </body>
@@ -96,9 +96,9 @@ The Least Authority Enterprises team (Zooko, Daira and Za)
 """
 
 # TODO: allow customizing the text per-product.
-DEVPAY_RESPONSE_HAVE_CODES_HTML = html("Request activation for Tahoe-LAFS-on-S3 alpha", """
+DEVPAY_RESPONSE_HAVE_CODES_HTML = html("Request activation for Simple Secure Storage Service", """
 <p>
-Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
+Thank you for requesting to sign up for Simple Secure Storage Service!
 </p>
 """ + ACTIVATION_FORM_HTML)
 
@@ -106,9 +106,9 @@ Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
 # In that case, the easiest way to get those codes is for the user to click on
 # the 'Go to Application' link, so tell them to do that, rather than requiring
 # them to paste in the code(s).
-DEVPAY_RESPONSE_MISSING_CODE_HTML = html("Request activation for Tahoe-LAFS-on-S3 alpha", """
+DEVPAY_RESPONSE_MISSING_CODE_HTML = html("Request activation for Simple Secure Storage Service", """
 <p>
-Thank you for requesting to sign up for the Tahoe-LAFS-on-S3 alpha!
+Thank you for requesting to sign up for Simple Secure Storage Service!
 </p>
 <p>
 Please follow the link above that says "click here to get activation
@@ -120,10 +120,10 @@ Application</b> link for this subscription.
 If you have any problem completing the sign-up, please contact
 <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
 <p>
-Happy Cloud Storing!
+Happy Simple Secure Storing!
 </p>
 <p>
-The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
+The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
 </p>
 <hr>
 </body>
@@ -136,16 +136,16 @@ Your activation request has been received.
 </p>
 <p>
 When your account is activated, we will send you a confirmation email with
-instructions on how to start using Tahoe-LAFS-on-S3, or alternatively an email
-requesting any information that was missing. If you don't receive this within
-an hour (also check your spam folder in case it is there), please contact
-<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+instructions on how to start using Simple Secure Storage Service, or alternatively
+an email requesting any information that was missing. If you don't receive this
+within an hour (also check your spam folder in case it is there), please contact
+<a href="mailto:support@LeastAuthority.com">&lt;support@LeastAuthority.com&gt</a>.
 </p>
 <p>
-Thanks again for signing up, and especially with your help for the alpha test.
+Thanks again for signing up.
 </p>
 <p>
-The Least Authority Enterprises team (Zooko, David-Sarah and Zancas)
+The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
 </p>
 <hr>
 <p>
