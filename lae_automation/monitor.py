@@ -85,6 +85,9 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
             if now - launch_time < 10*60:
                 print >>stdout, ("Note: Ignoring unknown %s instance %s at %s because it was launched less than 10 minutes ago at %s."
                                  % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
+            elif rpt_status == 'terminated':
+                print >>stdout, ("Note: Ignoring %s instance %s at %s launched at %s."
+                                 % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
             else:
                 print >>stderr, ("Warning: The %s instance %s at %s launched at %s is not in the list of known servers."
                                  % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
