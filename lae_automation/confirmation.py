@@ -30,9 +30,9 @@ shares.total = 1
 
 (The introducer.furl setting should be on one line.)
 
-For more User support, visit
+For User support, visit
 
-  https://leastauthority.zendesk.com/home
+  https://leastauthority.com/support
 
 We hope you enjoy using our service and find it useful.
 
