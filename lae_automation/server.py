@@ -180,8 +180,8 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     sudo_apt_get('update')
     sudo_apt_get('dist-upgrade -y')
 
-    print >>stdout, "Rebooting server..."
-    api.reboot(100)
+    print >>stdout, "Rebooting server (this will take a while)..."
+    api.reboot(240)
 
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev')

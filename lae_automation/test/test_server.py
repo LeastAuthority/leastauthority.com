@@ -49,7 +49,7 @@ class TestServerModule(TestCase):
         self.patch(api, 'sudo', call_api_sudo)
 
         def call_api_reboot(seconds, *args, **kwargs):
-            self.failUnlessEqual(seconds, 100)
+            self.failUnlessEqual(seconds, 240)
         self.patch(api, 'reboot', call_api_reboot)
 
         def call_write(value, remote_path, use_sudo=False, mode=None):
