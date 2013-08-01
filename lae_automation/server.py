@@ -178,12 +178,8 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
 
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
-    sudo_apt_get('dist-upgrade -y')
-
-    print >>stdout, "Rebooting server (this will take a while)..."
-    api.reboot(240)
-
     print >>stdout, "Installing dependencies..."
+    
     sudo_apt_get('install -y python-dev')
     sudo_apt_get('install -y python-setuptools')
     sudo_apt_get('install -y exim4-base')

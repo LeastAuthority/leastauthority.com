@@ -267,7 +267,7 @@ def get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_i
 
 def wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, endpoint, poll_time, wait_time, stdout, stderr,
                        instance_id):
-    print >>stdout, "Attempting to get console data. Will try for %s seconds." % (wait_time,)
+    print >>stdout, "Waiting for AWS console data..."
     def _wait(remaining_time):
         d = get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint, instance_id)
         def _maybe_again(res):
