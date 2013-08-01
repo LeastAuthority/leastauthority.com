@@ -59,7 +59,7 @@ class TestConfirmation(unittest.TestCase):
         self.failUnlessIn('https://leastauthority.com/howtoconfigure', body)
         self.failUnlessIn(self.EXTERNAL_INTRODUCER_FURL, body)
         self.failUnlessIn('%s' % (self.PUBIP,), body)
-        self.failUnlessIn('https://leastauthority.com/support', body)
+        self.failUnlessIn('https://leastauthority.zendesk.com/home', body)
 
         eventually(d.callback, None)
         return self.the_factory
