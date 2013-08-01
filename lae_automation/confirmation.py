@@ -10,7 +10,7 @@ CONFIRMATION_EMAIL_SUBJECT = "Your sign-up to Tahoe-LAFS-on-S3 is complete"
 
 CONFIRMATION_EMAIL_BODY = """Hello %(customer_name)s,
 
-Welcome to the alpha programme!  Please go to
+Congratulations on activating your Simple Secure Storage Service!  Please go to
 
   https://leastauthority.com/howtoconfigure
 
@@ -30,9 +30,9 @@ shares.total = 1
 
 (The introducer.furl setting should be on one line.)
 
-For more information, see
+For more User support, visit
 
-  https://leastauthority.com/support
+  https://leastauthority.zendesk.com/home
 
 We hope you enjoy using our service and find it useful.
 
