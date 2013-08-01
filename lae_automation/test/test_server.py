@@ -134,7 +134,7 @@ class TestServerModule(TestCase):
             ('apt-get install -y python-setuptools', False, {}),
             ('apt-get install -y exim4-base', False, {}),
             ('apt-get install -y darcs', False, {}),
-            ('easy_install foolscap', False, {}),
+            ('apt-get install -y python-foolscap', False, {}),
             ('python ./setup.py install', False, {}),
             ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
             ('mkdir -p /home/customer/.ssh/', False, {}),

@@ -143,9 +143,6 @@ def set_host_and_key(publichost, ssh_private_keyfile, username="ubuntu"):
 def sudo_apt_get(argstring):
     sudo('apt-get %s' % argstring)
 
-def sudo_easy_install(argstring):
-    sudo('easy_install %s' % argstring)
-
 def write(value, remote_path, use_sudo=False, mode=None):
     # There's an incompletely understood interaction between use_sudo and mode.
     # It can result in cryptic remote file names when use_sudo is True and
@@ -191,7 +188,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     sudo_apt_get('install -y python-setuptools')
     sudo_apt_get('install -y exim4-base')
     sudo_apt_get('install -y darcs')
-    sudo_easy_install('foolscap')
+    sudo_apt_get('install -y python-foolscap')
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
@@ -287,7 +284,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 '
                             'python-nevow python-dateutil fabric python-foolscap python-twisted-mail')
-    #sudo_easy_install('foolscap')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
     sudo_apt_get('install -y postfix')
