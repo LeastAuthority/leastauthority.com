@@ -186,10 +186,8 @@ TO_EMAIL2 = "monitoring@leastauthority.com"
 USER_AGENT = "Least Authority Enterprises e-mail sender"
 
 SMTP_HOST = "smtp.googlemail.com"
-SMTP_HOST2 = "127.0.0.1"
 SMTP_PORT = 25
 SMTP_USERNAME = FROM_EMAIL
-SMTP_USERNAME2 = ''
 
 
 def send_monitoring_report(errors, password_path='../secret_config/smtppassword'):
@@ -208,7 +206,6 @@ def send_monitoring_report(errors, password_path='../secret_config/smtppassword'
 
     d = send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, TO_EMAIL,
                          content, headers, SENDER_DOMAIN, SMTP_PORT)
-    d.addBoth(lambda ign: send_plain_email(SMTP_HOST2, SMTP_USERNAME2, '', FROM_EMAIL, TO_EMAIL2,
-                                           content, headers, SENDER_DOMAIN, SMTP_PORT,
-                                           requireSSL=False))
+    d.addBoth(lambda ign: send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, TO_EMAIL2,
+                                           content, headers, SENDER_DOMAIN, SMTP_PORT))
     return d
