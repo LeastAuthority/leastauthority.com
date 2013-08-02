@@ -318,12 +318,12 @@ Product page
     margin-left: 30px;
 }
 
-pre, tt {
+pre, .code {
     font-family: monospace;
     font-size: 1em;
 }
 
-tt {
+.code {
     background: #eee;
 }
 
