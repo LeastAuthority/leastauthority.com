@@ -76,7 +76,7 @@ h3.section-header {
 }
 
 h4, h5 {
-    font-size: 1.2em;
+    font-size: 1.3em;
     font-weight: 300;
     margin-bottom: 0;
 }
@@ -94,17 +94,11 @@ a, a:visited, a.btn {
 a:hover:not(.btn), a:hover:not(img) {
     color: rgb(189, 54, 47);
     text-decoration: none;
-/*    border-bottom: 1pt dotted rgb(189, 54, 47);
-*/}
+}
 
 a:active {
     text-decoration: none;
     color: #ec291f;
-}
-
-
-p, blockquote, li {
-    font-size: 15px;
 }
 
 .left {
