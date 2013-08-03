@@ -12,6 +12,7 @@
     {% block scripts %}{% endblock %}
 </head>
 <body>
+    {% block nav %}
     <div class="nav">
         <div class="container">
             <div class="row-fluid">
@@ -26,6 +27,7 @@
             </div>
       </div>
     </div>
+    {% endblock nav %}
     <div class="container site-container">
         <div class="container">
             <div id="main_wrap" class="row-fluid">
@@ -35,6 +37,7 @@
             </div>
         </div>
     </div>
+    {% block footer %}
     <div id="footer_wrap">
         <div id="footer" class="container">
             <div class="row-fluid">
@@ -47,6 +50,7 @@
             </div>
         </div>
     </div>
+    {% endblock footer %}
 <!-- Piwik -->
 <script type="text/javascript"> 
   var _paq = _paq || [];
