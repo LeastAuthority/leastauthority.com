@@ -7,19 +7,28 @@
         $('.glowquotes div').hide();
         QUOTECOUNT = $('.glowquotes div').length;
         CURRENTQUOTE = 0;
+        CAN_ROTATE = true;
         $($('.glowquotes div')[CURRENTQUOTE]).show();
 
         var glowSwitch = function(){;
             var glowquotes = $('.glowquotes div');
-            $(glowquotes[CURRENTQUOTE]).hide(800);
-            CURRENTQUOTE++;
-            if (CURRENTQUOTE >= QUOTECOUNT) {
-                CURRENTQUOTE = 0;
+            if (CAN_ROTATE) {
+                $(glowquotes[CURRENTQUOTE]).hide(800);
+                CURRENTQUOTE++;
+                if (CURRENTQUOTE >= QUOTECOUNT) {
+                    CURRENTQUOTE = 0;
+                }
+                $(glowquotes[CURRENTQUOTE]).show(800);
             }
-            $(glowquotes[CURRENTQUOTE]).show(800);
         };
 
-        var quoteSwitcher = window.setInterval(glowSwitch, 8000);
+        $('.glowquotes div').mouseover(function(){
+            CAN_ROTATE = false;
+        }).mouseout(function(){
+            CAN_ROTATE = true;
+        });
+
+        var quoteSwitcher = window.setInterval(glowSwitch, 6000);
     });
 </script>
 {% endblock %}
