@@ -467,12 +467,12 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     print >>stdout, "Starting introducer..."
-    run('rm -f /home/customer/introducer/introducer.furl')
+    run('rm -f /home/customer/introducer/introducer.furl /home/customer/introducer/logport.furl')
     write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
     write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
 
     if oldsecrets:
-        restore_secrets(oldsecrets, stdout, stderr)
+        restore_secrets(oldsecrets, 'introducer', stdout, stderr)
 
     run('LAFS_source/bin/tahoe restart introducer && sleep 5')
 
@@ -489,10 +489,14 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
                                       'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
                                       'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
     write(tahoe_cfg, '/home/customer/storageserver/tahoe.cfg')
+
+    if oldsecrets:
+        restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
+
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0440)
-    write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0440)
-    write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0440)
+    write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
+    write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
+    write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
 
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
@@ -501,6 +505,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
 
     set_up_reboot(stdout, stderr)
 
+    # FIXME: eliminate code duplication with record_secrets.
     introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
     introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
     server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
@@ -729,20 +734,20 @@ def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_
     run('crontab /home/monitor/ctab')
 
 
-def restore_secrets(secrets, stdout, stderr):
-    if 'introducer_node_pem' in secrets and 'introducer_nodeid' in secrets:
-        print >>stdout, "Restoring introducer identity..."
-        write(secrets['introducer_node_pem'], '/home/customer/introducer/private/node.pem', mode=0440)
-        write(secrets['introducer_nodeid'],   '/home/customer/introducer/my_nodeid')
-    else:
-        print >>stderr, "Warning: missing field for introducer identity."
+def restore_secrets(secrets, nodetype, stdout, stderr):
+    node_pem = secrets.get(nodetype + '_node_pem', '')
+    nodeid   = secrets.get(nodetype + '_nodeid', '')
+    dirname  = nodetype
 
-    if 'server_node_pem' in secrets and 'server_nodeid' in secrets:
-        print >>stdout, "Restoring storage server identity..."
-        write(secrets['server_node_pem'], '/home/customer/storageserver/private/node.pem', mode=0440)
-        write(secrets['server_nodeid'],   '/home/customer/storageserver/my_nodeid')
+    print >>stdout, "Attempting to restore %s identity..." % (nodetype,)
+    run('mkdir -p --mode=700 /home/customer/%s/private' % (dirname,))
+
+    if node_pem and nodeid:
+        run('chmod -f u+w /home/customer/%s/private/node.pem' % (dirname,))
+        write(node_pem, '/home/customer/%s/private/node.pem' % (dirname,), mode=0640)
+        write(nodeid,   '/home/customer/%s/my_nodeid' % (dirname,))
     else:
-        print >>stderr, "Warning: missing field for storage server identity."
+        print >>stderr, "Warning: missing field(s) for %s identity." % (nodetype,)
 
 
 def setremoteconfigoption(pathtoremote, section, option, value):
