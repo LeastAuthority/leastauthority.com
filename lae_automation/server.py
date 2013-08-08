@@ -470,10 +470,11 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
     run('rm -f /home/customer/introducer/introducer.furl')
     write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
     write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
-    run('LAFS_source/bin/tahoe restart introducer && sleep 5')
 
     if oldsecrets:
         restore_secrets(oldsecrets, stdout, stderr)
+
+    run('LAFS_source/bin/tahoe restart introducer && sleep 5')
 
     internal_introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
@@ -731,16 +732,14 @@ def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_
 def restore_secrets(secrets, stdout, stderr):
     if 'introducer_node_pem' in secrets and 'introducer_nodeid' in secrets:
         print >>stdout, "Restoring introducer identity..."
-        run('LAFS_source/bin/tahoe stop introducer && sleep 5')
-        write(secrets['introducer_node_pem'], '/home/customer/introducer/private/node.pem')
+        write(secrets['introducer_node_pem'], '/home/customer/introducer/private/node.pem', mode=0440)
         write(secrets['introducer_nodeid'],   '/home/customer/introducer/my_nodeid')
-        run('LAFS_source/bin/tahoe restart introducer && sleep 5')
     else:
         print >>stderr, "Warning: missing field for introducer identity."
 
     if 'server_node_pem' in secrets and 'server_nodeid' in secrets:
         print >>stdout, "Restoring storage server identity..."
-        write(secrets['server_node_pem'], '/home/customer/storageserver/private/node.pem')
+        write(secrets['server_node_pem'], '/home/customer/storageserver/private/node.pem', mode=0440)
         write(secrets['server_nodeid'],   '/home/customer/storageserver/my_nodeid')
     else:
         print >>stderr, "Warning: missing field for storage server identity."
