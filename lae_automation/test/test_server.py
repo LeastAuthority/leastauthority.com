@@ -231,7 +231,7 @@ class TestServerModule(TestCase):
                                       'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
         self.WHOAMI_FIFO = []
         self.RUNARGS_FIFO = fifo([
-                ('rm -f /home/customer/introducer/introducer.furl', False, {}),
+                ('rm -f /home/customer/introducer/introducer.furl /home/customer/introducer/logport.furl', False, {}),
                 ('LAFS_source/bin/tahoe restart introducer && sleep 5', False, {}),
                 ('cat /home/customer/introducer/introducer.furl', False, {}),
                 ('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.', False, {}),
@@ -249,9 +249,9 @@ class TestServerModule(TestCase):
                 (INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port', False, None),
                 (SERVER_PORT + '\n', '/home/customer/storageserver/client.port', False, None),
                 (test_tahoe_cfg, '/home/customer/storageserver/tahoe.cfg', False, None),
-                (SECRETACCESSKEY, '/home/customer/storageserver/private/s3secret', False, 0440),
-                (USERTOKEN, '/home/customer/storageserver/private/s3usertoken', False, 0440),
-                (PRODUCTTOKEN, '/home/customer/storageserver/private/s3producttoken', False, 0440),
+                (SECRETACCESSKEY, '/home/customer/storageserver/private/s3secret', False, 0640),
+                (USERTOKEN, '/home/customer/storageserver/private/s3usertoken', False, 0640),
+                (PRODUCTTOKEN, '/home/customer/storageserver/private/s3producttoken', False, 0640),
                 (RESTART_SCRIPT, '/home/customer/restart.sh', False, 0750),
                 ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
                 ])

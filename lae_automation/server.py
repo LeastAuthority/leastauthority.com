@@ -743,7 +743,7 @@ def restore_secrets(secrets, nodetype, stdout, stderr):
     run('mkdir -p --mode=700 /home/customer/%s/private' % (dirname,))
 
     if node_pem and nodeid:
-        run('chmod -f u+w /home/customer/%s/private/node.pem' % (dirname,))
+        run('chmod u+w /home/customer/%s/private/node.pem || echo No existing node.pem.' % (dirname,))
         write(node_pem, '/home/customer/%s/private/node.pem' % (dirname,), mode=0640)
         write(nodeid,   '/home/customer/%s/my_nodeid' % (dirname,))
     else:
