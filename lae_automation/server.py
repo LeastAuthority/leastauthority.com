@@ -408,6 +408,8 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
         introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
         server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
         server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
+        server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
+                                  ' then cat /home/customer/storageserver/private/node.privkey; fi')
 
         tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
         config = SafeConfigParser()
@@ -439,6 +441,7 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
             'introducer_nodeid':        introducer_nodeid,
             'server_node_pem':          server_node_pem,
             'server_nodeid':            server_nodeid,
+            'server_node_privkey':      server_node_privkey,
             'internal_introducer_furl': internal_introducer_furl,
             'external_introducer_furl': external_introducer_furl,
         })
@@ -510,6 +513,8 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
     introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
     server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
     server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
+    server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
+                              ' then cat /home/customer/storageserver/private/node.privkey; fi')
 
     print >>stdout, "The introducer and storage server are running."
 
@@ -540,6 +545,7 @@ shares.total = 1
         'introducer_nodeid':        introducer_nodeid,
         'server_node_pem':          server_node_pem,
         'server_nodeid':            server_nodeid,
+        'server_node_privkey':      server_node_privkey,
         'internal_introducer_furl': internal_introducer_furl,
         'external_introducer_furl': external_introducer_furl,
     })
@@ -748,6 +754,14 @@ def restore_secrets(secrets, nodetype, stdout, stderr):
         write(nodeid,   '/home/customer/%s/my_nodeid' % (dirname,))
     else:
         print >>stderr, "Warning: missing field(s) for %s identity." % (nodetype,)
+
+    if nodetype == 'storageserver':
+        # This is used by versions of Tahoe-LAFS that support signed introductions.
+        server_node_privkey = secrets.get('server_node_privkey', '')
+        if server_node_privkey:
+            write(server_node_privkey, '/home/customer/%s/private/node.privkey' % (dirname,), mode=0640)
+        else:
+            print >>stderr, "Warning: not restoring server's node.privkey."
 
 
 def setremoteconfigoption(pathtoremote, section, option, value):

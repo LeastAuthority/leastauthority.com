@@ -242,7 +242,8 @@ class TestServerModule(TestCase):
                 ('cat /home/customer/introducer/private/node.pem', False, {}),
                 ('cat /home/customer/introducer/my_nodeid', False, {}),
                 ('cat /home/customer/storageserver/private/node.pem', False, {}),
-                ('cat /home/customer/storageserver/my_nodeid', False, {})
+                ('cat /home/customer/storageserver/my_nodeid', False, {}),
+                ('if [[ -e /home/customer/storageserver/private/node.privkey ]]; then cat /home/customer/storageserver/private/node.privkey; fi', False, {}),
                 ])
         self.SUDOARGS_FIFO = []
         self.WRITEARGS_FIFO = fifo([
