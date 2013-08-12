@@ -1,0 +1,25 @@
+{% extends '_base.html' %}
+
+{% block content %}
+
+<section>
+<h2>Magic Folder</h2>
+
+<div class="row-fluid">
+    <div class="span3"><img src="/static/img/magicfolder.png"></div>
+    <div class="span9 top-area">
+        <p>Magic Folder will be a verifiably secure, "Dropbox-esque" file-syncing utility usable by anyone. Sign up to be a beta tester now:</p>
+
+        {% include '_signup_for_magicfolder.html' %}
+    </div>
+</div>
+</section>
+
+<section>
+    <h3>How it will work</h3>
+    <p>Just put files (and folders full of files) inside the Magic Folder, and they will appear on any other authorized computer with Magic Folder installed. When you edit a file inside Magic Folder, it syncs automatically.</p>
+    <p>No more emailing files to yourself, no more clunky upload-download services, no more flash drives!</p>
+    <p>Even better, Magic Folder encrypts your data so that no one can listen in and read your files while they sync. <a href="/how_it_works">Learn how Magic Folder and Least Authority's other products keep your data safe and private &raquo;</a></p>
+</section>
+
+{% endblock content %}
