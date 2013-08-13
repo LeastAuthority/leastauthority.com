@@ -277,7 +277,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(COLLECTIONNAMES[0], 'i-MOCKEC2INSTANCEID')
             self.failUnlessEqual(COLLECTIONNAMES[1], 'SSEC2s')
             self.failUnlessEqual(suffixname, 'unitteststorageserver/rss')
-        self.patch(signup, 'initialize_statmover_source', call_initialize_statmover_source)
+        #self.patch(signup, 'initialize_statmover_source', call_initialize_statmover_source)
 
         from lae_automation.aws import queryapi
         def call_hostpubkeyextractor(consoletext, instanceId):
