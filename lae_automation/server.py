@@ -282,8 +282,9 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Rebooting server..."
     api.reboot(300)
     print >>stdout, "Installing dependencies..."
-    sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 '
-                            'python-nevow python-dateutil fabric python-foolscap python-twisted-mail')
+    sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 python-nevow '
+                 'python-dateutil fabric python-foolscap python-twisted-mail python-six '
+                 'python-unidecode python-tz python-docutils python-markdown')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
     sudo_apt_get('install -y postfix')
@@ -294,6 +295,11 @@ postfix	postfix/main_mailer_type select	No configuration"""
 #    sudo('rm /etc/nginx/sites-enabled/default')
 #    sudo('service nginx restart')
     
+    run('wget https://pypi.python.org/packages/source/p/pelican/pelican-3.2.2.tar.gz')
+    run('tar zxf pelican-3.2.2.tar.gz')
+    with cd('pelican-3.2.2'):
+        sudo('python setup.py install')
+
     create_account('website', website_pubkey, stdout, stderr)
 
     sudo_apt_get('install -y authbind')
