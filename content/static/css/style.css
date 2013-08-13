@@ -131,6 +131,19 @@ section {
     font-size: .8em;
     font-style: italic;
 }
+
+label {
+    font-size: 1.1em;
+}
+
+.form-row {
+    line-height: 2.8em;
+}
+
+input {
+    width: inherit;
+}
+
 /*
  * Nav
  */
