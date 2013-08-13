@@ -2,35 +2,6 @@
 
 {% block content %}
 <h2>Subscribe to S4</h2>
-
-  <!--<script src="https://checkout.stripe.com/v2/checkout.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.js"></script>
-
-  <button id="customButton" class="btn btn-danger btn-large signup-button">Purchase</button>
-
-  <script>
-    $('#customButton').click(function(){
-      var token = function(res){
-        var $input = $('<input type=hidden name=stripeToken />').val(res.id);
-        $('form').append($input).submit();
-      };
-
-      StripeCheckout.open({
-        key:         'pk_test_GhLIkGyZQCw5gfzQSGpygNQT',
-        address:     false,
-        amount:      5000,
-        currency:    'usd',
-        name:        'Least Authority',
-        description: 'S4 subscription ($50/month)',
-        image:       "static/img/s4.png",
-        panelLabel:  'Checkout',
-        token:       token
-      });
-
-      return false;
-    });
-  </script>-->
-
 <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
 <script type="text/javascript">
   // This identifies your website in the createToken call below
