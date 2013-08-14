@@ -36,3 +36,5 @@ DELETE_OUTPUT_DIRECTORY = True
 OUTPUT_PATH = '../lae_site/templates/blog/'
 
 FEED_DOMAIN = SITEURL
+
+DISQUS_SITENAME = 'leastauthority'
