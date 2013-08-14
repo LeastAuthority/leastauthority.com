@@ -319,9 +319,12 @@ postfix	postfix/main_mailer_type select	No configuration"""
     setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
     setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
 
+
     with cd('/home/website/'):
-        run('mkdir signup_logs')
-        run('mkdir secrets')
+        if not files.exists('signup_logs'):
+            run('mkdir signup_logs')
+        if not files.exists('secrets'):
+            run('mkdir secrets')
 
     with cd('/home/website/secret_config'):
         run('chmod 400 *pem')
