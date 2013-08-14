@@ -7,8 +7,12 @@
         <article class="hentry">
                 <header> <h3 class="entry-title"><a href="{{ SITEURL }}/{{ article.url }}" rel="bookmark" title="Permalink to {{ article.title|striptags }}">{{ article.title }}</a></h3> </header>
                 <footer class="post-info help-text">
-                    <abbr class="published"> {{ article.locale_date }} </abbr>
-                    {% if article.author %}<address class="vcard author">By <a class="url fn" href="{{ SITEURL }}/{{ article.author.url }}">{{ article.author }}</a></address>{% endif %}
+                    <div style="float: right;"><a href="{{ SITEURL }}/{{ article.url }}#disqus_thread">Comments</a></div>
+                    <div class="published"> {{ article.locale_date }} </div>
+                    {% if article.author %}
+                      <div>By <a class="url fn" href="{{ SITEURL }}/{{ article.author.url }}">{{ article.author }}</a></div>
+                    {% endif %}
+                    <br>
                 </footer><!-- /.post-info -->
                 <!-- <div class="entry-content"> {{ article.summary }} </div>-->
                 <div class="entry-content">
@@ -20,4 +24,16 @@
     </div><!-- /#posts-list -->
     {% include 'pagination.html' %}
 </section><!-- /#content -->
+ <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'leastauthority'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
 {% endblock blog_content %}
