@@ -405,3 +405,22 @@ tt {
     margin-top: .8em;
 }
 
+
+/* blog styles */
+
+.blog-sidebar {
+    text-align: right;
+    background: white;
+    background: rgba(255,255,255,.5);
+    padding: 10px;
+}
+
+.blog-sidebar ul {
+    margin: 0;
+    padding: 5px 0 12px 0;
+    list-style-type: none;
+}
+
+.blog-sidebar ul li {
+    padding-right: 5px;
+}
