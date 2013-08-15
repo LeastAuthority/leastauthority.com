@@ -33,7 +33,7 @@ RELATIVE_URLS = True
 
 THEME = "themes/lae"
 DELETE_OUTPUT_DIRECTORY = True
-OUTPUT_PATH = '../lae_site/templates/blog/'
+OUTPUT_PATH = '../content/blog/'
 
 FEED_DOMAIN = SITEURL
 
