@@ -17,8 +17,14 @@ SITE_CONFIG_JSON = """{
     { "short_name":    "product",
       "full_name":     "Yummy cloud hotness for everyone",
       "listed":        "true",
-      "signup_url":    "https://example.com/abc?offeringCode=12345678",
-      "product_code":  "PRODUCTCODE"
+      "signup_url":    "https://example.com/abc?offeringCode=01234567",
+      "product_code":  "PRODUCTCODE1"
+    },
+    { "short_name":    "future",
+      "full_name":     "Voyage to Tau Ceti",
+      "listed":        "false",
+      "signup_url":    "https://example.com/abc?offeringCode=89ABCDEF",
+      "product_code":  "PRODUCTCODE2"
     }
   ]
 }"""
@@ -67,6 +73,7 @@ class Handlers(TestCase):
 
     def setUp(self):
         self.patch(devpay_complete, 'FlappCommand', MockFlappCommand)
+        self.patch(devpay_complete, 'ACTIVE_PRODUCTS', set(['product']))
         self.basefp = FilePath('.')
         remove_if_possible(self.basefp.child("emails.csv"))
         remove_if_possible(self.basefp.child("activation_requests.csv"))
@@ -79,8 +86,31 @@ class Handlers(TestCase):
     def test_collectemailhandler(self):
         out = StringIO()
         config = Config(StringIO(SITE_CONFIG_JSON))
+        self.email_content = None
+
+        def call_send_plain_email(fromEmail, toEmail, content, headers):
+            self.email_content = content
+        self.patch(send_email, 'send_plain_email', call_send_plain_email)
+        self.patch(devpay_complete, 'send_plain_email', call_send_plain_email)
 
         d = devpay_complete.start(self.basefp)
+        d.addCallback(lambda ign:
+                      self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
+                                         "POST", Email=["fred@example.com"], ProductName=["future"],
+                                         ProductFullName=["Voyage to Tau Ceti"]))
+
+        def _finished_future( (req, output) ):
+            self.failUnlessEqual(req.responsecode, OK)
+            self.failUnlessIn('Thank you for your interest in Voyage to Tau Ceti!', output)
+            self.failIfIn('<a href="/signup/future">', output)
+            self.failUnlessIn("We've sent you an email", output)
+            self.failIfIn("https://leastauthority.com/signup/", self.email_content)
+            self.failUnlessIn("fred@example.com,future\n",
+                              FilePath("emails.csv").getContent())
+            remove_if_possible(self.basefp.child("emails.csv"))
+            self.email_content = None
+        d.addCallback(_finished_future)
+
         d.addCallback(lambda ign:
                       self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
                                          "POST", Email=["fred@example.com"], ProductName=["product"],
@@ -90,22 +120,52 @@ class Handlers(TestCase):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn('Thank you for your interest in Yummy cloud hotness!', output)
             self.failUnlessIn('<a href="/signup/product">', output)
+            self.failUnlessIn("We've sent you an email", output)
+            self.failUnlessIn("https://leastauthority.com/signup/product", self.email_content)
             self.failUnlessIn("fred@example.com,product\n",
                               FilePath("emails.csv").getContent())
+            remove_if_possible(self.basefp.child("emails.csv"))
+            self.email_content = None
         d.addCallback(_finished_valid)
 
         d.addCallback(lambda ign:
                       self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
                                          "POST", Email=["blah"], ProductName=["product"],
                                          ProductFullName=["Yummy cloud hotness"]))
-
         def _finished_invalid( (req, output) ):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn('Thank you for your interest in Yummy cloud hotness, but', output)
+            self.failIfIn('<a href="/signup/product">', output)
+            self.failIf(self.email_content)
             self.failUnlessIn('<a href="/">', output)
             self.failUnlessIn("blah,product\n",
                               FilePath("emails.csv").getContent())
+            remove_if_possible(self.basefp.child("emails.csv"))
+            self.email_content = None
         d.addCallback(_finished_invalid)
+
+        def call_send_plain_email_broken(fromEmail, toEmail, content, headers):
+            raise Exception("something went wrong")
+        d.addCallback(lambda ign: self.patch(send_email, 'send_plain_email', call_send_plain_email_broken))
+        d.addCallback(lambda ign: self.patch(devpay_complete, 'send_plain_email', call_send_plain_email_broken))
+
+        d.addCallback(lambda ign:
+                      self._mock_request(devpay_complete.CollectEmailHandler(self.basefp, config.products, out=out),
+                                         "POST", Email=["fred@nodomain.com"], ProductName=["product"],
+                                         ProductFullName=["Yummy cloud hotness"]))
+
+        def _finished_could_not_send( (req, output) ):
+            self.failUnlessEqual(req.responsecode, OK)
+            self.failUnlessIn('Thank you for your interest in Yummy cloud hotness!', output)
+            self.failUnlessIn('<a href="/signup/product">', output)
+            self.failUnlessIn("We weren't able to send email", output)
+            self.failIf(self.email_content)
+            self.failUnlessIn("fred@nodomain.com,product\n",
+                              FilePath("emails.csv").getContent())
+            remove_if_possible(self.basefp.child("emails.csv"))
+            self.email_content = None
+        d.addCallback(_finished_could_not_send)
+        return d
 
     def _test_devpaypurchasehandler(self, method):
         out = StringIO()
