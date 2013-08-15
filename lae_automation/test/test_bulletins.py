@@ -16,19 +16,21 @@ class MarkerException(Exception):
 
 
 class TestBulletins(unittest.TestCase):
-    SMTP_HOST = updatebulletins.SMTP_HOST
-    SMTP_PORT = updatebulletins.SMTP_PORT
-    SMTP_USERNAME = updatebulletins.SMTP_USERNAME
+    SMTP_HOST = send_email.SMTP_HOST
+    SMTP_PORT = send_email.SMTP_PORT
+    SMTP_USERNAME = send_email.SMTP_USERNAME
+    SMTP_PASSWORD_PATH = 'smtppassword'
     SMTP_PASSWORD = 'supersekret'
-    SENDER_DOMAIN = updatebulletins.SENDER_DOMAIN
-    FROM_EMAIL = updatebulletins.FROM_EMAIL
+    SENDER_DOMAIN = send_email.SENDER_DOMAIN
+    FROM_EMAIL = send_email.FROM_EMAIL
     CUSTOMER_NAME = 'Fred Bloggs'
     CUSTOMER_EMAIL = 'fbloggs@example.net'
     PGP_NOTIFICATION_EMAIL = updatebulletins.PGP_NOTIFICATION_EMAIL
     PUBIP = '0.0.0.0'
 
     def setUp(self):
-        FilePath('smtppassword').setContent(self.SMTP_PASSWORD)
+        FilePath(self.SMTP_PASSWORD_PATH).setContent(self.SMTP_PASSWORD)
+        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.SMTP_PASSWORD_PATH)
 
 
     def _call_ESMTPSenderFactory_non_PGP(self, username, password, fromEmail, toEmail, f, d,
@@ -106,7 +108,7 @@ class TestBulletins(unittest.TestCase):
 
         stdout = StringIO()
         stderr = StringIO()
-        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, customer_keyinfo, stdout, stderr, password_path='smtppassword')
+        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, customer_keyinfo, stdout, stderr)
         def _check(ign):
             self.failUnless('flag' in connected)
             out = stdout.getvalue()
@@ -132,7 +134,7 @@ class TestBulletins(unittest.TestCase):
             raise MarkerException()
         self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
-        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, '', stdout, stderr, password_path='smtppassword')
+        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -157,7 +159,7 @@ class TestBulletins(unittest.TestCase):
             pass
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
-        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, '', stdout, stderr, password_path='smtppassword')
+        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -182,7 +184,7 @@ class TestBulletins(unittest.TestCase):
             raise MarkerException()
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
-        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, '', stdout, stderr, password_path='smtppassword')
+        d = send_bulletin(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):

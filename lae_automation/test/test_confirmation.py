@@ -8,7 +8,6 @@ from twisted.python.filepath import FilePath
 from foolscap.api import eventually
 
 from lae_util import send_email
-from lae_automation import confirmation
 from lae_automation.confirmation import send_signup_confirmation
 
 
@@ -17,21 +16,23 @@ class MarkerException(Exception):
 
 
 class TestConfirmation(unittest.TestCase):
-    SMTP_HOST = confirmation.SMTP_HOST
-    SMTP_PORT = confirmation.SMTP_PORT
-    SMTP_USERNAME = confirmation.SMTP_USERNAME
+    SMTP_HOST = send_email.SMTP_HOST
+    SMTP_PORT = send_email.SMTP_PORT
+    SMTP_USERNAME = send_email.SMTP_USERNAME
+    SMTP_PASSWORD_PATH = 'smtppassword'
     SMTP_PASSWORD = 'supersekret'
-    SENDER_DOMAIN = confirmation.SENDER_DOMAIN
-    FROM_EMAIL = confirmation.FROM_EMAIL
+    SENDER_DOMAIN = send_email.SENDER_DOMAIN
+    FROM_EMAIL = send_email.FROM_EMAIL
     CUSTOMER_NAME = 'Fred Bloggs'
     CUSTOMER_EMAIL = 'fbloggs@example.net'
-    PGP_NOTIFICATION_EMAIL = confirmation.PGP_NOTIFICATION_EMAIL
+    PGP_NOTIFICATION_EMAIL = send_email.PGP_NOTIFICATION_EMAIL
     EXTERNAL_INTRODUCER_FURL = 'pb://foo@0.0.0.0/baz'
     PUBIP = '0.0.0.0'
 
-
     def setUp(self):
-        FilePath('smtppassword').setContent(self.SMTP_PASSWORD)
+        FilePath(self.SMTP_PASSWORD_PATH).setContent(self.SMTP_PASSWORD)
+        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.SMTP_PASSWORD_PATH)
+
 
     def _call_ESMTPSenderFactory_non_PGP(self, username, password, fromEmail, toEmail, f, d,
                                          retries=5, timeout=None, contextFactory=None, heloFallback=False,
@@ -109,7 +110,7 @@ class TestConfirmation(unittest.TestCase):
         stdout = StringIO()
         stderr = StringIO()
         d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
-                                     customer_keyinfo, stdout, stderr, password_path='smtppassword')
+                                     customer_keyinfo, stdout, stderr)
         def _check(ign):
             self.failUnless('flag' in connected)
             out = stdout.getvalue()
@@ -136,7 +137,7 @@ class TestConfirmation(unittest.TestCase):
         self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
         d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
-                                     '', stdout, stderr, password_path='smtppassword')
+                                     '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -162,7 +163,7 @@ class TestConfirmation(unittest.TestCase):
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
         d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
-                                     '', stdout, stderr, password_path='smtppassword')
+                                     '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -188,7 +189,7 @@ class TestConfirmation(unittest.TestCase):
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
         d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
-                                     '', stdout, stderr, password_path='smtppassword')
+                                     '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):

@@ -7,7 +7,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key, NotListeningError
 from lae_automation.aws.queryapi import pubIPextractor
-from lae_util.send_email import send_plain_email
+from lae_util.send_email import send_plain_email, FROM_EMAIL
 from lae_util.servers import append_record
 from lae_util.timestamp import parse_iso_time
 
@@ -178,21 +178,12 @@ Everything appears to be working again, as far as I can tell.
 multiservercheck.py
 """
 
-SENDER_DOMAIN = "leastauthority.com"
-FROM_EMAIL = "info@leastauthority.com"
 FROM_ADDRESS = "Monitoring <%s>" % (FROM_EMAIL,)
 TO_EMAIL = "info@leastauthority.com"
 TO_EMAIL2 = "monitoring@leastauthority.com"
-USER_AGENT = "Least Authority Enterprises e-mail sender"
-
-SMTP_HOST = "smtp.googlemail.com"
-SMTP_PORT = 25
-SMTP_USERNAME = FROM_EMAIL
 
 
-def send_monitoring_report(errors, password_path='../secret_config/smtppassword'):
-    password = FilePath(password_path).getContent().strip()
-
+def send_monitoring_report(errors):
     if errors:
         content = MONITORING_EMAIL_BODY_BROKEN % (errors,)
     else:
@@ -200,12 +191,8 @@ def send_monitoring_report(errors, password_path='../secret_config/smtppassword'
     headers = {
                "From": FROM_ADDRESS,
                "Subject": MONITORING_EMAIL_SUBJECT,
-               "User-Agent": USER_AGENT,
-               "Content-Type": 'text/plain; charset="utf-8"',
               }
 
-    d = send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, TO_EMAIL,
-                         content, headers, SENDER_DOMAIN, SMTP_PORT)
-    d.addBoth(lambda ign: send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, TO_EMAIL2,
-                                           content, headers, SENDER_DOMAIN, SMTP_PORT))
+    d = send_plain_email(FROM_EMAIL, TO_EMAIL, content, headers)
+    d.addBoth(lambda ign: send_plain_email(FROM_EMAIL, TO_EMAIL2, content, headers))
     return d

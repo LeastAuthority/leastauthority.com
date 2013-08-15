@@ -4,14 +4,12 @@ from urllib import quote
 from cgi import escape as htmlEscape
 
 from twisted.internet import defer
-from twisted.python.filepath import FilePath
 from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 
 from lae_util.flapp import FlappCommand
 from lae_util.servers import append_record
-from lae_util.send_email import send_plain_email, \
-     SENDER_DOMAIN, FROM_EMAIL, FROM_ADDRESS, SUPPORT_ADDRESS, USER_AGENT, SMTP_HOST, SMTP_PORT, SMTP_USERNAME
+from lae_util.send_email import send_plain_email, FROM_EMAIL, FROM_ADDRESS
 
 from lae_site.handlers.web import env
 
@@ -366,9 +364,7 @@ class CollectEmailHandler(HandlerBase):
             return tmpl.render(productname=productname, productfullname=productfullname).encode('utf-8')
 
 
-def send_autoreply(customer_email, full_product_name, signup_url, password_path='../secret_config/smtppassword'):
-    password = FilePath(password_path).getContent().strip()
-
+def send_autoreply(customer_email, full_product_name, signup_url):
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
     # but I'm being cautious for now since I haven't reviewed email.mime.text.MIMEText to make sure that's safe.
     if signup_url is None:
@@ -383,14 +379,10 @@ def send_autoreply(customer_email, full_product_name, signup_url, password_path=
 
     headers = {
                "From": FROM_ADDRESS,
-               "Reply-To": SUPPORT_ADDRESS,
                "Subject": AUTOREPLY_EMAIL_SUBJECT % {"full_product_name": full_product_name},
-               "User-Agent": USER_AGENT,
-               "Content-Type": 'text/plain; charset="utf-8"',
               }
 
-    d = send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, customer_email,
-                         content, headers, SENDER_DOMAIN, SMTP_PORT)
+    d = send_plain_email(FROM_EMAIL, customer_email, content, headers)
     return d
 
 
