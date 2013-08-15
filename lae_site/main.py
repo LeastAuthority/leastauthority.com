@@ -62,7 +62,7 @@ def main(basefp):
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
         from twisted.internet.ssl import DefaultOpenSSLContextFactory
-        from OpenSSL.SSL import SSLv3_METHOD, OP_SINGLE_DH_USE
+        #from OpenSSL.SSL import OP_SINGLE_DH_USE
 
         # <http://www.openssl.org/docs/ssl/SSL_CTX_set_options.html#NOTES>
         # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L656>
@@ -71,13 +71,14 @@ def main(basefp):
         CIPHER_LIST = ("ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA256:"
                        "DHE-RSA-AES256-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:"
                        "DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:"
-                       "DHE-RSA-3DES-SHA")
+                       "DHE-RSA-3DES-SHA:"
+                       "RSA-3DES-SHA:RSA-RC4-SHA256:RSA-RC4-SHA")
 
         # http://twistedmatrix.com/documents/current/core/howto/ssl.html
-        sslfactory = DefaultOpenSSLContextFactory(KEYFILE, CERTFILE, sslmethod=SSLv3_METHOD)
+        sslfactory = DefaultOpenSSLContextFactory(KEYFILE, CERTFILE)
         sslcontext = sslfactory.getContext()
         sslcontext.set_cipher_list(CIPHER_LIST)
-        sslcontext.set_options(OP_SINGLE_DH_USE)
+        #sslcontext.set_options(OP_SINGLE_DH_USE)
         sslcontext.set_options(OP_CIPHER_SERVER_PREFERENCE)
         reactor.listenSSL(port, site, sslfactory)
 
