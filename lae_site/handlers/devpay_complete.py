@@ -259,8 +259,9 @@ AUTOREPLY_READY_EMAIL_BODY = """Hello,
 
 We've received your request to sign up for %(full_product_name)s.
 
-If you haven't already done so, please go to %(signup_url)s to confirm your sign up
-and payment details with Amazon Payments, and initiate the activation process.
+If you haven't already done so, please go to %(signup_url)s
+to confirm your sign up and payment details with Amazon Payments, and start
+the activation process.
 
 If you have any questions, please email them to <support@LeastAuthority.com>.
 
@@ -353,7 +354,7 @@ class CollectEmailHandler(HandlerBase):
             d = defer.succeed(None)
             d.addCallback(lambda ign: send_autoreply(email, productfullname, signup_url))
             def _sent(ign):
-                request.write("We've sent you an email to check that your address is working.")
+                request.write("We've just sent you an email to check that you can receive email from us.")
                 request.write(rest)
             def _error(f):
                 request.write("We weren't able to send email to the address you provided. This could be a problem on "
