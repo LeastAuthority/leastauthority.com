@@ -1,9 +1,7 @@
 
 from twisted.internet import defer
-from twisted.python.filepath import FilePath
 
-from lae_util.send_email import send_plain_email, \
-     SENDER_DOMAIN, FROM_EMAIL, FROM_ADDRESS, USER_AGENT, SMTP_HOST, SMTP_PORT, SMTP_USERNAME
+from lae_util.send_email import send_plain_email, FROM_EMAIL, FROM_ADDRESS, PGP_NOTIFICATION_EMAIL
 
 
 CONFIRMATION_EMAIL_SUBJECT = "Your Simple Secure Storage Service is Activated"
@@ -57,12 +55,8 @@ signup.py
 
 NOTIFY_FAILURE_EMAIL = "support@leastauthority.com"
 
-PGP_NOTIFICATION_EMAIL = "zancas@leastauthority.com"
 
-
-def send_signup_confirmation(publichost, customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr, password_path='../secret_config/smtppassword'):
-    password = FilePath(password_path).getContent().strip()
-
+def send_signup_confirmation(publichost, customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr):
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
     # but I'm being cautious for now since I haven't reviewed email.mime.text.MIMEText to make sure that's safe.
     content = CONFIRMATION_EMAIL_BODY % {
@@ -73,8 +67,6 @@ def send_signup_confirmation(publichost, customer_name, customer_email, external
     headers = {
                "From": FROM_ADDRESS,
                "Subject": CONFIRMATION_EMAIL_SUBJECT,
-               "User-Agent": USER_AGENT,
-               "Content-Type": 'text/plain; charset="utf-8"',
               }
 
     d = defer.succeed(None)
@@ -83,14 +75,13 @@ def send_signup_confirmation(publichost, customer_name, customer_email, external
         # Don't send the introducer furl; they're supposed to log in to the automation server to get it.
         headers["Subject"] = "Sign-up with PGP key"
         d.addCallback(lambda ign:
-                      send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, PGP_NOTIFICATION_EMAIL,
+                      send_plain_email(FROM_EMAIL, PGP_NOTIFICATION_EMAIL,
                                        "Please send a confirmation e-mail to %r at %r." % (customer_name, customer_email),
-                                       headers, SENDER_DOMAIN, SMTP_PORT))
+                                       headers))
     else:
         print >>stdout, "Sending confirmation e-mail to <%s>..." % (customer_email,)
         d.addCallback(lambda ign:
-                      send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, customer_email,
-                                       content, headers, SENDER_DOMAIN, SMTP_PORT))
+                      send_plain_email(FROM_EMAIL, customer_email, content, headers))
 
     def _sent(ign):
         if customer_keyinfo:
@@ -106,9 +97,7 @@ def send_signup_confirmation(publichost, customer_name, customer_email, external
     return d
 
 
-def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr, password_path='../secret_config/smtppassword'):
-    password = FilePath(password_path).getContent().strip()
-
+def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr):
     print >>stderr, str(f)
 
     content = NOTIFY_FAILURE_BODY % {
@@ -119,18 +108,14 @@ def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, s
     headers = {
                "From": FROM_ADDRESS,
                "Subject": NOTIFY_FAILURE_SUBJECT,
-               "User-Agent": USER_AGENT,
-               "Content-Type": 'text/plain; charset="utf-8"',
               }
 
-    d = send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, NOTIFY_FAILURE_EMAIL,
-                         content, headers, SENDER_DOMAIN, SMTP_PORT)
+    d = send_plain_email(FROM_EMAIL, NOTIFY_FAILURE_EMAIL, content, headers)
 
     def _sent(ign):
         print >>stdout, "Failure notification sent for the following error:"
     def _error(emailf):
         print >>stdout, "A failure notification could not be sent."
-        print >>stdout, "Contacting <%s> yourself may help to resolve this problem more quickly:" % (NOTIFY_FAILURE_EMAIL,)
         print >>stderr, str(emailf)
     d.addCallbacks(_sent, _error)
     # return the original failure

@@ -1,8 +1,8 @@
 
 from twisted.internet import defer
-from twisted.python.filepath import FilePath
 
-from lae_util.send_email import send_plain_email
+from lae_util.send_email import send_plain_email, FROM_EMAIL, FROM_ADDRESS, PGP_NOTIFICATION_EMAIL
+
 
 bulletinsubject_01 = "LAE Enterprises Now Provides Server Monitoring Data"
 bulletinbody_01 = """Hello %(customer_name)s
@@ -29,21 +29,8 @@ future and welcome suggestions as to how we can better keep you informed.
 The Least Authority Enterprises team
 """
 
-SENDER_DOMAIN = "leastauthority.com"
-FROM_EMAIL = "info@leastauthority.com"
-FROM_ADDRESS = "Least Authority Enterprises <%s>" % (FROM_EMAIL,)
-USER_AGENT = "Least Authority Enterprises e-mail sender"
 
-SMTP_HOST = "smtp.googlemail.com"
-SMTP_PORT = 25
-SMTP_USERNAME = FROM_EMAIL
-
-PGP_NOTIFICATION_EMAIL = "davidsarah@leastauthority.com"
-
-
-def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, stdout, stderr, password_path='../secret_config/smtppassword'):
-    password = FilePath(password_path).getContent().strip()
-
+def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, stdout, stderr):
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
     # but I'm being cautious for now since I haven't reviewed email.mime.text.MIMEText to make sure that's safe.
     content = bulletinbody_01 % {
@@ -53,8 +40,6 @@ def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, s
     headers = {
                "From": FROM_ADDRESS,
                "Subject": bulletinsubject_01,
-               "User-Agent": USER_AGENT,
-               "Content-Type": 'text/plain; charset="utf-8"'
                }
 
     d = defer.succeed(None)
@@ -62,14 +47,13 @@ def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, s
         print >>stdout, "Notifying one of our staff to send an update bulletin e-mail to <%s>..." % (customer_email,)
         headers["Subject"] = "PGP key enabled: "+bulletinsubject_01
         d.addCallback(lambda ign:
-                      send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, PGP_NOTIFICATION_EMAIL,
+                      send_plain_email(FROM_EMAIL, PGP_NOTIFICATION_EMAIL,
                                        "Please send an update bulletin, e-mail to %r at %r." % (customer_name, customer_email),
-                                       headers, SENDER_DOMAIN, SMTP_PORT))
+                                       headers))
     else:
         print >>stdout, "Sending update bulletin e-mail to <%s>..." % (customer_email)
         d.addCallback(lambda ign:
-                      send_plain_email(SMTP_HOST, SMTP_USERNAME, password, FROM_EMAIL, customer_email,
-                                       content, headers, SENDER_DOMAIN, SMTP_PORT))
+                      send_plain_email(FROM_EMAIL, customer_email, content, headers))
 
     def _sent(ign):
         if customer_keyinfo:
@@ -78,7 +62,6 @@ def send_bulletin(publichost, customer_name, customer_email, customer_keyinfo, s
             print >>stdout, "Bulletin sent."
     def _error(f):
         print >>stdout, "Sending of bulletin e-mail failed."
-        print >>stdout, "Please contact <info@leastauthority.com> to make sure that we have your correct e-mail address."
         print >>stderr, str(f)
         return f
     d.addCallbacks(_sent, _error)

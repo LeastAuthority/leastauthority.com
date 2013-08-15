@@ -9,6 +9,7 @@ from twisted.python.filepath import FilePath
 
 from lae_site.handlers import devpay_complete
 from lae_site.config import Config
+from lae_util import send_email
 
 
 SITE_CONFIG_JSON = """{
@@ -61,12 +62,18 @@ class MockRequest(object):
 
 
 class Handlers(TestCase):
+    SMTP_PASSWORD_PATH = 'smtppassword'
+    SMTP_PASSWORD = 'supersekret'
+
     def setUp(self):
         self.patch(devpay_complete, 'FlappCommand', MockFlappCommand)
         self.basefp = FilePath('.')
         remove_if_possible(self.basefp.child("emails.csv"))
         remove_if_possible(self.basefp.child("activation_requests.csv"))
         remove_if_possible(self.basefp.child("signups.csv"))
+
+        FilePath(self.SMTP_PASSWORD_PATH).setContent(self.SMTP_PASSWORD)
+        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.SMTP_PASSWORD_PATH)
 
 
     def test_collectemailhandler(self):
