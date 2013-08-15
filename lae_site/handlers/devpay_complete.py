@@ -22,6 +22,8 @@ SIGNUP_FURL_FILE         = 'signup.furl'
 
 VALID_EMAIL_RE = re.compile("[^@]+@[^@]+")
 
+ACTIVE_PRODUCTS = set(['s4'])
+SIGNUP_BASE_URL = "https://leastauthority.com/signup/"
 
 def html(title, body):
     return """<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
@@ -257,8 +259,8 @@ AUTOREPLY_READY_EMAIL_BODY = """Hello,
 
 We've received your request to sign up for %(full_product_name)s.
 
-Please go to %(signup_url)s to confirm your sign up and
-payment details with Amazon Payments, and initiate the activation process.
+If you haven't already done so, please go to %(signup_url)s to confirm your sign up
+and payment details with Amazon Payments, and initiate the activation process.
 
 If you have any questions, please email them to <support@LeastAuthority.com>.
 
@@ -332,20 +334,26 @@ class CollectEmailHandler(HandlerBase):
         productname = self.get_arg(request, 'ProductName')
         productfullname = self.get_arg(request, 'ProductFullName')
 
+        if productname in ACTIVE_PRODUCTS:
+            signup_url = SIGNUP_BASE_URL + productname
+            valid_email_template = 'valid_email_activeproduct.html'
+        else:
+            signup_url = None
+            valid_email_template = 'valid_email_inactiveproduct.html'
+
         append_record(self.basefp.child(EMAILS_FILE), email, productname)
 
         request.setResponseCode(200)
 
         if email and VALID_EMAIL_RE.match(email):
-            tmpl = env.get_template('valid_email.html')
+            tmpl = env.get_template(valid_email_template)
             (start, _, rest) = tmpl.render(productname=productname, productfullname=productfullname).encode('utf-8').partition("MAGIC")
             request.write(start)
 
             d = defer.succeed(None)
-            d.addCallback(lambda ign: send_autoreply(email, productfullname, 'https://leastauthority.com/signup/s4'))
+            d.addCallback(lambda ign: send_autoreply(email, productfullname, signup_url))
             def _sent(ign):
-                request.write("We've sent you an email to check that your address is working, that email contains the "
-                              "activation URL you'll use to continue the activation process.")
+                request.write("We've sent you an email to check that your address is working.")
                 request.write(rest)
             def _error(f):
                 request.write("We weren't able to send email to the address you provided. This could be a problem on "
