@@ -7,7 +7,7 @@ import logging
 mimetypes.add_type("text/plain", ".rst")
 
 
-from twisted.internet import ssl, reactor
+from twisted.internet import reactor
 from twisted.python.filepath import FilePath
 
 from lae_site.config import Config
@@ -55,8 +55,24 @@ def main(basefp):
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
+        from twisted.internet.ssl import DefaultOpenSSLContextFactory
+        from OpenSSL.SSL import SSLv3_METHOD, OP_SINGLE_DH_USE
+
+        # <http://www.openssl.org/docs/ssl/SSL_CTX_set_options.html#NOTES>
+        # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L656>
+        OP_CIPHER_SERVER_PREFERENCE = 0x00400000L
+
+        CIPHER_LIST = ("ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA256:"
+                       "DHE-RSA-AES256-GCM-SHA256:DHE-RSA-AES128-GCM-SHA256:"
+                       "DHE-RSA-AES256-SHA:DHE-RSA-AES128-SHA:"
+                       "DHE-RSA-3DES-SHA")
+
         # http://twistedmatrix.com/documents/current/core/howto/ssl.html
-        sslfactory = ssl.DefaultOpenSSLContextFactory(KEYFILE, CERTFILE)
+        sslfactory = DefaultOpenSSLContextFactory(KEYFILE, CERTFILE, sslmethod=SSLv3_METHOD)
+        sslcontext = sslfactory.getContext()
+        sslcontext.set_cipher_list(CIPHER_LIST)
+        sslcontext.set_options(OP_SINGLE_DH_USE)
+        sslcontext.set_options(OP_CIPHER_SERVER_PREFERENCE)
         reactor.listenSSL(port, site, sslfactory)
 
         if redirect_port is not None:
