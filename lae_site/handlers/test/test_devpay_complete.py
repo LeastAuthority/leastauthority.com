@@ -103,7 +103,7 @@ class Handlers(TestCase):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn('Thank you for your interest in Voyage to Tau Ceti!', output)
             self.failIfIn('<a href="/signup/future">', output)
-            self.failUnlessIn("We've sent you an email", output)
+            self.failUnlessIn("We've just sent you an email", output)
             self.failIfIn("https://leastauthority.com/signup/", self.email_content)
             self.failUnlessIn("fred@example.com,future\n",
                               FilePath("emails.csv").getContent())
@@ -120,7 +120,7 @@ class Handlers(TestCase):
             self.failUnlessEqual(req.responsecode, OK)
             self.failUnlessIn('Thank you for your interest in Yummy cloud hotness!', output)
             self.failUnlessIn('<a href="/signup/product">', output)
-            self.failUnlessIn("We've sent you an email", output)
+            self.failUnlessIn("We've just sent you an email", output)
             self.failUnlessIn("https://leastauthority.com/signup/product", self.email_content)
             self.failUnlessIn("fred@example.com,product\n",
                               FilePath("emails.csv").getContent())
