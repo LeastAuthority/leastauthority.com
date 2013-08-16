@@ -1,8 +1,12 @@
-﻿
+﻿Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service
+####################################################################################################################
 
-=============================================================================================================
- Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service
-=============================================================================================================
+:date: 2013-08-15 9:00
+:tags: silent circle, prism
+:category: Letters
+:slug: open_letter_silent_circle
+:author: Zooko Wilcox-O'Hearn
+:summary: This open letter is in response to the recent shutdown of Lavabit, the ensuing shutdown of Silent Circle's “Silent Mail” product, Jon Callas's posts about the topic on G+, and Phil Zimmermann's interview in Forbes. Also, of course, all of this is unfolding in the context of the 2013 Mass Surveillance Scandal.
 
 This open letter is in response to the `recent shutdown of Lavabit`_ , the ensuing `shutdown of Silent Circle's “Silent Mail” product`_, `Jon Callas's posts about the topic on G+`_, and `Phil Zimmermann's interview in Forbes`_. Also, of course, all of this is unfolding in the context of the `2013 Mass Surveillance Scandal`_.
 
