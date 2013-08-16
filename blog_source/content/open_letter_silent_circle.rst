@@ -25,7 +25,7 @@ Dear Phil and Jon: Hello there! It is good to have a chance to chat with you in 
 
 Please accept the following in the spirit of constructive criticism in which it is intended.
 
-For those readers who don't know, I've known you both, personally and professionally for decades. You've each written texts that I've learned from, inspired me to follow your example, we've worked together successfully, and you've mentored me. I have great respect for your technical abilities, your integrity, and your general reasonableness. Thank you for the all of that and for holding fast to your principles today, when we need it more than ever.
+For those readers who don't know, I've known you both, personally and professionally for decades. You've each written texts that I've learned from, inspired me to follow your example, we've worked together successfully, and you've mentored me. I have great respect for your technical abilities, your integrity, and your general reasonableness. Thank you for all of that and for holding fast to your principles today, when we need it more than ever.
 
 Now:
 
