@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 {% block blog_content %}
-<section id="content" class="body highlight">
+<section id="content" class="body">
+<div class="highlight">
   <header>
     <h3 class="entry-title">
       {{ article.title }}</h3>
@@ -34,5 +35,6 @@
     </script>
     <noscript>JavaScript is required to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
     <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
 </section>
 {% endblock %}
