@@ -1,12 +1,12 @@
 ﻿Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service
 ####################################################################################################################
 
-:date: 2013-08-15 9:00
+:date: 2013-08-16 9:00
 :tags: silent circle, prism
 :category: Letters
 :slug: open_letter_silent_circle
 :author: Zooko Wilcox-O'Hearn
-:summary: This open letter is in response to the recent shutdown of Lavabit, the ensuing shutdown of Silent Circle's “Silent Mail” product, Jon Callas's posts about the topic on G+, and Phil Zimmermann's interview in Forbes. Also, of course, all of this is unfolding in the context of the 2013 Mass Surveillance Scandal.
+:summary: This open letter is in response to the recent shutdown of Lavabit and the ensuing shutdown of Silent Circle's “Silent Mail” product.
 
 This open letter is in response to the `recent shutdown of Lavabit`_ , the ensuing `shutdown of Silent Circle's “Silent Mail” product`_, `Jon Callas's posts about the topic on G+`_, and `Phil Zimmermann's interview in Forbes`_. Also, of course, all of this is unfolding in the context of the `2013 Mass Surveillance Scandal`_.
 
@@ -37,7 +37,7 @@ If some attacker, for example the U.S. Federal Government — or to pick a diffe
 
 There is no way for me to verify that any given version of Silent Text, including the one that I just installed, is correctly generating strong encryption keys and is protecting those keys instead of leaking them.
 
-Therefore, how are your current products any safer for your users that the canceled Silent Mail product was? The only attacker against whom your canceled Silent Mail product was vulnerable but against whom your current products are safe is the attacker who would require you to backdoor your server software but who wouldn't require you to backdoor your client software.
+Therefore, how are your current products any safer for your users that the canceled Silent Mail product was? The only attacker against whom your canceled Silent Mail product was vulnerable but against whom your current products are safe is an attacker who would require you to backdoor your server software but who wouldn't require you to backdoor your client software.
 
 Does that constraint apply to the U.S. Federal Government entities who are responsible for PRISM, for the shut-down of Lavabit, and so much else? No, that constraint does not apply to them. This was demonstrated in the Hushmail case in which the U.S. DEA asked Hushmail (a Canadian company) to turn over the plaintext of the email of one of its customers. Hushmail complied, shipping a set of CDs to the DEA containing the customer's messages.
 
