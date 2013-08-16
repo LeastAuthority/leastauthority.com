@@ -4,7 +4,7 @@
 <section id="content">
     <div id="post-list">
     {% for article in articles_page.object_list %}
-        <article class="hentry">
+        <article class="hentry highlight">
                 <header> <h3 class="entry-title"><a href="{{ SITEURL }}/{{ article.url }}" rel="bookmark" title="Permalink to {{ article.title|striptags }}">{{ article.title }}</a></h3> </header>
                 <footer class="post-info help-text">
                     <div style="float: right;"><a href="{{ SITEURL }}/{{ article.url }}#disqus_thread">Comments</a></div>
@@ -19,7 +19,7 @@
                     {{ article.content }}
                 </div><!-- /.entry-content -->
         </article>
-        <hr>
+        <br>
     {% endfor %}
     </div><!-- /#posts-list -->
     {% include 'pagination.html' %}
