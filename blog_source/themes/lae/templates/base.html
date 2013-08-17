@@ -57,8 +57,10 @@
 
             <h4>Syndication</h4>
             <ul>
-            <li><a href="{{ FEED_DOMAIN }}/{{ FEED_ATOM }}">Atom Feed</a></li>
-            <li><a href="{{ FEED_DOMAIN }}/{{ FEED_RSS }}">RSS Feed</a></li>
+            <li><a href="{{ FEED_DOMAIN }}/{{ FEED_ALL_ATOM }}">Atom Feed</a></li>
+            {% if FEED_ALL_RSS %}
+            <li><a href="{{ FEED_DOMAIN }}/{{ FEED_ALL_RSS }}">RSS Feed</a></li>
+            {% endif %}
             </ul>
         </div>
     </div>
