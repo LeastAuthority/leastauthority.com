@@ -93,10 +93,18 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                                  customer_keyinfo, stdout, stderr, secretsfile,
                                                  config, serverinfopath, ec2secretpath,
                                                  clock=myclock))
+
+        d2.addCallback(lambda ign: append_record(signups_fp, 'success', activationkey, productcode,
+                                                 name, email, publickey))
         return d2
     d.addCallback(_activated)
-    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfilename, stdout,
-                                               stderr))
+    def _failed(f):
+        try:
+            append_record(signups_fp, 'failure', activationkey, productcode, name, email, publickey)
+        except Exception, e:
+            print >>stderr, "Could not append failure record to signups.csv: %s" % (e,)
+        return send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr)
+    d.addErrback(_failed)
     return d
 
 

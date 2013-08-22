@@ -20,21 +20,30 @@ ACTIVATION_REQUESTS_FILE = 'activation_requests.csv'
 SIGNUPS_FILE             = 'signups.csv'
 SIGNUP_FURL_FILE         = 'signup.furl'
 
-VALID_EMAIL_RE = re.compile("[^@]+@[^@]+")
+VALID_EMAIL_RE = re.compile("[^@%]+@[^@%]+")
 
 ACTIVE_PRODUCTS = set(['s4'])
 SIGNUP_BASE_URL = "https://leastauthority.com/signup/"
 
 def html(title, body):
-    return """<!DOCTYPE HTML>
-<html>
+    return """<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
-  <link href="/static/img/icon.png" rel="shortcut icon">
   <title>%s</title>
+  <link rel="stylesheet" type="text/css" title="Default style" href="/static/css/style.css">
+  <link href="/static/img/icon.png" rel="shortcut icon">
+  <link rel="canonical" href="http://leastauthority.com/">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <link href="/static/img/icon.png" rel="shortcut icon">
 </head>
-<body style="background: #FFFFFF">%s""" % (title, body)
-    return ""
+<body>%s
+<p>
+The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
+</p>
+<hr>
+</body>
+</html>
+""" % (title, body)
 
 
 ACTIVATION_FORM_HTML = """<p>
@@ -87,12 +96,6 @@ by email to <a href="mailto:support@leastauthority.com">&lt;support@leastauthori
 <p>
 Happy Simple Secure Storing!
 </p>
-<p>
-The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
-</p>
-<hr>
-</body>
-</html>
 """
 
 # TODO: allow customizing the text per-product.
@@ -122,59 +125,51 @@ If you have any problem completing the sign-up, please contact
 <p>
 Happy Simple Secure Storing!
 </p>
-<p>
-The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
-</p>
-<hr>
-</body>
-</html>
 """)
 
-ACTIVATIONREQ_RESPONSE_NORMAL_HTML = html("Activation requested", """
+ACTIVATIONREQ_RESPONSE_NORMAL_HTML = html("Activation in progress", """
 <p>
-Your activation request has been received.
+We're activating your Simple Secure Storage Service! When that's finished, we'll
+send a confirmation email to the address you provided. This usually takes around
+20 minutes, although it may sometimes take longer.
 </p>
 <p>
-When your account is activated, we will send you a confirmation email with
-instructions on how to start using Simple Secure Storage Service, or alternatively
-an email requesting any information that was missing. If you don't receive this
-within an hour (also check your spam folder in case it is there), please contact
-<a href="mailto:support@LeastAuthority.com">&lt;support@LeastAuthority.com&gt</a>.
+In the meantime, <a href="https://leastauthority.com/howtoconfigure" target="_blank">https://leastauthority.com/howtoconfigure</a>
+gives instructions on how to set up and configure your Tahoe-LAFS gateway.
+You will need the <span class="code">introducer.furl</span> from your confirmation
+email in order to complete the configuration and start using the service.
+</p>
+<p>
+If you haven't received any email from us within an hour (check your
+spam folder in case it is there), please contact
+&lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt;.
 </p>
 <p>
 Thanks again for signing up.
 </p>
-<p>
-The Least Authority Enterprises team (Zooko, Daira, Za, Leif, and Nathan)
+""")
+
+ACTIVATIONREQ_RESPONSE_FAILED_HTML = html("Something went wrong", """
+<p style="color: red;">
+An error occurred while trying to record your activation request. Please report this to
+&lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt;, and
+we'll try to fix the problem for you. Sorry for the inconvenience.
 </p>
-<hr>
-<p>
-The progress of your server setup is shown below. You do not need to read and
-understand it -- it is shown solely to let you know that progress is being
-made. Once the server setup is complete, an email will be sent to you with
-all the information you need to know.
-</p>
-<p>
-Please don't reload this page, since the activation key is
-only valid once.
-</p>
-<pre>
 """)
 
 ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML = html("Missing activation key or product code", """
 <p>
 The activation key or product code was missing from the request. This can happen in some cases
 if you reload the page after an activation request. If you are having any difficulty signing up,
-please contact <a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+please contact &lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt;.
 </p>
-<pre>
 """)
 
 ACTIVATIONREQ_RESPONSE_MISSING_NAME_HTML = html("Missing name", """
 <p style="color: red;">
 The 'Name' field was not filled in. All fields except for the PGP key information
 are required. If you are having any difficulty signing up, please contact
-<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+&lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt;.
 </p>
 <hr>
 """ + ACTIVATION_FORM_HTML)
@@ -183,61 +178,18 @@ ACTIVATIONREQ_RESPONSE_MISSING_OR_INVALID_EMAIL_HTML = html("Missing or invalid 
 <p style="color: red;">
 The 'Email address' field was not filled in with a valid-looking address. All fields except for
 the PGP key information are required. If you are having any difficulty signing up, please contact
-<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+&lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt;.
 </p>
 <hr>
 """ + ACTIVATION_FORM_HTML)
-
-ACTIVATIONREQ_RESPONSE_ALREADY_SUCCEEDED_HTML = html("Activation already succeeded", """
-<p>
-This activation key has already been used in a successful sign-up. If you have not received
-the confirmation e-mail, please contact
-<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
-</p>
-<hr>
-</body>
-</html>
-""")
 
 ACTIVATIONREQ_RESPONSE_ALREADY_USED_HTML = html("Activation key already used", """
 <p>
 This activation key has already been used. If you have not yet received any e-mail
 about your sign-up, please contact
-<a href="mailto:support@leastauthority.com">&lt;support@leastauthority.com&gt</a>.
+&lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt;.
 </p>
-<hr>
-</body>
-</html>
 """)
-
-SUCCEEDED_HTML = """</pre>
-<p>
-Your Simple Secure Storage Service has been activated!
-</p>
-<p>
-Please go to
-<a href="https://leastauthority.com/howtoconfigure" target="_blank">https://leastauthority.com/howtoconfigure</a>
-for instructions on how to set up and configure your Tahoe-LAFS gateway
-(using the <tt>introducer.furl</tt> printed above) and start using the service.
-</p>
-<p>
-You will also shortly get a confirmation email at the address you provided.
-</p>
-<hr>
-</body>
-</html>
-"""
-
-FAILED_HTML = """</pre>
-<p>
-We weren't able to complete your account activation automatically, but don't worry,
-we'll finish it manually if possible, and email you when that is done or if we need
-more information.
-</p>
-<hr>
-</body>
-</html>
-"""
 
 AUTOREPLY_EMAIL_SUBJECT = "Thank you for your interest in %(full_product_name)s"
 
@@ -446,19 +398,17 @@ class RequestOutputStream(object):
 # Rely on start() to initialize these, in order to make it easier for tests to patch
 # and/or reinitialize.
 flappcommand = None
-all_activationkeys = None
-successful_activationkeys = None
+used_activationkeys = None
 
 def start(basefp):
-    global flappcommand, all_activationkeys, successful_activationkeys
+    global flappcommand, used_activationkeys
 
     signup_furl_fp = basefp.child('secret_config').child(SIGNUP_FURL_FILE)
     activation_requests_fp = basefp.child(ACTIVATION_REQUESTS_FILE)
     signups_fp = basefp.child(SIGNUPS_FILE)
 
     flappcommand = FlappCommand(signup_furl_fp.path)
-    all_activationkeys = set([])
-    successful_activationkeys = set([])
+    used_activationkeys = set([])
 
     # read the sets of keys
     try:
@@ -471,8 +421,7 @@ def start(basefp):
             for line in f:
                 fields = line.split(',')
                 if len(fields) >= 2:
-                    [timestamp, key] = fields[:2]
-                    all_activationkeys.add(key)
+                    used_activationkeys.add(fields[1])
         finally:
             f.close()
 
@@ -486,9 +435,7 @@ def start(basefp):
             for line in f:
                 fields = line.split(',')
                 if len(fields) >= 3:
-                    [timestamp, outcome, key] = fields[:3]
-                    if outcome == "success":
-                        successful_activationkeys.add(key)
+                    used_activationkeys.add(fields[2])
         finally:
             f.close()
 
@@ -504,76 +451,50 @@ class ActivationRequestHandler(HandlerBase):
     def render(self, request):
         print >>self.out, "Got activation request:", request.args
 
-        name = self.get_arg(request, 'Name')
-        email = self.get_arg(request, 'Email')
-        activationkey = self.get_arg(request, 'ActivationKey')
-        productcode = self.get_arg(request, 'ProductCode')
-        publickey = self.get_arg(request, 'PublicKey')
-
-        activation_requests_fp = self.basefp.child(ACTIVATION_REQUESTS_FILE)
-        signups_fp = self.basefp.child(SIGNUPS_FILE)
-
-        append_record(activation_requests_fp, activationkey, productcode, name, email, publickey)
-
         request.setResponseCode(200)
 
-        if not (activationkey and productcode):
-            return ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML
-        elif activationkey in successful_activationkeys:
-            return ACTIVATIONREQ_RESPONSE_ALREADY_SUCCEEDED_HTML
-        elif activationkey in all_activationkeys:
-            return ACTIVATIONREQ_RESPONSE_ALREADY_USED_HTML
-        elif not name:
-            return ACTIVATIONREQ_RESPONSE_MISSING_NAME_HTML % {"activationkey": activationkey,
-                                                               "productcode": productcode,
-                                                               "productfullname": get_full_name(productcode, self.products)}
-        elif "%" in email or not "@" in email:
-            return ACTIVATIONREQ_RESPONSE_MISSING_OR_INVALID_EMAIL_HTML % {"activationkey": activationkey,
-                                                                           "productcode": productcode,
-                                                                           "productfullname": get_full_name(productcode, self.products)}
-
-        print >>self.out, "Yay! Someone signed up :-)"
-
-        request.write(ACTIVATIONREQ_RESPONSE_NORMAL_HTML)
-
-        # None of these fields can contain newlines because they would be quoted by get_arg.
-        stdin = ("%s\n"*5) % (activationkey,
-                              productcode,
-                              name,
-                              email,
-                              publickey,
-                             )
-        stdout = RequestOutputStream(request, tee=self.out)
-        stderr = self.out
-        def when_done():
-            try:
-                successful_activationkeys.add(activationkey)
-                all_activationkeys.add(activationkey)
-                append_record(signups_fp, 'success', activationkey, productcode, name, email, publickey)
-            except Exception:
-                # The request really did succeed, we just failed to record that it did. Log the error locally.
-                traceback.print_exc(100, stderr)
-                request.write(SUCCEEDED_HTML)
-            else:
-                request.write(SUCCEEDED_HTML)
-            finally:
-                request.finish()
-        def when_failed():
-            try:
-                all_activationkeys.add(activationkey)
-                append_record(signups_fp, 'failure', activationkey, productcode, name, email, publickey)
-            except Exception:
-                traceback.print_exc(100, stderr)
-                request.write(FAILED_HTML)
-            else:
-                request.write(FAILED_HTML)
-            finally:
-                request.finish()
         try:
-            flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
-        except Exception:
-            traceback.print_exc(100, stdout)
-            when_failed()
+            name = self.get_arg(request, 'Name')
+            email = self.get_arg(request, 'Email')
+            activationkey = self.get_arg(request, 'ActivationKey')
+            productcode = self.get_arg(request, 'ProductCode')
+            publickey = self.get_arg(request, 'PublicKey')
 
-        # http://twistedmatrix.com/documents/10.1.0/web/howto/web-in-60/asynchronous.html
-        return NOT_DONE_YET
+            activation_requests_fp = self.basefp.child(ACTIVATION_REQUESTS_FILE)
+            append_record(activation_requests_fp, activationkey, productcode, name, email, publickey)
+            used_activationkeys.add(activationkey)
+
+            if not (activationkey and productcode):
+                return ACTIVATIONREQ_RESPONSE_MISSING_KEY_HTML
+            elif activationkey in used_activationkeys:
+                return ACTIVATIONREQ_RESPONSE_ALREADY_USED_HTML
+            elif not name:
+                return ACTIVATIONREQ_RESPONSE_MISSING_NAME_HTML % {"activationkey": activationkey,
+                                                                   "productcode": productcode,
+                                                                   "productfullname": get_full_name(productcode, self.products)}
+            elif not VALID_EMAIL_RE.match(email):
+                return ACTIVATIONREQ_RESPONSE_MISSING_OR_INVALID_EMAIL_HTML % {"activationkey": activationkey,
+                                                                               "productcode": productcode,
+                                                                               "productfullname": get_full_name(productcode, self.products)}
+
+            # None of these fields can contain newlines because they would be quoted by get_arg.
+            stdin = ("%s\n"*5) % (activationkey,
+                                  productcode,
+                                  name,
+                                  email,
+                                  publickey,
+                                 )
+            def when_done():
+                print >>self.out, "Signup completed."
+            def when_failed():
+                print >>self.out, "Signup failed."
+
+            flappcommand.run(stdin, self.out, None, when_done, when_failed)
+
+            print >>self.out, "Yay! Someone signed up :-)"
+            return ACTIVATIONREQ_RESPONSE_NORMAL_HTML
+        except Exception:
+            traceback.print_exc(100, self.out)
+            # Ideally we'd hide this error as well, but the problem is that we might not notice the
+            # entry in activation_requests.csv.
+            return ACTIVATIONREQ_RESPONSE_FAILED_HTML
