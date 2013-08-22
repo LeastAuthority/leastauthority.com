@@ -137,7 +137,7 @@ class Handlers(TestCase):
             self.failUnlessIn('Thank you for your interest in Yummy cloud hotness, but', output)
             self.failIfIn('<a href="/signup/product">', output)
             self.failIf(self.email_content)
-            self.failUnlessIn('<a href="/">', output)
+            self.failUnlessIn('<form action="/collect-email"', output)
             self.failUnlessIn("blah,product\n",
                               FilePath("emails.csv").getContent())
             remove_if_possible(self.basefp.child("emails.csv"))
