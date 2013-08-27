@@ -1,6 +1,5 @@
 
 #XXXfrom twisted.web.util import Redirect
-import stripe
 from twisted.web.resource import Resource
 
 from lae_site.handlers.web import env
@@ -10,15 +9,17 @@ class SubscriptionHandler(Resource):
 
     def __init__(self, basefp, products):
         pass
-        """self.products = products
-        self.children = {}
-        self.putChild('', Redirect('/products'))
-        for product in self.products:
-            self.putChild(str(product['short_name']), Redirect(str(product['signup_url'])))"""
 
     def render_GET(self, request):
         tmpl = env.get_template('subscription_signup.html')
         return tmpl.render().encode('utf-8', 'replace')
 
     def render_POST(self, request):
-        return '<html><body>%s</body></html>' % (request.args,)
+        import stripe
+        stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"#'pk_test_czwzkTp2tactuLOEOqbMTRzG'
+        token = request.args['stripeToken'][0]
+        card = token
+        plan = 's4'
+        email = request.args['Email'][0]
+        customer = stripe.Customer.create(card=token, plan='s4', email=request.args['Email'][0])
+        return '<html><body>%s</body></html>' % (customer['id'],)
