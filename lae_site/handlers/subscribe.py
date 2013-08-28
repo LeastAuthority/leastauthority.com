@@ -15,11 +15,11 @@ class SubscriptionHandler(Resource):
         return tmpl.render().encode('utf-8', 'replace')
 
     def render_POST(self, request):
-        import stripe
+        import stripe, cgi
         stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"#'pk_test_czwzkTp2tactuLOEOqbMTRzG'
         token = request.args['stripeToken'][0]
         card = token
         plan = 's4'
         email = request.args['Email'][0]
         customer = stripe.Customer.create(card=token, plan='s4', email=request.args['Email'][0])
-        return '<html><body>%s</body></html>' % (customer['id'],)
+        return '<html><body>%s</body></html>' % (cgi.escape(customer['id']),)
