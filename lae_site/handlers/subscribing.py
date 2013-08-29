@@ -4,7 +4,7 @@ from twisted.web.resource import Resource
 
 from lae_site.handlers.web import env
 
-class SubscriptionHandler(Resource):
+class SubscriptionSubmitHandler(Resource):
     #XXXisLeaf = 0
 
     def __init__(self, basefp, products):
