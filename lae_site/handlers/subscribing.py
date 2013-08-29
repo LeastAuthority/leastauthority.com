@@ -1,9 +1,8 @@
 
-from twisted.web.resource import Resource
-
 from lae_site.handlers.web import env
+from lae_site.handlers.devpay_complete import HandlerBase
 
-class SubscriptionSubmitHandler(Resource):
+class SubscriptionSubmitHandler(HandlerBase):
     #XXXisLeaf = 0
 
     def __init__(self, basefp, products):

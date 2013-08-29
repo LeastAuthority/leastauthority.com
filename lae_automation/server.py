@@ -394,6 +394,13 @@ def set_up_reboot(stdout, stderr):
     write('@reboot /home/customer/restart.sh\n', '/home/customer/ctab')
     run('crontab /home/customer/ctab')
 
+def create_secrets_file(basefp, timestamp):
+    seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
+    logfilename = "%s-%s" % (timestamp, seed)
+
+    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+    logfile = basefp.child('signup_logs').child(logfilename).open('a+')
+    return secretsfile, logfile
 
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
