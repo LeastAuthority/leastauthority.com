@@ -7,7 +7,7 @@ from twisted.web.resource import Resource
 from lae_site.handlers.devpay_complete import CollectEmailHandler, DevPayPurchaseHandler, ActivationRequestHandler
 from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
-from lae_site.handlers.subscribe import SubscriptionHandler
+from lae_site.handlers.subscribing import SubscriptionSubmitHandler
 
 
 def make_site(basefp, config):
@@ -18,7 +18,7 @@ def make_site(basefp, config):
     resource.putChild('signup', SignupHandler(config.products))
     resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
     resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
-    resource.putChild('subscribe', SubscriptionHandler(basefp, config.products))
+    resource.putChild('subscribing', SubscriptionSubmitHandler(basefp, config.products))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
     site = Site(resource, logPath=basefp.child('sitelogs').path)
