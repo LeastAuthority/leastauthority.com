@@ -5,7 +5,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.server import install_infrastructure_server
 from lae_automation.aws.license_service_client import LicenseServiceClient
-from lae_automation.aws.devpay_s3client import DevPayS3Client
+from txaws.s3.client import S3Client
 from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError, \
      wait_for_EC2_addresses
 
@@ -244,8 +244,7 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
     return d
 
 
-def create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
-                       producttoken=None, location=None):
+def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr, location):
     if location is None:
         print >>stdout, "Creating S3 bucket in 'US East' region..."
     else:
@@ -257,8 +256,8 @@ def create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, st
                      'location = %r\n'
                      % (usertoken, bucketname, location))
 
-    usercreds = AWSCredentials(useraccesskeyid, usersecretkey)
-    client = DevPayS3Client(creds=usercreds, usertoken=usertoken, producttoken=producttoken)
+    LAcreds = AWSCredentials(accesskeyid, secretkey)
+    client = S3Client(creds=LAcreds, endpoint=location)
 
     if location:
         object_name = "?LocationConstraint=" + urllib.quote(location)
