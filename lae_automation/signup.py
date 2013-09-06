@@ -177,10 +177,10 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
     return d
 
 # TODO: too many args. Consider passing them in a dict.
-def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, usertoken, producttoken,
-                  bucketname, oldsecrets, amiimageid, instancesize,
-                  customer_name, customer_email, customer_pgpinfo, stdout, stderr,
-                  secretsfile, config, serverinfopath=None, ec2secretpath=None, clock=None):
+def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsecrets, amiimageid, 
+                                instancesize, customer_name, customer_email, customer_pgpinfo, 
+                                stdout, stderr, secretsfile, config, serverinfopath=None, 
+                                ec2secretpath=None, clock=None):
 
     serverinfopath = serverinfopath or '../serverinfo.csv'
     ec2secretpath = ec2secretpath or '../secret_config/ec2secret'
@@ -198,7 +198,7 @@ def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, usertoken, product
     #sinkname_suffix = str(config.other['sinkname_suffix'])
 
     # XXX Here's where we decide whether the new signup goes to a new EC2.
-    d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
+    d = deploy_EC2_instance(AWSaccesskeyid, AWSsecretkey, EC2_ENDPOINT, amiimageid,
                             instancesize, bucketname, admin_keypair_name, instancename,
                             stdout, stderr)
 
