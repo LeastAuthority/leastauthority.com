@@ -287,7 +287,7 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
     print >>stderr, ('usertoken = %r\n'
                      'bucketname = %r\n'
                      'location = %r\n'
-                     % (usertoken, bucketname, location))
+                     % (None, bucketname, location))
 
     LAcreds = AWSCredentials(accesskeyid, secretkey)
     client = S3Client(creds=LAcreds, endpoint=location)
