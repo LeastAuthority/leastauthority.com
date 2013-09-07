@@ -3,7 +3,7 @@ import stripe, cgi, time
 
 from lae_util.timestamp import format_iso_time
 from lae_automation.server import create_secrets_file
-from lae_site.handlers.web import env
+#from lae_site.handlers.web import env
 from lae_site.handlers.devpay_complete import HandlerBase
 
 class SubscriptionReportHandler(HandlerBase):
