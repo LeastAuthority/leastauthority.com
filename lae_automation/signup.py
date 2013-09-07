@@ -6,7 +6,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.config import Config
 from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
-    create_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
+    create_user_bucket, create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
 from lae_automation.aws.queryapi import TimeoutError, wait_for_EC2_addresses
 from lae_automation.server import install_server, bounce_server, NotListeningError
 #from lae_automation.server import initialize_statmover_source
@@ -104,11 +104,12 @@ def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdou
     config = Config(configpath)
     myclock = clock or reactor
     AWSaccesskeyid = config["ec2_access_key_id"]
-    AWSsecretkey = FilePath(config["ec2_secret_path"]).getContent()
+    AWSsecretkeypath = config["ec2_secret_path"]
+    AWSsecretkey = FilePath(AWSsecretkeypath).getContent()
     plan = customer.subscription.plan.name
     bucketname = "lae-%s-%s" % (plan, customer.id)
     location = EC2_ENDPOINT  # default location for now
-    product = lookup_product(config, productcode)
+    product = lookup_product(config, plan)
     fullname = product['full_name']
     amiimageid = product['ami_image_id']
     instancesize = product['instance_size']
@@ -121,10 +122,10 @@ def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdou
     # if necessary, but let's keep it simple and sequential.
     d.addCallback(lambda ign: deploy_stripeaccount_server (AWSaccesskeyid, AWSsecretkey, bucketname, 
                                                            None, amiimageid, instancesize, 
-                                                           customer_name, customer_email,
+                                                           customer_name, customer.email,
                                                            customer_pgpinfo, stdout, stderr, 
                                                            secretsfile, config, serverinfopath, 
-                                                           ec2secretpath, clock=myclock))
+                                                           AWSsecretkeypath, clock=myclock))
     d.addErrback(lambda f: send_notify_failure(f, customer_name, customer.email, logfilename, stdout,
                                                stderr))
     return d
@@ -288,9 +289,9 @@ def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsec
                         time.sleep(LISTEN_POLL_TIME)
                         continue
 
-                furl = bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid,
-                                     usersecretkey, usertoken, producttoken, bucketname, oldsecrets,
-                                     stdout, stderr, secretsfile)
+                furl = bounce_server(publichost, admin_privkey_path, privatehost, AWSaccesskeyid,
+                                     AWSsecretkey, None, None, bucketname, oldsecrets, stdout, stderr,
+                                     secretsfile)
 
                 # Disabled for now.
                 #initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
