@@ -6,6 +6,7 @@ from twisted.python.filepath import FilePath
 from lae_automation.server import install_infrastructure_server
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from txaws.s3.client import S3Client
+from lae_automation.aws.devpay_s3client import DevPayS3Client
 from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError, \
      wait_for_EC2_addresses
 
@@ -243,6 +244,38 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
     d.addCallback(_got_fingerprintfromconsole)
     return d
 
+def create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
+                       producttoken=None, location=None):
+    if location is None:
+        print >>stdout, "Creating S3 bucket in 'US East' region..."
+    else:
+        # TODO: print user-friendly region name
+        print >>stdout, "Creating S3 bucket..."
+
+    print >>stderr, ('usertoken = %r\n'
+                     'bucketname = %r\n'
+                     'location = %r\n'
+                     % (usertoken, bucketname, location))
+
+    usercreds = AWSCredentials(useraccesskeyid, usersecretkey)
+    client = DevPayS3Client(creds=usercreds, usertoken=usertoken, producttoken=producttoken)
+
+    if location:
+        object_name = "?LocationConstraint=" + urllib.quote(location)
+    else:
+        object_name = None
+
+    query = client.query_factory(
+        action="PUT", creds=client.creds, endpoint=client.endpoint,
+        bucket=bucketname, object_name=object_name)
+    d = query.submit()
+
+    def bucket_created(res):
+        print >>stdout, "S3 bucket created."
+        print >>stderr, repr(res)
+
+    d.addCallback(bucket_created)
+    return d
 
 def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr, location):
     if location is None:

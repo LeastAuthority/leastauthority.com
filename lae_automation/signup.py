@@ -129,8 +129,6 @@ def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdou
                                                stderr))
     return d
 
-
-
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
                    secretsfile, logfilename,
                    configpath='../secret_config/lae_automation_config.json',
@@ -149,7 +147,6 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     d.addErrback(lambda f: send_notify_failure(f, "someone", customer_email, logfilename, stdout,
                                                stderr))
     return d
-
 
 # TODO: too many args. Consider passing them in a dict.
 def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
