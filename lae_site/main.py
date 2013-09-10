@@ -61,6 +61,8 @@ def main(basefp):
         # <http://www.openssl.org/docs/ssl/SSL_CTX_set_options.html#NOTES>
         # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L656>
         OP_CIPHER_SERVER_PREFERENCE = 0x00400000L
+        # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L645>
+        OP_NO_COMPRESSION = 0x00020000L
 
         CIPHER_LIST = ("ECDHE-RSA-AES128-GCM-SHA256:"
                        "ECDHE-RSA-AES256-GCM-SHA384:"
@@ -91,6 +93,7 @@ def main(basefp):
         sslcontext.set_cipher_list(CIPHER_LIST)
         #sslcontext.set_options(OP_SINGLE_DH_USE)
         sslcontext.set_options(OP_CIPHER_SERVER_PREFERENCE)
+        sslcontext.set_options(OP_NO_COMPRESSION)
         reactor.listenSSL(port, site, sslfactory)
 
         if redirect_port is not None:
