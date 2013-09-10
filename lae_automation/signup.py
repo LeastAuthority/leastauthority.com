@@ -43,8 +43,10 @@ def lookup_product(config, productcode):
 def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout,
            stderr, seed, secretsfile, logfilename,
            configpath='../secret_config/lae_automation_config.json',
+           signupspath='../signups.csv',
            serverinfopath=None, ec2secretpath=None, clock=None):
     config = Config(configpath)
+    signups_fp = FilePath(signupspath)
     myclock = clock or reactor
 
     bucketname = "lae-%s-%s" % (productcode.lower(), seed)
@@ -95,12 +97,13 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                                  clock=myclock))
 
         d2.addCallback(lambda ign: append_record(signups_fp, 'success', activationkey, productcode,
-                                                 name, email, publickey))
+                                                 customer_name, customer_email, customer_keyinfo))
         return d2
     d.addCallback(_activated)
     def _failed(f):
         try:
-            append_record(signups_fp, 'failure', activationkey, productcode, name, email, publickey)
+            append_record(signups_fp, 'failure', activationkey, productcode,
+                          customer_name, customer_email, customer_keyinfo)
         except Exception, e:
             print >>stderr, "Could not append failure record to signups.csv: %s" % (e,)
         return send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr)
