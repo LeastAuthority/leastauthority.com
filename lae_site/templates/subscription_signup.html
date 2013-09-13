@@ -10,9 +10,14 @@
 
     <div class="form-row">
       <label><span>Email address:</span></label> 
-      <input type="email" name="Email" autofocus>
+      <input type="email" name="email" autofocus>
     </div>
-      <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
+    <div class="form-row">
+      <label><span>Name:</span></label> 
+      <input type="text" name="nickname" autofocus>
+    </div>
+
+    <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
     
     <div class="form-row">
       <label>
@@ -32,6 +37,11 @@
       </label>
         <input type="number" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month"/>
         <span> / </span><input type="number" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year"/>
+    </div>
+
+    <div class="form-row">
+      <label><span>Optional PGP Public Key:</span></label> 
+      <input type="text" name="pgp_pubkey" style="width:20em; height:12ex" autofocus>
     </div>
 
     <div class="form-row">
