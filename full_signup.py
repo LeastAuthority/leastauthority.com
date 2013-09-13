@@ -9,23 +9,28 @@ from lae_util.streams import LoggingTeeStream
 from lae_util.timestamp import format_iso_time
 
 
-def main(stdin, stdout, stderr, seed, secretsfile, logfilename):
+def main(stdin, stdout, stderr):#, seed, secretsfile, logfilename):
     print >>stdout, "Automation script started."
     print >>stderr, "On separate lines: Activation key, Product code, Name, Email, Key info"
-    activationkey = stdin.readline().strip()
-    productcode = stdin.readline().strip()
-    name = stdin.readline().strip()
-    email = stdin.readline().strip()
-    keyinfo = stdin.readline().strip()
+    customer_name = stdin.readline().strip()
+    customer_email = stdin.readline().strip()
+    customer_pgpinfo = stdin.readline().strip()
+    customer_id = stdin.readline().strip()
+    customer_subscription_id = stdin.readline().strip()
+    customer_plan = stdin.readline().strip()
+    secretsfile = stdin.readline().strip()
+    logfile = stdin.readline().strip()
 
-    if keyinfo is None:
-        # EOF reached before 5 lines (including blank lines) were input
+    if logfile is None:
+        # EOF reached before 8 lines (including blank lines) were input
         raise AssertionError("full_signup.py: some information was not received. Please report this to <info@leastauthority.com>.")
 
     print >>stderr, "Received all fields, thanks."
     try:
-        from lae_automation.signup import signup
-        return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, secretsfile, logfilename)
+        from lae_automation.signup import activate_subscribed_service
+        return activate_subscribed_service(customer_name, customer_email, customer_pgpinfo, 
+                                           customer_subscription_id, customer_plan, stdout, stderr, 
+                                           secretsfile, logfile)
     except Exception:
         import traceback
         traceback.print_exc(100, stdout)

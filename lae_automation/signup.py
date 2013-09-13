@@ -98,7 +98,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                                stderr))
     return d
 
-def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdout, stderr, secretsfile, logfile,
+def activate_subscribed_service(customer_name, customer_email, customer_pgpinfo, customer_id, customer_subscription_id, 
+                                plan, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
     config = Config(configpath)
@@ -106,8 +107,7 @@ def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdou
     AWSaccesskeyid = config["ec2_access_key_id"]
     AWSsecretkeypath = config["ec2_secret_path"]
     AWSsecretkey = FilePath(AWSsecretkeypath).getContent()
-    plan = customer.subscription.plan.name
-    bucketname = "lae-%s-%s" % (plan, customer.id)
+    bucketname = "lae-%s-%s" % (customer_subscription_id, customer_id)
     location = EC2_ENDPOINT  # default location for now
     product = lookup_product(config, plan)
     fullname = product['full_name']
@@ -122,11 +122,11 @@ def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdou
     # if necessary, but let's keep it simple and sequential.
     d.addCallback(lambda ign: deploy_stripeaccount_server (AWSaccesskeyid, AWSsecretkey, bucketname, 
                                                            None, amiimageid, instancesize, 
-                                                           customer_name, customer.email,
+                                                           customer_name, customer_email,
                                                            customer_pgpinfo, stdout, stderr, 
                                                            secretsfile, config, serverinfopath, 
                                                            AWSsecretkeypath, clock=myclock))
-    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer.email, logfile, stdout,
+    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfile, stdout,
                                                stderr))
     return d
 
