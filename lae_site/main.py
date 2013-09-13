@@ -12,7 +12,7 @@ from twisted.python.filepath import FilePath
 
 from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
-from lae_site.handlers.devpay_complete import start
+from lae_site.handlers.subscription_complete import start
 
 
 def main(basefp):
