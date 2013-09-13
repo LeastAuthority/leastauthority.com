@@ -98,7 +98,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                                stderr))
     return d
 
-def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdout, stderr, secretsfile, logfilename,
+def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
     config = Config(configpath)
@@ -126,7 +126,7 @@ def activate_subscribed_service(customer_name, customer, customer_pgpinfo, stdou
                                                            customer_pgpinfo, stdout, stderr, 
                                                            secretsfile, config, serverinfopath, 
                                                            AWSsecretkeypath, clock=myclock))
-    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer.email, logfilename, stdout,
+    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer.email, logfile, stdout,
                                                stderr))
     return d
 
