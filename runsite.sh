@@ -1,8 +1,8 @@
 #!/bin/sh
-cd /home/website/leastauthority.com
+
 flappserver restart `pwd`/flapp
 sleep 2
-cmd="python -u `pwd`/lae_site/main.py"
+cmd="/home/arc/LeastAuthority_env/bin/python -u `pwd`/lae_site/main.py"
 pids=$(pgrep -fl "$cmd" |cut -f1 -d' ')
 if [ "$pids" != "" ]; then
        echo killing $pids

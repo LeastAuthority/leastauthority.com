@@ -71,7 +71,7 @@ class SubscriptionReportHandler(HandlerBase):
         HandlerBase.__init__(self, out=out)
         self.basefp = basefp
 
-    def render_POST(self, request):
+    def render(self, request):
         stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"
         token = request.args['stripeToken'][0]
         customer = stripe.Customer.create(card=token, plan='S4', email=request.args['email'][0])
@@ -91,26 +91,22 @@ class SubscriptionReportHandler(HandlerBase):
         append_record(subscriptions_fp, customer.subscription.id, customer.subscription.plan.name, 
                       nickname, customer.email, customer_pgpinfo)       
         
-        stdin = ("%s\n"*8) % (nickname,
+        stdin = ("%s\n"*6) % (nickname,
                               customer.email,
                               customer_pgpinfo,
                               customer.id,
                               customer.subscription.id,
                               customer.subscription.plan.name,
-                              secrets_fh,
-                              log_fh
                              )
-        return '<html><body>%s</body></html>' % (stdin,)
 
-        """
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = self.out
 
         service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
         def when_done():
             try:
-                subscribed_confirmed.add(customer.subcription.id)
-                all_subscribed.add(customer.subcription.id)
+                subscribed_confirmed.add(customer.subscription.id)
+                all_subscribed.add(customer.subscription.id)
                 append_record(service_confirmed_fp, 'success', customer.subscription.id, 
                               customer.subscription.plan.name, nickname, customer.email, 
                               customer_pgpinfo)
@@ -124,7 +120,7 @@ class SubscriptionReportHandler(HandlerBase):
                 request.finish()
         def when_failed():
             try:
-                all_subscribed.add(customer.subcription.id)
+                all_subscribed.add(customer.subscription.id)
                 append_record(service_confirmed_fp, 'failure', customer.subscription.id, 
                               customer.subscription.plan.name, nickname, customer.email, 
                               customer_pgpinfo)
@@ -137,6 +133,7 @@ class SubscriptionReportHandler(HandlerBase):
             finally:
                 request.finish()
         try:
+            print >>stderr, 'stdin in subscription_complete is: %s' % (stdin,)
             flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
         except Exception:
             traceback.print_exc(100, stdout)
@@ -145,5 +142,5 @@ class SubscriptionReportHandler(HandlerBase):
         # http://twistedmatrix.com/documents/10.1.0/web/howto/web-in-60/asynchronous.html
         
         #return '<html><body>%s<br>%s</body></html>' % (cgi.escape(request.args.__repr__()),'foo')#cgi.escape((customer))))
-        """
+
         return NOT_DONE_YET
