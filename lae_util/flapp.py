@@ -30,9 +30,11 @@ class FlappCommand(object):
         options = ClientOptions()
         options.stdout = stdout
         options.stderr = stderr
+        print >>stderr, 'self.flappclient_args: %s' % self.flappclient_args
         options.parseOptions(self.flappclient_args)
 
         def stdio(proto):
+            print >>stderr, '\n***\ncontent: %s' % content
             proto.dataReceived(content)
             proto.connectionLost("EOF")
 
@@ -42,6 +44,8 @@ class FlappCommand(object):
 
         def _go(ign):
             print >>stdout, "Starting..."
+            print >>stdout, "self.rref is %s " % (self.rref,)
+            print >>stdout, "options.subOptions.stdio is %s " % (options.subOptions.stdio,)
             return RunCommand().run(self.rref, options.subOptions)
         def _done(rc):
             if rc == 0:
