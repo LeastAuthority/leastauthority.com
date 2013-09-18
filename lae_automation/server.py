@@ -398,8 +398,8 @@ def set_up_reboot(stdout, stderr):
 def create_secrets_file(basefp, timestamp, stripe_customer_id):
     logfilename = "%s-%s" % (timestamp, stripe_customer_id)
 
-    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
-    logfile = basefp.child('signup_logs').child(logfilename).open('a+')
+    secretsfile = basefp.child('secrets').child(logfilename)
+    logfile = basefp.child('signup_logs').child(logfilename)
     return secretsfile, logfile
 
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
