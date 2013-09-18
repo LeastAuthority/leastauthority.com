@@ -102,11 +102,12 @@ def activate_subscribed_service(customer_name, customer_email, customer_pgpinfo,
                                 plan, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
+    print >> stderr, "entering activate_subscribed_service call."
     config = Config(configpath)
     myclock = clock or reactor
     AWSaccesskeyid = config.other["ec2_access_key_id"]
     AWSsecretkeypath = config.other["ec2_secret_path"]
-    AWSsecretkey = FilePath(AWSsecretkeypath).getContent()
+    AWSsecretkey = FilePath(AWSsecretkeypath).getContent().strip()
     bucketname = "lae-%s-%s" % (customer_subscription_id, customer_id)
     location = EC2_ENDPOINT  # default location for now
     product = lookup_product(config, plan)
