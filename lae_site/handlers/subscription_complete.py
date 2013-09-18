@@ -72,32 +72,39 @@ class SubscriptionReportHandler(HandlerBase):
         self.basefp = basefp
 
     def render(self, request):
+        """
+        Some of the values returned either from parsing the request or from stripe
+        are unicodes.   Foolscaphas been handling unicodes poorly.
+        """
         stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"
         token = request.args['stripeToken'][0]
         customer = stripe.Customer.create(card=token, plan='S4', email=request.args['email'][0])
         nickname = request.args['nickname'][0]
         timestamp = format_iso_time(time.time())
         fpcleantimestamp = timestamp.replace(':', '')
-        secrets_fh, log_fh = create_secrets_file(self.basefp, fpcleantimestamp, customer.id)
+        secrets_fp, log_fp = create_secrets_file(self.basefp, fpcleantimestamp, customer.id)
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
-        print >> secrets_fh, customer.email
-        print >> secrets_fh, customer.default_card
-        print >> secrets_fh, customer.subscription.plan.name
-        print >> secrets_fh, customer.id
-        print >> log_fh, customer.email
+        secrets_fp.setContent('\n'.join([customer.email, customer.default_card, 
+                                         customer.subscription.plan.name, customer.id]))
+        log_fp.setContent(customer.email)
         
         customer_pgpinfo = request.args['pgp_pubkey'][0]
         
         append_record(subscriptions_fp, customer.subscription.id, customer.subscription.plan.name, 
                       nickname, customer.email, customer_pgpinfo)       
         
-        stdin = ("%s\n"*6) % (nickname,
+        raw_stdin = ("%s\n"*8) % (nickname,
                               customer.email,
                               customer_pgpinfo,
                               customer.id,
                               customer.subscription.id,
                               customer.subscription.plan.name,
+                              secrets_fp.path,
+                              log_fp.path,
                              )
+
+        #This value will be passed to foolscap, and must be coerced to a string.
+        stdin = str(raw_stdin)
 
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = self.out
@@ -133,7 +140,6 @@ class SubscriptionReportHandler(HandlerBase):
             finally:
                 request.finish()
         try:
-            print >>stderr, 'stdin in subscription_complete is: %s' % (stdin,)
             flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
         except Exception:
             traceback.print_exc(100, stdout)
