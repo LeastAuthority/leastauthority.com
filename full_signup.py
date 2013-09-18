@@ -11,29 +11,31 @@ from lae_util.timestamp import format_iso_time
 
 def main(stdin, stdout, stderr):
     print >>stdout, "Automation script started."
-    print >>stderr, "On separate lines: Name, email, pgpinfo, stripe customer id, stripe subscription id, plan name, secretsfile, logile"
+    print >>stderr, "On separate lines: Name, email, pgpinfo, stripe customer id, stripe subscription id, plan name, secretsfile, logfile"
     customer_name = stdin.readline().strip()
-    print >>stderr, "stdin is %s "% (stdin,)
-    for line in stdin.readlines():
-        print >>stderr, "line is %s" % (line,)
     customer_email = stdin.readline().strip()
     customer_pgpinfo = stdin.readline().strip()
     customer_id = stdin.readline().strip()
     customer_subscription_id = stdin.readline().strip()
     customer_plan = stdin.readline().strip()
-    secretsfile = stdin.readline().strip()
-    logfile = stdin.readline().strip()
-
-    #print >>stderr, "%s "* 8 % (customer_name, customer_email, customer_pgpinfo, customer_id, customer_subscription_id, customer_plan, secretsfile, logfile)
+    secretsfile_name = stdin.readline().strip()
+    logfile_name = stdin.readline().strip()
 
 
-    if logfile is None:
+    print >>stderr, "customer plan is: %s" % (customer_plan,)
+    print >>stderr, "customer name is: %s" % (customer_name,)
+
+    print >>stderr, "%s " * 8 % (customer_name, customer_email, customer_pgpinfo, customer_id, 
+                                 customer_subscription_id, customer_plan, secretsfile_name, 
+                                 logfile_name)
+
+
+    if logfile_name is None:
         # EOF reached before 8 lines (including blank lines) were input
         raise AssertionError("full_signup.py: some information was not received. Please report this to <info@leastauthority.com>.")
 
     print >>stderr, "Received all fields, thanks."
-    print >>stderr, "customer plan is: %s" % (customer_plan,)
-    print >>stderr, "customer name is: %s" % (customer_name,)
+
     try:
         from lae_automation.signup import activate_subscribed_service
         return activate_subscribed_service(customer_name, customer_email, customer_pgpinfo, 
