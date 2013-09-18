@@ -84,6 +84,9 @@ class SubscriptionReportHandler(HandlerBase):
         fpcleantimestamp = timestamp.replace(':', '')
         secrets_fp, log_fp = create_secrets_file(self.basefp, fpcleantimestamp, customer.id)
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
+        #Use of "setContent" here assures us that the associated file will be in a known state
+        #when it is referenced on the other side of "the wire" <- ala foolscap
+        #This is necessary because we are passing a stringified reference to the file over the wire.
         secrets_fp.setContent('\n'.join([customer.email, customer.default_card, 
                                          customer.subscription.plan.name, customer.id]))
         log_fp.setContent(customer.email)

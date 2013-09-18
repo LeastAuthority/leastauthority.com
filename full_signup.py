@@ -18,16 +18,19 @@ def main(stdin, stdout, stderr):
     customer_id = stdin.readline().strip()
     customer_subscription_id = stdin.readline().strip()
     customer_plan = stdin.readline().strip()
-    secretsfile_name = stdin.readline().strip()
-    logfile_name = stdin.readline().strip()
 
+    #We can't pass file object through the foolscap service, so we pass names.
+    secretsfile_name = stdin.readline().strip()
+    secretsfile = open(secretsfile_name, 'a')
+    logfile_name = stdin.readline().strip()
+    logfile = open(logfile_name, 'a')
 
     print >>stderr, "customer plan is: %s" % (customer_plan,)
     print >>stderr, "customer name is: %s" % (customer_name,)
 
     print >>stderr, "%s " * 8 % (customer_name, customer_email, customer_pgpinfo, customer_id, 
-                                 customer_subscription_id, customer_plan, secretsfile_name, 
-                                 logfile_name)
+                                 customer_subscription_id, customer_plan, secretsfile, 
+                                 logfile)
 
 
     if logfile_name is None:
