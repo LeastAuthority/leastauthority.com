@@ -44,8 +44,6 @@ class FlappCommand(object):
 
         def _go(ign):
             print >>stdout, "Starting..."
-            print >>stdout, "self.rref is %s " % (self.rref,)
-            print >>stdout, "options.subOptions.stdio is %s " % (options.subOptions.stdio,)
             return RunCommand().run(self.rref, options.subOptions)
         def _done(rc):
             if rc == 0:
