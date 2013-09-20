@@ -26,6 +26,10 @@ def main(basefp):
             port = int(arg[len('--port='):])
         elif arg.startswith('--redirectport='):
             redirect_port = int(arg[len('--redirectport='):])
+        elif arg == '--dev':
+            ssl_enabled = False
+            redirect_port = None
+            default_port = 8000
         elif arg == '--nossl':
             ssl_enabled = False
             redirect_port = None
