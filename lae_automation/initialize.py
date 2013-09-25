@@ -292,15 +292,15 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
                      % (None, bucketname, location, accesskeyid, secretkey))
 
     LAcreds = AWSCredentials(accesskeyid, secretkey)
-    client = S3Client(creds=LAcreds, endpoint=location)
+    client = S3Client(creds=LAcreds)
     print >>stderr, "client is %s" % (client,)
 
-    """
+    
     if location:
         object_name = "?LocationConstraint=" + urllib.quote(location)
     else:
         object_name = None
-    """    
+        
     object_name = None
     query = client.query_factory(
         action="PUT", creds=client.creds, endpoint=client.endpoint,

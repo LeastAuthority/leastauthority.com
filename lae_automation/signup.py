@@ -109,7 +109,7 @@ def activate_subscribed_service(customer_name, customer_email, customer_pgpinfo,
     AWSsecretkeypath = config.other["ec2_secret_path"]
     AWSsecretkey = FilePath(AWSsecretkeypath).getContent().strip()
     bucketname = "lae-%s-%s" % (customer_subscription_id, customer_id)
-    location = EC2_ENDPOINT  # default location for now
+    location = None  # default S3 location for now
     product = lookup_product(config, plan)
     fullname = product['full_name']
     amiimageid = product['ami_image_id']
