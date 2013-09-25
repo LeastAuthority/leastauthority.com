@@ -6,15 +6,15 @@
 <div class="row-fluid">
   <div class="span6">
   <form action="/subscription-complete" method="POST" enc="multipart/form-data" id="payment-form" class="form-inline">
-    <span class="payment-errors"></span>
+    <span class="payment-errors">{{ errorblock }}</span>
 
     <div class="form-row">
       <label><span>Email address:</span></label> 
-      <input type="email" name="email" autofocus>
+      <input type="email" name="email" required="true" autofocus>
     </div>
     <div class="form-row">
       <label><span>Name:</span></label> 
-      <input type="text" name="nickname" autofocus>
+      <input type="text" name="nickname" required="true" autofocus>
     </div>
 
     <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
@@ -23,20 +23,20 @@
       <label>
         <span>Card number:</span>
       </label>
-        <input type="number" maxlength="20" size="20" placeholder="**** **** **** ****" data-stripe="number"/>
+        <input type="number" maxlength="20" size="20" placeholder="**** **** **** ****" data-stripe="number" required="true" pattern="\d{4}\s?\d{4}\s?\d{4}\s?\d{4}"/>
     </div>
 
     <div class="form-row">
       <label>
         <span>CVC:</span>
       </label>
-      <input type="number" maxlength="4" size="4" data-stripe="cvc"/>
+      <input type="number" maxlength="4" size="4" data-stripe="cvc" required="true" pattern="\d{3}"/>
       &nbsp;
       <label> 
         <span>Expiration:</span>
       </label>
-        <input type="number" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month"/>
-        <span> / </span><input type="number" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year"/>
+        <input type="number" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" pattern="\d\d"/>
+        <span> / </span><input type="number" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" pattern="\d{4}"/>
     </div>
 
     <div class="form-row">
