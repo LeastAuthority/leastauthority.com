@@ -259,6 +259,10 @@ button.signup-button {
     height: 1.6em;
 }
 
+.payment-errors {
+    color: red;
+}
+
  /*  *  */
 
 .help-text {

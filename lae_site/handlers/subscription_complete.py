@@ -7,6 +7,7 @@ from lae_util.servers import append_record
 from lae_util.flapp import FlappCommand
 from lae_util.timestamp import format_iso_time
 from lae_automation.server import create_secrets_file
+from lae_site.handlers.web import env
 from lae_site.handlers.devpay_complete import HandlerBase, RequestOutputStream, SUCCEEDED_HTML,\
 FAILED_HTML
 
@@ -78,7 +79,16 @@ class SubscriptionReportHandler(HandlerBase):
         """
         stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"
         token = request.args['stripeToken'][0]
-        customer = stripe.Customer.create(card=token, plan='S4', email=request.args['email'][0])
+        try:
+            customer = stripe.Customer.create(card=token, plan='S4', email=request.args['email'][0])
+        except stripe.CardError, e:
+            #return "<html><head></head><body><h2>Stripe Processing Error</h2>%s</body></html>" % str(e)
+            print >>self.out, "Got an exception from the stripe.Customer.create call:"
+            #print >>self.out, type(e)
+            print >>self.out, dir(e)
+            print >>self.out, repr(e)
+            tmpl = env.get_template('subscription_signup.html')
+            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
         nickname = request.args['nickname'][0]
         timestamp = format_iso_time(time.time())
         fpcleantimestamp = timestamp.replace(':', '')
