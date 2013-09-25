@@ -16,8 +16,10 @@ if len(sys.argv) < 4:
 useraccesskeyid = sys.argv[1]
 usersecretkey = sys.argv[2]
 bucketname = sys.argv[3]
-if len(sys.argv) > 5:
-    location = sys.argv[5]
+
+
+if len(sys.argv) > 4:
+    location = sys.argv[4]
 else:
     location = None  # default
 
