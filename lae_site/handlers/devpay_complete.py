@@ -348,7 +348,7 @@ class CollectEmailHandler(HandlerBase):
 
         if email and VALID_EMAIL_RE.match(email):
             tmpl = env.get_template(valid_email_template)
-            (start, _, rest) = tmpl.render(productname=productname, productfullname=productfullname).encode('utf-8').partition("MAGIC")
+            (start, _, rest) = tmpl.render(productname=productname, productfullname=productfullname, email=email).encode('utf-8').partition("MAGIC")
             request.write(start)
 
             d = defer.succeed(None)
