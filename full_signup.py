@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import time, os, sys, base64
+import codecs, time, os, sys, base64
 
 from twisted.internet import defer, reactor
 from twisted.python.filepath import FilePath
@@ -12,17 +12,20 @@ from lae_util.timestamp import format_iso_time
 def main(stdin, stdout, stderr):
     print >>stdout, "Automation script started."
     print >>stderr, "On separate lines: Name, email, pgpinfo, stripe customer id, stripe subscription id, plan name, secretsfile, logfile"
-    customer_name = stdin.readline().strip()
-    customer_email = stdin.readline().strip()
-    customer_pgpinfo = stdin.readline().strip()
-    customer_id = stdin.readline().strip()
-    customer_subscription_id = stdin.readline().strip()
-    customer_plan = stdin.readline().strip()
+
+    stdin_u = codecs.getreader('utf-8')(stdin)
+
+    customer_name = stdin_u.readline().strip()
+    customer_email = stdin_u.readline().strip()
+    customer_pgpinfo = stdin_u.readline().strip()
+    customer_id = stdin_u.readline().strip()
+    customer_subscription_id = stdin_u.readline().strip()
+    customer_plan = stdin_u.readline().strip()
 
     #We can't pass file object through the foolscap service, so we pass names.
-    secretsfile_name = stdin.readline().strip()
+    secretsfile_name = stdin_u.readline().strip()
     secretsfile = open(secretsfile_name, 'a')
-    logfile_name = stdin.readline().strip()
+    logfile_name = stdin_u.readline().strip()
     logfile = open(logfile_name, 'a')
 
     print >>stderr, "customer plan is: %s" % (customer_plan,)
@@ -58,7 +61,10 @@ if __name__ == '__main__':
 
         d = defer.succeed(None)
         d.addCallback(lambda ign: main(stdin, stdout, stderr))
-        d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
+        def _print_except(f):
+            f.printTraceback(file=stderr)
+            os._exit(2)
+        d.addCallbacks(lambda ign: os._exit(0), _print_except)
         reactor.run()
     except Exception:
         import traceback
