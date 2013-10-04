@@ -26,6 +26,7 @@ class FlappCommand(object):
         return done
 
     def run(self, content, stdout, stderr, when_done, when_failed):
+        assert isinstance(content, unicode), (`content`, type(content))
         assert self.rref is not None
         options = ClientOptions()
         options.stdout = stdout
@@ -35,7 +36,9 @@ class FlappCommand(object):
 
         def stdio(proto):
             print >>stderr, '\n***\ncontent: %s' % content
-            proto.dataReceived(content)
+            #This value is being sent to the stdin of the flapp, and
+            #must be coerced to a bytestring.
+            proto.dataReceived(content.encode('utf-8'))
             proto.connectionLost("EOF")
 
         options.subOptions.stdio = stdio

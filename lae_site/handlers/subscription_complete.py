@@ -116,9 +116,6 @@ class SubscriptionReportHandler(HandlerBase):
                               log_fp.path,
                              )
 
-        #This value will be passed to foolscap, and must be coerced to a string.
-        stdin = str(raw_stdin)
-
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = self.out
 
