@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import codecs, time, os, sys, base64
+import simplejson, time, os, sys, base64
 
 from twisted.internet import defer, reactor
 from twisted.python.filepath import FilePath
@@ -13,20 +13,19 @@ def main(stdin, stdout, stderr):
     print >>stdout, "Automation script started."
     print >>stderr, "On separate lines: Name, email, pgpinfo, stripe customer id, stripe subscription id, plan name, secretsfile, logfile"
 
-    stdin_u = codecs.getreader('utf-8')(stdin)
-
-    customer_name = stdin_u.readline().strip()
-    customer_email = stdin_u.readline().strip()
-    customer_pgpinfo = stdin_u.readline().strip()
-    customer_id = stdin_u.readline().strip()
-    customer_subscription_id = stdin_u.readline().strip()
-    customer_plan = stdin_u.readline().strip()
+    (customer_name,
+    customer_email,
+    customer_pgpinfo,
+    customer_id,
+    customer_subscription_id,
+    customer_plan,
+    secretsfile_name,
+    logfile_name) = simplejson.loads(stdin)
 
     #We can't pass file object through the foolscap service, so we pass names.
-    secretsfile_name = stdin_u.readline().strip()
     secretsfile = open(secretsfile_name, 'a')
-    logfile_name = stdin_u.readline().strip()
     logfile = open(logfile_name, 'a')
+
 
     print >>stderr, "customer plan is: %s" % (customer_plan,)
     print >>stderr, "customer name is: %s" % (customer_name,)
