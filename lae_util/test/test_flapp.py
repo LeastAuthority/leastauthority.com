@@ -59,7 +59,7 @@ class FlappCommandTests(TestCase):
         d = cmd.start()
 
         # check that an exception from when_done doesn't bugger things up
-        d.addCallback(lambda ign: cmd.run("CONTENT1", self.stdout, self.stderr, raise_exception, fail))
+        d.addCallback(lambda ign: cmd.run(u"CONTENT1", self.stdout, self.stderr, raise_exception, fail))
         d.addCallback(_poll_until_ready)
         def _check1(ign):
             self.failUnlessIn("Starting", self.stdout.getvalue())
@@ -70,7 +70,7 @@ class FlappCommandTests(TestCase):
             reset(0)
         d.addCallback(_check1)
 
-        d.addCallback(lambda ign: cmd.run("CONTENT2", self.stdout, self.stderr, callback, fail))
+        d.addCallback(lambda ign: cmd.run(u"CONTENT2", self.stdout, self.stderr, callback, fail))
         d.addCallback(_poll_until_ready)
         def _check2(ign):
             self.failUnlessIn("Starting", self.stdout.getvalue())
@@ -82,7 +82,7 @@ class FlappCommandTests(TestCase):
         d.addCallback(_check2)
 
         # check that an exception from when_failed doesn't bugger things up
-        d.addCallback(lambda ign: cmd.run("CONTENT3", self.stdout, self.stderr, fail, raise_exception))
+        d.addCallback(lambda ign: cmd.run(u"CONTENT3", self.stdout, self.stderr, fail, raise_exception))
         d.addCallback(_poll_until_ready)
         def _check3(ign):
             self.failUnlessIn("Starting", self.stdout.getvalue())
@@ -93,7 +93,7 @@ class FlappCommandTests(TestCase):
             reset(1)
         d.addCallback(_check3)
 
-        d.addCallback(lambda ign: cmd.run("CONTENT4", self.stdout, self.stderr, fail, callback))
+        d.addCallback(lambda ign: cmd.run(u"CONTENT4", self.stdout, self.stderr, fail, callback))
         d.addCallback(_poll_until_ready)
         def _check4(ign):
             self.failUnlessIn("Starting", self.stdout.getvalue())
