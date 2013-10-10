@@ -122,12 +122,12 @@ def activate_subscribed_service(customer_name, customer_email, customer_pgpinfo,
 
     # We could deploy and configure the instance in parallel with the above wait and delete it
     # if necessary, but let's keep it simple and sequential.
-    d.addCallback(lambda ign: deploy_stripeaccount_server (AWSaccesskeyid, AWSsecretkey, bucketname, 
-                                                           None, amiimageid, instancesize, 
-                                                           customer_name, customer_email,
-                                                           customer_pgpinfo, stdout, stderr, 
-                                                           secretsfile, config, serverinfopath, 
-                                                           AWSsecretkeypath, clock=myclock))
+    d.addCallback(lambda ign: deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, 
+                                                          None, amiimageid, instancesize, 
+                                                          customer_name, customer_email,
+                                                          customer_pgpinfo, stdout, stderr, 
+                                                          secretsfile, config, serverinfopath, 
+                                                          AWSsecretkeypath, clock=myclock))
     d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfile, stdout,
                                                stderr))
     return d
