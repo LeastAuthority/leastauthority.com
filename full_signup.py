@@ -11,8 +11,7 @@ from lae_util.timestamp import format_iso_time
 
 def main(stdin, stdout, stderr):
     print >>stdout, "Automation script started."
-    print >>stderr, "On separate lines: Name, email, pgpinfo, stripe customer id, stripe subscription id, plan name, secretsfile, logfile"
-
+    
     (customer_name,
     customer_email,
     customer_pgpinfo,
@@ -20,7 +19,7 @@ def main(stdin, stdout, stderr):
     customer_subscription_id,
     customer_plan,
     secretsfile_name,
-    logfile_name) = simplejson.loads(stdin)
+    logfile_name) = simplejson.loads(stdin.read())
 
     #We can't pass file object through the foolscap service, so we pass names.
     secretsfile = open(secretsfile_name, 'a')
