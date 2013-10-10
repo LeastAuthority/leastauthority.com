@@ -1,5 +1,5 @@
 
-import stripe, time, traceback
+import stripe, time, traceback, simplejson
 
 from twisted.web.server import NOT_DONE_YET
 
@@ -106,15 +106,16 @@ class SubscriptionReportHandler(HandlerBase):
         append_record(subscriptions_fp, customer.subscription.id, customer.subscription.plan.name, 
                       nickname, customer.email, customer_pgpinfo)       
         
-        raw_stdin = ("%s\n"*8) % (nickname,
-                              customer.email,
-                              customer_pgpinfo,
-                              customer.id,
-                              customer.subscription.id,
-                              customer.subscription.plan.name,
-                              secrets_fp.path,
-                              log_fp.path,
-                             )
+        stdin = simplejson.dumps((nickname,
+                                 customer.email,
+                                 customer_pgpinfo,
+                                 customer.id,
+                                 customer.subscription.id,
+                                 customer.subscription.plan.name,
+                                 secrets_fp.path,
+                                 log_fp.path),
+                                 ensure_ascii=True
+                                 )
 
         stdout = RequestOutputStream(request, tee=self.out)
         stderr = self.out
