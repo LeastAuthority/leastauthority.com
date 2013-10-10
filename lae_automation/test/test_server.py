@@ -252,8 +252,6 @@ class TestServerModule(TestCase):
                 (SERVER_PORT + '\n', '/home/customer/storageserver/client.port', False, None),
                 (test_tahoe_cfg, '/home/customer/storageserver/tahoe.cfg', False, None),
                 (SECRETACCESSKEY, '/home/customer/storageserver/private/s3secret', False, 0640),
-                (USERTOKEN, '/home/customer/storageserver/private/s3usertoken', False, 0640),
-                (PRODUCTTOKEN, '/home/customer/storageserver/private/s3producttoken', False, 0640),
                 (RESTART_SCRIPT, '/home/customer/restart.sh', False, 0750),
                 ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
                 ])
