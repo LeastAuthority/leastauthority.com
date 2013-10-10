@@ -393,7 +393,7 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     pubkey_filepath = pubkey_dir.child(pubkey_filename)
     pubkey_relpath = os.path.join(PUBKEY_DIR, pubkey_filename)
     output = pubkey_filepath.open('w')
-    keyscan_call = ('ssh-keyscan', '-H', targetIP)
+    keyscan_call = ('ssh-keyscan', '-t', 'rsa', '-H', targetIP)
     sp = subprocess.Popen(keyscan_call, stdout=output, stderr=subprocess.PIPE)
     if sp.wait() != 0:
         raise subprocess.CalledProcessError
