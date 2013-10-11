@@ -8,8 +8,7 @@ from lae_util.flapp import FlappCommand
 from lae_util.timestamp import format_iso_time
 from lae_automation.server import create_secrets_file
 from lae_site.handlers.web import env
-from lae_site.handlers.devpay_complete import HandlerBase, RequestOutputStream, SUCCEEDED_HTML,\
-FAILED_HTML
+from lae_site.handlers.devpay_complete import HandlerBase, SUCCEEDED_HTML,FAILED_HTML
 
 
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
@@ -117,7 +116,7 @@ class SubscriptionReportHandler(HandlerBase):
                                  ensure_ascii=True
                                  )
 
-        stdout = RequestOutputStream(request, tee=self.out)
+        stdout = self.out
         stderr = self.out
 
         service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
