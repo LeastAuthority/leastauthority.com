@@ -73,8 +73,12 @@ class SubscriptionReportHandler(HandlerBase):
 
     def render(self, request):
         """
+        The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
+        render_POST is handled by the HandlerBase parent which calls this this method after logging 
+        the request.
+
         The foolscap service registered to run when flappcommand.run is called expects a bytestream
-        US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
+        of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
         addition).  Therefore the content passed to the command must conform to US-ascii.
         """
         stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"
