@@ -1,4 +1,6 @@
 
+from mock import MagicMock
+
 from cStringIO import StringIO
 
 from twisted.internet import defer
@@ -16,6 +18,8 @@ class MockFlappCommand(object):
     def start(self):
         return defer.succeed(None)
     def run(self, content, stdout, stderr, when_done, when_failed):
+        for char in content:
+            assert isinstance(char, bytes)
         print >>stdout, "Starting..."
         if self.should_succeed:
             when_done()
