@@ -26,6 +26,7 @@ class FlappCommand(object):
         return done
 
     def run(self, content, stdout, stderr, when_done, when_failed):
+        assert isinstance(content, bytes), (`content`, type(content))
         assert self.rref is not None
         options = ClientOptions()
         options.stdout = stdout
