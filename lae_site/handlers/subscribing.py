@@ -1,4 +1,3 @@
-import sys
 
 from lae_site.handlers.web import env
 from lae_site.handlers.devpay_complete import HandlerBase
