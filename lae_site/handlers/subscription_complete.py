@@ -1,14 +1,16 @@
 
-import stripe, time, traceback, simplejson
+import stripe, time, traceback, simplejson, sys
 
 from twisted.web.server import NOT_DONE_YET
 
 from lae_util.servers import append_record
 from lae_util.flapp import FlappCommand
 from lae_util.timestamp import format_iso_time
+from lae_util.streams import LoggingTeeStream
 from lae_automation.server import create_secrets_file
 from lae_site.handlers.web import env
-from lae_site.handlers.devpay_complete import HandlerBase, SUCCEEDED_HTML,FAILED_HTML
+from lae_site.handlers.devpay_complete import HandlerBase, SUCCEEDED_HTML,FAILED_HTML,\
+RequestOutputStream
 
 
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
@@ -103,6 +105,7 @@ class SubscriptionReportHandler(HandlerBase):
         #This is necessary because we are passing a stringified reference to the file over the wire.
         secrets_fp.setContent('\n'.join([customer.email, customer.default_card, 
                                          customer.subscription.plan.name, customer.id]))
+        RequestOutputStream(request, tee=secrets_fp.open('a'))
         log_fp.setContent(customer.email)
         
         customer_pgpinfo = request.args['pgp_pubkey'][0]
@@ -121,8 +124,8 @@ class SubscriptionReportHandler(HandlerBase):
                                  ensure_ascii=True
                                  )
 
-        stdout = self.out
-        stderr = self.out
+        stdout = LoggingTeeStream(sys.stdout, log_fp.open('a'), 'stdout')
+        stderr = LoggingTeeStream(sys.stderr, log_fp.open('a'), 'stderr')
 
         service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
         def when_done():
