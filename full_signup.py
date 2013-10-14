@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 
-import simplejson, time, os, sys, base64
+import simplejson, os, sys
 
 from twisted.internet import defer, reactor
-from twisted.python.filepath import FilePath
 
 from lae_util.streams import LoggingTeeStream
-from lae_util.timestamp import format_iso_time
 
 
 def main(stdin, stdout, stderr):
