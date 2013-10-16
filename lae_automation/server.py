@@ -526,10 +526,9 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
     introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
     server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
     server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
-    #server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
-    #                          ' then cat /home/customer/storageserver/private/node.privkey; fi')
-    server_node_privkey = ''
-
+    server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
+                              ' then cat /home/customer/storageserver/private/node.privkey; fi')
+    
     print >>stdout, "The introducer and storage server are running."
 
     external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
