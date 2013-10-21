@@ -228,6 +228,7 @@ input {
  * Signup pages
  */
 
+a.signup-button,
 button.signup-button {
     font-weight: 700;
     color: white;
