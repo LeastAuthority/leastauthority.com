@@ -5,7 +5,7 @@ from lae_site.handlers.devpay_complete import HandlerBase
 class SubscriptionSubmitHandler(HandlerBase):
     #XXXisLeaf = 0
 
-    def __init__(self, basefp, products):
+    def __init__(self, basefp):
         pass
 
     def render_GET(self, request):

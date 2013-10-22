@@ -69,8 +69,8 @@ def start(basefp):
 class SubscriptionReportHandler(HandlerBase):
     #XXXisLeaf = 0
 
-    def __init__(self, basefp, out=None):
-        HandlerBase.__init__(self, out=out)
+    def __init__(self, basefp):
+        HandlerBase.__init__(self, out=None)
         self.basefp = basefp
 
     def render(self, request):

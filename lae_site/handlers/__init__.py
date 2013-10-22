@@ -19,8 +19,8 @@ def make_site(basefp, config):
     resource.putChild('signup', SignupHandler(config.products)) # is this obsolete now? the stripe processing is all in 'subscribing.py' right?
     resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
     resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
-    resource.putChild('subscribing', SubscriptionSubmitHandler(basefp, config.products))
-    resource.putChild('subscription-complete', SubscriptionReportHandler(basefp, config.products))
+    resource.putChild('subscribing', SubscriptionSubmitHandler(basefp))
+    resource.putChild('subscription-complete', SubscriptionReportHandler(basefp))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
     site = Site(resource, logPath=basefp.child('sitelogs').path)
