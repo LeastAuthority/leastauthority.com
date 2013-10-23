@@ -1,0 +1,18 @@
+{% extends '_base.html' %}
+
+{% block content %}
+
+<h3>Thank you</h3>
+<p>
+Thank you for subscribing to {{ productfullname }}!
+</p>
+<p>
+We are deploying the infrastructure necessary to support your Cloud service!
+We'll send you an email with your unique introducer furl shortly.
+Before you start using {{ productfullname }}, you will need to
+<a href="https://tahoe-lafs.org/trac/tahoe-lafs/wiki/Installation">install LAFS</a> on your
+trusted machine. After you've installed LAFS, you can configure it with the
+furl you'll be receiving in your email.
+</p>
+
+{% endblock %}

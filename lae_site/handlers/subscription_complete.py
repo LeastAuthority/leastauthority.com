@@ -74,7 +74,8 @@ class SubscriptionReportHandler(HandlerBase):
         self.basefp = basefp
 
     def _delayedRender(self, request):
-        request.write("<html><body>Sorry to keep you waiting.</body></html>")
+        tmpl = env.get_template('payment_verified.html')
+        request.write(tmpl.render().encode('utf-8'))
         request.finish()
 
     def render(self, request):
