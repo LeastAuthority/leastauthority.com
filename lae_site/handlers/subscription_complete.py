@@ -147,11 +147,6 @@ class SubscriptionReportHandler(HandlerBase):
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
                 traceback.print_exc(100, stderr)
-                #request.write(SUCCEEDED_HTML)
-            #else:
-                #request.write(SUCCEEDED_HTML)
-            #finally:
-                #request.finish()
         def when_failed():
             try:
                 all_subscribed.add(customer.subscription.id)
@@ -161,11 +156,6 @@ class SubscriptionReportHandler(HandlerBase):
 
             except Exception:
                 traceback.print_exc(100, stderr)
-                #request.write(FAILED_HTML)
-            #else:
-                #request.write(FAILED_HTML)
-            #finally:
-                #request.finish()
         try:
             flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
         except Exception:
@@ -173,7 +163,4 @@ class SubscriptionReportHandler(HandlerBase):
             when_failed()
 
         # http://twistedmatrix.com/documents/current/web/howto/web-in-60/asynchronous.html
-        
-        #return '<html><body>%s<br>%s</body></html>' % (cgi.escape(request.args.__repr__()),'foo')#cgi.escape((customer))))
-
         return NOT_DONE_YET
