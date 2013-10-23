@@ -1,11 +1,8 @@
 
-from mock import MagicMock
-
 from cStringIO import StringIO
 
 from twisted.internet import defer
 from twisted.trial.unittest import TestCase
-from twisted.web.http import OK
 from twisted.web.server import NOT_DONE_YET
 from twisted.python.filepath import FilePath
 
@@ -72,6 +69,9 @@ def mock_create_secrets_file(basefp, timestamp, stripe_customer_id):
     logfile = basefp.child('signup_logs_'+logfilename)
     return secretsfile, logfile
 
+def mock_callLater(*args):
+    pass
+
 class Handlers(TestCase):
 
     def setUp(self):
@@ -96,8 +96,4 @@ class Handlers(TestCase):
         else:
             d.callback((req, resp))
         return d
-
-    def test_subscriptionreporthandler_POST(self):
-        d = self._test_subscriptionreporthandler('POST', stripeToken=['mockstripetoken'], email=['test@example.com'], nickname=['RandomNym'],
-                pgp_pubkey=['ASCIIARMORED'])
-        return d      
+        
