@@ -73,6 +73,10 @@ class SubscriptionReportHandler(HandlerBase):
         HandlerBase.__init__(self, out=None)
         self.basefp = basefp
 
+    def _delayedRender(self, request):
+        request.write("<html><body>Sorry to keep you waiting.</body></html>")
+        request.finish()
+
     def render(self, request):
         """
         The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
@@ -93,6 +97,8 @@ class SubscriptionReportHandler(HandlerBase):
             print >>self.out, repr(e)
             tmpl = env.get_template('subscription_signup.html')
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+        from twisted.internet import reactor
+        reactor.callLater(1, self._delayedRender, request)
         nickname = request.args['nickname'][0]
         timestamp = format_iso_time(time.time())
         fpcleantimestamp = timestamp.replace(':', '')
