@@ -76,8 +76,11 @@ class SubscriptionReportHandler(HandlerBase):
     def _delayedRender(self, request):
         tmpl = env.get_template('payment_verified.html')
         request.write(tmpl.render({"productfullname":"Simple Secure Storage Service", "productname":"S4"}).encode('utf-8'))
-        #request.finish()  <-- I think we don't want this.
+        request.finish()
 
+    def _responseFailed(self, failure, call):
+        call.cancel()
+        
     def render(self, request):
         """
         The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
@@ -99,7 +102,8 @@ class SubscriptionReportHandler(HandlerBase):
             tmpl = env.get_template('subscription_signup.html')
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
         from twisted.internet import reactor
-        reactor.callLater(1, self._delayedRender, request)
+        call = reactor.callLater(1, self._delayedRender, request)
+        request.notifyFinish().addErrback(self._responseFailed, call)
         nickname = request.args['nickname'][0]
         timestamp = format_iso_time(time.time())
         fpcleantimestamp = timestamp.replace(':', '')
@@ -143,11 +147,11 @@ class SubscriptionReportHandler(HandlerBase):
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
                 traceback.print_exc(100, stderr)
-                request.write(SUCCEEDED_HTML)
-            else:
-                request.write(SUCCEEDED_HTML)
-            finally:
-                request.finish()
+                #request.write(SUCCEEDED_HTML)
+            #else:
+                #request.write(SUCCEEDED_HTML)
+            #finally:
+                #request.finish()
         def when_failed():
             try:
                 all_subscribed.add(customer.subscription.id)
@@ -157,11 +161,11 @@ class SubscriptionReportHandler(HandlerBase):
 
             except Exception:
                 traceback.print_exc(100, stderr)
-                request.write(FAILED_HTML)
-            else:
-                request.write(FAILED_HTML)
-            finally:
-                request.finish()
+                #request.write(FAILED_HTML)
+            #else:
+                #request.write(FAILED_HTML)
+            #finally:
+                #request.finish()
         try:
             flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
         except Exception:
