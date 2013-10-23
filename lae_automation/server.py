@@ -285,7 +285,9 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 python-nevow '
                  'python-dateutil fabric python-foolscap python-twisted-mail python-six '
-                 'python-unidecode python-tz python-docutils python-markdown')
+                 'python-unidecode python-tz python-docutils python-markdown python-pip')
+    # From:  https://stripe.com/docs/libraries
+    sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
     sudo_apt_get('install -y postfix')
