@@ -4,9 +4,6 @@ import simplejson, os, sys
 
 from twisted.internet import defer, reactor
 
-from lae_util.streams import LoggingTeeStream
-
-
 def main(stdin, stdout, stderr):
     print >>stdout, "Automation script started."
     

@@ -76,7 +76,7 @@ class SubscriptionReportHandler(HandlerBase):
     def _delayedRender(self, request):
         tmpl = env.get_template('payment_verified.html')
         request.write(tmpl.render({"productfullname":"Simple Secure Storage Service", "productname":"S4"}).encode('utf-8'))
-        request.finish()
+        #request.finish()  <-- I think we don't want this.
 
     def render(self, request):
         """
