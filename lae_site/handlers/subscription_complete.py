@@ -88,9 +88,7 @@ class SubscriptionReportHandler(HandlerBase):
         try:
             customer = stripe.Customer.create(card=token, plan='S4', email=request.args['email'][0])
         except stripe.CardError, e:
-            #return "<html><head></head><body><h2>Stripe Processing Error</h2>%s</body></html>" % str(e)
             print >>self.out, "Got an exception from the stripe.Customer.create call:"
-            #print >>self.out, type(e)
             print >>self.out, dir(e)
             print >>self.out, repr(e)
             tmpl = env.get_template('subscription_signup.html')
@@ -163,7 +161,7 @@ class SubscriptionReportHandler(HandlerBase):
             traceback.print_exc(100, stdout)
             when_failed()
 
-        # http://twistedmatrix.com/documents/10.1.0/web/howto/web-in-60/asynchronous.html
+        # http://twistedmatrix.com/documents/current/web/howto/web-in-60/asynchronous.html
         
         #return '<html><body>%s<br>%s</body></html>' % (cgi.escape(request.args.__repr__()),'foo')#cgi.escape((customer))))
 
