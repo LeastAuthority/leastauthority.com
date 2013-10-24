@@ -23,7 +23,9 @@
       <label>
         <span>Card number:</span>
       </label>
-        <input type="number" maxlength="20" size="20" placeholder="**** **** **** ****" data-stripe="number" required="true" pattern="\d{4}\s?\d{4}\s?\d{4}\s?\d{4}"/>
+        <input type="number" maxlength="20" size="20" placeholder="**** **** **** ****"
+	       data-stripe="number" required="true"
+	       pattern="^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$|^\d{4}\s?\d{6}\s?\d{5}$|^\d{4}\s?\d{4}\s?\d{4}\s?\d{2}$"/>
     </div>
 
     <div class="form-row">
