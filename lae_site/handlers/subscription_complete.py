@@ -9,8 +9,7 @@ from lae_util.timestamp import format_iso_time
 from lae_util.streams import LoggingTeeStream
 from lae_automation.server import create_secrets_file
 from lae_site.handlers.web import env
-from lae_site.handlers.devpay_complete import HandlerBase, SUCCEEDED_HTML,FAILED_HTML,\
-RequestOutputStream
+from lae_site.handlers.devpay_complete import HandlerBase, RequestOutputStream
 
 
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
