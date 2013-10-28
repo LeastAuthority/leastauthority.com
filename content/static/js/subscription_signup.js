@@ -10,6 +10,16 @@ window.creditcardVerifier = (function () {
 	      });
 	      
 	  },
+	  formSubmissionHandler: function (event) {
+	      var $form = $(this);
+	      // Disable the submit button to prevent repeated clicks
+              $form.find('button').prop('disabled', true);
+	      
+
+              Stripe.createToken($form, creditcardVerifier.stripeResponseHandler);
+	      
+	      return false;
+	  },
 	  stripeResponseHandler: function(status, response) {
 	      var $form = $('#payment-form');
 
@@ -25,16 +35,6 @@ window.creditcardVerifier = (function () {
 		  // and submit
 		  $form.get(0).submit();
 	      }
-	  },
-	  formSubmissionHandler: function (event) {
-	      var $form = $(this);
-	      // Disable the submit button to prevent repeated clicks
-              $form.find('button').prop('disabled', true);
-	      
-
-              Stripe.createToken($form, creditcardVerifier.stripeResponseHandler);
-	      
-	      return false;
 	  },
       }
 }());
