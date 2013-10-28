@@ -1,6 +1,6 @@
 "use strict";
 
-window.credit_card_verifier = (function () {
+window.creditcardVerifier = (function () {
       return {
 	  stripeResponseHandler: function(status, response) {
 	      var $form = $('#payment-form');
@@ -18,13 +18,13 @@ window.credit_card_verifier = (function () {
 		  $form.get(0).submit();
 	      }
 	  },
-	  form_submission_handler: function (event) {
+	  formSubmissionHandler: function (event) {
 	      var $form = $(this);
 	      // Disable the submit button to prevent repeated clicks
               $form.find('button').prop('disabled', true);
 	      
 
-              Stripe.createToken($form, credit_card_verifier.stripeResponseHandler);
+              Stripe.createToken($form, creditcardVerifier.stripeResponseHandler);
 	      
 	      return false;
 	  },
@@ -32,7 +32,7 @@ window.credit_card_verifier = (function () {
 	      // This identifies your website in the createToken call below
 	      Stripe.setPublishableKey('pk_test_czwzkTp2tactuLOEOqbMTRzG');
 	      jQuery(function ($) {
-		  $('#payment-form').submit( credit_card_verifier.form_submission_handler );
+		  $('#payment-form').submit( creditcardVerifier.formSubmissionHandler );
 	      });
 	      
 	  },
