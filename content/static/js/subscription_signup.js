@@ -1,3 +1,5 @@
+"use strict";
+
 // This identifies your website in the createToken call below
 Stripe.setPublishableKey('pk_test_czwzkTp2tactuLOEOqbMTRzG')
 jQuery(function($) {
