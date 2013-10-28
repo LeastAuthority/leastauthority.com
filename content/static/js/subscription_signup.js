@@ -2,6 +2,14 @@
 
 window.creditcardVerifier = (function () {
       return {
+	  register_callbacks: function () {
+	      // This identifies your website in the createToken call below
+	      Stripe.setPublishableKey('pk_test_czwzkTp2tactuLOEOqbMTRzG');
+	      jQuery(function ($) {
+		  $('#payment-form').submit( creditcardVerifier.formSubmissionHandler );
+	      });
+	      
+	  },
 	  stripeResponseHandler: function(status, response) {
 	      var $form = $('#payment-form');
 
@@ -27,14 +35,6 @@ window.creditcardVerifier = (function () {
               Stripe.createToken($form, creditcardVerifier.stripeResponseHandler);
 	      
 	      return false;
-	  },
-	  register_callbacks: function () {
-	      // This identifies your website in the createToken call below
-	      Stripe.setPublishableKey('pk_test_czwzkTp2tactuLOEOqbMTRzG');
-	      jQuery(function ($) {
-		  $('#payment-form').submit( creditcardVerifier.formSubmissionHandler );
-	      });
-	      
 	  },
       }
 }());
