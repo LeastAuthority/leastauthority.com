@@ -10,20 +10,21 @@ describe('callback registration', function () {
 });
 
 describe('The submission handler', function () { 
-    var aliasStripe;
+    var asideStripe;
     beforeEach(function () {
-	aliasStripe = window.Stripe;
-	window.Stripe = { createToken : function($form, responsehandler){} };
-	spyOn(window.Stripe, 'createToken');
-	creditcardVerifier.formSubmissionHandler.call( jasmine.createSpy("this_form"), jasmine.createSpy("event") );
+	this.asideStripe = window.Stripe;
+	delete window.Stripe;
     });
 
     afterEach( function () {
-	window.Stripe = aliasStripe;
-	delete window.aliasStripe;
+	window.Stripe = this.asideStripe;
+	delete this.asideStripe;
     });
 
     it('registers the response handler', function () {
-	expect(Stripe.createToken).toHaveBeenCalledWith(jasmine.any(Object), creditcardVerifier.stripeResponseHandler);
+	window.Stripe = { createToken : function($form, responsehandler){} };
+	spyOn(window.Stripe, 'createToken');
+	creditcardVerifier.formSubmissionHandler.call( jasmine.createSpy("form"), jasmine.createSpy("event") );
+	expect(Stripe.createToken).toHaveBeenCalledWith( jasmine.any(Object), creditcardVerifier.stripeResponseHandler );
     }); 
 });
