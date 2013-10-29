@@ -13,8 +13,7 @@ window.creditcardVerifier = (function () {
 	  formSubmissionHandler: function (event) {
 	      var $form = $(this);
 	      // Disable the submit button to prevent repeated clicks
-              $form.find('button').prop('disabled', true);
-	      
+              $form.find('button').prop('disabled', true);      
 
               Stripe.createToken($form, creditcardVerifier.stripeResponseHandler);
 	      
