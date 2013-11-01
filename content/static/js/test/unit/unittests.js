@@ -9,7 +9,7 @@ describe('callback registration', function () {
     });
 });
 
-describe('The submission handler', function () { 
+describe('The form submission handler', function () { 
     var asideStripe, aside$;
     beforeEach(function () {
 	aside$ = window.$;
@@ -25,16 +25,41 @@ describe('The submission handler', function () {
 	aside$ = {};
     });
 
-    it('registers the response handler', function () {
-	window.Stripe = { createToken : function($form, responsehandler){} };
+    it('finds the form submission button', function () {
+	window.Stripe = jasmine.createSpyObj('Stripe', ['createToken']);
+	var jqueryform = jasmine.createSpyObj('form', ['find']);
+	window.$ = jasmine.createSpy("$").andReturn(jqueryform);
 	var HTMLformSpy = jasmine.createSpy("HTMLform");
 	var button = jasmine.createSpyObj('button', ['prop'])
-	var jqueryform = jasmine.createSpyObj('form', ['find']);
 	jqueryform.find.andReturn(button)
+
+	creditcardVerifier.formSubmissionHandler.call( HTMLformSpy, jasmine.createSpy("click") );
+	expect(jqueryform.find).toHaveBeenCalledWith('button');
+    }); 
+
+    it('disables the form submission button', function () {
+	window.Stripe = jasmine.createSpyObj('Stripe', ['createToken']);
+	var jqueryform = jasmine.createSpyObj('form', ['find']);
 	window.$ = jasmine.createSpy("$").andReturn(jqueryform);
-	spyOn(window.Stripe, 'createToken');
-	creditcardVerifier.formSubmissionHandler.call( HTMLformSpy, jasmine.createSpy("event") );
-	expect(Stripe.createToken).toHaveBeenCalledWith( jasmine.any(Object), creditcardVerifier.stripeResponseHandler );
+	var HTMLformSpy = jasmine.createSpy("HTMLform");
+	var button = jasmine.createSpyObj('button', ['prop'])
+	jqueryform.find.andReturn(button)
+
+	creditcardVerifier.formSubmissionHandler.call( HTMLformSpy, jasmine.createSpy("click") );
 	expect(button.prop).toHaveBeenCalledWith('disabled', true);
     }); 
+
+    it('registers the response handler inside Stripe.createToken', function () {
+	window.Stripe = jasmine.createSpyObj('Stripe', ['createToken']);
+	var jqueryform = jasmine.createSpyObj('form', ['find']);
+	window.$ = jasmine.createSpy("$").andReturn(jqueryform);
+	var HTMLformSpy = jasmine.createSpy("HTMLform");
+	var button = jasmine.createSpyObj('button', ['prop'])
+	jqueryform.find.andReturn(button)
+
+	creditcardVerifier.formSubmissionHandler.call( HTMLformSpy, jasmine.createSpy("click") );
+	expect(Stripe.createToken).toHaveBeenCalledWith( jqueryform, creditcardVerifier.stripeResponseHandler );
+    }); 
+
+
 });
