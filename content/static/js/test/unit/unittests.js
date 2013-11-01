@@ -10,8 +10,10 @@ describe('callback registration', function () {
 });
 
 describe('The submission handler', function () { 
-    var asideStripe;
+    var asideStripe, aside$;
     beforeEach(function () {
+	aside$ = window.$;
+	window.$ = {};
 	asideStripe = window.Stripe;
 	window.Stripe = {};
     });
@@ -19,12 +21,30 @@ describe('The submission handler', function () {
     afterEach( function () {
 	window.Stripe = asideStripe;
 	asideStripe = {};
+	window.$ = aside$;
+	aside$ = {};
     });
 
     it('registers the response handler', function () {
 	window.Stripe = { createToken : function($form, responsehandler){} };
+	/*var buttonSpy = jasmine.createSpyObj("button", ["prop"]);
+	, ["find"]).andReturn(buttonSpy);
+	var jquerySpy = jasmine.createSpy("$").andReturn(formSpy);
+	*/
+	var HTMLformSpy = jasmine.createSpy("HTMLform");
+	var formbutton = {prop : function(boolstatus, setboolstatus){}}
+	var jqueryform = {find : function(target) 
+			  {
+			      if (target === "button") 
+			      {
+				  return formbutton;
+			      }
+			  }
+			 }
+	window.$ = jasmine.createSpy("$").andReturn(jqueryform);
+	//alert($);
 	spyOn(window.Stripe, 'createToken');
-	creditcardVerifier.formSubmissionHandler.call( jasmine.createSpy("form"), jasmine.createSpy("event") );
+	creditcardVerifier.formSubmissionHandler.call( HTMLformSpy, jasmine.createSpy("event") );
 	expect(Stripe.createToken).toHaveBeenCalledWith( jasmine.any(Object), creditcardVerifier.stripeResponseHandler );
     }); 
 });
