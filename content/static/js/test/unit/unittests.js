@@ -12,13 +12,13 @@ describe('callback registration', function () {
 describe('The submission handler', function () { 
     var asideStripe;
     beforeEach(function () {
-	this.asideStripe = window.Stripe;
-	delete window.Stripe;
+	asideStripe = window.Stripe;
+	window.Stripe = {};
     });
 
     afterEach( function () {
-	window.Stripe = this.asideStripe;
-	delete this.asideStripe;
+	window.Stripe = asideStripe;
+	asideStripe = {};
     });
 
     it('registers the response handler', function () {
