@@ -27,24 +27,14 @@ describe('The submission handler', function () {
 
     it('registers the response handler', function () {
 	window.Stripe = { createToken : function($form, responsehandler){} };
-	/*var buttonSpy = jasmine.createSpyObj("button", ["prop"]);
-	, ["find"]).andReturn(buttonSpy);
-	var jquerySpy = jasmine.createSpy("$").andReturn(formSpy);
-	*/
 	var HTMLformSpy = jasmine.createSpy("HTMLform");
-	var formbutton = {prop : function(boolstatus, setboolstatus){}}
-	var jqueryform = {find : function(target) 
-			  {
-			      if (target === "button") 
-			      {
-				  return formbutton;
-			      }
-			  }
-			 }
+	var button = jasmine.createSpyObj('button', ['prop'])
+	var jqueryform = jasmine.createSpyObj('form', ['find']);
+	jqueryform.find.andReturn(button)
 	window.$ = jasmine.createSpy("$").andReturn(jqueryform);
-	//alert($);
 	spyOn(window.Stripe, 'createToken');
 	creditcardVerifier.formSubmissionHandler.call( HTMLformSpy, jasmine.createSpy("event") );
 	expect(Stripe.createToken).toHaveBeenCalledWith( jasmine.any(Object), creditcardVerifier.stripeResponseHandler );
+	expect(button.prop).toHaveBeenCalledWith('disabled', true);
     }); 
 });
