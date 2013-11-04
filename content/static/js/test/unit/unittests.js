@@ -13,9 +13,8 @@ describe('The form submission handler', function () {
     var asideStripe, aside$, jqueryform, HTMLformSpy, button;
     beforeEach(function () {
 	aside$ = window.$;
-	window.$ = {};
 	asideStripe = window.Stripe;
-	window.Stripe = {};
+	window.Stripe, window.$ = {};
 	window.Stripe = jasmine.createSpyObj('Stripe', ['createToken']);
 	jqueryform = jasmine.createSpyObj('form', ['find']);
 	window.$ = jasmine.createSpy("$").andReturn(jqueryform);
