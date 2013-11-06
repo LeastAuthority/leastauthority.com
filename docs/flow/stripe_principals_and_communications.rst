@@ -1,41 +1,113 @@
 .. _Stripe: https://stripe.com
-.. _Stripe JS: https://stripe.com/docs/stripe.js
-.. _Stripe Python Library: https://github.com/stripe/stripe-python
+.. _The JS loaded from Stripe: https://stripe.com/docs/stripe.js
+.. _The Python Library Installed on the LA Webserver: https://github.com/stripe/stripe-python
 .. _root resource: https://twistedmatrix.com/documents/current/web/howto/web-in-60/static-dispatch.html
+.. _Our interface to the Web: https://github.com/LeastAuthority/leastauthority.com
+.. _/subscribing: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/handlers/subscribing.py
+.. _Twisted Web Resource:
+.. https://twistedmatrix.com/documents/current/api/twisted.web.resource.Resource.html
+.. _/subscription_complete: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/handlers/subscription_complete.py
+.. _Aurora: http://ppa.launchpad.net/ubuntu-mozilla-daily/firefox-aurora/ubuntu/
+.. _their API: https://stripe.com/docs/api
 
 Introduction
 ============
 
- During signup for Least Authority services, in which Stripe_ is used as the
- payment processor, there are several network nodes that communicate with
- each other.  The communication is conducted via HTTP messages.  This
- document describes the expected nodes and messages in each of several cases.
+ During Stripe_ -processed signup for Our services several 
+ Principal Actors send Messages to each other.  This document describes the 
+ expected behavior of these "Principals" and Messages in each of several cases. 
+
+ With respect to the behaviors within its scope, it is intended to be
+ authoritative (i.e. look here first!), comprehensive (let's not leave any
+ relevant part out!), and clear (this doc should reify our common
+ understanding). In short, this is the place to explain how it works. 
+
+ A note on the format:
+   Each case is intended to contain a clear sequence of behaviors the reader
+   can engage in, in order to (re)produce the case.
 
 Definitions
 -----------
 
-- Service: The product we are providing for a fee.
+  LA Webserver
+    `Our interface to the Web`_
 
-- User:  The party signing up for the service
+  Principals Actors (aka Principals)
+    Entities that send and receive Messages during the signup process.
 
-- Stripe Servers: The agency managing credit card payments processing,
-  verification, and billing. 
+    - `Twisted Web Resource`_ s, Provided By the LA Webserver
 
-- `Stripe Python Library`_: The Python Library Installed on the Least
-  Authority Server (via pip)
+       - `/subscribing`_
+       - `/subscription_complete`_
+  
+    - The User's Browser (I usually use `Aurora`_, so it's the most tested)
+    - Stripe Servers via `their API`_
+   
+  Message
+    Data that is processed by two or more Principals, and is (approximately) invariant 'in between'
 
-- `Stripe JS`_: The JS loaded into the Users browser
+  The System
+    All Principals and Messages
 
-Overview
---------
+  The Start Point
+    Each case begins with a browser which has loaded the content provided in
+    response to an HTTP GET request against the "`root resource`_" at:
 
- Each case begins with a browser which has loaded the content provided in
- response to an HTTP GET request against the "`root resource`_" at:
+      ``https://leastauthority.com``
 
-  ``https://leastauthority.com``
+    The User is provided with a "button class" HTML Anchor Element, labeled
+    "Signup", which on-click causes the browser to request via HTTP GET the
+    resource provided by "`/subscribing`_".  
+
+    I define the state of The System immediately after the browser has
+    successfully loaded this content as "The Start Point". 
+
+    This analysis is focused on the behavior that occurs between this Start
+    Point and the subsequent End Point.
+
+  The End Point
+    The state of The System that is reached when all Prinicipals have
+    finished processing Messages from other Principals.
+
+    This definition implies that non-Principal behavior is not within the scope of the
+    analysis, even if it is 'ultimately' caused by a Principal Message.  In
+    particular, this document is not concerned with the behavior of the
+    flappserver, or other components of the webserver that is stimulated
+    by Principal-generated Messages. 
+
+  Service
+    The product we are providing for a fee.
+
+  Stripe Servers
+    The agency managing credit card payments processing, verification, and
+    billing.
+ 
+  Stripe Python Library
+    `The Python Library Installed on the LA Webserver`_ (via pip)
+
+  Stripe JS
+    `The JS loaded from Stripe`_ into the User's browser
+
+  User
+    The agent controlling the User's Browser
+
+  The Signup Process
+    The behaviors that occur between the Start- and End- Points specified below.
+
+
+Caveat Emptor
+-------------
+
+ This is a Message-Centric analysis.  That seemed to be a reasonable
+ framework for carving up the system.  I make no claim that it's in-any-sense optimal.
+
+In All Cases
+------------
+
+  1. Start Your Local Test Server
+
+     - foo
+ 
 
 Case One: Valid CC All Nodes Available
-``````````````````````````````````````
-
-
-
+--------------------------------------
