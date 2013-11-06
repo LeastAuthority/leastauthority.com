@@ -104,10 +104,40 @@ Caveat Emptor
 In All Cases
 ------------
 
-  1. Start Your Local Test Server
+  1. Start Your Local Test Server With the Stripe Signup Implementation
 
-     - foo
- 
+     - ``cd YOUR_leastauthority.com_REPO``
+     - ``git checkout 103_implement_stripe_01``
+     - ``git pull git@github.com:LeastAuthority/leastauthority.com.git``
+     - ``cd YOURLOCALPATH/leastauthority.com ./runsite --dev``
+
+  2. Navigate to the test site
+
+     - point your favorite browser (Firefox) at: 
+
+       ``http://localhost:8000``
+
+     - open the browser's webconsole (Ctrl-Shift-K)
+     - deselect CSS, JS, Security, and Logging tabs
+
+  3. Navigate to The Start Point
+
+     - click the "Sign up!" button, and get 'redirected' to:
+
+       ``http://localhost:8000/subscribing``
 
 Case One: Valid CC All Nodes Available
 --------------------------------------
+
+Here's a set of valid form input data:
+
+ Email address:
+   test@test
+ Name:
+   testvalidCC_01
+ Card number:
+   4242 4242 4242 4242
+ CVC:
+   111
+ Expiration:
+   01 / 2015
