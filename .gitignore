@@ -1,6 +1,6 @@
 *.pyc
 *.pyo
 *~
-
+env/*
 _trial_temp/
 lae_rendered/*
