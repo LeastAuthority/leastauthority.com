@@ -1,3 +1,4 @@
+﻿.. -*- coding: utf-8-with-signature -*-
 .. _Stripe: https://stripe.com
 .. _The JS loaded from Stripe: https://stripe.com/docs/stripe.js
 .. _The Python Library Installed on the LA Webserver: https://github.com/stripe/stripe-python
@@ -104,40 +105,68 @@ Caveat Emptor
 In All Cases
 ------------
 
-  1. Start Your Local Test Server With the Stripe Signup Implementation
+  1. Start Your Local Test Server With the Stripe Signup Implementation:
 
-     - ``cd YOUR_leastauthority.com_REPO``
-     - ``git checkout 103_implement_stripe_01``
-     - ``git pull git@github.com:LeastAuthority/leastauthority.com.git``
-     - ``cd YOURLOCALPATH/leastauthority.com ./runsite --dev``
+     #. ``cd YOUR_leastauthority.com_REPO``
+     #. ``git checkout 103_implement_stripe_01``
+     #. ``git pull git@github.com:LeastAuthority/leastauthority.com.git``
+     #. ``cd YOURLOCALPATH/leastauthority.com ./runsite --dev``
 
-  2. Navigate to the test site
+  2. Navigate to the test site:
 
-     - point your favorite browser (Firefox) at: 
+     #. open your favorite browser (Firefox-Aurora)
+     #. open the browser's webconsole (Ctrl-Shift-K)
+     #. deselect CSS, JS, Security, and Logging tabs
+     #. paste the following into the browser's location bar
+        ``http://localhost:8000``
 
-       ``http://localhost:8000``
+     Notice attributes of the consequent http traffic:
 
-     - open the browser's webconsole (Ctrl-Shift-K)
-     - deselect CSS, JS, Security, and Logging tabs
+     - no cookies are set on the browser by the server
 
-  3. Navigate to The Start Point
+     .. NOTE:  We need to verify this exhaustively.  To that end I've started
+     .. implementing a MITM'd option to runsite.sh --dev that runs the server
+     .. "through" a TCP proxy, which dumps all traffic.  Once that's complete
+     .. we can grep the logs for patterns like "Set-Cookie"
 
-     - click the "Sign up!" button, and get 'redirected' to:
+     - all requests against resources hosted on different domains are over https
+  
+     .. this also needs some more comprehensive proof that manual console inspection 
+
+  3. Navigate to The Start Point:
+
+     #. click the "Sign up!" button, and get 'redirected' to:
 
        ``http://localhost:8000/subscribing``
 
+     Notice attributes of the consequent http traffic:
+
+     - as above
+     - the stripe js is fetched over https
+     - the jquery source is loaded from a local static file
+     - XXX: Discuss:  what's the right policy here?
+
+ 
 Case One: Valid CC All Nodes Available
 --------------------------------------
+
+.. _'payment-form' HTML form: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/templates/subscription_signup.html#L8
 
 Here's a set of valid form input data:
 
  Email address:
    test@test
  Name:
-   testvalidCC_01
+   testvalidCC
  Card number:
    4242 4242 4242 4242
  CVC:
    111
  Expiration:
    01 / 2015
+
+ 1.  Enter the data into the `'payment-form' HTML form`_ and click "Purchase"
+
+
+    Notice
+     - foo
