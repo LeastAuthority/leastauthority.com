@@ -11,7 +11,7 @@ window.creditcardVerifier = (function () {
 	      
 	  },
 	  formSubmissionHandler: function (event) {
-	      var $form = $(this);
+	      var $form = $('#payment-form');
 	      // Disable the submit button to prevent repeated clicks
               $form.find('button').prop('disabled', true);      
 
