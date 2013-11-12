@@ -24,8 +24,9 @@ Introduction
  understanding). In short, this is the place to explain how it works. 
 
  A note on the format:
-   Each case is intended to contain a clear sequence of behaviors the reader
-   can engage in, in order to (re)produce the case.
+   Each Case contains a sequence of behaviors the reader
+   can engage in, in order to (re)produce the case. This reproduction
+   will produce output similar to that included in the Case.
 
 Definitions
 -----------
@@ -105,39 +106,61 @@ Caveat Emptor
 In All Cases
 ------------
 
-  1. Start Your Local Test Server With the Stripe Signup Implementation:
+.. _manipulates cookies: http://piwik.org/faq/general/#faq_146
+.. _our analytics server: https://analytics.leastauthority.com/piwik/piwik.php?idsite=1
+
+  #. Start Your Local Test Server With the Stripe Signup Implementation:
 
      #. ``cd YOUR_leastauthority.com_REPO``
      #. ``git checkout 103_implement_stripe_01``
      #. ``git pull git@github.com:LeastAuthority/leastauthority.com.git``
-     #. ``cd YOURLOCALPATH/leastauthority.com ./runsite --dev``
+     #. ``cd YOURLOCALPATH/leastauthority.com ./runsite.sh --dev``
 
-  2. Navigate to the test site:
+  #. Setup up monitoring environment:
 
-     #. open your favorite browser (Firefox-Aurora)
-     #. open the browser's webconsole (Ctrl-Shift-K)
-     #. deselect CSS, JS, Security, and Logging tabs
+     #. Server Monitoring:
+
+        #. Leave the terminal where ``./runsite.sh --dev`` was executed open
+        #. ``tail -F ../sitelogs``
+            This displays the HTTP requests the server has received
+        
+     #. Browser Monitoring:
+
+        #. open your favorite browser (Firefox-Aurora)
+        #. open the browser's webconsole (Ctrl-Shift-K)
+        #. deselect CSS, JS, Security, and Logging tabs
+
+  #. Navigate to the test site:
+
      #. paste the following into the browser's location bar
-        ``http://localhost:8000``
+         ``http://localhost:8000``
 
      Notice attributes of the consequent http traffic:
 
-     - no cookies are set on the browser by the server
+     - no cookies are set on the browser by the LA server
 
      .. NOTE:  We need to verify this exhaustively.  To that end I've started
      .. implementing a MITM'd option to runsite.sh --dev that runs the server
      .. "through" a TCP proxy, which dumps all traffic.  Once that's complete
      .. we can grep the logs for patterns like "Set-Cookie"
 
+     - `our analytics server`_, `manipulates cookies`_, it:
+        responds to GETs with a Set-Cookie header this
+         - sets ``_pk_uid`` to "deleted" with an expiration time in the past 
+         - effectively removes ``_pk_uid`` from the browser IIUC
+         - looks like this, for a time *after* the '``expires``' value:   
+            ``"_pk_uid=deleted; expires=Mon, 12-Nov-2012 19:15:32 GMT"``
+         - XXX: Discuss: Is done to enhance User privacy?
+
      - all requests against resources hosted on different domains are over https
-  
-     .. this also needs some more comprehensive proof that manual console inspection 
 
-  3. Navigate to The Start Point:
+       .. this also needs some more comprehensive proof that manual console inspection 
+       .. how is the origin defined?
 
-     #. click the "Sign up!" button, and get 'redirected' to:
+  #. Navigate to The Start Point:
 
-       ``http://localhost:8000/subscribing``
+     #. click the "Sign up!" button, and get 'redirected' to
+         ``http://localhost:8000/subscribing``
 
      Notice attributes of the consequent http traffic:
 
@@ -152,6 +175,8 @@ Case One: Valid CC All Nodes Available
 
 .. _'payment-form' HTML form: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/templates/subscription_signup.html#L8
 
+.. _form submission method call: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/content/static/js/subscription_signup.js#L35
+
 Here's a set of valid form input data:
 
  Email address:
@@ -165,8 +190,13 @@ Here's a set of valid form input data:
  Expiration:
    01 / 2015
 
- 1.  Enter the data into the `'payment-form' HTML form`_ and click "Purchase"
+One A: The User's Browser
+`````````````````````````
 
+ #.  Comment out the `form submission method call`_.
 
+ #.  Enter the data into the `'payment-form' HTML form`_ and click "Purchase"
+
+ 
     Notice
      - foo
