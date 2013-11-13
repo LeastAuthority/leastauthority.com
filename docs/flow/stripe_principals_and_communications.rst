@@ -14,7 +14,7 @@
 Introduction
 ============
 
- During Stripe_ -processed signup for Our services several 
+ During Stripe_ -processed signup for Our services three  
  Principal Actors send Messages to each other.  This document describes the 
  expected behavior of these "Principals" and Messages in each of several cases. 
 
@@ -27,75 +27,6 @@ Introduction
    Each Case contains a sequence of behaviors the reader
    can engage in, in order to (re)produce the case. This reproduction
    will produce output similar to that included in the Case.
-
-Definitions
------------
-
-  LA Webserver
-    `Our interface to the Web`_
-
-  Principals Actors (aka Principals)
-    Entities that send and receive Messages during the signup process.
-
-    - `Twisted Web Resource`_ s, Provided By the LA Webserver
-
-       - `/subscribing`_
-       - `/subscription-complete`_
-  
-    - The User's Browser (I usually use `Aurora`_, so it's the most tested)
-    - Stripe Servers via `their API`_
-   
-  Message
-    Data that is processed by two or more Principals, and is (approximately) invariant 'in between'
-
-  The System
-    All Principals and Messages
-
-  The Start Point
-    Each case begins with a browser which has loaded the content provided in
-    response to an HTTP GET request against the "`root resource`_" at:
-
-      ``https://leastauthority.com``
-
-    The User is provided with a "button class" HTML Anchor Element, labeled
-    "Signup", which on-click causes the browser to request via HTTP GET the
-    resource provided by "`/subscribing`_".  
-
-    I define the state of The System immediately after the browser has
-    successfully loaded this content as "The Start Point". 
-
-    This analysis is focused on the behavior that occurs between this Start
-    Point and the subsequent End Point.
-
-  The End Point
-    The state of The System that is reached when all Prinicipals have
-    finished processing Messages from other Principals.
-
-    This definition implies that non-Principal behavior is not within the scope of the
-    analysis, even if it is 'ultimately' caused by a Principal Message.  In
-    particular, this document is not concerned with the behavior of the
-    flappserver, or other components of the webserver that is stimulated
-    by Principal-generated Messages. 
-
-  Service
-    The product we are providing for a fee.
-
-  Stripe Servers
-    The agency managing credit card payments processing, verification, and
-    billing.
- 
-  Stripe Python Library
-    `The Python Library Installed on the LA Webserver`_ (via pip)
-
-  Stripe JS
-    `The JS loaded from Stripe`_ into the User's browser
-
-  User
-    The agent controlling the User's Browser
-
-  The Signup Process
-    The behaviors that occur between the Start- and End- Points specified below.
-
 
 Caveat Emptor
 -------------
@@ -116,7 +47,7 @@ In All Cases
      #. ``git pull git@github.com:LeastAuthority/leastauthority.com.git``
      #. ``cd YOURLOCALPATH/leastauthority.com ./runsite.sh --dev``
 
-  #. Setup up monitoring environment:
+  #. Setup up the monitoring environment:
 
      #. Server Monitoring:
 
@@ -356,3 +287,72 @@ Result 2:
 
       See https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/templates/payment_verified.html
      
+Definitions
+-----------
+
+  LA Webserver
+    `Our interface to the Web`_
+
+  Principals Actors (aka Principals)
+    Entities that send and receive Messages during the signup process.
+
+    1. the LA Webserver `Twisted Web Resource`_ s, Provided By 
+
+       - `/subscribing`_
+       - `/subscription-complete`_
+  
+    2. The User's Browser (I usually use `Aurora`_, so it's the most tested)
+    3. Stripe Servers via `their API`_
+   
+  Message
+    Data that is processed by two or more Principals, and is (approximately) invariant 'in between'
+
+  The System
+    All Principals and Messages
+
+  The Start Point
+    Each case begins with a browser which has loaded the content provided in
+    response to an HTTP GET request against the "`root resource`_" at:
+
+      ``https://leastauthority.com``
+
+    The User is provided with a "button class" HTML Anchor Element, labeled
+    "Signup", which on-click causes the browser to request via HTTP GET the
+    resource provided by "`/subscribing`_".  
+
+    I define the state of The System immediately after the browser has
+    successfully loaded this content as "The Start Point". 
+
+    This analysis is focused on the behavior that occurs between this Start
+    Point and the subsequent End Point.
+
+  The End Point
+    The state of The System that is reached when all Prinicipals have
+    finished processing Messages from other Principals.
+
+    This definition implies that non-Principal behavior is not within the scope of the
+    analysis, even if it is 'ultimately' caused by a Principal Message.  In
+    particular, this document is not concerned with the behavior of the
+    flappserver, or other components of the webserver that is stimulated
+    by Principal-generated Messages. 
+
+  Service
+    The product we are providing for a fee.
+
+  Stripe Servers
+    The agency managing credit card payments processing, verification, and
+    billing.
+ 
+  Stripe Python Library
+    `The Python Library Installed on the LA Webserver`_ (via pip)
+
+  Stripe JS
+    `The JS loaded from Stripe`_ into the User's browser
+
+  User
+    The agent controlling the User's Browser
+
+  The Signup Process
+    The behaviors that occur between the Start- and End- Points specified below.
+
+
