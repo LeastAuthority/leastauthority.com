@@ -7,7 +7,7 @@
 .. _/subscribing: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/handlers/subscribing.py
 .. _Twisted Web Resource:
 .. https://twistedmatrix.com/documents/current/api/twisted.web.resource.Resource.html
-.. _/subscription_complete: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/handlers/subscription_complete.py
+.. _/subscription-complete: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/handlers/subscription_complete.py
 .. _Aurora: http://ppa.launchpad.net/ubuntu-mozilla-daily/firefox-aurora/ubuntu/
 .. _their API: https://stripe.com/docs/api
 
@@ -40,7 +40,7 @@ Definitions
     - `Twisted Web Resource`_ s, Provided By the LA Webserver
 
        - `/subscribing`_
-       - `/subscription_complete`_
+       - `/subscription-complete`_
   
     - The User's Browser (I usually use `Aurora`_, so it's the most tested)
     - Stripe Servers via `their API`_
@@ -167,7 +167,7 @@ In All Cases
      - as above
      - the stripe js is fetched over https
      - the jquery source is loaded from a local static file
-     - XXX: Discuss:  what's the right policy here?
+     - XXX: Discuss:  what's the right policy wrt these 2 options?
 
  
 Case One: Valid CC All Nodes Available
@@ -190,13 +190,155 @@ Here's a set of valid form input data:
  Expiration:
    01 / 2015
 
-One A: The User's Browser
-`````````````````````````
+Stripe API Request:
+```````````````````
+
+.. _The Stripe.createToken call: https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/content/static/js/subscription_signup.js#L18
+.. _jsonp: http://www.json-p.org/
 
  #.  Comment out the `form submission method call`_.
 
+ #.  reload the page
+
  #.  Enter the data into the `'payment-form' HTML form`_ and click "Purchase"
 
- 
-    Notice
-     - foo
+Result 1:
+~~~~~~~~~
+
+`The Stripe.createToken call`_ causes the browser to submit an HTTP message with attributes similar to the following:
+
+    METHOD: GET 
+
+    URL:
+     ``https://api.stripe.com/v1/tokens?card[number]=4242+4242+4242+4242&card[cvc]=111&card[exp_month]=02&card[exp_year]=2015&key=pk_test_czwzkTp2tactuLOEOqbMTRzG&callback=sjsonp1384288955781&_method=POST``
+
+     The components (excluding delimiters) are as follows:
+
+      #. ``https``
+          The protocol, everything besides the hostname is PKI encrypted.
+      #. ``api.stripe.com`` See: https://stripe.com/docs/api#intro
+          Stripe's api server(s)
+      #. ``/v1/tokens``
+          the resource url for token handling
+      #. ``card[number]=4242+4242+4242+4242&card[cvc]=111&card[exp_month]=02&card[exp_year]=2015``
+          the submitted cc information
+      #. ``key=pk_test_czwzkTp2tactuLOEOqbMTRzG``
+          a unique ID that allows the stripe servers to associated the
+          request with our account.
+      #. ``callback=sjsonp1384288955781``
+          the `jsonp`_ callback registered to handle the jsonp response
+           - this function name had an invariant prefix of ``'sjsonp13842'``
+             across multiple calls to Stripe.createToken
+           - I guess this means that the function name has < 27 bits of entropy 
+      #. ``_method=POST``
+          XXX: Discuss: I don't know what this signifies.
+
+    HTTP Headers:
+
+     - Request:
+
+      ::
+
+       User-Agent:      Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
+       Referer:	        http://localhost:8000/subscribing
+       Host:	        api.stripe.com
+       DNT:             1
+       Connection:      keep-alive
+       Accept-Language: en-US,en;q=0.5
+       Accept-Encoding: gzip, deflate
+       Accept:          */*
+
+     - Response:  
+
+      ::
+
+       Vary:                              Accept-Encoding
+       Strict-Transport-Security:         max-age=31556926; includeSubDomains
+       Server:                            nginx
+       Date:                              Tue, 12 Nov 2013 21:37:35 GMT
+       Content-Type:                      application/javascript;charset=utf-8
+       Content-Length:                    297
+       Content-Encoding:                  gzip
+       Connection:                        keep-alive
+       Cache-Control:                     no-cache, no-store
+       Access-Control-Max-Age:            300
+       Access-Control-Allow-Methods:      GET, POST, HEAD, OPTIONS, DELETE
+       Access-Control-Allow-Credentials:  true
+
+    Body:
+
+     ::
+
+      sjsonp1384292298925({ "id": "tok_2vgDb9eq6p7Zih", 
+                            "livemode": false, 
+                            "created": 1384292252, 
+                            "used": false, 
+                            "object": "token", 
+                            "type": "card", 
+                            "card": { "id": "card_2vgD4Mq0j1TOvH", 
+                                      "object": "card", 
+                                      "last4": "4242", 
+                                      "type": "Visa", 
+                                      "exp_month": 1, 
+                                      "exp_year": 2015, 
+                                      "fingerprint": "qhjxpr7DiCdFYTlH", 
+                                      "customer": null, 
+                                      "country": "US", 
+                                      "name": null, 
+                                      "address_line1": null, 
+                                      "address_line2": null, 
+                                      "address_city": null, 
+                                      "address_state": null, 
+                                      "address_zip": null, 
+                                      "address_country": null 
+                                    } 
+                          }, 
+                          200
+                         ) 
+
+Stripe API Response Handling:
+`````````````````````````````
+
+ #.  Uncomment the `form submission method call`_.
+
+ #.  reload the page
+
+ #.  Enter the data into the `'payment-form' HTML form`_ and click "Purchase"
+
+
+Result 2:
+~~~~~~~~~
+
+ The flow now proceeds beyond the response from https://api.stripe.com
+ including the information that the card has been verified.
+
+ The next message is passed from the `/subscribing`_ resource to the
+ `/subscription-complete`_ resource.
+
+    METHOD: POST
+
+    URL: ``http://localhost:8000/subscription-complete``
+
+    HTTP Headers:
+
+     - Request:
+
+      ::
+
+       User-Agent:      Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:26.0) Gecko/20100101 Firefox/26.0
+       Referer:         http://localhost:8000/subscribing
+       Host:            localhost:8000
+       Connection:      keep-alive 
+       Accept-Language: en-US,en;q=0.5 
+       Accept-Encoding: gzip, deflate
+       Accept:          text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+
+     - Response:
+
+      ::
+
+       stripeToken:     tok_2vilczNdS92TU3
+       ProductName:
+       pgp_pubkey:
+       nickname:        test
+       email:           test@test
