@@ -337,8 +337,22 @@ Result 2:
 
       ::
 
+       Transfer-Encoding: chunked
+       Server:            TwistedWeb/13.1.0
+       Date:              Wed, 13 Nov 2013 00:16:29 GMT
+       Content-Type:      text/html
+
+    Sent Form Data:
+
+      ::
+
        stripeToken:     tok_2vilczNdS92TU3
        ProductName:
        pgp_pubkey:
        nickname:        test
        email:           test@test
+
+    Body:
+
+      See https://github.com/LeastAuthority/leastauthority.com/blob/103_implement_stripe_01/lae_site/templates/payment_verified.html
+     
