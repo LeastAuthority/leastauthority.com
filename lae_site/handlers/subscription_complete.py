@@ -90,7 +90,7 @@ class SubscriptionReportHandler(HandlerBase):
         of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
         addition).  Therefore the content passed to the command must conform to US-ascii.
         """
-        stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"
+        stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"  # <-- This is a secret which must never be included in this repository!
         token = request.args['stripeToken'][0]
         try:
             customer = stripe.Customer.create(card=token, plan='S4', email=request.args['email'][0])
