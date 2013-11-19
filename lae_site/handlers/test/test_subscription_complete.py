@@ -80,7 +80,7 @@ class Handlers(TestCase):
         self.patch(subscription_complete, 'create_secrets_file', mock_create_secrets_file)
         self.basefp = FilePath('.')
 
-    def _test_subscriptionreporthandler(self, method, **args):
+    def test_subscriptionreporthandler(self, method, **args):
         d = subscription_complete.start(self.basefp)
         d.addCallback(lambda ign: self._mock_request(
                 subscription_complete.SubscriptionReportHandler(self.basefp), method, 
