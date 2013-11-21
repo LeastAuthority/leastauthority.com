@@ -42,17 +42,30 @@ class Tester(unittest.TestCase):
     Mockflappcommand = Mock()
     Mockflappcommand.run.return_value = True
 
-    @patch('lae_site.handlers.subscription_complete.flappcommand', Mockflappcommand)
-    @patch('lae_site.handlers.subscription_complete.all_subscribed', set([]))
-    @patch('lae_site.handlers.subscription_complete.stripe.Customer', MockCustomer)
-    def test_rendering(self):
-        basefp = filepath.FilePath('.').child('_rendering')
+    def loghelper(self, target_test_function_name):
+        basefp = filepath.FilePath('.').child(target_test_function_name.__name__.lstrip('test'))
+        try:
+            basefp.remove()
+        except OSError, e:
+            if 'No such file or directory' in e.strerror:
+                pass
+            else:
+                raise e
+            
         basefp.createDirectory()
         SECRETSDIRFP = basefp.child('secrets')
         SECRETSDIRFP.createDirectory()
         LOGGINGDIRFP = basefp.child('signup_logs')
         LOGGINGDIRFP.createDirectory()
         subscriptionreporthandler = SubscriptionReportHandler(basefp)
+        return subscriptionreporthandler
+    
+
+    @patch('lae_site.handlers.subscription_complete.flappcommand', Mockflappcommand)
+    @patch('lae_site.handlers.subscription_complete.all_subscribed', set([]))
+    @patch('lae_site.handlers.subscription_complete.stripe.Customer', MockCustomer)
+    def test_rendering(self):
+        subscriptionreporthandler = self.loghelper(self.test_rendering)
         request = DummyRequest([''])
         for k, v in (('stripeToken', ['flooble']), ('email', ['test@testmail']), ('nickname', ['poobles']), ('pgp_pubkey', [''])):
             request.addArg(k, v)
@@ -63,3 +76,6 @@ class Tester(unittest.TestCase):
             self.assertEquals("".join(request.written), "...")
             d.addCallback(rendered)
         return d
+
+    def test_secret_partition(self):
+        subscriptionreporthandler = self.loghelper(self.test_secret_partition)
