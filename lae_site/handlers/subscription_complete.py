@@ -111,8 +111,8 @@ class SubscriptionReportHandler(HandlerBase):
         #Use of "setContent" here assures us that the associated file will be in a known state
         #when it is referenced on the other side of "the wire" <- ala foolscap
         #This is necessary because we are passing a stringified reference to the file over the wire.
-        secrets_fp.setContent('\n'.join([customer.email, customer.default_card, 
-                                         customer.subscription.plan.name, customer.id]))
+        secrets_string = '\n'.join([customer.email, customer.default_card, customer.subscription.plan.name, customer.id])
+        secrets_fp.setContent(secrets_string)
         RequestOutputStream(request, tee=secrets_fp.open('a'))
         log_fp.setContent(customer.email)
         

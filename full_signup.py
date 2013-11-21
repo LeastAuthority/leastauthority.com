@@ -24,6 +24,7 @@ def main(stdin, stdout, stderr):
     print >>stderr, "customer plan is: %s" % (customer_plan,)
     print >>stderr, "customer name is: %s" % (customer_name,)
 
+    #XXX THese secrets have to be moved to website/secrets.  I need to add naming info to each line in the log.
     print >>stderr, "%s " * 8 % (customer_name, customer_email, customer_pgpinfo, customer_id, 
                                  customer_subscription_id, customer_plan, secretsfile, 
                                  logfile)
