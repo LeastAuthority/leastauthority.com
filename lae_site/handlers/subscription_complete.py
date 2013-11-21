@@ -2,6 +2,7 @@
 import stripe, time, traceback, simplejson, sys
 
 from twisted.web.server import NOT_DONE_YET
+from twisted.python.filepath import FilePath
 
 from lae_util.servers import append_record
 from lae_util.flapp import FlappCommand
@@ -90,10 +91,11 @@ class SubscriptionReportHandler(HandlerBase):
         of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
         addition).  Therefore the content passed to the command must conform to US-ascii.
         """
-        stripe.api_key = "sk_test_mkGsLqEW6SLnZa487HYfJVLf"  # <-- This is a secret which must never be included in this repository!
+        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
+        stripe_api_key = stripefp.getContent().strip()
         token = request.args['stripeToken'][0]
         try:
-            customer = stripe.Customer.create(card=token, plan='S4', email=request.args['email'][0])
+            customer = stripe.Customer.create(api_key=stripe_api_key, card=token, plan='S4', email=request.args['email'][0])
         except stripe.CardError, e:
             print >>self.out, "Got an exception from the stripe.Customer.create call:"
             print >>self.out, dir(e)
@@ -136,6 +138,7 @@ class SubscriptionReportHandler(HandlerBase):
         stderr = LoggingTeeStream(sys.stderr, log_fp.open('a'), 'stderr')
 
         service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
+
         def when_done():
             try:
                 subscribed_confirmed.add(customer.subscription.id)
