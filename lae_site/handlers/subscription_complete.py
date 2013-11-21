@@ -92,6 +92,7 @@ class SubscriptionReportHandler(HandlerBase):
         addition).  Therefore the content passed to the command must conform to US-ascii.
         """
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
+        assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()
         token = request.args['stripeToken'][0]
         try:
@@ -138,7 +139,6 @@ class SubscriptionReportHandler(HandlerBase):
         stderr = LoggingTeeStream(sys.stderr, log_fp.open('a'), 'stderr')
 
         service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
-
         def when_done():
             try:
                 subscribed_confirmed.add(customer.subscription.id)
