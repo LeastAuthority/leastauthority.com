@@ -8,7 +8,6 @@ from lae_util.servers import append_record
 from lae_util.flapp import FlappCommand
 from lae_util.timestamp import format_iso_time
 from lae_util.streams import LoggingTeeStream
-from lae_automation.server import create_secrets_file
 from lae_site.handlers.web import env
 from lae_site.handlers.devpay_complete import HandlerBase, RequestOutputStream
 
@@ -80,7 +79,18 @@ class SubscriptionReportHandler(HandlerBase):
 
     def _responseFailed(self, failure, call):
         call.cancel()
-        
+
+    def _create_log_filepaths(self, stripe_customer_id):
+        timestamp = format_iso_time(time.time())
+        fpcleantimestamp = timestamp.replace(':', '')
+
+        logfilename = "%s-%s" % (timestamp, stripe_customer_id)
+
+        secretsfile_fp = self.basefp.child('secrets').child(logfilename)
+        logfile_fp = self.basefp.child('signup_logs').child(logfilename)
+        subscriptionsfile_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
+        return secretsfile_fp, logfile_fp, subscriptionsfile_fp
+
     def render(self, request):
         """
         The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
@@ -107,10 +117,8 @@ class SubscriptionReportHandler(HandlerBase):
         call = reactor.callLater(1, self._delayedRender, request)
         request.notifyFinish().addErrback(self._responseFailed, call)
         nickname = request.args['nickname'][0]
-        timestamp = format_iso_time(time.time())
-        fpcleantimestamp = timestamp.replace(':', '')
-        secrets_fp, log_fp = create_secrets_file(self.basefp, fpcleantimestamp, customer.id)
-        subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
+        secrets_fp, log_fp, subscriptions_fp = self._create_log_filepaths(customer.id)
+
         #Use of "setContent" here assures us that the associated file will be in a known state
         #when it is referenced on the other side of "the wire" <- ala foolscap
         #This is necessary because we are passing a stringified reference to the file over the wire.
