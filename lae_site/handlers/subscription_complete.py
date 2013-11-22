@@ -1,6 +1,9 @@
 
-import stripe, time, traceback, simplejson, sys
+import logging, pprint, stripe, time, traceback, simplejson, sys
+from urllib import quote
+from cgi import escape as htmlEscape
 
+from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 from twisted.python.filepath import FilePath
 
@@ -9,8 +12,6 @@ from lae_util.flapp import FlappCommand
 from lae_util.timestamp import format_iso_time
 from lae_util.streams import LoggingTeeStream
 from lae_site.handlers.web import env
-from lae_site.handlers.devpay_complete import HandlerBase, RequestOutputStream
-
 
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
 SERVICE_CONFIRMED_FILE  = 'service_confirmed.csv'
@@ -19,6 +20,32 @@ SIGNUP_FURL_FILE        = 'signup.furl'
 flappcommand = None
 all_subscribed = None
 subscribed_confirmed = None
+
+class RequestOutputStream(object):
+    def __init__(self, request, tee=None):
+        self.request = request
+        self.tee = tee
+
+    def write(self, s):
+        # reject non-shortest-form encodings, which might defeat the escaping
+        s.decode('utf-8', 'strict')
+        self.request.write(htmlEscape(s))
+        if self.tee:
+            self.tee.write(s)
+
+    def writelines(self, seq):
+        for s in seq:
+            self.write(s)
+
+    def flush(self):
+        pass
+
+    def isatty(self):
+        return False
+
+    def close(self):
+        pass
+
 
 def start(basefp):
     global flappcommand, all_subscribed, subscribed_confirmed
@@ -65,6 +92,49 @@ def start(basefp):
 
     return flappcommand.start()
 
+class HandlerBase(Resource):
+    def __init__(self, out=None, *a, **kw):
+        Resource.__init__(self, *a, **kw)
+        self._log = logging.getLogger(self.__class__.__name__)
+        self._log.debug('Initialized.')
+        if out is None:
+            out = sys.stdout
+        self.out = out
+
+    def render_POST(self, request):
+        self.log_request(self, request)
+        return self.render(self, request)
+
+    def render_GET(self, request):
+        self.log_request(self, request)
+        return self.render(self, request)
+
+    def log_request(self, request):
+        details = dict(
+            [ (k, getattr(request, k))
+              for k in ['method',
+                        'uri',
+                        'path',
+                        'args',
+                        'received_headers']
+              ])
+        details['client-ip'] = request.getClientIP()
+        self._log.debug('Request details from %r:\n%s', request, pprint.pformat(details))
+
+    def get_arg(self, request, argname):
+        try:
+            [arg] = request.args[argname]
+        except (KeyError, ValueError):
+            arg = ""
+
+        # Quote the arguments to avoid injection attacks when we interpolate them into HTML
+        # attributes (enclosed in ""), CSV values, or the stdin of the flapp command.
+        # We could use htmlEscape, but that does not escape ',' or newlines so we would need
+        # additional quoting for CSV and flapp.
+        # URL-encoding with the set of safe-characters below will work for all these cases.
+        # Note that the safe set must include characters that are valid in email addresses.
+        return quote(arg, safe=' !#$()*+-./:=?@^_`{|}~')
+
 class SubscriptionReportHandler(HandlerBase):
     #XXXisLeaf = 0
 
@@ -104,7 +174,7 @@ class SubscriptionReportHandler(HandlerBase):
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
         assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()
-        token = request.args['stripeToken'][0]
+        token = self.get_arg(request, 'stripeToken')
         try:
             customer = stripe.Customer.create(api_key=stripe_api_key, card=token, plan='S4', email=request.args['email'][0])
         except stripe.CardError, e:
