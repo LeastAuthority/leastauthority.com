@@ -175,8 +175,11 @@ class SubscriptionReportHandler(HandlerBase):
         assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()
         token = self.get_arg(request, 'stripeToken')
+        nickname = self.get_arg(request, 'nickname')
+        email_from_form = self.get_arg(request, 'email')
+        customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
         try:
-            customer = stripe.Customer.create(api_key=stripe_api_key, card=token, plan='S4', email=request.args['email'][0])
+            customer = stripe.Customer.create(api_key=stripe_api_key, card=token, plan='S4', email=email_from_form)
         except stripe.CardError, e:
             print >>self.out, "Got an exception from the stripe.Customer.create call:"
             print >>self.out, dir(e)
@@ -186,7 +189,7 @@ class SubscriptionReportHandler(HandlerBase):
         from twisted.internet import reactor
         call = reactor.callLater(1, self._delayedRender, request)
         request.notifyFinish().addErrback(self._responseFailed, call)
-        nickname = request.args['nickname'][0]
+
         secrets_fp, log_fp, subscriptions_fp = self._create_log_filepaths(customer.id)
 
         #Use of "setContent" here assures us that the associated file will be in a known state
@@ -197,7 +200,7 @@ class SubscriptionReportHandler(HandlerBase):
         RequestOutputStream(request, tee=secrets_fp.open('a'))
         log_fp.setContent(customer.email)
         
-        customer_pgpinfo = request.args['pgp_pubkey'][0]
+
         
         append_record(subscriptions_fp, customer.subscription.id, customer.subscription.plan.name, 
                       nickname, customer.email, customer_pgpinfo)       
