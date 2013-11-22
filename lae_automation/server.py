@@ -397,13 +397,6 @@ def set_up_reboot(stdout, stderr):
     write('@reboot /home/customer/restart.sh\n', '/home/customer/ctab')
     run('crontab /home/customer/ctab')
 
-def create_secrets_file(basefp, timestamp, stripe_customer_id):
-    logfilename = "%s-%s" % (timestamp, stripe_customer_id)
-
-    secretsfile = basefp.child('secrets').child(logfilename)
-    logfile = basefp.child('signup_logs').child(logfilename)
-    return secretsfile, logfile
-
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
