@@ -44,15 +44,17 @@ def main(basefp):
     logging.basicConfig(
         stream = sys.stdout,
         level = logging.DEBUG,
-        format = '%(asctime)s %(levelname) 7s [%(module) 8s L%(lineno)d] %(message)s',
+        format = '%(asctime)s %(levelname) 7s [%(name)-65s L%(lineno)d] %(message)s',
         datefmt = '%Y-%m-%dT%H:%M:%S%z',
         )
 
+    root_log = logging.getLogger(__name__)
+
     site = make_site(basefp, config)
 
-    logging.info('Listening on port %d...' % (port,))
+    root_log.info('Listening on port %d...' % (port,))
     if ssl_enabled:
-        logging.info('SSL/TLS is enabled (start with --nossl to disable).')
+        root_log.info('SSL/TLS is enabled (start with --nossl to disable).')
         KEYFILE = '../secret_config/rapidssl/server.key'
         CERTFILE = '../secret_config/rapidssl/server.crt'
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
@@ -63,10 +65,10 @@ def main(basefp):
         reactor.listenSSL(port, site, sslfactory)
 
         if redirect_port is not None:
-            logging.info('http->https redirector listening on port %d...' % (redirect_port,))
+            root_log.info('http->https redirector listening on port %d...' % (redirect_port,))
             reactor.listenTCP(redirect_port, make_redirector_site(port))
     else:
-        logging.info('SSL/TLS is disabled.')
+        root_log.info('SSL/TLS is disabled.')
         reactor.listenTCP(port, site)
 
 

@@ -1,6 +1,6 @@
 
 from lae_site.handlers.web import env
-from lae_site.handlers.devpay_complete import HandlerBase
+from lae_site.handlers.main import HandlerBase
 
 class SubscriptionSubmitHandler(HandlerBase):
     #XXXisLeaf = 0

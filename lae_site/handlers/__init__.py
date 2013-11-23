@@ -4,7 +4,7 @@ from twisted.web.static import File
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
 
-from lae_site.handlers.devpay_complete import CollectEmailHandler, ActivationRequestHandler
+from lae_site.handlers.emailcollector import CollectEmailHandler
 from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
 from lae_site.handlers.subscribing import SubscriptionSubmitHandler
@@ -18,7 +18,7 @@ def make_site(basefp, config):
     resource.putChild('collect-email', CollectEmailHandler(basefp, config.products))
     resource.putChild('signup', SignupHandler(config.products)) # is this obsolete now? the stripe processing is all in 'subscribing.py' right?
     #resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
-    resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
+    #resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
     resource.putChild('subscribing', SubscriptionSubmitHandler(basefp))
     resource.putChild('subscription-complete', SubscriptionReportHandler(basefp))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))

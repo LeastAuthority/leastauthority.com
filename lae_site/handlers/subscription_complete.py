@@ -1,17 +1,17 @@
 
-import logging, pprint, stripe, time, traceback, simplejson, sys
-from urllib import quote
-from cgi import escape as htmlEscape
+import stripe, time, traceback, simplejson, sys
 
-from twisted.web.resource import Resource
 from twisted.web.server import NOT_DONE_YET
 from twisted.python.filepath import FilePath
 
 from lae_util.servers import append_record
-from lae_util.flapp import FlappCommand
+
 from lae_util.timestamp import format_iso_time
 from lae_util.streams import LoggingTeeStream
 from lae_site.handlers.web import env
+from lae_util.flapp import FlappCommand
+
+from lae_site.handlers.main import RequestOutputStream, HandlerBase
 
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
 SERVICE_CONFIRMED_FILE  = 'service_confirmed.csv'
@@ -20,32 +20,6 @@ SIGNUP_FURL_FILE        = 'signup.furl'
 flappcommand = None
 all_subscribed = None
 subscribed_confirmed = None
-
-class RequestOutputStream(object):
-    def __init__(self, request, tee=None):
-        self.request = request
-        self.tee = tee
-
-    def write(self, s):
-        # reject non-shortest-form encodings, which might defeat the escaping
-        s.decode('utf-8', 'strict')
-        self.request.write(htmlEscape(s))
-        if self.tee:
-            self.tee.write(s)
-
-    def writelines(self, seq):
-        for s in seq:
-            self.write(s)
-
-    def flush(self):
-        pass
-
-    def isatty(self):
-        return False
-
-    def close(self):
-        pass
-
 
 def start(basefp):
     global flappcommand, all_subscribed, subscribed_confirmed
@@ -92,54 +66,13 @@ def start(basefp):
 
     return flappcommand.start()
 
-class HandlerBase(Resource):
-    def __init__(self, out=None, *a, **kw):
-        Resource.__init__(self, *a, **kw)
-        self._log = logging.getLogger(self.__class__.__name__)
-        self._log.debug('Initialized.')
-        if out is None:
-            out = sys.stdout
-        self.out = out
-
-    def render_POST(self, request):
-        self.log_request(self, request)
-        return self.render(self, request)
-
-    def render_GET(self, request):
-        self.log_request(self, request)
-        return self.render(self, request)
-
-    def log_request(self, request):
-        details = dict(
-            [ (k, getattr(request, k))
-              for k in ['method',
-                        'uri',
-                        'path',
-                        'args',
-                        'received_headers']
-              ])
-        details['client-ip'] = request.getClientIP()
-        self._log.debug('Request details from %r:\n%s', request, pprint.pformat(details))
-
-    def get_arg(self, request, argname):
-        try:
-            [arg] = request.args[argname]
-        except (KeyError, ValueError):
-            arg = ""
-
-        # Quote the arguments to avoid injection attacks when we interpolate them into HTML
-        # attributes (enclosed in ""), CSV values, or the stdin of the flapp command.
-        # We could use htmlEscape, but that does not escape ',' or newlines so we would need
-        # additional quoting for CSV and flapp.
-        # URL-encoding with the set of safe-characters below will work for all these cases.
-        # Note that the safe set must include characters that are valid in email addresses.
-        return quote(arg, safe=' !#$()*+-./:=?@^_`{|}~')
 
 class SubscriptionReportHandler(HandlerBase):
     #XXXisLeaf = 0
 
     def __init__(self, basefp):
         HandlerBase.__init__(self, out=None)
+        self._logger_helper(__name__)
         self.basefp = basefp
 
     def _delayedRender(self, request):
@@ -198,13 +131,9 @@ class SubscriptionReportHandler(HandlerBase):
         secrets_string = '\n'.join([customer.email, customer.default_card, customer.subscription.plan.name, customer.id])
         secrets_fp.setContent(secrets_string)
         RequestOutputStream(request, tee=secrets_fp.open('a'))
-        log_fp.setContent(customer.email)
-        
-
-        
+        log_fp.setContent(customer.email)        
         append_record(subscriptions_fp, customer.subscription.id, customer.subscription.plan.name, 
                       customer.email, customer_pgpinfo)       
-        
         stdin = simplejson.dumps((customer.email,
                                   customer_pgpinfo,
                                   customer.id,
