@@ -4,7 +4,7 @@ from twisted.web.static import File
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
 
-from lae_site.handlers.devpay_complete import CollectEmailHandler, DevPayPurchaseHandler, ActivationRequestHandler
+from lae_site.handlers.devpay_complete import CollectEmailHandler, ActivationRequestHandler
 from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
 from lae_site.handlers.subscribing import SubscriptionSubmitHandler

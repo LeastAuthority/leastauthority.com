@@ -7,14 +7,13 @@ from twisted.internet import defer, reactor
 def main(stdin, stdout, stderr):
     print >>stdout, "Automation script started."
     
-    (customer_name,
-    customer_email,
-    customer_pgpinfo,
-    customer_id,
-    customer_subscription_id,
-    customer_plan,
-    secretsfile_name,
-    logfile_name) = simplejson.loads(stdin.read())
+    (customer_email,
+     customer_pgpinfo,
+     customer_id,
+     customer_subscription_id,
+     customer_plan,
+     secretsfile_name,
+     logfile_name) = simplejson.loads(stdin.read())
 
     #We can't pass file object through the foolscap service, so we pass names.
     secretsfile = open(secretsfile_name, 'a')
@@ -22,10 +21,10 @@ def main(stdin, stdout, stderr):
 
 
     print >>stderr, "customer plan is: %s" % (customer_plan,)
-    print >>stderr, "customer name is: %s" % (customer_name,)
+    print >>stderr, "customer email is: %s" % (customer_email,)
 
     #XXX THese secrets have to be moved to website/secrets.  I need to add naming info to each line in the log.
-    print >>stderr, "%s " * 8 % (customer_name, customer_email, customer_pgpinfo, customer_id, 
+    print >>stderr, "%s " * 7 % (customer_email, customer_pgpinfo, customer_id, 
                                  customer_subscription_id, customer_plan, secretsfile, 
                                  logfile)
 
@@ -38,7 +37,7 @@ def main(stdin, stdout, stderr):
 
     try:
         from lae_automation.signup import activate_subscribed_service
-        return activate_subscribed_service(customer_name, customer_email, customer_pgpinfo, 
+        return activate_subscribed_service(customer_email, customer_pgpinfo, 
                                            customer_id, customer_subscription_id, customer_plan, 
                                            stdout, stderr, secretsfile, logfile)
     except Exception:

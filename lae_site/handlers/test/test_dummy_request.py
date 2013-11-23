@@ -1,4 +1,4 @@
-import sys, stripe, simplejson
+import stripe, simplejson
 from mock import Mock, patch
 from lae_site.handlers.subscription_complete import SubscriptionReportHandler
 
@@ -16,10 +16,10 @@ def _render(resource, request):
     if isinstance(result, str):
         request.write(result)
         request.finish()
-        return succeed(None)
+        return defer.succeed(None)
     elif result is NOT_DONE_YET:
         if request.finished:
-            return succeed(None)
+            return defer.succeed(None)
         else:
             return request.notifyFinish()
     else:
@@ -69,7 +69,7 @@ class Tester(unittest.TestCase):
     def test_rendering(self):
         subscriptionreporthandler = self.loghelper(self.test_rendering)
         request = DummyRequest([''])
-        for k, v in (('stripeToken', ['flooble']), ('email', ['test@testmail']), ('nickname', ['poobles']), ('pgp_pubkey', [''])):
+        for k, v in (('stripeToken', 'flooble'), ('email', 'test@testmail'), ('pgp_pubkey', '')):
             request.addArg(k, v)
         d = _render(subscriptionreporthandler, request)
         def rendered(ignored):
@@ -122,7 +122,7 @@ class TestSubscriptionCompleteHandler(unittest.TestCase):
         self.loghelper(self.test_secret_partition)
         subscriptionreporthandler = SubscriptionReportHandler(self.testbasefp)
         request = DummyRequest([''])
-        for k, v in (('stripeToken', ['flooble']), ('email', ['test@testmail']), ('nickname', ['poobles']), ('pgp_pubkey', [''])):
+        for k, v in (('stripeToken', 'flooble'), ('email', 'test@testmail'), ('nickname', 'poobles'), ('pgp_pubkey', '')):
             request.addArg(k, v)
         try:
             d = _render(subscriptionreporthandler, request)
