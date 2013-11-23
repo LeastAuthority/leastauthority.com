@@ -6,7 +6,7 @@ from lae_util.send_email import send_plain_email, FROM_EMAIL, FROM_ADDRESS, PGP_
 
 CONFIRMATION_EMAIL_SUBJECT = "Your Simple Secure Storage Service is Activated"
 
-CONFIRMATION_EMAIL_BODY = """Hello %(customer_name)s,
+CONFIRMATION_EMAIL_BODY = """Hello S4 Subscriber,
 
 Congratulations on activating your Simple Secure Storage Service!  Please go to
 
@@ -42,7 +42,7 @@ NOTIFY_FAILURE_SUBJECT = "A sign-up failed"
 
 NOTIFY_FAILURE_BODY = """Hello, hard-working support person.
 
-The sign-up process failed for customer %(customer_name)s <%(customer_email)s>.
+The sign-up process failed for customer <%(customer_email)s>.
 The log filename is '%(logfilename)s'.
 
 I'm sure you'll be able to fix it in no time with your human intellect.
@@ -56,11 +56,10 @@ signup.py
 NOTIFY_FAILURE_EMAIL = "support@leastauthority.com"
 
 
-def send_signup_confirmation(publichost, customer_name, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr):
+def send_signup_confirmation(publichost, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr):
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
     # but I'm being cautious for now since I haven't reviewed email.mime.text.MIMEText to make sure that's safe.
     content = CONFIRMATION_EMAIL_BODY % {
-               "customer_name": customer_name,
                "external_introducer_furl": external_introducer_furl,
                "publichost": publichost
               }
@@ -76,7 +75,7 @@ def send_signup_confirmation(publichost, customer_name, customer_email, external
         headers["Subject"] = "Sign-up with PGP key"
         d.addCallback(lambda ign:
                       send_plain_email(FROM_EMAIL, PGP_NOTIFICATION_EMAIL,
-                                       "Please send a confirmation e-mail to %r at %r." % (customer_name, customer_email),
+                                       "Please send a confirmation e-mail to %r." % (customer_email),
                                        headers))
     else:
         print >>stdout, "Sending confirmation e-mail to <%s>..." % (customer_email,)
@@ -97,11 +96,10 @@ def send_signup_confirmation(publichost, customer_name, customer_email, external
     return d
 
 
-def send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr):
+def send_notify_failure(f, customer_email, logfilename, stdout, stderr):
     print >>stderr, str(f)
 
     content = NOTIFY_FAILURE_BODY % {
-               "customer_name": customer_name,
                "customer_email": customer_email,
                "logfilename": logfilename,
               }

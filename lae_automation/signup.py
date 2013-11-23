@@ -98,7 +98,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
                                                stderr))
     return d
 
-def activate_subscribed_service(customer_name, customer_email, customer_pgpinfo, customer_id, customer_subscription_id, 
+def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, customer_subscription_id, 
                                 plan, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
@@ -124,11 +124,11 @@ def activate_subscribed_service(customer_name, customer_email, customer_pgpinfo,
     # if necessary, but let's keep it simple and sequential.
     d.addCallback(lambda ign: deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, 
                                                           None, amiimageid, instancesize, 
-                                                          customer_name, customer_email,
+                                                          customer_email,
                                                           customer_pgpinfo, stdout, stderr, 
                                                           secretsfile, config, serverinfopath, 
                                                           AWSsecretkeypath, clock=myclock))
-    d.addErrback(lambda f: send_notify_failure(f, customer_name, customer_email, logfile, stdout,
+    d.addErrback(lambda f: send_notify_failure(f, customer_email, logfile, stdout,
                                                stderr))
     return d
 
@@ -147,7 +147,7 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
                       bucketname, oldsecrets, amiimageid, instancesize,
                       "someone", customer_email, None, stdout, stderr,
                       secretsfile, config, serverinfopath, ec2secretpath, clock)
-    d.addErrback(lambda f: send_notify_failure(f, "someone", customer_email, logfilename, stdout,
+    d.addErrback(lambda f: send_notify_failure(f, customer_email, logfilename, stdout,
                                                stderr))
     return d
 
@@ -236,7 +236,7 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
 
 # TODO: too many args. Consider passing them in a dict.
 def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsecrets, amiimageid, 
-                                instancesize, customer_name, customer_email, customer_pgpinfo, 
+                                instancesize, customer_email, customer_pgpinfo, 
                                 stdout, stderr, secretsfile, config, serverinfopath=None, 
                                 ec2secretpath=None, clock=None):
 
@@ -306,7 +306,7 @@ def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsec
                 print >>stderr, "Signup done."
                 d4 = defer.succeed(None)
                 if not oldsecrets:
-                    d4.addCallback(lambda ign: send_signup_confirmation(publichost, customer_name,
+                    d4.addCallback(lambda ign: send_signup_confirmation(publichost, 
                                                                         customer_email, furl,
                                                                         customer_pgpinfo,
                                                                         stdout, stderr) )

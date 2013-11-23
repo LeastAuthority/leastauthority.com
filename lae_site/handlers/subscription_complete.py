@@ -154,7 +154,7 @@ class SubscriptionReportHandler(HandlerBase):
         timestamp = format_iso_time(time.time())
         fpcleantimestamp = timestamp.replace(':', '')
 
-        logfilename = "%s-%s" % (timestamp, stripe_customer_id)
+        logfilename = "%s-%s" % (fpcleantimestamp, stripe_customer_id)
 
         secretsfile_fp = self.basefp.child('secrets').child(logfilename)
         logfile_fp = self.basefp.child('signup_logs').child(logfilename)
@@ -175,9 +175,9 @@ class SubscriptionReportHandler(HandlerBase):
         assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()
         token = self.get_arg(request, 'stripeToken')
-        nickname = self.get_arg(request, 'nickname')
         email_from_form = self.get_arg(request, 'email')
         customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
+
         try:
             customer = stripe.Customer.create(api_key=stripe_api_key, card=token, plan='S4', email=email_from_form)
         except stripe.CardError, e:
@@ -186,12 +186,12 @@ class SubscriptionReportHandler(HandlerBase):
             print >>self.out, repr(e)
             tmpl = env.get_template('subscription_signup.html')
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+
         from twisted.internet import reactor
         call = reactor.callLater(1, self._delayedRender, request)
         request.notifyFinish().addErrback(self._responseFailed, call)
 
         secrets_fp, log_fp, subscriptions_fp = self._create_log_filepaths(customer.id)
-
         #Use of "setContent" here assures us that the associated file will be in a known state
         #when it is referenced on the other side of "the wire" <- ala foolscap
         #This is necessary because we are passing a stringified reference to the file over the wire.
@@ -203,16 +203,15 @@ class SubscriptionReportHandler(HandlerBase):
 
         
         append_record(subscriptions_fp, customer.subscription.id, customer.subscription.plan.name, 
-                      nickname, customer.email, customer_pgpinfo)       
+                      customer.email, customer_pgpinfo)       
         
-        stdin = simplejson.dumps((nickname,
-                                 customer.email,
-                                 customer_pgpinfo,
-                                 customer.id,
-                                 customer.subscription.id,
-                                 customer.subscription.plan.name,
-                                 secrets_fp.path,
-                                 log_fp.path),
+        stdin = simplejson.dumps((customer.email,
+                                  customer_pgpinfo,
+                                  customer.id,
+                                  customer.subscription.id,
+                                  customer.subscription.plan.name,
+                                  secrets_fp.path,
+                                  log_fp.path),
                                  ensure_ascii=True
                                  )
 
@@ -225,7 +224,7 @@ class SubscriptionReportHandler(HandlerBase):
                 subscribed_confirmed.add(customer.subscription.id)
                 all_subscribed.add(customer.subscription.id)
                 append_record(service_confirmed_fp, 'success', customer.subscription.id, 
-                              customer.subscription.plan.name, nickname, customer.email, 
+                              customer.subscription.plan.name, customer.email, 
                               customer_pgpinfo)
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
@@ -234,7 +233,7 @@ class SubscriptionReportHandler(HandlerBase):
             try:
                 all_subscribed.add(customer.subscription.id)
                 append_record(service_confirmed_fp, 'failure', customer.subscription.id, 
-                              customer.subscription.plan.name, nickname, customer.email, 
+                              customer.subscription.plan.name, customer.email, 
                               customer_pgpinfo)
 
             except Exception:
