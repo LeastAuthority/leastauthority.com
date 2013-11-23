@@ -17,7 +17,7 @@ def make_site(basefp, config):
     resource.putChild('blog', File('content/blog'))
     resource.putChild('collect-email', CollectEmailHandler(basefp, config.products))
     resource.putChild('signup', SignupHandler(config.products)) # is this obsolete now? the stripe processing is all in 'subscribing.py' right?
-    resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
+    #resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
     resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
     resource.putChild('subscribing', SubscriptionSubmitHandler(basefp))
     resource.putChild('subscription-complete', SubscriptionReportHandler(basefp))
