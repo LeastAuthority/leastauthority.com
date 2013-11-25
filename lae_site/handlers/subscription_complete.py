@@ -11,7 +11,7 @@ from lae_util.streams import LoggingTeeStream
 from lae_site.handlers.web import env
 from lae_util.flapp import FlappCommand
 
-from lae_site.handlers.main import RequestOutputStream, HandlerBase
+from lae_site.handlers.main import HandlerBase
 
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
 SERVICE_CONFIRMED_FILE  = 'service_confirmed.csv'
