@@ -104,16 +104,20 @@ class SubscriptionReportHandler(HandlerBase):
         of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
         addition).  Therefore the content passed to the command must conform to US-ascii.
         """
-
-        #Assign variables
-        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
-        assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
-        stripe_api_key = stripefp.getContent().strip()
+        #Parse request, info from stripe and subscriber
         token = self.get_arg(request, 'stripeToken')
         email_from_form = self.get_arg(request, 'email')
         customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
 
-        #charge cc by subscribing to recurring-payment plan
+        #Log request info (also see site.out, signup_logs, and secrets)
+        receipt_time = format_iso_time(time.time()).replace(':', '')
+        reqstring = "token: %s\nemail_from_form: %s\ncustomer_pgpinfo: %s" % (token, email_from_form, customer_pgpinfo)
+        self.basefp.child('secrets').child('subscription_complete_requests').child(receipt_time).setContent(reqstring)
+
+        #invoke cc-charge by requesting subscription to recurring-payment plan
+        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
+        assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
+        stripe_api_key = stripefp.getContent().strip()
         try:
             customer = stripe.Customer.create(api_key=stripe_api_key, card=token, plan='S4', email=email_from_form)
         except stripe.CardError, e:
@@ -123,6 +127,7 @@ class SubscriptionReportHandler(HandlerBase):
             tmpl = env.get_template('subscription_signup.html')
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
 
+        # wait 'til customer object 
         from twisted.internet import reactor
         call = reactor.callLater(1, self._delayedRender, request)
         request.notifyFinish().addErrback(self._responseFailed, call)
