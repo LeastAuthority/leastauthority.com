@@ -104,6 +104,8 @@ class SubscriptionReportHandler(HandlerBase):
         of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
         addition).  Therefore the content passed to the command must conform to US-ascii.
         """
+
+        #Assign variables
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
         assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()
@@ -111,6 +113,7 @@ class SubscriptionReportHandler(HandlerBase):
         email_from_form = self.get_arg(request, 'email')
         customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
 
+        #charge cc by subscribing to recurring-payment plan
         try:
             customer = stripe.Customer.create(api_key=stripe_api_key, card=token, plan='S4', email=email_from_form)
         except stripe.CardError, e:
@@ -130,7 +133,6 @@ class SubscriptionReportHandler(HandlerBase):
         #This is necessary because we are passing a stringified reference to the file over the wire.
         secrets_string = '\n'.join([customer.email, customer.default_card, customer.subscription.plan.name, customer.id])
         secrets_fp.setContent(secrets_string)
-        RequestOutputStream(request, tee=secrets_fp.open('a'))
         log_fp.setContent(customer.email)        
         append_record(subscriptions_fp, customer.subscription.id, customer.subscription.plan.name, 
                       customer.email, customer_pgpinfo)       
