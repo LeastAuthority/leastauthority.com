@@ -5,9 +5,7 @@ from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
 
 from lae_site.handlers.emailcollector import CollectEmailHandler
-from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
-from lae_site.handlers.subscribing import SubscriptionSubmitHandler
 from lae_site.handlers.subscription_complete import SubscriptionReportHandler
 
 
