@@ -141,7 +141,7 @@ describe('the Stripe response handler', function (){
 	    creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), mockresponse);
 	    expect(jqueryform.get).toHaveBeenCalledWith(0);
 	});
-	it('invokes the forms submit action', function () {
+	it('invokes the form\'s submit action', function () {
 	    creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), mockresponse);
 	    expect(jqueryform.get).toHaveBeenCalledWith(0);
 	    expect(submitter.submit).toHaveBeenCalled();
