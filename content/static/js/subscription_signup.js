@@ -3,12 +3,10 @@
 window.creditcardVerifier = (function () {
       return {
 	  register_callbacks: function () {
+	      var $form = $('#payment-form');
 	      // This identifies your website in the createToken call below
 	      Stripe.setPublishableKey('pk_test_czwzkTp2tactuLOEOqbMTRzG');
-	      jQuery(function ($) {
-		  $('#payment-form').submit( creditcardVerifier.formSubmissionHandler );
-	      });
-	      
+	      $form.submit( creditcardVerifier.formSubmissionHandler );
 	  },
 	  formSubmissionHandler: function (event) {
 	      var $form = $('#payment-form');

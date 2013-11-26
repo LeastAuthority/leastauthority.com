@@ -1,11 +1,25 @@
 "use strict";
 
-describe('callback registration', function () {
-    it('should be defined', function () {
-	expect(creditcardVerifier).toBeDefined();
-	expect(creditcardVerifier.formSubmissionHandler).toBeDefined();
-	expect(creditcardVerifier.stripeResponseHandler).toBeDefined();
-	expect(creditcardVerifier.register_callbacks).toBeDefined();
+describe('The register_callbacks callback', function () {
+    var asideStripe, aside$, jqueryform;
+    beforeEach(function () {
+	aside$ = window.$;
+	asideStripe = window.Stripe;
+	window.Stripe, window.$ = {};
+	window.Stripe = jasmine.createSpyObj('Stripe', ['setPublishableKey']);
+	jqueryform = jasmine.createSpyObj('form', ['submit']);
+	window.$ = jasmine.createSpy("$").andReturn(jqueryform);
+	creditcardVerifier.register_callbacks();
+    });
+
+    afterEach( function () {
+	window.Stripe = asideStripe;
+	window.$ = aside$;
+	asideStripe, aside$, jqueryform = {};
+    });
+
+    it('registers the formSubmissionHandler to handle "payment-form"\'s submit event', function () {
+	expect(jqueryform.submit).toHaveBeenCalledWith( creditcardVerifier.formSubmissionHandler );
     });
 });
 
