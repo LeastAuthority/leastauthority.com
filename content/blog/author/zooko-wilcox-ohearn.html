@@ -9,8 +9,8 @@
     <link rel="canonical" href="http://leastauthority.com/">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="description" content="Least Authority Enterprises">
-                            <link href="https://leastauthority.com/blog/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Least Authority Blog Full Atom Feed" />
-                                                                            </head>
+        <link href="https://leastauthority.com/blog/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Least Authority Blog Full Atom Feed" />
+</head>
 <body>
     <div class="nav">
         <div class="container">
@@ -21,7 +21,7 @@
                     </a>
                 </div>
                 <div class="span9">
-                    <ul class="navlinks">
+<ul class="navlinks">
     <li><a href="/products">Products</a></li>
     <li><a href="/how_it_works">How It Works</a></li>
     <!--<li><a href="/faq/">FAQ</a></li>-->
@@ -36,20 +36,61 @@
         <div class="container">
             <div id="main_wrap" class="row-fluid">
                 <div id="main_content" class="span12">
-                        <section>
+    <section>
     <div class="row-fluid">
         <div class="span8">
-            <h2>Articles by Zooko Wilcox-O'Hearn</h2>
+<h2>Articles by Zooko Wilcox-O'Hearn</h2>
 
-            <section id="content">
+<section id="content">
     <div id="post-list">
-            <article class="hentry highlight">
+        <article class="hentry highlight">
+                <header> <h3 class="entry-title"><a href="../open_letter_silent_circle.html" rel="bookmark" title="Permalink to Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service">Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service</a></h3> </header>
+                <footer class="post-info help-text">
+                    <div style="float: right;"><a href="../open_letter_silent_circle.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Fri 16 August 2013 </div>
+                      <div>By <a class="url fn" href="../author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
+                    <br>
+                </footer><!-- /.post-info -->
+                <!-- <div class="entry-content"> <p class="first last">This open letter is in response to the recent shutdown of Lavabit and the ensuing shutdown of Silent Circle's “Silent Mail” product.</p>
+ </div>-->
+                <div class="entry-content">
+                    <p>This open letter is in response to the <a class="reference external" href="http://boingboing.net/2013/08/08/lavabit-email-service-snowden.html">recent shutdown of Lavabit</a> , the ensuing <a class="reference external" href="http://silentcircle.wordpress.com/2013/08/09/to-our-customers/">shutdown of Silent Circle's “Silent Mail” product</a>, <a class="reference external" href="https://plus.google.com/112961607570158342254/posts/9uySMokvg7k">Jon Callas's posts about the topic on G+</a>, and <a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/08/09/e-mails-big-privacy-problem-qa-with-silent-circle-co-founder-phil-zimmermann/">Phil Zimmermann's interview in Forbes</a>. Also, of course, all of this is unfolding in the context of the <a class="reference external" href="https://en.wikipedia.org/wiki/2013_mass_surveillance_scandal">2013 Mass Surveillance Scandal</a>.</p>
+<p>Dear Phil and Jon: Hello there! It is good to have a chance to chat with you in public.</p>
+<p>Please accept the following in the spirit of constructive criticism in which it is intended.</p>
+<p>For those readers who don't know, I've known you both, personally and professionally for decades. You've each written texts that I've learned from, inspired me to follow your example, we've worked together successfully, and you've mentored me. I have great respect for your technical abilities, your integrity, and your general reasonableness. Thank you for all of that and for holding fast to your principles today, when we need it more than ever.</p>
+<p>Now:</p>
+<p>Your job is not yet done. Your customers are currently vulnerable to having all of their communications secretly monitored.</p>
+<p>I just subscribed to the service at <a class="reference external" href="https://SilentCircle.com">https://SilentCircle.com</a>, and after I paid $120 for one year of service, it directed me to install the Silent Text app from Silent Circle on my android phone, which I did. Now, when I use that Silent Circle app to send text messages to other Silent Circle customers, I have no way of verifying whether it is really encrypting my message on my own phone, and if it is really keeping the encryption key only for me, or if it is leaking the contents of my messages or my encryption keys to you or to others.</p>
+<p>If some attacker, for example the U.S. Federal Government — or to pick a different example the Zetas Mexican drug cartel — were to coerce Silent Circle into cooperating with them, then that attacker would simply require Silent Circle to distribute an update to the app, containing a backdoor.</p>
+<p>There is no way for me to verify that any given version of Silent Text, including the one that I just installed, is correctly generating strong encryption keys and is protecting those keys instead of leaking them.</p>
+<p>Therefore, how are your current products any safer for your users than the canceled Silent Mail product was? The only attacker against whom your canceled Silent Mail product was vulnerable but against whom your current products are safe is an attacker who would require you to backdoor your server software but who wouldn't require you to backdoor your client software.</p>
+<p>Does that constraint apply to the U.S. Federal Government entities who are responsible for PRISM, for the shut-down of Lavabit, and so much else? No, that constraint does not apply to them. This was demonstrated in the Hushmail case in which the U.S. DEA asked Hushmail (a Canadian company) to turn over the plaintext of the email of one of its customers. Hushmail complied, shipping a set of CDs to the DEA containing the customer's messages.</p>
+<p>The President of Hushmail <a class="reference external" href="http://www.wired.com/threatlevel/2007/11/hushmail-to-war/">emphasized</a> in interviews with journalists at the time that Hushmail would be able to comply with such orders regardless of whether the customer used Hushmail's “client-to-server” (SSL) encryption or its “end-to-end” (Java applet) encryption.</p>
+<p>Phil had been Chief Cryptographer of Hushmail years earlier, and was still a member of the Advisory Board of Hushmail at the time of that case. He commented about the case at that time, and he also <a class="reference external" href="http://www.wired.com/threatlevel/2007/11/pgp-creator-def/">stated</a>, correctly, that the Hushmail model of <em>unverified</em> end-to-end encryption was vulnerable to government coercion. That's the same model that Silent Circle uses today.</p>
+<p>You have just taken the courageous act of publicly shutting down the Silent Mail product, and publicly stating your reasons for doing so. This, then, is your opportunity to make your stance consistent by informing your customers of the similar dangers posed by the software distribution practices currently used by Silent Circle (along with most of the rest of the industry).</p>
+<p>I don't know the perfect solution to the problem of the <em>unverifiability</em> of today's software. But being frank about the current approach and the vulnerability that it imposes on users is the first step. People will listen to you about this, now. Let's start talking about it and we can start finding solutions.</p>
+<p>Also, warn your users. Don't tell them the untruth that it is impossible for you to eavesdrop on their communications even if you try (as your company seems to be on the borderline of doing in public statements like these: [ <a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/07/15/corporate-customers-flock-to-anti-snooping-app-silent-circle/">¹</a>, <a class="reference external" href="http://techcrunch.com/2013/08/08/silent-circle-preemptively-shuts-down-encrypted-email-service-to-prevent-nsa-spying/">²</a>]).</p>
+<p>We're trying an approach to this problem, here at <a class="reference external" href="https://LeastAuthority.com">LeastAuthority.com</a>, of “<em>verifiable</em> end-to-end security”. For our data backup and storage service, all of the software is Free and Open Source, and it is distributed through channels which are out of our direct control, such as Debian and Ubuntu. Of course this approach is not perfectly secure — it doesn't guarantee that a state-level actor cannot backdoor our customers. But it does guarantee that <em>we</em> cannot backdoor our customers.</p>
+<p>This currently imposes inconvenience on our customers, and I'm not saying it is the perfect solution, but it shows that there is more than one way to go at this problem.</p>
+<p>Thank you for your attention to these important matter, and your leadership in speaking out about them.</p>
+<p>(By the way, <a class="reference external" href="https://LeastAuthority.com">LeastAuthority.com</a> is not a competitor to Silent Circle. We don't offer voice, text, video, or email services, like Silent Circle does/did. What we offer is simply secure offsite <em>backup</em>, and a secure cloud storage API that people use to build other services.)</p>
+<p>Regards,</p>
+<p>Zooko Wilcox-O'Hearn</p>
+
+                </div><!-- /.entry-content -->
+                <div>
+                    <div style="float: right;"><a href="../open_letter_silent_circle.html#disqus_thread">Comments</a></div>
+                    <div class="clearer">&nbsp;</div>
+                </div>
+        </article>
+        <br>
+        <article class="hentry highlight">
                 <header> <h3 class="entry-title"><a href="../least-authority-announces-prism-proof-storage-service.html" rel="bookmark" title="Permalink to LeastAuthority.com Announces A PRISM-Proof Storage Service">LeastAuthority.com Announces A PRISM-Proof Storage Service</a></h3> </header>
                 <footer class="post-info help-text">
                     <div style="float: right;"><a href="../least-authority-announces-prism-proof-storage-service.html#disqus_thread">Comments</a></div>
                     <div class="published"> Tue 30 July 2013 </div>
-                                          <div>By <a class="url fn" href="../author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
-                                        <br>
+                      <div>By <a class="url fn" href="../author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
+                    <br>
                 </footer><!-- /.post-info -->
                 <!-- <div class="entry-content"> <p class="first last">LeastAuthority.com today announced Simple Secure Storage Service (S4), a backup service that encrypts your files to protect them from the prying eyes of spies and criminals.</p>
  </div>-->
@@ -81,51 +122,10 @@
                 </div>
         </article>
         <br>
-            <article class="hentry highlight">
-                <header> <h3 class="entry-title"><a href="../open_letter_silent_circle.html" rel="bookmark" title="Permalink to Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service">Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service</a></h3> </header>
-                <footer class="post-info help-text">
-                    <div style="float: right;"><a href="../open_letter_silent_circle.html#disqus_thread">Comments</a></div>
-                    <div class="published"> Fri 16 August 2013 </div>
-                                          <div>By <a class="url fn" href="../author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
-                                        <br>
-                </footer><!-- /.post-info -->
-                <!-- <div class="entry-content"> <p class="first last">This open letter is in response to the recent shutdown of Lavabit and the ensuing shutdown of Silent Circle's “Silent Mail” product.</p>
- </div>-->
-                <div class="entry-content">
-                    <p>This open letter is in response to the <a class="reference external" href="http://boingboing.net/2013/08/08/lavabit-email-service-snowden.html">recent shutdown of Lavabit</a> , the ensuing <a class="reference external" href="http://silentcircle.wordpress.com/2013/08/09/to-our-customers/">shutdown of Silent Circle's “Silent Mail” product</a>, <a class="reference external" href="https://plus.google.com/112961607570158342254/posts/9uySMokvg7k">Jon Callas's posts about the topic on G+</a>, and <a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/08/09/e-mails-big-privacy-problem-qa-with-silent-circle-co-founder-phil-zimmermann/">Phil Zimmermann's interview in Forbes</a>. Also, of course, all of this is unfolding in the context of the <a class="reference external" href="https://en.wikipedia.org/wiki/2013_mass_surveillance_scandal">2013 Mass Surveillance Scandal</a>.</p>
-<p>Dear Phil and Jon: Hello there! It is good to have a chance to chat with you in public.</p>
-<p>Please accept the following in the spirit of constructive criticism in which it is intended.</p>
-<p>For those readers who don't know, I've known you both, personally and professionally for decades. You've each written texts that I've learned from, inspired me to follow your example, we've worked together successfully, and you've mentored me. I have great respect for your technical abilities, your integrity, and your general reasonableness. Thank you for all of that and for holding fast to your principles today, when we need it more than ever.</p>
-<p>Now:</p>
-<p>Your job is not yet done. Your customers are currently vulnerable to having all of their communications secretly monitored.</p>
-<p>I just subscribed to the service at <a class="reference external" href="https://SilentCircle.com">https://SilentCircle.com</a>, and after I paid $120 for one year of service, it directed me to install the Silent Text app from Silent Circle on my android phone, which I did. Now, when I use that Silent Circle app to send text messages to other Silent Circle customers, I have no way of verifying whether it is really encrypting my message on my own phone, and if it is really keeping the encryption key only for me, or if it is leaking the contents of my messages or my encryption keys to you or to others.</p>
-<p>If some attacker, for example the U.S. Federal Government — or to pick a different example the Zetas Mexican drug cartel — were to coerce Silent Circle into cooperating with them, then that attacker would simply require Silent Circle to distribute an update to the app, containing a backdoor.</p>
-<p>There is no way for me to verify that any given version of Silent Text, including the one that I just installed, is correctly generating strong encryption keys and is protecting those keys instead of leaking them.</p>
-<p>Therefore, how are your current products any safer for your users that the canceled Silent Mail product was? The only attacker against whom your canceled Silent Mail product was vulnerable but against whom your current products are safe is an attacker who would require you to backdoor your server software but who wouldn't require you to backdoor your client software.</p>
-<p>Does that constraint apply to the U.S. Federal Government entities who are responsible for PRISM, for the shut-down of Lavabit, and so much else? No, that constraint does not apply to them. This was demonstrated in the Hushmail case in which the U.S. DEA asked Hushmail (a Canadian company) to turn over the plaintext of the email of one of its customers. Hushmail complied, shipping a set of CDs to the DEA containing the customer's messages.</p>
-<p>The President of Hushmail <a class="reference external" href="http://www.wired.com/threatlevel/2007/11/hushmail-to-war/">emphasized</a> in interviews with journalists at the time that Hushmail would be able to comply with such orders regardless of whether the customer used Hushmail's “client-to-server” (SSL) encryption or its “end-to-end” (Java applet) encryption.</p>
-<p>Phil had been Chief Cryptographer of Hushmail years earlier, and was still a member of the Advisory Board of Hushmail at the time of that case. He commented about the case at that time, and he also <a class="reference external" href="http://www.wired.com/threatlevel/2007/11/pgp-creator-def/">stated</a>, correctly, that the Hushmail model of <em>unverified</em> end-to-end encryption was vulnerable to government coercion. That's the same model that Silent Circle uses today.</p>
-<p>You have just taken the courageous act of publicly shutting down the Silent Mail product, and publicly stating your reasons for doing so. This, then, is your opportunity to make your stance consistent by informing your customers of the similar dangers posed by the software distribution practices currently used by Silent Circle (along with most of the rest of the industry).</p>
-<p>I don't know the perfect solution to the problem of the <em>unverifiability</em> of today's software. But being frank about the current approach and the vulnerability that it imposes on users is the first step. People will listen to you about this, now. Let's start talking about it and we can start finding solutions.</p>
-<p>Also, warn your users. Don't tell them the untruth that it is impossible for you to eavesdrop on their communications even if you try (as your company seems to be on the borderline of doing in public statements like these: [ <a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/07/15/corporate-customers-flock-to-anti-snooping-app-silent-circle/">¹</a>, <a class="reference external" href="http://techcrunch.com/2013/08/08/silent-circle-preemptively-shuts-down-encrypted-email-service-to-prevent-nsa-spying/">²</a>]).</p>
-<p>We're trying an approach to this problem, here at <a class="reference external" href="https://LeastAuthority.com">LeastAuthority.com</a>, of “<em>verifiable</em> end-to-end security”. For our data backup and storage service, all of the software is Free and Open Source, and it is distributed through channels which are out of our direct control, such as Debian and Ubuntu. Of course this approach is not perfectly secure — it doesn't guarantee that a state-level actor cannot backdoor our customers. But it does guarantee that <em>we</em> cannot backdoor our customers.</p>
-<p>This currently imposes inconvenience on our customers, and I'm not saying it is the perfect solution, but it shows that there is more than one way to go at this problem.</p>
-<p>Thank you for your attention to these important matter, and your leadership in speaking out about them.</p>
-<p>(By the way, <a class="reference external" href="https://LeastAuthority.com">LeastAuthority.com</a> is not a competitor to Silent Circle. We don't offer voice, text, video, or email services, like Silent Circle does/did. What we offer is simply secure offsite <em>backup</em>, and a secure cloud storage API that people use to build other services.)</p>
-<p>Regards,</p>
-<p>Zooko Wilcox-O'Hearn</p>
-
-                </div><!-- /.entry-content -->
-                <div>
-                    <div style="float: right;"><a href="../open_letter_silent_circle.html#disqus_thread">Comments</a></div>
-                    <div class="clearer">&nbsp;</div>
-                </div>
-        </article>
-        <br>
-        </div><!-- /#posts-list -->
-    <p class="paginator">
-        Page 1 / 1
-    </p>
+    </div><!-- /#posts-list -->
+<p class="paginator">
+    Page 1 / 1
+</p>
 </section><!-- /#content -->
  <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
@@ -143,20 +143,20 @@
         <div class="span3 offset1 blog-sidebar">
             <h4>Categories</h4>
             <ul>
-                            <li><a href="../category/letters.html">Letters</a></li>
-                            <li><a href="../category/press.html">Press</a></li>
-                            <li><a href="../category/press-releases.html">Press Releases</a></li>
-                        </ul>
+                <li><a href="../category/letters.html">Letters</a></li>
+                <li><a href="../category/press.html">Press</a></li>
+                <li><a href="../category/press-releases.html">Press Releases</a></li>
+            </ul>
 
             <h4>Tags</h4>
             <ul>                <li><a href="../tag/cloud.html">cloud</a> (2)</li>
-                            <li><a href="../tag/interview.html">interview</a> (1)</li>
-                            <li><a href="../tag/lafs.html">lafs</a> (2)</li>
-                            <li><a href="../tag/press-release.html">press release</a> (1)</li>
-                            <li><a href="../tag/prism.html">prism</a> (4)</li>
-                            <li><a href="../tag/s4.html">s4</a> (2)</li>
-                            <li><a href="../tag/silent-circle.html">silent circle</a> (1)</li>
-                        </ul>
+                <li><a href="../tag/interview.html">interview</a> (1)</li>
+                <li><a href="../tag/lafs.html">lafs</a> (2)</li>
+                <li><a href="../tag/press-release.html">press release</a> (1)</li>
+                <li><a href="../tag/prism.html">prism</a> (4)</li>
+                <li><a href="../tag/s4.html">s4</a> (2)</li>
+                <li><a href="../tag/silent-circle.html">silent circle</a> (1)</li>
+            </ul>
 
             <h4>Syndication</h4>
             <ul>
@@ -177,7 +177,7 @@
                     <div id="copy">
                     <span>&copy; 2011-2013 Least Authority Enterprises</span>
                     </div>
-                    <ul class="navlinks">
+<ul class="navlinks">
     <li><a href="/products">Products</a></li>
     <li><a href="/how_it_works">How It Works</a></li>
     <!--<li><a href="/faq/">FAQ</a></li>-->
@@ -189,20 +189,21 @@
         </div>
     </div>
 <!-- Piwik -->
-<script type="text/javascript"> 
-  var _paq = _paq || [];
-  _paq.push(['trackPageView']);
-  _paq.push(['enableLinkTracking']);
-  (function() {
-    var u="https://analytics.leastauthority.com/piwik/";
-    _paq.push(['setTrackerUrl', u+'piwik.php']);
-    _paq.push(['setSiteId', 1]);
-    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0]; g.type='text/javascript';
-    g.defer=true; g.async=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
-  })();
-
+<script type="text/javascript">
+  if (document.domain == "leastauthority.com") {
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u="https://analytics.leastauthority.com/piwik/";
+      _paq.push(['setTrackerUrl', u+'piwik.php']);
+      _paq.push(['setSiteId', 1]);
+      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0]; g.type='text/javascript';
+      g.defer=true; g.async=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+  }
 </script>
-<noscript><p><img src="http://analytics.leastauthority.com/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p></noscript>
+<noscript><p><img src="https://analytics.leastauthority.com/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p></noscript>
 <!-- End Piwik Code -->
 </body>
 </html>
