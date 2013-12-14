@@ -135,6 +135,7 @@ class TestServerModule(TestCase):
             ('apt-get install -y exim4-base', False, {}),
             ('apt-get install -y darcs', False, {}),
             ('apt-get install -y python-foolscap', False, {}),
+            ('apt-get remove -y --purge whoopsie', False, {}),
             ('python ./setup.py install', False, {}),
             ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
             ('mkdir -p /home/customer/.ssh/', False, {}),
