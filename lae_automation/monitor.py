@@ -82,7 +82,7 @@ def compare_servers_to_local(remotepropstuplelist, localstate, stdout, stderr, n
         if not localstate.has_key(rpt_instance_id):
             # unknown instance
             launch_time = parse_iso_time(rpt_launch_time)
-            if now - launch_time < 10*60:
+            if now - launch_time < 30*60:
                 print >>stdout, ("Note: Ignoring unknown %s instance %s at %s because it was launched less than 10 minutes ago at %s."
                                  % (rpt_status, rpt_instance_id, rpt_publichost_s, rpt_launch_time))
             elif rpt_status == 'terminated':
