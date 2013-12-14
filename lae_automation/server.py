@@ -189,6 +189,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     sudo_apt_get('install -y exim4-base')
     sudo_apt_get('install -y darcs')
     sudo_apt_get('install -y python-foolscap')
+    sudo_apt_get('remove -y --purge whoopsie')
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
