@@ -1,7 +1,6 @@
 
 import stripe, time, traceback, simplejson, sys
 
-from twisted.web.server import NOT_DONE_YET
 from twisted.python.filepath import FilePath
 
 from lae_util.servers import append_record
@@ -75,14 +74,6 @@ class SubscriptionReportHandler(HandlerBase):
         self._logger_helper(__name__)
         self.basefp = basefp
 
-    def _delayedRender(self, request):
-        tmpl = env.get_template('payment_verified.html')
-        request.write(tmpl.render({"productfullname":"Simple Secure Storage Service", "productname":"S4"}).encode('utf-8'))
-        request.finish()
-
-    def _responseFailed(self, failure, call):
-        call.cancel()
-
     def _create_log_filepaths(self, stripe_customer_id):
         timestamp = format_iso_time(time.time())
         fpcleantimestamp = timestamp.replace(':', '')
@@ -126,11 +117,6 @@ class SubscriptionReportHandler(HandlerBase):
             print >>self.out, repr(e)
             tmpl = env.get_template('subscription_signup.html')
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
-
-        # wait 'til customer object 
-        from twisted.internet import reactor
-        call = reactor.callLater(1, self._delayedRender, request)
-        request.notifyFinish().addErrback(self._responseFailed, call)
 
         secrets_fp, log_fp, subscriptions_fp = self._create_log_filepaths(customer.id)
         #Use of "setContent" here assures us that the associated file will be in a known state
@@ -181,4 +167,5 @@ class SubscriptionReportHandler(HandlerBase):
             when_failed()
 
         # http://twistedmatrix.com/documents/current/web/howto/web-in-60/asynchronous.html
-        return NOT_DONE_YET
+        tmpl = env.get_template('payment_verified.html')
+        return tmpl.render({"productfullname":"Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')
