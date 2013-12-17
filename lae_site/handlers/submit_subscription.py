@@ -160,7 +160,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             except Exception:
                 traceback.print_exc(100, stderr)
         try:
-            flappcommand.run(stdin)
+            flappcommand.run(stdin, self.out)
         except Exception:
             traceback.print_exc(100, stdout)
             when_failed()

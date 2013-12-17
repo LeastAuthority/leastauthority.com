@@ -33,7 +33,7 @@ class FlappCommand(object):
         self.d.addCallbacks(_got_rref, _failed)
         return done
 
-    def run(self, content):
+    def run(self, content, log):
         assert isinstance(content, bytes), (`content`, type(content))
         assert self.rref is not None
         options = ClientOptions()
@@ -46,14 +46,17 @@ class FlappCommand(object):
 
         options.subOptions.stdio = stdio
 
-        done = defer.Deferred()
+        # These are not used.
+        options.subOptions.stdout = None
+        options.subOptions.stderr = None
+
         def _go(ign):
+            print >>log, "Starting command."
             return RunCommand().run(self.rref, options.subOptions)
-        def _check_return_code(rc):
-            if rc != 0:
-                raise CommandFailed(rc)
+        def _log_return_code(rc):
+            print >>log, "Command completed with exit code %r" % (rc,)
+        def _log_failure(f):
+            print >>log, "Command failed with %r" % (f,)
 
         self.d.addCallback(_go)
-        self.d.addCallback(_check_return_code)
-        self.d.addBoth(done.callback)
-        return done
+        self.d.addCallbacks(_log_return_code, _log_failure)
