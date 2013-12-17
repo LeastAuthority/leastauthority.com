@@ -1,5 +1,5 @@
 
-import stripe, traceback, simplejson, base64, hashlib, sys
+import stripe, traceback, simplejson, sys
 
 from twisted.python.filepath import FilePath
 
@@ -60,14 +60,13 @@ class SubmitSubscriptionHandler(HandlerBase):
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
 
         #log that a new subscription has been created (at stripe)
-        leastauthority_subscription_id = base64.b32encode(hashlib.sha1(customer.subscription.id))
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
-        append_record(subscriptions_fp, leastauthority_subscription_id)       
+        append_record(subscriptions_fp, customer.subscription.id)       
 
         def when_done():
             service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
             try:
-                append_record(service_confirmed_fp, leastauthority_subscription_id)
+                append_record(service_confirmed_fp, customer.subscription.id)
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
                 traceback.print_exc(100, sys.stderr)
