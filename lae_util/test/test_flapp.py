@@ -25,6 +25,7 @@ class MockProtocol(object):
 class MockRunCommand(object):
     def run(self, rref, options):
         options.stdio(MockProtocol())
+        MockRunCommand.ready = True
         return defer.succeed(MockRunCommand.rc)
 
 
@@ -35,72 +36,37 @@ class FlappCommandTests(TestCase):
 
         FilePath("furlfile").setContent("pb://foo@bar/baz")
         cmd = flapp.FlappCommand("furlfile")
-        def raise_exception():
-            print >>self.stderr, "CANARY"
-            self.ready = True
-            raise Exception()
-        def callback():
-            print >>self.stdout, "DONE"
-            self.ready = True
-        def fail():
-            self.fail("shouldn't get here")
         def _poll_until_ready(ign):
-            if self.ready:
+            if MockRunCommand.ready:
                 return
             return eventually(_poll_until_ready)
         def reset(rc):
+            self.log = StringIO()
             MockProtocol.content = None
             MockRunCommand.rc = rc
-            self.stdout = StringIO()
-            self.stderr = StringIO()
-            self.ready = False
+            MockRunCommand.ready = False
         reset(0)
 
         d = cmd.start()
 
-        # check that an exception from when_done doesn't bugger things up
-        d.addCallback(lambda ign: cmd.run("CONTENT1", self.stdout, self.stderr, raise_exception, fail))
+        # check the success case
+        d.addCallback(lambda ign: cmd.run("CONTENT1", self.log))
         d.addCallback(_poll_until_ready)
         def _check1(ign):
-            self.failUnlessIn("Starting", self.stdout.getvalue())
-            self.failIfIn("Command failed", self.stderr.getvalue())
-            self.failIfIn("DONE", self.stdout.getvalue())
-            self.failUnlessIn("CANARY", self.stderr.getvalue())
+            self.failUnlessIn("Starting", self.log.getvalue())
+            self.failIfIn("Command failed", self.log.getvalue())
+            self.failUnlessIn("Command succeeded", self.log.getvalue())
             self.failUnlessEqual(MockProtocol.content, "CONTENT1")
-            reset(0)
+            reset(1)  # make the next command fail
         d.addCallback(_check1)
 
-        d.addCallback(lambda ign: cmd.run("CONTENT2", self.stdout, self.stderr, callback, fail))
+        # check the failure case
+        d.addCallback(lambda ign: cmd.run("CONTENT2"))
         d.addCallback(_poll_until_ready)
         def _check2(ign):
-            self.failUnlessIn("Starting", self.stdout.getvalue())
-            self.failIfIn("Command failed", self.stderr.getvalue())
-            self.failUnlessIn("DONE", self.stdout.getvalue())
-            self.failIfIn("CANARY", self.stderr.getvalue())
+            self.failUnlessIn("Starting", self.log.getvalue())
+            self.failUnlessIn("Command failed with exit code 1", self.log.getvalue())
+            self.failIfIn("Command succeeded", self.log.getvalue())
             self.failUnlessEqual(MockProtocol.content, "CONTENT2")
-            reset(1)  # make the next command fail
         d.addCallback(_check2)
-
-        # check that an exception from when_failed doesn't bugger things up
-        d.addCallback(lambda ign: cmd.run("CONTENT3", self.stdout, self.stderr, fail, raise_exception))
-        d.addCallback(_poll_until_ready)
-        def _check3(ign):
-            self.failUnlessIn("Starting", self.stdout.getvalue())
-            self.failUnlessIn("Command failed with exit code 1.", self.stdout.getvalue())
-            self.failIfIn("DONE", self.stdout.getvalue())
-            self.failUnlessIn("CANARY", self.stderr.getvalue())
-            self.failUnlessEqual(MockProtocol.content, "CONTENT3")
-            reset(1)
-        d.addCallback(_check3)
-
-        d.addCallback(lambda ign: cmd.run("CONTENT4", self.stdout, self.stderr, fail, callback))
-        d.addCallback(_poll_until_ready)
-        def _check4(ign):
-            self.failUnlessIn("Starting", self.stdout.getvalue())
-            self.failUnlessIn("Command failed with exit code 1.", self.stdout.getvalue())
-            self.failUnlessIn("DONE", self.stdout.getvalue())
-            self.failIfIn("CANARY", self.stderr.getvalue())
-            self.failUnlessEqual(MockProtocol.content, "CONTENT4")
-            reset(0)
-        d.addCallback(_check4)
         return d
