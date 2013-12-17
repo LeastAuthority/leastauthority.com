@@ -400,8 +400,12 @@ def set_up_reboot(stdout, stderr):
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
-
-    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+    dirfp = basefp.child('secrets').child('active_SSEC2s')
+    try:
+        dirfp.makedirs()
+    except OSError:
+        pass
+    secretsfile = dirfp.child(logfilename).open('a+')
     logfile = basefp.child('signup_logs').child(logfilename).open('a+')
 
     stdout = LoggingStream(logfile, '>')

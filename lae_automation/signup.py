@@ -9,10 +9,9 @@ from lae_automation.initialize import activate_user_account_desktop, verify_user
     create_user_bucket, create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
 from lae_automation.aws.queryapi import TimeoutError, wait_for_EC2_addresses
 from lae_automation.server import install_server, bounce_server, NotListeningError
-#from lae_automation.server import initialize_statmover_source
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 from lae_util.servers import append_record
-
+from lae_util.timestamp import format_iso_time
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
@@ -328,3 +327,29 @@ def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsec
         return d2
     d.addCallback(_deployed)
     return d
+
+
+def create_log_filepaths(stripe_customer_id, stripe_subscription_id, stripe_plan_name):
+    timestamp = format_iso_time(time.time())
+    fpcleantimestamp = timestamp.replace(':', '')
+    logfilename = "%s-%s-%s" % (fpcleantimestamp, stripe_customer_id, stripe_subscription_id)
+    stripedirfp = FilePath('../').child('secrets').child(stripe_plan_name).child('stripe')
+    ssec2dirfp = FilePath('../').child('secrets').child(stripe_plan_name).child('SSEC2')
+    signupdirfp = FilePath('../').child('signup_logs').child(stripe_plan_name)
+    try:
+        stripedirfp.makedirs()
+    except OSError:
+        pass
+    try:
+        ssec2dirfp.makedirs()
+    except OSError:
+        pass
+    try:
+        signupdirfp.makedirs()
+    except OSError:
+        pass
+
+    stripelog_fp = stripedirfp.child(logfilename)
+    SSEC2log_fp = ssec2dirfp.child(logfilename)
+    signuplog_fp = signupdirfp.child(logfilename)
+    return stripelog_fp, SSEC2log_fp, signuplog_fp
