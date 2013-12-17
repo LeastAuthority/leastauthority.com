@@ -15,8 +15,6 @@ SERVICE_CONFIRMED_FILE  = 'service_confirmed.csv'
 SIGNUP_FURL_FILE        = 'signup.furl'
 
 flappcommand = None
-all_subscribed = None
-subscribed_confirmed = None
 
 def start(basefp):
     global flappcommand
@@ -24,7 +22,6 @@ def start(basefp):
     signup_furl_fp = basefp.child('secret_config').child(SIGNUP_FURL_FILE)
     flappcommand = FlappCommand(signup_furl_fp.path)
     return flappcommand.start()
-
 
 class SubmitSubscriptionHandler(HandlerBase):
 
@@ -34,15 +31,6 @@ class SubmitSubscriptionHandler(HandlerBase):
         self.basefp = basefp
 
     def render(self, request):
-        """
-        The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
-        render_POST is handled by the HandlerBase parent which calls this this method after logging 
-        the request.
-
-        The foolscap service registered to run when flappcommand.run is called expects a bytestream
-        of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
-        addition).  Therefore the content passed to the command must conform to US-ascii.
-        """
         #Parse request, info from stripe and subscriber
         stripe_authorization_token = self.get_arg(request, 'stripeToken')
         email_from_form = self.get_arg(request, 'email')
