@@ -66,8 +66,7 @@ def start(basefp):
     return flappcommand.start()
 
 
-class SubscriptionReportHandler(HandlerBase):
-    #XXXisLeaf = 0
+class SubmitSubscriptionHandler(HandlerBase):
 
     def __init__(self, basefp):
         HandlerBase.__init__(self, out=None)
