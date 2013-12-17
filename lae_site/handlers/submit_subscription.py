@@ -6,7 +6,7 @@ from twisted.python.filepath import FilePath
 from lae_util.servers import append_record
 
 from lae_util.timestamp import format_iso_time
-from lae_util.streams import LoggingTeeStream
+from lae_util.streams import LoggingStream
 from lae_site.handlers.web import env
 from lae_util.flapp import FlappCommand
 
@@ -136,8 +136,8 @@ class SubmitSubscriptionHandler(HandlerBase):
                                  ensure_ascii=True
                                  )
 
-        stdout = LoggingTeeStream(sys.stdout, log_fp.open('a'), 'stdout')
-        stderr = LoggingTeeStream(sys.stderr, log_fp.open('a'), 'stderr')
+        stdout = LoggingStream(log_fp.open('a'), '>')
+        stderr = LoggingStream(log_fp.open('a'), '')
 
         service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
         def when_done():

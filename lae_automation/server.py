@@ -12,7 +12,7 @@ from fabric import api
 from fabric.context_managers import cd
 from fabric.contrib import files
 
-from lae_util.streams import LoggingTeeStream
+from lae_util.streams import LoggingStream
 
 #The incident gatherer's furl is a secret, so it is obtained from lae_automation_config.
 #The stats gatherer's furl is a secret, so it is obtained from lae_automation_config.
@@ -404,8 +404,8 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
     secretsfile = basefp.child('secrets').child(logfilename).open('a+')
     logfile = basefp.child('signup_logs').child(logfilename).open('a+')
 
-    stdout = LoggingTeeStream(raw_stdout, logfile, '>')
-    stderr = LoggingTeeStream(raw_stderr, logfile, '')
+    stdout = LoggingStream(logfile, '>')
+    stderr = LoggingStream(logfile, '')
 
     # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
     # It does have a way to disable that, but not (easily) to redirect it.
