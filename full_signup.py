@@ -11,14 +11,10 @@ def main(stdin, stdout, stderr):
      customer_pgpinfo,
      customer_id,
      customer_subscription_id,
-     customer_plan,
-     secretsfile_name,
-     logfile_name) = simplejson.loads(stdin.read())
+     customer_plan) = simplejson.loads(stdin.read())
 
-    #We can't pass file object through the foolscap service, so we pass names.
     secretsfile = open(secretsfile_name, 'a')
     logfile = open(logfile_name, 'a')
-
 
     print >>stderr, "customer plan is: %s" % (customer_plan,)
     print >>stderr, "customer email is: %s" % (customer_email,)
