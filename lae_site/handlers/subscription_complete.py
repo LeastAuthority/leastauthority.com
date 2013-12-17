@@ -161,7 +161,7 @@ class SubscriptionReportHandler(HandlerBase):
             except Exception:
                 traceback.print_exc(100, stderr)
         try:
-            flappcommand.run(stdin, stdout, stderr, when_done, when_failed)
+            flappcommand.run(stdin)
         except Exception:
             traceback.print_exc(100, stdout)
             when_failed()

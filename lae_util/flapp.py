@@ -1,3 +1,4 @@
+import sys
 
 from twisted.internet import defer
 from foolscap.api import Tub
@@ -46,6 +47,8 @@ class FlappCommand(object):
             proto.connectionLost("EOF")
 
         options.subOptions.stdio = stdio
+        options.subOptions.stdout = sys.stdout
+        options.subOptions.stderr = sys.stderr
 
         done = defer.Deferred()
         def _go(ign):
