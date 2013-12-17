@@ -20,9 +20,8 @@ def main(stdin, stdout, stderr):
     print >>stderr, "customer email is: %s" % (customer_email,)
 
     #XXX THese secrets have to be moved to website/secrets.  I need to add naming info to each line in the log.
-    print >>stderr, "%s " * 7 % (customer_email, customer_pgpinfo, customer_id, 
-                                 customer_subscription_id, customer_plan, secretsfile, 
-                                 logfile)
+    print >>stderr, "%s " * 5 % (customer_email, customer_pgpinfo, customer_id, 
+                                 customer_subscription_id, customer_plan)
 
 
     if logfile_name is None:
@@ -34,8 +33,7 @@ def main(stdin, stdout, stderr):
     try:
         from lae_automation.signup import activate_subscribed_service
         return activate_subscribed_service(customer_email, customer_pgpinfo, 
-                                           customer_id, customer_subscription_id, customer_plan, 
-                                           stdout, stderr, secretsfile, logfile)
+                                           customer_id, customer_subscription_id, customer_plan)
     except Exception:
         import traceback
         traceback.print_exc(100, stdout)
