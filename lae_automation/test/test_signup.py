@@ -123,11 +123,13 @@ class TestSignupModule(TestCase):
     def setUp(self):
         self.fakeURLs = [adphttprequestheader, verifyhttprequestheader]
         self.mhr_return_values = [adprequestresponse, verifyrequestresponse]
+        self.SIGNUPSPATH = 'mock_signups.csv'
         self.CONFIGFILEPATH = 'init_test_config.json'
         self.SERVERINFOPATH = 'mock_serverinfo.csv'
         self.EC2SECRETPATH = 'mock_ec2secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
 
+        FilePath(self.SIGNUPSPATH).setContent('')
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
         FilePath(self.SERVERINFOPATH).setContent('')
         FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
@@ -251,6 +253,7 @@ class TestSignupModule(TestCase):
         self.patch(EC2_Query, 'submit', call_ec2_query_submit)
 
     def tearDown(self):
+        FilePath(self.SIGNUPSPATH).remove()
         FilePath(self.CONFIGFILEPATH).remove()
         FilePath(self.SERVERINFOPATH).remove()
         FilePath(self.EC2SECRETPATH).remove()
@@ -285,8 +288,13 @@ class TestSignupModule(TestCase):
         self.patch(queryapi, 'hostpubkeyextractor', call_hostpubkeyextractor)
 
         d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                          MSEED, MSECRETSFILE, MLOGFILENAME, self.SIGNUPSPATH, self.CONFIGFILEPATH,
                           self.SERVERINFOPATH, self.EC2SECRETPATH)
+        def _check(ign):
+            lines = FilePath(self.SIGNUPSPATH).getContent().splitlines()
+            self.failUnlessEqual(len(lines), 1)
+            self.failUnlessIn(lines[0], ",%s,%s,%s" % (MNAME, MEMAIL, MKEYINFO))
+        d.addCallback(_check)
         return d
 
     def test_no_products(self):
