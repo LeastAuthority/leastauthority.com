@@ -31,9 +31,20 @@ class SubmitSubscriptionHandler(HandlerBase):
         self.basefp = basefp
 
     def render(self, request):
+        """
+        The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
+        render_POST is handled by the HandlerBase parent which calls this this method after logging 
+        the request.
+
+        The foolscap service registered to run when flappcommand.run is called expects a bytestream
+        of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
+        addition).  Therefore the content passed to the command must conform to US-ascii.
+        """
         #Parse request, info from stripe and subscriber
         stripe_authorization_token = self.get_arg(request, 'stripeToken')
         email_from_form = self.get_arg(request, 'email')
+
+        #Load apikey
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
         assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()
@@ -54,27 +65,28 @@ class SubmitSubscriptionHandler(HandlerBase):
         append_record(subscriptions_fp, leastauthority_subscription_id)       
 
         def when_done():
+            service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
             try:
-                service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
                 append_record(service_confirmed_fp, leastauthority_subscription_id)
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
                 traceback.print_exc(100, sys.stderr)
+
         def when_failed():
             try:
                 pass  #XXX
             except Exception:
                 traceback.print_exc(100, sys.stderr)
-        try:        
-            customer_pgpinfo = customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
-            stdin = simplejson.dumps((customer.email,
-                                      customer_pgpinfo,
-                                      customer.id,
-                                      customer.subscription.id,
-                                      customer.subscription.plan.name),
-                                     ensure_ascii=True
-                                     )
 
+        customer_pgpinfo = customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
+        stdin = simplejson.dumps((customer.email,
+                                  customer_pgpinfo,
+                                  customer.id,
+                                  customer.subscription.id,
+                                  customer.subscription.plan.name),
+                                 ensure_ascii=True
+                                 )
+        try:        
             flappcommand.run(stdin, self.out)
         except Exception:
             traceback.print_exc(100, self.out)
