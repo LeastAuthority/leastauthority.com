@@ -6,7 +6,7 @@ from twisted.web.resource import Resource
 
 from lae_site.handlers.emailcollector import CollectEmailHandler
 from lae_site.handlers.web import JinjaHandler
-from lae_site.handlers.subscription_complete import SubscriptionReportHandler
+from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
 
 
 def make_site(basefp, config):
@@ -15,7 +15,7 @@ def make_site(basefp, config):
     resource.putChild('blog', File('content/blog'))
     resource.putChild('collect-email', CollectEmailHandler(basefp, config.products))
     resource.putChild('signup', Redirect("/"))
-    resource.putChild('subscription-complete', SubscriptionReportHandler(basefp))
+    resource.putChild('submit-subscription', SubmitSubscriptionHandler(basefp))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
     site = Site(resource, logPath=basefp.child('sitelogs').path)
