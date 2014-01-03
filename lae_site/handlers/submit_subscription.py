@@ -73,7 +73,7 @@ class SubmitSubscriptionHandler(HandlerBase):
 
         def when_failed():
             try:
-                pass  #XXX
+                pass  #XXX  Inform operations that a subscribed customer has a broken service!!
             except Exception:
                 traceback.print_exc(100, sys.stderr)
 
@@ -85,12 +85,10 @@ class SubmitSubscriptionHandler(HandlerBase):
                                   customer.subscription.plan.name),
                                  ensure_ascii=True
                                  )
-        try:        
-            flappcommand.run(stdin, self.out)
-        except Exception:
-            traceback.print_exc(100, self.out)
-            when_failed()
 
-        # http://twistedmatrix.com/documents/current/web/howto/web-in-60/asynchronous.html
+        d = flappcommand.run(stdin, self.out)
+        d.addCallback(when_done)
+        d.addErrback(when_failed)
+
         tmpl = env.get_template('payment_verified.html')
         return tmpl.render({"productfullname":"Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')

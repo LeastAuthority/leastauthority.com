@@ -5,7 +5,7 @@ window.creditcardVerifier = (function () {
 	  register_callbacks: function () {
 	      var $form = $('#payment-form');
 	      // This identifies your website in the createToken call below
-	      Stripe.setPublishableKey('pk_test_czwzkTp2tactuLOEOqbMTRzG');
+	      Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
 	      $form.submit( creditcardVerifier.formSubmissionHandler );
 	  },
 	  formSubmissionHandler: function (event) {

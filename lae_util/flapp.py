@@ -60,3 +60,4 @@ class FlappCommand(object):
 
         self.d.addCallback(_go)
         self.d.addCallbacks(_log_return_code, _log_failure)
+        return self.d
