@@ -63,7 +63,7 @@ class SubmitSubscriptionHandler(HandlerBase):
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
         append_record(subscriptions_fp, customer.subscription.id)       
 
-        def when_done():
+        def when_done(ignored_None):
             service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
             try:
                 append_record(service_confirmed_fp, customer.subscription.id)
@@ -71,7 +71,7 @@ class SubmitSubscriptionHandler(HandlerBase):
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
                 traceback.print_exc(100, sys.stderr)
 
-        def when_failed():
+        def when_failed(ignored_None):
             try:
                 pass  #XXX  Inform operations that a subscribed customer has a broken service!!
             except Exception:
@@ -81,8 +81,8 @@ class SubmitSubscriptionHandler(HandlerBase):
         stdin = simplejson.dumps((customer.email,
                                   customer_pgpinfo,
                                   customer.id,
-                                  customer.subscription.id,
-                                  customer.subscription.plan.name),
+                                  customer.subscription.plan.id,
+                                  customer.subscription.id),
                                  ensure_ascii=True
                                  )
 

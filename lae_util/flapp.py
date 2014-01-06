@@ -50,14 +50,12 @@ class FlappCommand(object):
         options.subOptions.stdout = None
         options.subOptions.stderr = None
 
-        def _go(ign):
-            print >>log, "Starting command."
-            return RunCommand().run(self.rref, options.subOptions)
+        print >>log, "Starting command."
+        self.d = RunCommand().run(self.rref, options.subOptions)
         def _log_return_code(rc):
             print >>log, "Command completed with exit code %r" % (rc,)
         def _log_failure(f):
             print >>log, "Command failed with %r" % (f,)
 
-        self.d.addCallback(_go)
         self.d.addCallbacks(_log_return_code, _log_failure)
         return self.d

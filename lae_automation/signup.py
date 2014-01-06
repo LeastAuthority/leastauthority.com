@@ -109,7 +109,7 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     return d
 
 def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, customer_subscription_id, 
-                                plan, stdout, stderr, secretsfile, logfile,
+                                subscription_plan_id, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
     print >> stderr, "entering activate_subscribed_service call."
@@ -121,7 +121,7 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, c
     #AWS REST API encodes requests in lowercase, so send the id's to _lowercase_ before naming the buckets.  Terrible idea?
     bucketname = "lae-%s-%s" % (customer_subscription_id.lower(), customer_id.lower()) 
     location = None  # default S3 location for now
-    product = lookup_product(config, plan)
+    product = lookup_product(config, subscription_plan_id)
     fullname = product['full_name']
     amiimageid = product['ami_image_id']
     instancesize = product['instance_size']
@@ -329,27 +329,14 @@ def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsec
     return d
 
 
-def create_log_filepaths(stripe_customer_id, stripe_subscription_id, stripe_plan_name):
+def create_log_filepaths(stripe_plan_id, stripe_customer_id, stripe_subscription_id):
+    logdir_parent_fp = FilePath('../').child('secrets').child(stripe_plan_id)
     timestamp = format_iso_time(time.time())
     fpcleantimestamp = timestamp.replace(':', '')
-    logfilename = "%s-%s-%s" % (fpcleantimestamp, stripe_customer_id, stripe_subscription_id)
-    stripedirfp = FilePath('../').child('secrets').child(stripe_plan_name).child('stripe')
-    ssec2dirfp = FilePath('../').child('secrets').child(stripe_plan_name).child('SSEC2')
-    signupdirfp = FilePath('../').child('signup_logs').child(stripe_plan_name)
-    try:
-        stripedirfp.makedirs()
-    except OSError:
-        pass
-    try:
-        ssec2dirfp.makedirs()
-    except OSError:
-        pass
-    try:
-        signupdirfp.makedirs()
-    except OSError:
-        pass
-
-    stripelog_fp = stripedirfp.child(logfilename)
-    SSEC2log_fp = ssec2dirfp.child(logfilename)
-    signuplog_fp = signupdirfp.child(logfilename)
+    logdirname = "%s-%s-%s" % (fpcleantimestamp, stripe_customer_id, stripe_subscription_id)
+    abslogdir_fp = logdir_parent_fp.child(logdirname)
+    abslogdir_fp.makedirs()
+    stripelog_fp = abslogdir_fp.child('stripe')
+    SSEC2log_fp = abslogdir_fp.child('SSEC2')
+    signuplog_fp = abslogdir_fp.child('signup_logs')
     return stripelog_fp, SSEC2log_fp, signuplog_fp
