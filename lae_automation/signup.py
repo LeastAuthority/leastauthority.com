@@ -130,6 +130,12 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, c
 
     d = create_stripe_user_bucket(AWSaccesskeyid, AWSsecretkey, bucketname, stdout, stderr, location)
 
+    print >>stdout, "After create_stripe_account_user_bucket %s..." % str((AWSaccesskeyid, AWSsecretkey, bucketname, 
+                                                          None, amiimageid, instancesize, 
+                                                          customer_email,
+                                                          customer_pgpinfo, stdout, stderr, 
+                                                          secretsfile, config, serverinfopath, 
+                                                          AWSsecretkeypath, myclock))
     # We could deploy and configure the instance in parallel with the above wait and delete it
     # if necessary, but let's keep it simple and sequential.
     d.addCallback(lambda ign: deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, 
@@ -249,7 +255,7 @@ def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsec
                                 instancesize, customer_email, customer_pgpinfo, 
                                 stdout, stderr, secretsfile, config, serverinfopath=None, 
                                 ec2secretpath=None, clock=None):
-
+    print >> stdout, "inside deploy_stripeaccount_server"
     serverinfopath = serverinfopath or '../serverinfo.csv'
     ec2secretpath = ec2secretpath or '../secret_config/ec2secret'
     myclock = clock or reactor
