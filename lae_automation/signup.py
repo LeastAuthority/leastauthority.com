@@ -119,7 +119,10 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, c
     AWSsecretkeypath = config.other["ec2_secret_path"]
     AWSsecretkey = FilePath(AWSsecretkeypath).getContent().strip()
     #AWS REST API encodes requests in lowercase, so send the id's to _lowercase_ before naming the buckets.  Terrible idea?
-    bucketname = "lae-%s-%s" % (customer_subscription_id.lower(), customer_id.lower()) 
+    #Hmmm...  due to the nature of bucketnames these need to be url-encoded...
+    cust_sub_id_for_bucket = customer_subscription_id.lower().replace('_','-')
+    cust_id_for_bucket = customer_id.lower().replace('_','-')
+    bucketname = "lae-%s-%s" % (cust_sub_id_for_bucket, cust_id_for_bucket) 
     location = None  # default S3 location for now
     product = lookup_product(config, subscription_plan_id)
     fullname = product['full_name']
