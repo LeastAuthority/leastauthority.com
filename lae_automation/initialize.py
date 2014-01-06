@@ -312,7 +312,10 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
         print >>stdout, "S3 bucket created."
         print >>stderr, repr(res)
 
-    d.addCallback(bucket_created)
+    def bucket_creation_failed(res):
+        print >>stderr, "S3 bucket creation failed."
+        print >>stderr, repr(res)
+    d.addCallbacks(bucket_created, bucket_creation_failed)
     return d
 
 
