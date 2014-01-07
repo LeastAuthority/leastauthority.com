@@ -46,8 +46,7 @@ def main(stdin, flapp_stdout, flapp_stderr):
         fh.close()
         raise
     finally:
-        signup_stdout.close()
-        signup_stderr.close()
+        signup_logfile.close()
 
 if __name__ == '__main__':
 
