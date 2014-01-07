@@ -5,7 +5,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.server import install_infrastructure_server
 from lae_automation.aws.license_service_client import LicenseServiceClient
-from txaws.s3.client import S3Client
+from txaws.s3.client import S3Client, URLContext
 from lae_automation.aws.devpay_s3client import DevPayS3Client
 from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError, \
      wait_for_EC2_addresses
@@ -295,17 +295,17 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
     client = S3Client(creds=LAcreds)
     print >>stderr, "client is %s" % (client,)
 
-    
     if location:
         object_name = "?LocationConstraint=" + urllib.quote(location)
     else:
         object_name = None
         
-    object_name = None
     query = client.query_factory(
         action="PUT", creds=client.creds, endpoint=client.endpoint,
         bucket=bucketname, object_name=object_name)
     print >>stderr, "query is %s" % (query,)
+    print >>stderr, "%r %r %r" % (query.action, query.data, query.get_headers())
+    print >>stdout, "URL: %r" % (URLContext(query.endpoint, query.bucket, query.object_name).get_url(),)
     d = query.submit()
 
     def bucket_created(res):

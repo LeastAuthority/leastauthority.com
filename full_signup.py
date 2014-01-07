@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import simplejson, os, sys
+import simplejson, sys
 
 from twisted.internet import defer, reactor
 from lae_automation.signup import create_log_filepaths
@@ -45,6 +45,9 @@ def main(stdin, flapp_stdout, flapp_stderr):
         traceback.print_exc(100, file=fh)
         fh.close()
         raise
+    finally:
+        signup_stdout.close()
+        signup_stderr.close()
 
 if __name__ == '__main__':
 
@@ -61,7 +64,7 @@ if __name__ == '__main__':
         fh.close()
 
     d.addErrback(_print_except)
-    d.addCallbacks(lambda ign: os._exit(0), os._exit(9))
+    d.addCallbacks(lambda ign: sys.exit(0), sys.exit(8))
     FilePath('/home/arc/tester').setContent('5')
     try:
         reactor.run()
@@ -71,4 +74,4 @@ if __name__ == '__main__':
         fh = flapp_stderr.open('a+')
         traceback.print_exc(file=fh)
         fh.close()
-        os._exit(7)
+        sys.exit(7)
