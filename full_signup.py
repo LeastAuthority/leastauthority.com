@@ -52,6 +52,7 @@ if __name__ == '__main__':
 
     defer.setDebugging(True)
     stdin = sys.stdin
+    FilePath('../secrets/flappserver_logs').makedirs()
     flapp_stdout = FilePath('../secrets/flappserver_logs/stdout')
     flapp_stderr = FilePath('../secrets/flappserver_logs/stderr')
     
