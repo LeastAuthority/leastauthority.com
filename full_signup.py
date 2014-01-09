@@ -52,9 +52,11 @@ if __name__ == '__main__':
 
     defer.setDebugging(True)
     stdin = sys.stdin
-    FilePath('../secrets/flappserver_logs').makedirs()
-    flapp_stdout = FilePath('../secrets/flappserver_logs/stdout')
-    flapp_stderr = FilePath('../secrets/flappserver_logs/stderr')
+    logDir = FilePath('../secrets/flappserver_logs')
+    if not logDir.isdir():
+        logDir.makedirs()
+    flapp_stdout = logDir.child('stdout')
+    flapp_stderr = logDir.child('stderr')
     
     d = defer.succeed(None)
     d.addCallback(lambda ign: main(stdin, flapp_stdout, flapp_stderr))
