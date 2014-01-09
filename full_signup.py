@@ -64,7 +64,7 @@ if __name__ == '__main__':
         fh.close()
 
     d.addErrback(_print_except)
-    d.addCallbacks(lambda ign: sys.exit(0), sys.exit(8))
+    d.addCallbacks(lambda ign: sys.exit(0), lambda ign: sys.exit(8))
     FilePath('/home/arc/tester').setContent('5')
     try:
         reactor.run()
