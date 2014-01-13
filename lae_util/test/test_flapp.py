@@ -54,19 +54,17 @@ class FlappCommandTests(TestCase):
         d.addCallback(_poll_until_ready)
         def _check1(ign):
             self.failUnlessIn("Starting", self.log.getvalue())
-            self.failIfIn("Command failed", self.log.getvalue())
-            self.failUnlessIn("Command succeeded", self.log.getvalue())
+            self.failUnlessIn("Command completed with exit code 0\n", self.log.getvalue())
             self.failUnlessEqual(MockProtocol.content, "CONTENT1")
             reset(1)  # make the next command fail
         d.addCallback(_check1)
 
         # check the failure case
-        d.addCallback(lambda ign: cmd.run("CONTENT2"))
+        d.addCallback(lambda ign: cmd.run("CONTENT2", self.log))
         d.addCallback(_poll_until_ready)
         def _check2(ign):
             self.failUnlessIn("Starting", self.log.getvalue())
-            self.failUnlessIn("Command failed with exit code 1", self.log.getvalue())
-            self.failIfIn("Command succeeded", self.log.getvalue())
+            self.failUnlessIn("Command completed with exit code 1\n", self.log.getvalue())
             self.failUnlessEqual(MockProtocol.content, "CONTENT2")
         d.addCallback(_check2)
         return d
