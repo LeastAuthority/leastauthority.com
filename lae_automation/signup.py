@@ -348,4 +348,4 @@ def create_log_filepaths(stripe_plan_id, stripe_customer_id, stripe_subscription
     stripelog_fp = abslogdir_fp.child('stripe')
     SSEC2log_fp = abslogdir_fp.child('SSEC2')
     signuplog_fp = abslogdir_fp.child('signup_logs')
-    return stripelog_fp, SSEC2log_fp, signuplog_fp
+    return abslogdir_fp, stripelog_fp, SSEC2log_fp, signuplog_fp

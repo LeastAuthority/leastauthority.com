@@ -18,9 +18,11 @@ def main(stdin, flapp_stdout, flapp_stderr):
      customer_subscription_plan_id,
      customer_subscription_id) = simplejson.loads(stdin.read())
 
-    stripesecrets_log_fp, SSEC2secrets_log_fp, signup_log_fp = create_log_filepaths(customer_subscription_plan_id,
-                                                                                    customer_id, 
-                                                                                    customer_subscription_id)
+    abslogdir_fp, stripesecrets_log_fp, SSEC2secrets_log_fp, signup_log_fp = \
+        create_log_filepaths(customer_subscription_plan_id,
+                             customer_id, 
+                             customer_subscription_id)
+    append_record(flapp_stdout, "Writing logs to %r." % (abslogdir_fp.path,))
 
     stripesecrets_log_fp.setContent(simplejson.dumps({
                 'customer_email':                customer_email,
