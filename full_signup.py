@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-import simplejson, sys, os
+import simplejson, sys
 
 from twisted.internet import defer, reactor
 from lae_automation.signup import create_log_filepaths
 from lae_automation.signup import activate_subscribed_service
 from lae_util.streams import LoggingStream
 from lae_util.servers import append_record
+from lae_util.fileutil import make_dirs
 from twisted.python.filepath import FilePath
 
 def main(stdin, flapp_stdout, flapp_stderr):
@@ -48,34 +49,13 @@ def main(stdin, flapp_stdout, flapp_stderr):
     finally:
         signup_logfile.close()
 
-def make_dirs(dirname, mode=0777):
-    """
-    An idempotent version of os.makedirs().  If the dir already exists, do
-    nothing and return without raising an exception.  If this call creates the
-    dir, return without raising an exception.  If there is an error that
-    prevents creation or if the directory gets deleted after make_dirs() creates
-    it and before make_dirs() checks that it exists, raise an exception.
-
-    Copied from allmydata.util.fileutil
-    """
-    tx = None
-    try:
-        os.makedirs(dirname, mode)
-    except OSError, x:
-        tx = x
-
-    if not os.path.isdir(dirname):
-        if tx:
-            raise tx
-        raise exceptions.IOError, "unknown error prevented creation of directory, or deleted the directory immediately after creation: %s" % dirname # careful not to construct an IOError with a 2-tuple, as that has a special meaning...
-
 if __name__ == '__main__':
 
     defer.setDebugging(True)
     stdin = sys.stdin
     logDir = FilePath('../secrets/flappserver_logs')
     if not logDir.isdir():
-        makedirs(logDir.path)
+        make_dirs(logDir.path)
     flapp_stdout = logDir.child('stdout')
     flapp_stderr = logDir.child('stderr')
     
