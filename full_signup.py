@@ -68,11 +68,9 @@ if __name__ == '__main__':
 
     d.addErrback(_print_except)
     d.addCallbacks(lambda ign: sys.exit(0), lambda ign: sys.exit(8))
-    FilePath('/home/arc/tester').setContent('5')
     try:
         reactor.run()
     except Exception:
-        FilePath('/home/arc/tester').setContent('6')
         import traceback
         fh = flapp_stderr.open('a+')
         traceback.print_exc(file=fh)
