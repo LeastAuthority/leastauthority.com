@@ -37,19 +37,21 @@ def main(stdin, flapp_stdout, flapp_stderr):
     signup_stdout = LoggingStream(signup_logfile, '>')
     signup_stderr = LoggingStream(signup_logfile, '')
 
-    try:
-        return activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, 
-                                           customer_subscription_id, customer_subscription_plan_id,  
-                                           signup_stdout, signup_stderr, SSEC2_secretsfile, 
-                                           signup_logfile)
-    except Exception:
-        import traceback
+    def errhandler(err):
         fh = flapp_stderr.open('a+')
-        traceback.print_exc(100, file=fh)
+        fh.write(repr(err))
         fh.close()
-        raise
-    finally:
-        signup_logfile.close()
+        return err
+
+    d = defer.succeed(None)
+    d.addCallback(lambda ign: activate_subscribed_service(customer_email, customer_pgpinfo, 
+                                                          customer_id, customer_subscription_id, 
+                                                          customer_subscription_plan_id,  
+                                                          signup_stdout, signup_stderr, 
+                                                          SSEC2_secretsfile, signup_logfile)
+                  )
+    d.addErrback(errhandler)
+    d.addBoth(lambda ign: signup_logfile.close())
 
 if __name__ == '__main__':
 

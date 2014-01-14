@@ -113,6 +113,7 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, c
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
     print >> stderr, "entering activate_subscribed_service call."
+    print >> stderr, "configpath is %s" % configpath
     config = Config(configpath)
     myclock = clock or reactor
     AWSaccesskeyid = config.other["ec2_access_key_id"]
@@ -124,6 +125,7 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, c
     cust_id_for_bucket = customer_id.lower().replace('_','-')
     bucketname = "lae-%s-%s" % (cust_sub_id_for_bucket, cust_id_for_bucket) 
     location = None  # default S3 location for now
+    print >> stderr, "subscription_plan_id is %s" % subscription_plan_id
     product = lookup_product(config, subscription_plan_id)
     fullname = product['full_name']
     amiimageid = product['ami_image_id']
@@ -147,6 +149,7 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, c
                                                           customer_pgpinfo, stdout, stderr, 
                                                           secretsfile, config, serverinfopath, 
                                                           AWSsecretkeypath, clock=myclock))
+
     d.addErrback(lambda f: send_notify_failure(f, customer_email, logfile, stdout,
                                                stderr))
     return d
@@ -254,10 +257,10 @@ def deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
     return d
 
 # TODO: too many args. Consider passing them in a dict.
-def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsecrets, amiimageid, 
+def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsecrets, amiimageid,
                                 instancesize, customer_email, customer_pgpinfo, 
-                                stdout, stderr, secretsfile, config, serverinfopath=None, 
-                                ec2secretpath=None, clock=None):
+                                stdout, stderr, secretsfile, config, serverinfopath, 
+                                ec2secretpath, clock):
     print >> stdout, "inside deploy_stripeaccount_server"
     serverinfopath = serverinfopath or '../serverinfo.csv'
     ec2secretpath = ec2secretpath or '../secret_config/ec2secret'
