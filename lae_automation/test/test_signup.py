@@ -7,7 +7,6 @@ from twisted.python.failure import Failure
 from lae_util.fileutil import make_dirs
 from lae_automation import signup, initialize
 
-
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
 USERTOKEN = 'TESTUSERTOKEN'+'A'*385
 ACCESSKEYID = 'TEST'+'A'*16
@@ -95,9 +94,16 @@ CONFIGFILEJSON = """{
       "product_token":    "{ProductToken}TESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
       "ami_image_id":     "ami-testfbc2",
       "instance_size":    "t1.testy"
+    },
+    { "full_name":     "Mock Secure Simple Storage Service test S4",
+      "product_code":  "XX",
+      "product_token": "None",
+      "ami_image_id":  "ami-deadbeef",
+      "instance_size": "t9.sizeo"
     }
   ],
   "ec2_access_key_id":      "TESTAAAAAAAAAAAAAAAA",
+  "ec2_secret_path":        "mock_ec2secret",
   "admin_keypair_name":     "ADMINKEYS",
   "admin_privkey_path":     "ADMINKEYS.pem",
   "monitor_pubkey_path":    "MONITORKEYS.pub",
@@ -135,8 +141,8 @@ class TestSignupModule(TestCase):
 
         self.MEMAIL = 'MEMAIL'
         self.MKEYINFO = 'MKEYINFO'
-        self.MCUSTOMER_ID = 'cus_3JzQ8e47H1WcMP'
-        self.MSUBSCRIPTION_ID = 'sub_3J0B2YbF223LQ5'
+        self.MCUSTOMER_ID = 'cus_x14Charactersx'
+        self.MSUBSCRIPTION_ID = 'sub_x14Characterx'
         self.MPLAN_ID = 'XX'
         self.MSECRETSFILE = 'MSECRETSFILE'
 
@@ -181,18 +187,16 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(header_dict['Date'], 'Thu, 01 Jan 1970 00:00:00 GMT')
             self.failUnlessEqual(header_dict['Content-Length'], 0)
             self.failUnlessEqual(header_dict['Authorization'],
-                                 'AWS TESTAAAAAAAAAAAAAAAA:NlnzOWOmMCut8/Opl26UpAAiIhE=')
-            self.failUnlessEqual(header_dict['x-amz-security-token'],
-                                 '{UserToken}TESTUSERTOKEN%s==,{ProductToken}TESTPRODUCTTOKEN%s=' 
-                                 % ('A'*385, 'A'*295))
+                                 'AWS TESTAAAAAAAAAAAAAAAA:vrD/fHva81OWv9YM4EopWeIeitk=')
             self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
+
             return defer.succeed('Completed devpay bucket creation submission.')
         self.patch(S3_Query, 'submit', call_s3_query_submit)
 
         from lae_automation.initialize import EC2Client
         def call_run_instances(EC2ClientObject, ami_image_id, mininstancecount, maxinstancecount,
                                secgroups, keypair_name, instance_type):
-            self.failUnlessEqual(ami_image_id, 'ami-testfbc2')
+            self.failUnlessEqual(ami_image_id, 'ami-deadbeef')
             self.failUnlessEqual(mininstancecount, 1)
             self.failUnlessEqual(maxinstancecount, 1)
             self.failUnlessEqual(secgroups, ['CustomerDefault'])
@@ -250,11 +254,11 @@ class TestSignupModule(TestCase):
             return defer.succeed("Tested send confirmation email call!")
         self.patch(signup, 'send_signup_confirmation', call_send_signup_confirmation)
 
-        def call_send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr):
+        def call_send_notify_failure(f, customer_email, logfilename, stdout, stderr):
             self.failUnless(isinstance(f, Failure), f)
-            self.failUnlessEqual(customer_name, 'MNAME')
             self.failUnlessEqual(customer_email, 'MEMAIL')
-            self.failUnlessEqual(logfilename, '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+            logfile_end = logfilename[-78:]
+            self.failUnlessEqual(logfile_end, 'secrets/XX/1970-01-01T000000Z-cus_x14Charactersx-sub_x14Characterx/signup_logs')
             return f
         self.patch(signup, 'send_notify_failure', call_send_notify_failure)
 
@@ -269,6 +273,14 @@ class TestSignupModule(TestCase):
         FilePath(self.SERVERINFOPATH).remove()
         FilePath(self.EC2SECRETPATH).remove()
 
+    def initialize_testlocal_state(self, test_name):
+        timestamp = '1970-01-01T00:00:00Z'
+        fpcleantimestamp = timestamp.replace(':', '')
+        logdirname = "%s-%s-%s" % (fpcleantimestamp, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID)
+        testconfigdir = self.mockconfigdir.child(test_name).child('secrets').child(self.MPLAN_ID).child(logdirname)
+        testconfigdir.makedirs()
+        MLOGFILENAME = testconfigdir.path + '/signup_logs'
+        return StringIO(), StringIO(), MLOGFILENAME
 
     def test_signup(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -308,20 +320,14 @@ class TestSignupModule(TestCase):
         d.addCallback(_check)
         return d
 
-    def test_local_init(self, test_name):
-        testconfigdir = self.mockconfigdir.child(test_name).child('secrets').child(self.MPLAN_ID)
-        testconfigdir.makedirs()
-        MLOGFILENAME = testconfigdir.path + '/signup_logs'
-        return StringIO(), StringIO(), MLOGFILENAME
-        
     def test_no_products(self):
-        stdout, stderr, MLOGFILENAME = self.test_local_init('test_no_products')
+        stdout, stderr, MLOGFILENAME = self.initialize_testlocal_state('test_no_products')
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.activate_subscribed_service,
                               self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID, 
                               self.MPLAN_ID, stdout, stderr, self.MSECRETSFILE, MLOGFILENAME, 
-                              self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
+                              self.CONFIGFILEPATH, self.SERVERINFOPATH)
 
     def test_timeout_verify(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
@@ -383,9 +389,7 @@ class TestSignupModule(TestCase):
         return d
 
     def test_EC2_not_listening(self):
-        stdout = StringIO()
-        stderr = StringIO()
-        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        stdout, stderr, MLOGFILENAME = self.initialize_testlocal_state('test_EC2_not_listening')
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
@@ -397,7 +401,7 @@ class TestSignupModule(TestCase):
         d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
                                                self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
                                                self.MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, 
-                                               self.SERVERINFOPATH, self.EC2SECRETPATH)
+                                               self.SERVERINFOPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
