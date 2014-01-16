@@ -11,14 +11,16 @@
     <span class="payment-errors">{{ errorblock }}</span>
 
     <div class="form-row">
-      <label><span>Email address:</span></label> 
-      <input type="email" name="email" required="true" tabindex="1" autofocus>
+      <label style="width: 8em">
+        <span>Email address:</span>
+      </label>
+      <input type="email" name="email" size="25" required="true" tabindex="1" autofocus>
     </div>
 
     <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
     
     <div class="form-row">
-      <label>
+      <label style="width: 8em">
         <span>Card number:</span>
       </label>
         <input type="text" maxlength="19" size="19" placeholder="#### #### #### ####"
