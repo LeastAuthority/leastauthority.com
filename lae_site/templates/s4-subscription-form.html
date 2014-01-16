@@ -3,16 +3,16 @@
 {% block content %}
 <h2>Subscribe to S4</h2>
 <noscript>
-  <p>Javascript must be enabled to use this form!</p>
+  <p>JavaScript is currently disabled. You will need to enable it, then reload the page in order to sign up.</p>
 </noscript>
 <div class="row-fluid">
   <div class="span6">
-  <form action="/submit-subscription" method="POST" enc="multipart/form-data" id="payment-form" class="form-inline">
+  <form action="/submit-subscription" method="POST" enc="multipart/form-data" id="payment-form" class="form-inline" style="visibility: hidden">
     <span class="payment-errors">{{ errorblock }}</span>
 
     <div class="form-row">
       <label><span>Email address:</span></label> 
-      <input type="email" name="email" required="true" autofocus>
+      <input type="email" name="email" required="true" tabindex="1" autofocus>
     </div>
 
     <input type="hidden" name="ProductName" value="{% block product_slug %}{% endblock %}">
@@ -22,7 +22,7 @@
         <span>Card number:</span>
       </label>
         <input type="text" maxlength="19" size="19" placeholder="#### #### #### ####"
-	       data-stripe="number" required="true"
+	       data-stripe="number" required="true" tabindex="2"
 	       pattern="^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$|^\d{4}\s?\d{6}\s?\d{5}$|^\d{4}\s?\d{4}\s?\d{4}\s?\d{2}$"/>
     </div>
 
@@ -30,22 +30,22 @@
       <label>
         <span>CVC:</span>
       </label>
-      <input type="text" maxlength="4" size="4" data-stripe="cvc" required="true" pattern="^\d{3,4}$"/>
+      <input type="text" maxlength="4" size="4" data-stripe="cvc" required="true" tabindex="3" pattern="^\d{3,4}$"/>
       &nbsp;
       <label> 
         <span>Expiration:</span>
       </label>
-        <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" pattern="^[0]?[1-9]$|^1[0-2]$"/>
-        <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" pattern="^201[4-9]$|^20[2-9]\d$"/>
+        <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" tabindex="4" pattern="^[0]?[1-9]$|^1[0-2]$"/>
+        <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" tabindex="5" pattern="^201[4-9]$|^20[2-9]\d$"/>
     </div>
 
     <div class="form-row">
       <label><span>Optional PGP Public Key:</span></label> 
-      <input type="text" name="pgp_pubkey" style="width:20em; height:12ex">
+      <input type="text" name="pgp_pubkey" style="width:20em; height:12ex" tabindex="6">
     </div>
 
     <div class="form-row">
-         <button type="submit" class="btn btn-danger btn-large signup-button">Purchase</button>
+         <button type="submit" class="btn btn-danger btn-large signup-button" tabindex="7">Purchase</button>
     </div>
   </form>
   </div>
