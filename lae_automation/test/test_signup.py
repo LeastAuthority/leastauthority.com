@@ -4,6 +4,7 @@ from twisted.internet import defer
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 
+from lae_util.fileutil import make_dirs
 from lae_automation import signup, initialize
 
 
@@ -125,12 +126,19 @@ class TestSignupModule(TestCase):
         self.fakeURLs = [adphttprequestheader, verifyhttprequestheader]
         self.mhr_return_values = [adprequestresponse, verifyrequestresponse]
         self.mockconfigdir = FilePath('./test_signup').child('TestSignupModule')
-        self.mockconfigdir.makedirs()
+        make_dirs(self.mockconfigdir.path)
         self.SIGNUPSPATH = 'mock_signups.csv'
         self.CONFIGFILEPATH = 'init_test_config.json'
         self.SERVERINFOPATH = 'mock_serverinfo.csv'
         self.EC2SECRETPATH = 'mock_ec2secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
+
+        self.MEMAIL = 'MEMAIL'
+        self.MKEYINFO = 'MKEYINFO'
+        self.MCUSTOMER_ID = 'cus_3JzQ8e47H1WcMP'
+        self.MSUBSCRIPTION_ID = 'sub_3J0B2YbF223LQ5'
+        self.MPLAN_ID = 'XX'
+        self.MSECRETSFILE = 'MSECRETSFILE'
 
         FilePath(self.SIGNUPSPATH).setContent('')
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
@@ -301,24 +309,18 @@ class TestSignupModule(TestCase):
         return d
 
     def test_no_products(self):
-        MEMAIL = 'MEMAIL'
-        MKEYINFO = 'MKEYINFO'
-        MCUSTOMER_ID = 'cus_3JzQ8e47H1WcMP'
-        MSUBSCRIPTION_ID = 'sub_3J0B2YbF223LQ5'
-        MPLAN_ID = 'XX'
-        testconfigdir = self.mockconfigdir.child('test_no_products').child('secrets').child(MPLAN_ID)
+        testconfigdir = self.mockconfigdir.child('test_no_products').child('secrets').child(self.MPLAN_ID)
         testconfigdir.makedirs()
         stdout = StringIO()
         stderr = StringIO()
-        MSECRETSFILE = 'MSECRETSFILE'
         MLOGFILENAME = testconfigdir.path + '/signup_logs'
 
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.activate_subscribed_service,
-                              MEMAIL, MKEYINFO, MCUSTOMER_ID, MSUBSCRIPTION_ID, MPLAN_ID, 
-                              stdout, stderr, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
-                              self.SERVERINFOPATH, self.EC2SECRETPATH)
+                              self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID, 
+                              self.MPLAN_ID, stdout, stderr, self.MSECRETSFILE, MLOGFILENAME, 
+                              self.CONFIGFILEPATH, self.SERVERINFOPATH, self.EC2SECRETPATH)
 
     def test_timeout_verify(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
