@@ -150,8 +150,7 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
                                                           secretsfile, config, serverinfopath, 
                                                           AWSsecretkeypath, clock=myclock))
 
-    d.addErrback(lambda f: send_notify_failure(f, customer_email, logfile, stdout,
-                                               stderr))
+    d.addErrback(lambda f: send_notify_failure(f, customer_email, logfile, stdout, stderr))
     return d
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
