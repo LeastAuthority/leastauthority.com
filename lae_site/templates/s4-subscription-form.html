@@ -21,7 +21,7 @@
       <label>
         <span>Card number:</span>
       </label>
-        <input type="number" maxlength="20" size="20" placeholder="**** **** **** ****"
+        <input type="text" maxlength="20" size="20" placeholder="**** **** **** ****"
 	       data-stripe="number" required="true"
 	       pattern="^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$|^\d{4}\s?\d{6}\s?\d{5}$|^\d{4}\s?\d{4}\s?\d{4}\s?\d{2}$"/>
     </div>
@@ -30,13 +30,13 @@
       <label>
         <span>CVC:</span>
       </label>
-      <input type="number" maxlength="4" size="4" data-stripe="cvc" required="true" pattern="\d{3}"/>
+      <input type="text" maxlength="4" size="4" data-stripe="cvc" required="true" pattern="\d{3}"/>
       &nbsp;
       <label> 
         <span>Expiration:</span>
       </label>
-        <input type="number" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" pattern="\d\d"/>
-        <span> / </span><input type="number" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" pattern="\d{4}"/>
+        <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" pattern="\d\d"/>
+        <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" pattern="\d{4}"/>
     </div>
 
     <div class="form-row">
