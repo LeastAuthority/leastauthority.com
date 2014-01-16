@@ -109,6 +109,7 @@ CONFIGFILEJSON = """{
 ZEROPRODUCT = """{
   "products": [],
   "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
+  "ec2_secret_path":      "mock_ec2secret",
   "admin_keypair_name":   "ADMINKEYS",
   "admin_privkey_path":   "ADMINKEYS.pem",
   "monitor_pubkey_path":  "MONITORKEYS.pub",
@@ -123,6 +124,8 @@ class TestSignupModule(TestCase):
     def setUp(self):
         self.fakeURLs = [adphttprequestheader, verifyhttprequestheader]
         self.mhr_return_values = [adprequestresponse, verifyrequestresponse]
+        self.mockconfigdir = FilePath('./test_signup').child('TestSignupModule')
+        self.mockconfigdir.makedirs()
         self.SIGNUPSPATH = 'mock_signups.csv'
         self.CONFIGFILEPATH = 'init_test_config.json'
         self.SERVERINFOPATH = 'mock_serverinfo.csv'
@@ -298,21 +301,23 @@ class TestSignupModule(TestCase):
         return d
 
     def test_no_products(self):
-        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
-        MPRODUCTCODE = 'ABCDEFGH'
-        MNAME = 'MNAME'
         MEMAIL = 'MEMAIL'
         MKEYINFO = 'MKEYINFO'
+        MCUSTOMER_ID = 'cus_3JzQ8e47H1WcMP'
+        MSUBSCRIPTION_ID = 'sub_3J0B2YbF223LQ5'
+        MPLAN_ID = 'XX'
+        testconfigdir = self.mockconfigdir.child('test_no_products').child('secrets').child(MPLAN_ID)
+        testconfigdir.makedirs()
         stdout = StringIO()
         stderr = StringIO()
-        MSEED = 'MSEED'
         MSECRETSFILE = 'MSECRETSFILE'
-        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+        MLOGFILENAME = testconfigdir.path + '/signup_logs'
+
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
-        self.failUnlessRaises(AssertionError, signup.signup,
-                              MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                              MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+        self.failUnlessRaises(AssertionError, signup.activate_subscribed_service,
+                              MEMAIL, MKEYINFO, MCUSTOMER_ID, MSUBSCRIPTION_ID, MPLAN_ID, 
+                              stdout, stderr, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
                               self.SERVERINFOPATH, self.EC2SECRETPATH)
 
     def test_timeout_verify(self):
