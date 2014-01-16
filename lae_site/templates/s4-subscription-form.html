@@ -35,8 +35,8 @@
       <label> 
         <span>Expiration:</span>
       </label>
-        <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" pattern="\d\d"/>
-        <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" pattern="\d{4}"/>
+        <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" pattern="^[0]?[1-9]$|^1[0-2]$"/>
+        <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" pattern="20\d{2}"/>
     </div>
 
     <div class="form-row">
