@@ -77,7 +77,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             except Exception:
                 traceback.print_exc(100, sys.stderr)
 
-        customer_pgpinfo = customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
+        customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
         stdin = simplejson.dumps((customer.email,
                                   customer_pgpinfo,
                                   customer.id,
