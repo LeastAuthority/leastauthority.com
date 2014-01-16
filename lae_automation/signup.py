@@ -108,8 +108,8 @@ def signup(activationkey, productcode, customer_name, customer_email, customer_k
     d.addErrback(_failed)
     return d
 
-def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, customer_subscription_id, 
-                                subscription_plan_id, stdout, stderr, secretsfile, logfile,
+def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, subscription_id, 
+                                plan_id, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
     print >> stderr, "entering activate_subscribed_service call."
@@ -121,12 +121,12 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, c
     AWSsecretkey = FilePath(AWSsecretkeypath).getContent().strip()
     #AWS REST API encodes requests in lowercase, so send the id's to _lowercase_ before naming the buckets.  Terrible idea?
     #Hmmm...  due to the nature of bucketnames these need to be url-encoded...
-    cust_sub_id_for_bucket = customer_subscription_id.lower().replace('_','-')
+    cust_sub_id_for_bucket = subscription_id.lower().replace('_','-')
     cust_id_for_bucket = customer_id.lower().replace('_','-')
     bucketname = "lae-%s-%s" % (cust_sub_id_for_bucket, cust_id_for_bucket) 
     location = None  # default S3 location for now
-    print >> stderr, "subscription_plan_id is %s" % subscription_plan_id
-    product = lookup_product(config, subscription_plan_id)
+    print >> stderr, "plan_id is %s" % plan_id
+    product = lookup_product(config, plan_id)
     fullname = product['full_name']
     amiimageid = product['ami_image_id']
     instancesize = product['instance_size']
