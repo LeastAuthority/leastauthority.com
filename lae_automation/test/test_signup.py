@@ -308,13 +308,14 @@ class TestSignupModule(TestCase):
         d.addCallback(_check)
         return d
 
-    def test_no_products(self):
-        testconfigdir = self.mockconfigdir.child('test_no_products').child('secrets').child(self.MPLAN_ID)
+    def test_local_init(self, test_name):
+        testconfigdir = self.mockconfigdir.child(test_name).child('secrets').child(self.MPLAN_ID)
         testconfigdir.makedirs()
-        stdout = StringIO()
-        stderr = StringIO()
         MLOGFILENAME = testconfigdir.path + '/signup_logs'
-
+        return StringIO(), StringIO(), MLOGFILENAME
+        
+    def test_no_products(self):
+        stdout, stderr, MLOGFILENAME = self.test_local_init('test_no_products')
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.activate_subscribed_service,
@@ -382,15 +383,8 @@ class TestSignupModule(TestCase):
         return d
 
     def test_EC2_not_listening(self):
-        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
-        MPRODUCTCODE = 'ABCDEFGH'
-        MNAME = 'MNAME'
-        MEMAIL = 'MEMAIL'
-        MKEYINFO = 'MKEYINFO'
         stdout = StringIO()
         stderr = StringIO()
-        MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
         MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
@@ -400,9 +394,10 @@ class TestSignupModule(TestCase):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_consoleoutput', call_get_EC2_consoleoutput)
 
-        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
-                          self.SERVERINFOPATH, self.EC2SECRETPATH)
+        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
+                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
+                                               self.MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, 
+                                               self.SERVERINFOPATH, self.EC2SECRETPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
