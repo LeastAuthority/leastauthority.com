@@ -287,31 +287,24 @@ class TestSignupModule(TestCase):
                               self.CONFIGFILEPATH, self.SERVERINFOPATH)
 
     def test_timeout_addressreq(self):
-        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
-        MPRODUCTCODE = 'ABCDEFGH'
-        MNAME = 'MNAME'
-        MEMAIL = 'MEMAIL'
-        MKEYINFO = 'MKEYINFO'
-        stdout = StringIO()
-        stderr = StringIO()
-        MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
-        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-
+        stdout, stderr, MLOGFILENAME, MSSEC2_secretsfile = self.initialize_testlocal_state('test_timeout_addressreq')
         from lae_automation.aws import queryapi
         def call_get_EC2_properties(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, parser,
                                     *instance_ids):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
-        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
-                          self.SERVERINFOPATH, self.EC2SECRETPATH)
+        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
+                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
+                                               MSSEC2_secretsfile, MLOGFILENAME, self.CONFIGFILEPATH, 
+                                               self.SERVERINFOPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
             f.trap(signup.TimeoutError)
-            out = stdout.getvalue()
+            stdout.close()
+            logfp = FilePath(MLOGFILENAME)
+            out = logfp.getContent()
             self.failUnlessIn("Timed out", out)
         d.addCallbacks(_bad_success, _check_failure)
         return d
