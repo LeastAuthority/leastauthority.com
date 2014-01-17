@@ -15,7 +15,7 @@ Congratulations on activating your Simple Secure Storage Service!  Please go to
 for instructions on how to set up and configure your Tahoe-LAFS gateway
 and start using the service.
 
-The settings for your gateway's tahoe.cfg are:
+The settings that need to be added to your gateway's tahoe.cfg are:
 
 
 [client]
