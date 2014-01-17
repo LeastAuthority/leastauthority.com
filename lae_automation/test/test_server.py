@@ -226,7 +226,7 @@ class TestServerModule(TestCase):
                                       'publichost': MHOSTNAME,
                                       'privatehost': MPRIVHOST,
                                       'introducer_furl': INTERNALINTROFURL,
-                                      'access_key_id': ACCESSKEYID,
+                                      'AWSaccess_key_id': ACCESSKEYID,
                                       'bucket_name': BUCKETNAME,
                                       'incident_gatherer_furl': "MOCK_incident_gatherer_furl",
                                       'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
@@ -256,7 +256,7 @@ class TestServerModule(TestCase):
                 ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
                 ])
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
-                             SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
+                             SECRETACCESSKEY, BUCKETNAME, None, \
                              STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
         self._check_all_done()
 
