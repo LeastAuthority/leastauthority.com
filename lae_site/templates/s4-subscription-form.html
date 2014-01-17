@@ -6,7 +6,6 @@
   <p>JavaScript is currently disabled. You will need to enable it, then reload the page in order to sign up.</p>
 </noscript>
 <div class="row-fluid">
-  <div class="span6">
   <form action="/submit-subscription" method="POST" enc="multipart/form-data" id="payment-form" class="form-inline" style="display: none">
     <span class="payment-errors">{{ errorblock }}</span>
 
@@ -23,26 +22,27 @@
       <label style="width: 8em">
         <span>Card number:</span>
       </label>
-        <input type="text" maxlength="19" size="19" placeholder="#### #### #### ####"
-	       data-stripe="number" required="true" tabindex="2"
-	       pattern="^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$|^\d{4}\s?\d{6}\s?\d{5}$|^\d{4}\s?\d{4}\s?\d{4}\s?\d{2}$"/>
+      <input type="text" maxlength="19" size="19" placeholder="#### #### #### ####"
+             data-stripe="number" required="true" tabindex="2"
+             pattern="^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$|^\d{4}\s?\d{6}\s?\d{5}$|^\d{4}\s?\d{4}\s?\d{4}\s?\d{2}$"/>
     </div>
 
     <div class="form-row">
       <label>
-        <span>CVC:</span>
+        <span>CVC:&nbsp;</span>
       </label>
       <input type="text" maxlength="4" size="4" data-stripe="cvc" required="true" tabindex="3" pattern="^\d{3,4}$"/>
-      &nbsp;
+      &nbsp;&nbsp;
       <label> 
-        <span>Expiration:</span>
+        <span>Expiration:&nbsp;</span>
       </label>
-        <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" tabindex="4" pattern="^[0]?[1-9]$|^1[0-2]$"/>
-        <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" tabindex="5" pattern="^201[4-9]$|^20[2-9]\d$"/>
+      <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" tabindex="4" pattern="^[0]?[1-9]$|^1[0-2]$"/>
+      <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" tabindex="5" pattern="^201[4-9]$|^20[2-9]\d$"/>
     </div>
-
+    <br>
     <div class="form-row">
       <label><span>Optional PGP Public Key:</span></label> 
+      <br>
       <input type="text" name="pgp_pubkey" style="width:20em; height:12ex" tabindex="6">
     </div>
 
@@ -50,7 +50,6 @@
          <button type="submit" class="btn btn-danger btn-large signup-button" tabindex="7">Purchase</button>
     </div>
   </form>
-  </div>
 </div>
 <script type="text/javascript" src="/static/js/jquery-2.0.3.min.js"></script>
 <script type="text/javascript" src="https://js.stripe.com/v2/"></script>
