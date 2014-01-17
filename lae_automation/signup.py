@@ -5,8 +5,7 @@ from twisted.internet import defer, reactor, task
 from twisted.python.filepath import FilePath
 
 from lae_automation.config import Config
-from lae_automation.initialize import activate_user_account_desktop, verify_user_account, \
-    create_user_bucket, create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
+from lae_automation.initialize import create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
 from lae_automation.aws.queryapi import TimeoutError, wait_for_EC2_addresses
 from lae_automation.server import install_server, bounce_server, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
@@ -37,76 +36,6 @@ def lookup_product(config, productcode):
         raise AssertionError("Product code %r matches %d products." % (productcode, len(ps)))
 
     return ps[0]
-
-def signup(activationkey, productcode, customer_name, customer_email, customer_keyinfo, stdout,
-           stderr, seed, secretsfile, logfilename,
-           configpath='../secret_config/lae_automation_config.json',
-           signupspath='../signups.csv',
-           serverinfopath=None, ec2secretpath=None, clock=None):
-    config = Config(configpath)
-    signups_fp = FilePath(signupspath)
-    myclock = clock or reactor
-
-    bucketname = "lae-%s-%s" % (productcode.lower(), seed)
-    location = None  # default location for now
-    product = lookup_product(config, productcode)
-    fullname = product['full_name']
-    producttoken = product['product_token']
-    amiimageid = product['ami_image_id']
-    instancesize = product['instance_size']
-
-    print >>stdout, "Signing up customer for %s..." % (fullname,)
-
-    d = activate_user_account_desktop(activationkey, producttoken, stdout, stderr)
-    def _activated(adpr):
-        useraccesskeyid = adpr.access_key_id
-        usersecretkey = adpr.secret_key
-        usertoken = adpr.usertoken
-
-        def _wait_until_verified(how_long_secs):
-            d3 = verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout,
-                                     stderr)
-            def _maybe_again(res):
-                if res:
-                    print >>stdout, "Subscription verified."
-                    return
-                if how_long_secs <= 0.0:
-                    print >>stdout, "Timed out waiting for verification of subscription."
-                    raise TimeoutError()
-                print >>stdout, "Waiting another %d seconds..." % (POLL_TIME,)
-                return task.deferLater(myclock, POLL_TIME, _wait_until_verified,
-                                       how_long_secs - POLL_TIME)
-            d3.addCallback(_maybe_again)
-            return d3
-
-        d2 = _wait_until_verified(CC_VERIFICATION_TIME)
-
-        d2.addCallback(lambda ign: create_user_bucket(useraccesskeyid, usersecretkey, usertoken,
-                                                      bucketname, stdout, stderr,
-                                                      producttoken=producttoken, location=location))
-
-        # We could deploy and configure the instance in parallel with the above wait and delete it
-        # if necessary, but let's keep it simple and sequential.
-        d2.addCallback(lambda ign: deploy_server(useraccesskeyid, usersecretkey, usertoken,
-                                                 producttoken, bucketname, None, amiimageid,
-                                                 instancesize, customer_name, customer_email,
-                                                 customer_keyinfo, stdout, stderr, secretsfile,
-                                                 config, serverinfopath, ec2secretpath,
-                                                 clock=myclock))
-
-        d2.addCallback(lambda ign: append_record(signups_fp, 'success', activationkey, productcode,
-                                                 customer_name, customer_email, customer_keyinfo))
-        return d2
-    d.addCallback(_activated)
-    def _failed(f):
-        try:
-            append_record(signups_fp, 'failure', activationkey, productcode,
-                          customer_name, customer_email, customer_keyinfo)
-        except Exception, e:
-            print >>stderr, "Could not append failure record to signups.csv: %s" % (e,)
-        return send_notify_failure(f, customer_name, customer_email, logfilename, stdout, stderr)
-    d.addErrback(_failed)
-    return d
 
 def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, subscription_id, 
                                 plan_id, stdout, stderr, secretsfile, logfile,
