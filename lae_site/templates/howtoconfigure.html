@@ -25,16 +25,58 @@ location, which is the '<tt>.tahoe</tt>' subdirectory of your home directory), r
 e-mail):</p>
 
 <pre>
+# -*- mode: conf; coding: utf-8 -*-
+
+# This file controls the configuration of the Tahoe node that
+# lives in this directory. It is only read at node startup.
+# For details about the keys that can be set here, please
+# read the 'docs/configuration.rst' file that came with your
+# Tahoe installation.
+
+
+[node]
+nickname = 
+web.port = tcp:3456:interface=127.0.0.1
+web.static = public_html
+#tub.port =
+#tub.location = 
+#log_gatherer.furl =
+#timeout.keepalive =
+#timeout.disconnect =
+#ssh.port = 8022
+#ssh.authorized_keys_file = ~/.ssh/authorized_keys
+
 [client]
+# Which services should this client connect to?
 introducer.furl = <i>specific to each customer</i>
+helper.furl =
+#key_generator.furl =
+#stats_gatherer.furl =
+
+# What encoding parameters should this client use for uploads?
 shares.needed = 1
 shares.happy = 1
 shares.total = 1
-</pre>
 
-<p>(If you are repurposing an existing node to use as the gateway, also set <tt>enabled = false</tt> in
-the <tt>[storage]</tt> section. It is already set that way when you create a node using
-<tt>bin/tahoe create-client</tt>.)
+[storage]
+# Shall this node provide storage service?
+enabled = false
+#readonly =
+reserved_space = 1G
+#expire.enabled =
+#expire.mode =
+
+[helper]
+# Shall this node run a helper service that clients can use?
+enabled = false
+
+[drop_upload]
+# Shall this node automatically upload files created or modified in a local directory?
+enabled = false
+# To specify the target of uploads, a mutable directory writecap URI must be placed
+# in 'private/drop_upload_dircap'.
+local.directory = ~/drop_upload
+</pre>
 
 <p>Now start your gateway using:</p>
 <pre>
