@@ -142,6 +142,15 @@ label {
 
 input {
     width: inherit;
+    height: inherit;
+    padding: 0;
+    margin: 0;
+    vertical-align: bottom;
+    position: relative;
+    /* This is one pixel higher than the label baseline on IE and Chrome, but right on Firefox. It looks better than being one pixel low on Firefox.
+     * Credit to One Crayon at <http://stackoverflow.com/a/306593/393146>. */
+    top: -2px;
+    *overflow: hidden;
 }
 
 /*
