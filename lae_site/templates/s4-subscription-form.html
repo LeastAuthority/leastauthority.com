@@ -40,18 +40,18 @@
       <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" tabindex="5" pattern="^201[4-9]$|^20[2-9]\d$"/>
     </div>
     <br>
-    <div class="form-row">
-      <label>
-        <span>(Optional) If you would like us to communicate by PGP-encrypted email, give your public key:</span>
-      </label>
-      <br>
-      <input type="text" name="pgp_pubkey" style="width:20em; height:12ex" tabindex="6">
+    <div class="form-inline">
+      <label><input type="checkbox" name="use_pgp" tabindex="6" onclick="javascript:creditcardVerifier.use_pgp(this.checked);"/> Please send email PGP-encrypted and signed.</label>
+      <span id="pgp" style="display: none">
+        <p>Tell us your public key. If this key is on the usual key servers, a
+        fingerprint is sufficient, otherwise please paste the ASCII-armored key block.</p>
+        <input type="text" name="pgp_pubkey" id="pgp_pubkey" style="width:30em; height:16ex; white-space:pre;" tabindex="7"/>
+      </span>
     </div>
     <br>
     <p>Your card will be charged $50/month, which entitles you to store up to 350 GB.</p>
-
     <div class="form-row">
-         <button type="submit" class="btn btn-danger btn-large signup-button" tabindex="7">Purchase</button>
+         <button type="submit" class="btn btn-danger btn-large signup-button" tabindex="8">Purchase</button>
     </div>
   </form>
 </div>
