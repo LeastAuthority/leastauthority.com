@@ -46,3 +46,5 @@ window.creditcardVerifier = (function () {
 	  },
       }
 }());
+
+$(document).ready(creditcardVerifier.register_callbacks);
