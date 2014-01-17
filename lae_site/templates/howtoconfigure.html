@@ -91,19 +91,19 @@ it will run in the background. Next, in your web browser go to:</p>
 should see a green box starting with "Yes" in the list of connected servers.</p>
 
 <p>We recommend that you begin by creating a directory and making the alias
-'<tt>lae:</tt>' point to it:</p>
+'<tt>tahoe:</tt>' point to it:</p>
 <pre>
-  bin/tahoe create-alias lae
+  bin/tahoe create-alias tahoe
 </pre>
 <p>then to see that directory in your browser:</p>
 <pre>
-  bin/tahoe webopen lae:
+  bin/tahoe webopen tahoe:
 </pre>
-<p>(The colon after <tt>lae</tt> is required here.)</p>
+<p>(The colon after <tt>tahoe</tt> is required here.)</p>
 <p>You can use the '<tt>tahoe backup</tt>' command to back up your files to this
 directory, for example:</p>
 <pre>
-  bin/tahoe backup DIRECTORY_TO_BACKUP lae:
+  bin/tahoe backup DIRECTORY_TO_BACKUP tahoe:
 </pre>
 
 {% endblock %}
