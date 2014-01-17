@@ -213,8 +213,6 @@ class TestServerModule(TestCase):
         MPRIVHOST = '1.1.1.1'
         ACCESSKEYID = 'TEST'+'A'*16
         SECRETACCESSKEY = 'TEST'+'A'*36
-        USERTOKEN = 'TESTUSERTOKEN'+'A'*385
-        PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
         BUCKETNAME = 'foooooo'
         STDOUT = StringIO()
         STDERR = StringIO()

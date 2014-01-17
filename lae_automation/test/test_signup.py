@@ -1,4 +1,3 @@
-from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
