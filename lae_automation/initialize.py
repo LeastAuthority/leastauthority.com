@@ -19,34 +19,6 @@ from txaws.credentials import AWSCredentials
 class PublicKeyMismatch(Exception):
     pass
 
-
-def activate_user_account_desktop(activationkey, producttoken, stdout, stderr):
-    """
-    @param activationkey:
-            The activationkey sent from the user's browser upon completion
-            of the DevPay signup process.
-    @param stdout, stderr:
-            Standard output (for user feedback) and error (for debugging) streams.
-
-    @return:
-            A Deferred which fires with an ActivateDesktopProductResponse upon
-            successful user initialization.
-    """
-
-    print >>stdout, "Activating license..."
-    print >>stderr, 'activationkey = %r' % (activationkey,)
-
-    d = LicenseServiceClient().activate_desktop_product(activationkey, producttoken)
-    def activated(adpr):
-        print >>stdout, 'License activated.'
-        print >>stderr, ('access_key_id = %r\n'
-                         'secret_key = %r\n'
-                         'usertoken = %r'
-                         % (adpr.access_key_id, adpr.secret_key, adpr.usertoken))
-        return adpr
-    d.addCallback(activated)
-    return d
-
 # delay between starting an instance and setting its tags
 SET_TAGS_DELAY_TIME = 5
 
@@ -242,39 +214,6 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
         return d1
 
     d.addCallback(_got_fingerprintfromconsole)
-    return d
-
-def create_user_bucket(useraccesskeyid, usersecretkey, usertoken, bucketname, stdout, stderr,
-                       producttoken=None, location=None):
-    if location is None:
-        print >>stdout, "Creating S3 bucket in 'US East' region..."
-    else:
-        # TODO: print user-friendly region name
-        print >>stdout, "Creating S3 bucket..."
-
-    print >>stderr, ('usertoken = %r\n'
-                     'bucketname = %r\n'
-                     'location = %r\n'
-                     % (usertoken, bucketname, location))
-
-    usercreds = AWSCredentials(useraccesskeyid, usersecretkey)
-    client = DevPayS3Client(creds=usercreds, usertoken=usertoken, producttoken=producttoken)
-
-    if location:
-        object_name = "?LocationConstraint=" + urllib.quote(location)
-    else:
-        object_name = None
-
-    query = client.query_factory(
-        action="PUT", creds=client.creds, endpoint=client.endpoint,
-        bucket=bucketname, object_name=object_name)
-    d = query.submit()
-
-    def bucket_created(res):
-        print >>stdout, "S3 bucket created."
-        print >>stderr, repr(res)
-
-    d.addCallback(bucket_created)
     return d
 
 def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr, location):
