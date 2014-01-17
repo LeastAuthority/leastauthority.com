@@ -20,7 +20,7 @@
 
     <div class="form-row">
       <label style="width: 8em">
-        <span>Card number:</span>
+        <span>Card number*:</span>
       </label>
       <input type="text" maxlength="19" size="19" placeholder="#### #### #### ####"
              data-stripe="number" required="true" tabindex="2"
@@ -29,7 +29,7 @@
 
     <div class="form-row">
       <label>
-        <span>CVC:&nbsp;</span>
+        <span>CVC*:&nbsp;</span>
       </label>
       <input type="text" maxlength="4" size="4" data-stripe="cvc" required="true" tabindex="3" pattern="^\d{3,4}$"/>
       &nbsp;&nbsp;
@@ -53,6 +53,10 @@
     <div class="form-row">
          <button type="submit" class="btn btn-danger btn-large signup-button" tabindex="8">Purchase</button>
     </div>
+    <br>
+    <p class="help-text">* Accepted cards are Visa, MasterCard, American Express, JCB, Discover, and Diners Club
+    (including debit, gift and prepaid cards).<br>
+    &nbsp; The CVC is the last group of 3 or 4 digits on the back of the card.</p>
   </form>
 </div>
 <script type="text/javascript" src="/static/js/jquery-1.10.2.min.js"></script>
