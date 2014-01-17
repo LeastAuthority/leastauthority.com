@@ -286,35 +286,6 @@ class TestSignupModule(TestCase):
                               self.MPLAN_ID, stdout, stderr, MSSEC2SECRETSFILE, MLOGFILENAME, 
                               self.CONFIGFILEPATH, self.SERVERINFOPATH)
 
-    def test_timeout_verify(self):
-        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
-        MPRODUCTCODE = 'ABCDEFGH'
-        MNAME = 'MNAME'
-        MEMAIL = 'MEMAIL'
-        MKEYINFO = 'MKEYINFO'
-        stdout = StringIO()
-        stderr = StringIO()
-        MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
-        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-
-        def call_verify_user_account(useraccesskeyid, usersecretkey, usertoken, producttoken, stdout,
-                                     stderr):
-            return defer.succeed(False)
-        self.patch(signup, 'verify_user_account', call_verify_user_account)
-
-        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
-                          self.SERVERINFOPATH, self.EC2SECRETPATH)
-        def _bad_success(ign):
-            self.fail("should have got a failure")
-        def _check_failure(f):
-            f.trap(signup.TimeoutError)
-            out = stdout.getvalue()
-            self.failUnlessIn("Timed out", out)
-        d.addCallbacks(_bad_success, _check_failure)
-        return d
-
     def test_timeout_addressreq(self):
         MACTIVATIONKEY = 'MOCKACTIVATONKEY'
         MPRODUCTCODE = 'ABCDEFGH'
