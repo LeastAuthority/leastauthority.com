@@ -44,7 +44,7 @@ stats_gatherer.furl = %(stats_gatherer_furl)s
 # Shall this node provide storage service?
 enabled = true
 backend = s3
-s3.access_key_id = %(access_key_id)s
+s3.access_key_id = %(AWSaccess_key_id)s
 s3.bucket = %(bucket_name)s
 
 [helper]
