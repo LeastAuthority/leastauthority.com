@@ -313,8 +313,7 @@ def deploy_stripeaccount_server(AWSaccesskeyid, AWSsecretkey, bucketname, oldsec
                         continue
 
                 furl = bounce_server(publichost, admin_privkey_path, privatehost, AWSaccesskeyid,
-                                     AWSsecretkey, None, None, bucketname, oldsecrets, stdout, stderr,
-                                     secretsfile)
+                                     AWSsecretkey, bucketname, oldsecrets, stdout, stderr, secretsfile)
 
                 # Disabled for now.
                 #initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
