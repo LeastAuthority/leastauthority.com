@@ -5,40 +5,15 @@ from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 
 from lae_util.fileutil import make_dirs
+from lae_util.streams import LoggingStream
 from lae_automation import signup, initialize
 
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
-USERTOKEN = 'TESTUSERTOKEN'+'A'*385
 ACCESSKEYID = 'TEST'+'A'*16
 SECRETACCESSKEY = 'TEST'+'A'*36
 REQUESTID = 'TEST'+'A'*32
-PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
 
-# Test vector requests and responses to the different make http requests: activation, verification, describe instances
-# ActivateDesktopProduct
-adprequestresponse = """<ActivateDesktopProductResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/">
-  <ActivateDesktopProductResult>
-    <UserToken>{UserToken}%s==</UserToken>
-    <AWSAccessKeyId>%s</AWSAccessKeyId>
-    <SecretAccessKey>%s</SecretAccessKey>
-  </ActivateDesktopProductResult>
-  <ResponseMetadata>
-    <RequestId>%s</RequestId>
-  </ResponseMetadata>
-</ActivateDesktopProductResponse>""" % (USERTOKEN, ACCESSKEYID, SECRETACCESSKEY, REQUESTID)
-
-adphttprequestheader = """https://ls.amazonaws.com/?Action=ActivateDesktopProduct&ActivationKey=MOCKACTIVATONKEY&ProductToken=%7BProductToken%7DTESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D&Version=2008-04-28"""
-
-# VerifyProductSubscriptionByTokens
-verifyhttprequestheader = """https://ls.amazonaws.com/?Action=VerifyProductSubscriptionByTokens&AWSAccessKeyId=TESTAAAAAAAAAAAAAAAA&Expires=1970-01-01T00%3A15%3A00Z&ProductToken=%7BProductToken%7DTESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D&SignatureVersion=1&UserToken=%7BUserToken%7DTESTUSERTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA%3D%3D&Version=2008-04-28&Signature=EoWZTlMO9qQA6Pbq5Ze4eHAlKZc%3D"""
-verifyrequestresponse = """<VerifyProductSubscriptionByTokensResponse xmlns="http://ls.amazonaws.com/doc/2008-04-28/">
-  <VerifyProductSubscriptionByTokensResult>
-    <Subscribed>true</Subscribed>
-  </VerifyProductSubscriptionByTokensResult>
-  <ResponseMetadata>
-    <RequestId>bd9db94b-a1b0-4a5f-8d70-6cc4de427623</RequestId>
-  </ResponseMetadata>
-</VerifyProductSubscriptionByTokensResponse>"""
+# Test vector request and response to the make http request: describe instances
 
 # DescribeInstances
 describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?>
@@ -129,8 +104,6 @@ MONITORPUBKEY = 'MONITOR PUBLIC KEY'
 
 class TestSignupModule(TestCase):
     def setUp(self):
-        self.fakeURLs = [adphttprequestheader, verifyhttprequestheader]
-        self.mhr_return_values = [adprequestresponse, verifyrequestresponse]
         self.mockconfigdir = FilePath('./test_signup').child('TestSignupModule')
         make_dirs(self.mockconfigdir.path)
         self.SIGNUPSPATH = 'mock_signups.csv'
@@ -229,25 +202,21 @@ class TestSignupModule(TestCase):
                 raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
-        def call_bounce_server(publichost, admin_privkey_path, privatehost, useraccesskeyid,
-                               usersecretkey, usertoken, producttoken, bucket_name, oldsecrets,
-                               stdout, stderr, secretsfile):
+        def call_bounce_server(publichost, admin_privkey_path, privatehost, AWSaccesskeyid,
+                               AWSsecretkey, bucket_name, oldsecrets, stdout, stderr, secretsfile):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(privatehost, '0.0.0.1')
-            self.failUnlessEqual(useraccesskeyid, 'TESTAAAAAAAAAAAAAAAA')
-            self.failUnlessEqual(usersecretkey, 'TESTAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-            self.failUnlessEqual(usertoken, '{UserToken}TESTUSERTOKEN%s=='%('A'*385,))
-            self.failUnlessEqual(producttoken, '{ProductToken}TESTPRODUCTTOKEN%s='%('A'*295,))
-            self.failUnlessEqual(bucket_name, 'lae-abcdefgh-MSEED')
+            self.failUnlessEqual(AWSaccesskeyid, 'TESTAAAAAAAAAAAAAAAA')
+            self.failUnlessEqual(AWSsecretkey, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+            self.failUnlessEqual(bucket_name, 'lae-sub-x14characterx-cus-x14charactersx')
             self.failUnlessEqual(oldsecrets, None)
-            self.failUnlessEqual(secretsfile, 'MSECRETSFILE')
+            self.failUnlessEqual(secretsfile.name[-72:], 'secrets/XX/1970-01-01T000000Z-cus_x14Charactersx-sub_x14Characterx/SSEC2')
         self.patch(signup, 'bounce_server', call_bounce_server)
 
-        def call_send_signup_confirmation(publichost, customer_name, customer_email, furl,
-                                          customer_keyinfo, stdout, stderr):
+        def call_send_signup_confirmation(publichost, customer_email, furl, customer_keyinfo, stdout, 
+                                          stderr):
             self.failUnlessEqual(publichost, '0.0.0.0')
-            self.failUnlessEqual(customer_name, 'MNAME')
             self.failUnlessEqual(customer_email, 'MEMAIL')
             self.failUnlessEqual(furl, None)
             self.failUnlessEqual(customer_keyinfo, 'MKEYINFO')
@@ -279,54 +248,42 @@ class TestSignupModule(TestCase):
         logdirname = "%s-%s-%s" % (fpcleantimestamp, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID)
         testconfigdir = self.mockconfigdir.child(test_name).child('secrets').child(self.MPLAN_ID).child(logdirname)
         testconfigdir.makedirs()
-        MLOGFILENAME = testconfigdir.path + '/signup_logs'
-        return StringIO(), StringIO(), MLOGFILENAME
+        MLOGFILE_fp = FilePath(testconfigdir.path + '/signup_logs')
+        MSSEC2_secretsfile = FilePath(testconfigdir.path + '/SSEC2').open('a+')
+        signup_logfile = MLOGFILE_fp.open('a+')
+        signup_stdout = LoggingStream(signup_logfile, '>')
+        signup_stderr = LoggingStream(signup_logfile, '')
+        return signup_stdout, signup_stderr, MLOGFILE_fp.path, MSSEC2_secretsfile
 
-    def test_signup(self):
-        MACTIVATIONKEY = 'MOCKACTIVATONKEY'
-        MPRODUCTCODE = 'ABCDEFGH'
-        MNAME = 'MNAME'
-        MEMAIL = 'MEMAIL'
-        MKEYINFO = 'MKEYINFO'
-        stdout = StringIO()
-        stderr = StringIO()
-        MSEED = 'MSEED'
-        MSECRETSFILE = 'MSECRETSFILE'
-        MLOGFILENAME = '2012-01-01T000000Z-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+    def test_activate_subscribed_service(self):
+        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFILE = self.initialize_testlocal_state('test_activate_subscribed_service')
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
-
-        def call_initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path, suffixname, COLLECTIONNAMES):
-            self.failUnlessEqual(publichost, '0.0.0.0')
-            self.failUnlessEqual(monitor_privkey_path, 'MONITORKEYS.pem')
-            self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
-            self.failUnlessEqual(COLLECTIONNAMES[0], 'i-MOCKEC2INSTANCEID')
-            self.failUnlessEqual(COLLECTIONNAMES[1], 'SSEC2s')
-            self.failUnlessEqual(suffixname, 'unitteststorageserver/rss')
-        #self.patch(signup, 'initialize_statmover_source', call_initialize_statmover_source)
 
         from lae_automation.aws import queryapi
         def call_hostpubkeyextractor(consoletext, instanceId):
             return MOCKSERVERSSHFP
         self.patch(queryapi, 'hostpubkeyextractor', call_hostpubkeyextractor)
 
-        d = signup.signup(MACTIVATIONKEY, MPRODUCTCODE, MNAME, MEMAIL, MKEYINFO, stdout, stderr,
-                          MSEED, MSECRETSFILE, MLOGFILENAME, self.SIGNUPSPATH, self.CONFIGFILEPATH,
-                          self.SERVERINFOPATH, self.EC2SECRETPATH)
+        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
+                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
+                                               MSSEC2SECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, 
+                                               self.SERVERINFOPATH)
+
         def _check(ign):
-            lines = FilePath(self.SIGNUPSPATH).getContent().splitlines()
-            self.failUnlessEqual(len(lines), 1)
-            self.failUnlessIn(lines[0], ",%s,%s,%s" % (MNAME, MEMAIL, MKEYINFO))
+            content = FilePath(MLOGFILENAME).getContent()
+            self.failUnlessIn('MEMAIL', content)
+            self.failUnlessIn('MKEYINFO', content)
         d.addCallback(_check)
         return d
 
     def test_no_products(self):
-        stdout, stderr, MLOGFILENAME = self.initialize_testlocal_state('test_no_products')
+        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFILE = self.initialize_testlocal_state('test_no_products')
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.activate_subscribed_service,
                               self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID, 
-                              self.MPLAN_ID, stdout, stderr, self.MSECRETSFILE, MLOGFILENAME, 
+                              self.MPLAN_ID, stdout, stderr, MSSEC2SECRETSFILE, MLOGFILENAME, 
                               self.CONFIGFILEPATH, self.SERVERINFOPATH)
 
     def test_timeout_verify(self):
@@ -389,7 +346,7 @@ class TestSignupModule(TestCase):
         return d
 
     def test_EC2_not_listening(self):
-        stdout, stderr, MLOGFILENAME = self.initialize_testlocal_state('test_EC2_not_listening')
+        stdout, stderr, MLOGFILENAME, MSSEC2_secretsfile = self.initialize_testlocal_state('test_EC2_not_listening')
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
@@ -400,13 +357,15 @@ class TestSignupModule(TestCase):
 
         d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
                                                self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
-                                               self.MSECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, 
+                                               MSSEC2_secretsfile, MLOGFILENAME, self.CONFIGFILEPATH, 
                                                self.SERVERINFOPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
             f.trap(signup.TimeoutError)
-            out = stdout.getvalue()
+            stdout.close()
+            logfp = FilePath(MLOGFILENAME)
+            out = logfp.getContent()
             self.failUnlessIn("Timed out", out)
         d.addCallbacks(_bad_success, _check_failure)
         return d

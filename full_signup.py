@@ -48,7 +48,7 @@ def main(stdin, flapp_stdout, flapp_stderr):
                                                           customer_id, subscription_id, 
                                                           plan_id,  
                                                           signup_stdout, signup_stderr, 
-                                                          SSEC2_secretsfile, signup_logfile)
+                                                          SSEC2_secretsfile, signup_log_fp.path)
                   )
     d.addErrback(errhandler)
     d.addBoth(lambda ign: signup_logfile.close())

@@ -476,8 +476,8 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, secret_key, user_token, 
-                  product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
+def bounce_server(publichost, admin_privkey_path, privatehost, AWSaccess_key_id, AWSsecret_key, 
+                  bucket_name, oldsecrets, stdout, stderr, secretsfile,
                   configpath='../secret_config/lae_automation_config.json'):
     nickname = bucket_name
 
@@ -501,7 +501,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
                                       'publichost': publichost,
                                       'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
-                                      'access_key_id': access_key_id,
+                                      'AWSaccess_key_id': AWSaccess_key_id,
                                       'bucket_name': bucket_name,
                                       'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
                                       'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
@@ -511,7 +511,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, se
         restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
 
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
+    write(AWSsecret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
 
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
@@ -548,10 +548,6 @@ shares.total = 1
     print >>secretsfile, simplejson.dumps({
         'publichost':               publichost,
         'privatehost':              privatehost,
-        'access_key_id':            access_key_id,
-        'secret_key':               secret_key,
-        'user_token':               user_token,
-        'product_token':            product_token,
         'bucket_name':              bucket_name,
         'introducer_node_pem':      introducer_node_pem,
         'introducer_nodeid':        introducer_nodeid,
