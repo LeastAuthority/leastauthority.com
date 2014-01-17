@@ -285,6 +285,12 @@ button.signup-button {
     clear: both;
 }
 
+#pgp {
+    position: relative;
+    left: 1.2em;
+    padding-bottom: 2ex;
+}
+
 /* * *
 Product page
 * * */

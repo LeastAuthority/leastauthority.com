@@ -18,6 +18,16 @@ window.creditcardVerifier = (function () {
 	      
 	      return false;
 	  },
+      use_pgp: function (checked) {
+          var $pgp = $('#pgp');
+          if (checked) {
+              $pgp.show();
+          } else {
+              $pgp.hide();
+              $('#pgp_pubkey').val('');
+          }
+          return true;
+      },
 	  stripeResponseHandler: function(status, response) {
 	      var $form = $('#payment-form');
 
