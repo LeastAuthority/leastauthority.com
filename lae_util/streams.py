@@ -1,21 +1,17 @@
 
-class LoggingTeeStream(object):
+class LoggingStream(object):
     """
-    I perform unbuffered output to a stream f, and also to a log with a given
-    prefix on each write.
+    I perform unbuffered output to a log with a given prefix on each write.
     """
-    def __init__(self, f, log, prefix):
-        self.f = f
+    def __init__(self, log, prefix):
         self.log = log
         self.prefix = prefix
 
     def write(self, s):
-        self.f.write(s)
         if self.prefix:
             self.log.write(self.prefix)
         self.log.write(s)
         if '\n' in s:
-            self.f.flush()
             self.log.flush()
 
     def writelines(self, seq):
@@ -23,7 +19,6 @@ class LoggingTeeStream(object):
             self.write(s)
 
     def flush(self):
-        self.f.flush()
         self.log.flush()
 
     def isatty(self):
