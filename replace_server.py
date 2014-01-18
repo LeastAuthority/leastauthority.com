@@ -7,7 +7,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.signup import replace_server
 from lae_util.timestamp import format_iso_time
-from lae_util.streams import LoggingTeeStream
+from lae_util.streams import LoggingStream
 
 
 # FIXME: duplicates code in full_signup.py
@@ -32,8 +32,8 @@ if __name__ == '__main__':
     secretsfile = basefp.child('secrets').child(logfilename).open('a+')
     logfile = basefp.child('signup_logs').child(logfilename).open('a+')
     stdin = sys.stdin
-    stdout = LoggingTeeStream(sys.stdout, logfile, '>')
-    stderr = LoggingTeeStream(sys.stderr, logfile, '')
+    stdout = LoggingStream(sys.stdout, logfile, '>')
+    stderr = LoggingStream(sys.stderr, logfile, '')
 
     # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
     # It does have a way to disable that, but not (easily) to redirect it.
