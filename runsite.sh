@@ -1,4 +1,5 @@
 #!/bin/sh
+
 set -e
 cd $(readlink -f $(dirname $0))
 flappserver restart `pwd`/flapp
