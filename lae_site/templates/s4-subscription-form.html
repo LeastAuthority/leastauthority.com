@@ -1,0 +1,65 @@
+{% extends '_base.html' %}
+
+{% block content %}
+<h2>Subscribe to S4</h2>
+<noscript>
+  <p>JavaScript is currently disabled. You will need to enable it, then reload the page in order to sign up.</p>
+</noscript>
+<div class="row-fluid">
+  <form action="/submit-subscription" method="POST" enc="multipart/form-data" id="payment-form" class="form-inline" style="display: none">
+    <span class="payment-errors">{{ errorblock }}</span>
+
+    <div class="form-row">
+      <label style="width: 8em">
+        <span>Email address:</span>
+      </label>
+      <input type="email" name="email" size="25" required="true" tabindex="1" autofocus>
+    </div>
+
+    <input type="hidden" name="ProductName" value="s4">
+
+    <div class="form-row">
+      <label style="width: 8em">
+        <span>Card number*:</span>
+      </label>
+      <input type="text" maxlength="19" size="19" placeholder="#### #### #### ####"
+             data-stripe="number" required="true" tabindex="2"
+             pattern="^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$|^\d{4}\s?\d{6}\s?\d{5}$|^\d{4}\s?\d{4}\s?\d{4}\s?\d{2}$"/>
+    </div>
+
+    <div class="form-row">
+      <label>
+        <span>CVC*:&nbsp;</span>
+      </label>
+      <input type="text" maxlength="4" size="4" data-stripe="cvc" required="true" tabindex="3" pattern="^\d{3,4}$"/>
+      &nbsp;&nbsp;
+      <label> 
+        <span>Expiration:&nbsp;</span>
+      </label>
+      <input type="text" maxlength="2" size="2" placeholder="MM" data-stripe="exp-month" required="true" tabindex="4" pattern="^[0]?[1-9]$|^1[0-2]$"/>
+      <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" tabindex="5" pattern="^201[4-9]$|^20[2-9]\d$"/>
+    </div>
+    <br>
+    <div class="form-inline">
+      <label><input type="checkbox" name="use_pgp" tabindex="6" onclick="javascript:creditcardVerifier.use_pgp(this.checked);"/> Please send email PGP-encrypted and signed.</label>
+      <span id="pgp" style="display: none">
+        <p>Tell us your public key. If this key is on the usual key servers, a
+        fingerprint is sufficient, otherwise please paste the ASCII-armored key block.</p>
+        <input type="text" name="pgp_pubkey" id="pgp_pubkey" style="width:30em; height:16ex; white-space:pre;" tabindex="7"/>
+      </span>
+    </div>
+    <br>
+    <p>Your card will be charged $50/month, which entitles you to store up to 350 GB.</p>
+    <div class="form-row">
+         <button type="submit" class="btn btn-danger btn-large signup-button" tabindex="8">Purchase</button>
+    </div>
+    <br>
+    <p class="help-text">* Accepted cards are Visa, MasterCard, American Express, JCB, Discover, and Diners Club
+    (including debit, gift and prepaid cards).<br>
+    &nbsp; The CVC is the last group of 3 or 4 digits on the back of the card.</p>
+  </form>
+</div>
+<script type="text/javascript" src="/static/js/jquery-1.10.2.min.js"></script>
+<script type="text/javascript" src="https://js.stripe.com/v2/"></script>
+<script type="text/javascript" src="/static/js/subscription_signup.js"></script>
+{% endblock %}
