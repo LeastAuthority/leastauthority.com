@@ -9,6 +9,7 @@ window.creditcardVerifier = (function () {
             $form.submit( creditcardVerifier.formSubmissionHandler );
 
             creditcardVerifier.use_pgp($('#use_pgp').prop('checked'));
+            $('#loading').hide();
             $form.show();
         },
         formSubmissionHandler: function (event) {
