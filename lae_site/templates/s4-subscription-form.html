@@ -6,6 +6,10 @@
   <p>JavaScript is currently disabled. You will need to enable it, then reload the page in order to sign up.</p>
 </noscript>
 <div class="row-fluid">
+  <span id="loading" class="form-inline">
+    Loading...<br>
+    If the form doesn't load, please contact &lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt; and tell us your exact browser version and operating system.
+  </span>
   <form action="/submit-subscription" method="POST" enc="multipart/form-data" id="payment-form" class="form-inline" style="display: none">
     <span class="payment-errors">{{ errorblock }}</span>
 
