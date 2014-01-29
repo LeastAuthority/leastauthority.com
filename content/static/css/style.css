@@ -153,6 +153,10 @@ input {
     *overflow: hidden;
 }
 
+textarea {
+    font-family: monospace;
+}
+
 /*
  * Nav
  */

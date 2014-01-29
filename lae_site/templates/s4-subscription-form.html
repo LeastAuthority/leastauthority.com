@@ -41,11 +41,15 @@
     </div>
     <br>
     <div class="form-inline">
-      <label><input type="checkbox" name="use_pgp" tabindex="6" onclick="javascript:creditcardVerifier.use_pgp(this.checked);"> Please send email PGP-encrypted and signed.</label>
+      <label>
+        <input type="checkbox" name="use_pgp" id="use_pgp" tabindex="6" onclick="javascript:creditcardVerifier.use_pgp(this.checked);">
+        Please send email PGP-encrypted and signed.
+      </label>
       <span id="pgp" style="display: none">
         <p>Tell us your public key. If this key is on the usual key servers, a
-        fingerprint is sufficient, otherwise please paste the ASCII-armored key block.</p>
-        <input type="text" name="pgp_pubkey" id="pgp_pubkey" style="width:30em; height:16ex; white-space:pre;" tabindex="7">
+        fingerprint is sufficient (<code>gpg --fingerprint YOUR_EMAIL_ADDRESS</code>).<br>
+        Otherwise, please paste the ASCII-armored public key block (<code>gpg --export -a YOUR_EMAIL_ADDRESS</code>).</p>
+        <textarea id="pgp_pubkey_textarea" rows="10" cols="68" style="white-space:pre; word-break:break-all; width:40em; height:24ex;" tabindex="7"></textarea>
       </span>
     </div>
     <br>
