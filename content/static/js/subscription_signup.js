@@ -7,6 +7,8 @@ window.creditcardVerifier = (function () {
             // This identifies your website in the createToken call below
             Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
             $form.submit( creditcardVerifier.formSubmissionHandler );
+
+            creditcardVerifier.use_pgp($('#use_pgp').prop('checked'));
             $form.show();
         },
         formSubmissionHandler: function (event) {
@@ -18,12 +20,10 @@ window.creditcardVerifier = (function () {
             return false;
         },
         use_pgp: function (checked) {
-            var $pgp = $('#pgp');
             if (checked) {
-                $pgp.show();
+                $('#pgp').show();
             } else {
-                $pgp.hide();
-                $('#pgp_pubkey').val('');
+                $('#pgp').hide();
             }
             return true;
         },
@@ -35,6 +35,15 @@ window.creditcardVerifier = (function () {
                 $form.find('.payment-errors').text(response.error.message);
                 $form.find('button').prop('disabled', false);
             } else {
+                // Copy from pgp_pubkey_textarea to a hidden pgp_pubkey input field.
+                // We do this because input fields can't be multiline, but textareas can.
+                var pgp_pubkey = '';
+                if ($('#use_pgp').prop('checked')) {
+                    pgp_pubkey = $('#pgp_pubkey_textarea').val();
+                }
+                $form.append($('<input type="hidden" name="pgp_pubkey">').val(pgp_pubkey));
+                $('#use_pgp').prop('disabled', true);
+
                 // token contains id, last4, and card type
                 var token = response.id;
                 // Insert the token into the form so it gets submitted to the server
