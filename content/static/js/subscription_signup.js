@@ -42,7 +42,7 @@ window.creditcardVerifier = (function () {
                 // and submit
                 $form.get(0).submit();
             }
-        },
+        }
     }
 }());
 
