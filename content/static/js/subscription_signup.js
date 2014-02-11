@@ -2,15 +2,18 @@
 
 window.creditcardVerifier = (function () {
     return {
-        register_callbacks: function () {
+	initialize_page: function () {
             var $form = $('#payment-form');
+	    creditcardVerifier.register_callbacks($form);
+            $('#loading').hide();
+            $form.show();
+	},
+        register_callbacks: function ( $form ) {
+	    var $pgp_checkbox = $('#use_pgp');
             // This identifies your website in the createToken call below
             Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
             $form.submit( creditcardVerifier.formSubmissionHandler );
-
-            creditcardVerifier.use_pgp($('#use_pgp').prop('checked'));
-            $('#loading').hide();
-            $form.show();
+	    $pgp_checkbox.click( creditcardVerifier.use_pgp );
         },
         formSubmissionHandler: function (event) {
             var $form = $('#payment-form');
@@ -21,11 +24,7 @@ window.creditcardVerifier = (function () {
             return false;
         },
         use_pgp: function (checked) {
-            if (checked) {
-                $('#pgp').show();
-            } else {
-                $('#pgp').hide();
-            }
+	    $('#pgp').fadeToggle(800);
             return true;
         },
         stripeResponseHandler: function(status, response) {
@@ -40,7 +39,7 @@ window.creditcardVerifier = (function () {
                 // We do this because input fields can't be multiline, but textareas can.
                 var pgp_pubkey = '';
                 if ($('#use_pgp').prop('checked')) {
-                    pgp_pubkey = $('#pgp_pubkey_textarea').val();
+                    pgp_pubkey = $('#pgp_pubkey_textarea').val();//http://api.jquery.com/val/
                 }
                 $form.append($('<input type="hidden" name="pgp_pubkey">').val(pgp_pubkey));
                 $('#use_pgp').prop('disabled', true);
@@ -56,4 +55,4 @@ window.creditcardVerifier = (function () {
     }
 }());
 
-$(document).ready(creditcardVerifier.register_callbacks);
+$(document).ready(creditcardVerifier.initialize_page);
