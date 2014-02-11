@@ -4,6 +4,7 @@ window.creditcardVerifier = (function () {
     return {
         initialize_page: function () {
             var $form = $('#payment-form');
+            $('#use_pgp').prop('checked', false)
             creditcardVerifier.register_callbacks($form);
             $('#loading').hide();
             $form.show();
@@ -12,9 +13,7 @@ window.creditcardVerifier = (function () {
             // This identifies your website in the createToken call below
             Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
             $form.submit(creditcardVerifier.formSubmissionHandler);
-
             $('#use_pgp').click(creditcardVerifier.update_use_pgp);
-            creditcardVerifier.update_use_pgp();
         },
         formSubmissionHandler: function (event) {
             var $form = $('#payment-form');
