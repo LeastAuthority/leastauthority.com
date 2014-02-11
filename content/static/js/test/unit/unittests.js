@@ -222,6 +222,8 @@ describe('the Stripe response handler', function (){
 		return new jquerynodespy(); 
 	    } else if ( jtarget === '<input type="hidden" name="stripeToken">' ) {
 		return new jquerynodespy(); 
+	    } else if ( jtarget === '#pgp_pubkey_textarea' ) {
+		return "PGP PUBLIC KEY INFO"; 
 	    } 
 	};
 	findspy = function (target) {
@@ -285,30 +287,43 @@ describe('the Stripe response handler', function (){
 	    //jqueryformspy.append
 	    submitterspy = jasmine.createSpyObj('getreturn', ['submit']);
 	    jqueryformspy.get.andReturn(submitterspy);
-
-	    
-	    //jquerynodespy = jasmine.createSpyObj('jqnodespy', ['val']);
-	    //jquerynodespy.val.andReturn(jquerynodespy);
-
 	});
 	afterEach(function () {
 	    striperesponsespy.id, submitterspy = {};
 	});
-	describe('when a PGP key is not submitted', function() {
+	describe('when a PGP key is _NOT_ submitted', function() {
 	    beforeEach(function (){
 		//Define spy object
 		checkedspy = false;
 		creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy );
 	    });
+	    afterEach(function () {
+		checkedspy = {};
+	    });
 	    it('will append a jqnode with value \"\" to the form', function () {
 		expect(jqueryformspy.append.calls[0].args[0].val()).toBe('');
 		expect(jqueryformspy.jqnodes[0].val()).toBe('');
-	    });/*
+	    });
+	});
+	describe('when a PGP key _IS_ submitted', function() {
+	    beforeEach(function (){
+		//Define spy object
+		checkedspy = true;
+		creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy );
+	    });
+	    afterEach(function () {
+		checkedspy = {};
+	    });
+	    it('will append a jqnode with value \"XX\" to the form', function () {
+		expect(jqueryformspy.append.calls[0].args[0].val()).toBe('');
+		expect(jqueryformspy.jqnodes[0].val()).toBe('');
+	    });
+	});
+/*
 	    it('assigns the response id to a local variable', function () {
 		creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
 		expect(striperesponsespy.id).toBe('response_token');
 	    });*/
-	});
 /*
 	it("creates a jquery with argument '<input type=\"hidden\" name=\"stripeToken\" />'", function () {
 	    creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
