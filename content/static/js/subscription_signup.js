@@ -8,7 +8,9 @@ window.creditcardVerifier = (function () {
             Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
             $form.submit( creditcardVerifier.formSubmissionHandler );
 
-            creditcardVerifier.use_pgp($('#use_pgp').prop('checked'));
+            $('#use_pgp').click(creditcardVerifier.update_use_pgp);
+            creditcardVerifier.update_use_pgp();
+
             $('#loading').hide();
             $form.show();
         },
@@ -20,8 +22,8 @@ window.creditcardVerifier = (function () {
             Stripe.createToken($form, creditcardVerifier.stripeResponseHandler);
             return false;
         },
-        use_pgp: function (checked) {
-            if (checked) {
+        update_use_pgp: function () {
+            if ($('#use_pgp').prop('checked')) {
                 $('#pgp').show();
             } else {
                 $('#pgp').hide();
