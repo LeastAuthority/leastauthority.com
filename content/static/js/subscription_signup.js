@@ -2,18 +2,18 @@
 
 window.creditcardVerifier = (function () {
     return {
-	initialize_page: function () {
+        initialize_page: function () {
             var $form = $('#payment-form');
-	    creditcardVerifier.register_callbacks($form);
+            creditcardVerifier.register_callbacks($form);
             $('#loading').hide();
             $form.show();
-	},
+        },
         register_callbacks: function ( $form ) {
-	    var $pgp_checkbox = $('#use_pgp');
+            var $pgp_checkbox = $('#use_pgp');
             // This identifies your website in the createToken call below
             Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
             $form.submit( creditcardVerifier.formSubmissionHandler );
-	    $pgp_checkbox.click( creditcardVerifier.use_pgp );
+            $pgp_checkbox.click( creditcardVerifier.use_pgp );
         },
         formSubmissionHandler: function (event) {
             var $form = $('#payment-form');
@@ -24,7 +24,7 @@ window.creditcardVerifier = (function () {
             return false;
         },
         use_pgp: function (checked) {
-	    $('#pgp').fadeToggle(800);
+            $('#pgp').fadeToggle(800);
             return true;
         },
         stripeResponseHandler: function(status, response) {
