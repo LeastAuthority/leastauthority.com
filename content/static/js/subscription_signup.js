@@ -2,17 +2,19 @@
 
 window.creditcardVerifier = (function () {
     return {
-        register_callbacks: function () {
+        initialize_page: function () {
             var $form = $('#payment-form');
+            creditcardVerifier.register_callbacks($form);
+            $('#loading').hide();
+            $form.show();
+        },
+        register_callbacks: function ($form) {
             // This identifies your website in the createToken call below
             Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
-            $form.submit( creditcardVerifier.formSubmissionHandler );
+            $form.submit(creditcardVerifier.formSubmissionHandler);
 
             $('#use_pgp').click(creditcardVerifier.update_use_pgp);
             creditcardVerifier.update_use_pgp();
-
-            $('#loading').hide();
-            $form.show();
         },
         formSubmissionHandler: function (event) {
             var $form = $('#payment-form');
@@ -42,7 +44,7 @@ window.creditcardVerifier = (function () {
                 // We do this because input fields can't be multiline, but textareas can.
                 var pgp_pubkey = '';
                 if ($('#use_pgp').prop('checked')) {
-                    pgp_pubkey = $('#pgp_pubkey_textarea').val();
+                    pgp_pubkey = $('#pgp_pubkey_textarea').val();  // see http://api.jquery.com/val/
                 }
                 $form.append($('<input type="hidden" name="pgp_pubkey">').val(pgp_pubkey));
                 $('#use_pgp').prop('disabled', true);
@@ -58,4 +60,4 @@ window.creditcardVerifier = (function () {
     }
 }());
 
-$(document).ready(creditcardVerifier.register_callbacks);
+$(document).ready(creditcardVerifier.initialize_page);
