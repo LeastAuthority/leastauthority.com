@@ -7,20 +7,28 @@ describe('The subscription signup creditcardVerifier', function () {
     //The jquery constructor, all calls to this produce jquery objects and are replaced with spies.
     var jquery$spy;
     //Declare Spies which replace jquery objects
-    var ccformspy, use_pgpspy, pageloadspy; // definitions are specific to specs
+    var ccformspy, use_pgpspy, pageloadspy, pgpspanspy, jquerynodespy; // definitions are specific to specs
 
     beforeEach(function (){
         aside$ = window.$;
         asideStripe = window.Stripe;
         //Dereference Actual objects to isolate the unit under test.
         window.Stripe, window.$ = {};
-        jquery$spy = function (value) {
-            if ( value === "#use_pgp" ) {
+        jquery$spy = function (jtarget) {
+            if (jtarget === "#use_pgp") {
                 return use_pgpspy;
-            } else if ( value === "#payment-form" ) {
+            } else if (jtarget === "#payment-form") {
                 return ccformspy; // instances are declared in the invoking scope
-            } else if ( value === "#loading" ) {
+            } else if (jtarget === "#loading") {
                 return pageloadspy;
+            } else if (jtarget === "#pgp") {
+                return pgpspanspy;
+            } else if (jtarget === '<input type="hidden" name="pgp_pubkey">') {
+                return jquerynodespy;
+            } else if ( jtarget === '<input type="hidden" name="stripeToken">') {
+                return jquerynodespy;
+            } else if ( jtarget === '#pgp_pubkey_textarea') {
+                return jquerynodespy;
             }
         }
         spyOn(window, '$').andCallFake(jquery$spy);
@@ -32,9 +40,9 @@ describe('The subscription signup creditcardVerifier', function () {
         //Dereference spies to eliminate test specific state.
         aside$, asideStripe = {};
         jquery$spy = {};
-        ccformspy, use_pgpspy, pageloadspy = {};
+        ccformspy, use_pgpspy, pageloadspy, pgpspanspy, jquerynodespy = {};
     });
-    xdescribe('The initialize_page callback', function () {
+    describe('The initialize_page callback', function () {
         //Declare variables needed to isolate and monitor the unit under test.
         var asideregister_callbacks;
         beforeEach(function () {
@@ -64,14 +72,17 @@ describe('The subscription signup creditcardVerifier', function () {
             expect(ccformspy.show).toHaveBeenCalled();
         });
     });
-
     describe('The register_callbacks callback', function () {
         //Declare variables needed to isolate and monitor the unit under test.
-        var formsubmissionhandlerspy;
+        var formsubmissionhandlerspy, use_pgpmethodspy, asidefsh, asideuse_pgpmethod;
         beforeEach(function () {
+            asidefsh = creditcardVerifier.formSubmissionHandler
+            asideuse_pgpmethod = creditcardVerifier.use_pgp
             window.Stripe = jasmine.createSpyObj('Stripe', ['setPublishableKey']);
             formsubmissionhandlerspy = jasmine.createSpy('formsubspy');
             creditcardVerifier.formSubmissionHandler = formsubmissionhandlerspy;
+            use_pgpmethodspy = jasmine.createSpy('use_pgp_method');
+            creditcardVerifier.use_pgp = use_pgpmethodspy;
             ccformspy = {
                 submit: function(submithandler){},
             };
@@ -85,52 +96,45 @@ describe('The subscription signup creditcardVerifier', function () {
         });
 
         afterEach( function () {
+            creditcardVerifier.formSubmissionHandler = asidefsh;
+            creditcardVerifier.use_pgp = asideuse_pgpmethod;
             //Dereference spies to eliminate test specific state.
-            formsubmissionhandlerspy = {};
+            formsubmissionhandlerspy, use_pgpmethodspy = {};
         });
         it('sets the publishable stripe key to identify LeastAuth to Stripe during requests', function () {
             expect(window.Stripe.setPublishableKey).toHaveBeenCalledWith('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
         });
-        xit('registers the formSubmissionHandler to handle "payment-form"\'s submit event', function () {
-            expect(ccformspy_instance.submit).toHaveBeenCalledWith( formsubmissionhandlerspy );
+        it('registers the formSubmissionHandler to handle "payment-form"\'s submit event', function () {
+            expect(ccformspy.submit).toHaveBeenCalledWith( formsubmissionhandlerspy );
         });
-        xit('registers the use_pgp as the handler for the #use_pgp element click event', function () {
-            expect(use_pgpspy.click).toHaveBeenCalledWith(asideuse_pgp);
+        it('registers the use_pgp as the handler for the #use_pgp element click event', function () {
+            expect(use_pgpspy.click).toHaveBeenCalledWith(use_pgpmethodspy);
         });
     });
-/*
+
     describe('The form submission handler', function () { 
-        //Declare variables needed to isolate and monitor the unit under test.
-        var aside$, asideStripe, ccformspy, jquery$spy, button;
+        var buttonspy;
         beforeEach(function () {
-            //Set actual objects that interract with unit under test 'aside'
-            aside$ = window.$;
-            asideStripe = window.Stripe;
-            //Dereference Actual objects to isolate the unit under test.
-            window.Stripe, window.$ = {};
-            //Set up spies to record interractions between the unit under test and its context.
-            ccformspy = jasmine.createSpyObj('form', ['find']);
-            jquery$spy = function (value) {return ccformspy;}
-            spyOn(window,"$").andCallFake(jquery$spy);
-            button = jasmine.createSpyObj('button', ['prop']);
-            ccformspy.find.andReturn(button);
+            buttonspy = jasmine.createSpyObj('button', ['prop']);
+            ccformspy = {
+                find: function(element){return buttonspy;}
+            };
+            spyOn(ccformspy, 'find').andCallThrough();
             window.Stripe = jasmine.createSpyObj('Stripe', ['createToken']);
             //Invoke the unit under test.
             creditcardVerifier.formSubmissionHandler( jasmine.createSpy( "click" ) );
         });
 
         afterEach( function () {
-            //Re-reference actual objects, from their set-aside references
-            window.Stripe = asideStripe;
-            window.$ = aside$;
-            //Dereference spies to eliminate test specific state.
-            aside$, asideStripe, ccformspy, jquery$spy, button = {};
+            buttonspy = {};
         });
         it('finds the form submission button', function () {
+            expect(ccformspy).toBeDefined();
+            expect(ccformspy.find).toBeDefined();
             expect(ccformspy.find).toHaveBeenCalledWith('button');
         }); 
         it('disables the form submission button', function () {
-            expect(button.prop).toHaveBeenCalledWith('disabled', true);
+            expect(buttonspy.prop).toHaveBeenCalledWith('disabled', true);
         });
         it('registers the response handler inside Stripe.createToken', function () {
             expect(Stripe.createToken).toHaveBeenCalledWith( 
@@ -139,259 +143,188 @@ describe('The subscription signup creditcardVerifier', function () {
         });
     });
 
-    describe('The use_pgp input "checkbox" handler for the #use_pgp element',function(){
-        //Declare variables needed to isolate and monitor the unit under test.
-        var aside$, asideStripe, use_pgpspy, pgpspanspy, jquery$spy, pgpssinstance, pgpcbspyinstance;
+    describe('The use_pgp method, click handler for the #use_pgp element',function(){
         beforeEach(function () {
-            //Set actual objects that interract with unit under test 'aside'
-            aside$ = window.$;
-            asideStripe = window.Stripe;
-            //Dereference Actual objects to isolate the unit under test.
-            window.Stripe, window.$ = {};
-            //Set up spies to record interractions between the unit under test and its context.
-            pgpspanspy = function () {
-                this.show = function (){};
-                this.hide = function (){};
+            pgpspanspy = {
+                show: function (){},
+                hide: function (){}
             };
-        });
-
-        afterEach( function () {
-            //Re-reference actual objects, from their set-aside references
-            window.Stripe = asideStripe;
-            window.$ = aside$;
-            //Dereference spies to eliminate test specific state.
-            asideStripe, aside$, use_pgpspy, pgpspanspy, jquery$spy, pgpssinstance, pgpcbspyinstance = {};
+            spyOn(pgpspanspy, 'show')
+            spyOn(pgpspanspy, 'hide')
+            use_pgpspy = {
+                prop: function(checkobject){},
+            };
         });
         describe('when the box has been checked',function (){
             beforeEach(function(){
-                jquery$spy = function (value) {
-                    if ( value === '#use_pgp' ) {
-                        pgpcbspyinstance = new use_pgpspy(true);
-                        spyOn(pgpcbspyinstance, 'prop').andCallThrough();
-                        return pgpcbspyinstance;
-                    } else if ( value === "#pgp" ) {
-                        pgpssinstance = new pgpspanspy();
-                        spyOn(pgpssinstance, 'show');
-                        spyOn(pgpssinstance, 'hide');
-                        return pgpssinstance;
-                    }
-                }
-                spyOn(window, "$").andCallFake(jquery$spy);
+                spyOn(use_pgpspy, 'prop').andReturn(true);
                 //Invoke the unit under test.
                 creditcardVerifier.use_pgp();
             });
             it('calls "$(\'#pgp\').show();" because "checked" is true', function(){
-                expect(pgpcbspyinstance.prop()).toBe(true);
-                expect(pgpssinstance.show).toHaveBeenCalled();
+                expect(use_pgpspy.prop).toHaveBeenCalledWith('checked');
+                expect(pgpspanspy.show).toHaveBeenCalled();
             });
-            it('does _NOT_ call "$(\'#pgp\').hide();" when "checked" is true', function(){
-                expect(pgpssinstance.hide).not.toHaveBeenCalled();
+            it('does _NOT_ call "$(\'#pgp\').hide();" when "checked" is true', function() {
+                expect(use_pgpspy.prop).toHaveBeenCalledWith('checked');
+                expect(pgpspanspy.hide).not.toHaveBeenCalled();
             });
         });
         describe('when the box has _NOT_ been checked',function (){
             beforeEach(function(){
-                jquery$spy = function (value) {
-                    if ( value === '#use_pgp' ) {
-                        pgpcbspyinstance = new use_pgpspy(false);
-                        spyOn(pgpcbspyinstance, 'prop').andCallThrough();
-                        return pgpcbspyinstance;
-                    } else if ( value === "#pgp" ) {
-                        pgpssinstance = new pgpspanspy();
-                        spyOn(pgpssinstance, 'show');
-                        spyOn(pgpssinstance, 'hide');
-                        return pgpssinstance;
-                    }
-                }
-                spyOn(window, "$").andCallFake(jquery$spy);
+                spyOn(use_pgpspy, 'prop').andReturn(false);
                 //Invoke the unit under test.
                 creditcardVerifier.use_pgp();
             });
             it('does _NOT_ call "$(\'#pgp\').show();" because "checked" is false', function(){
-                expect(pgpcbspyinstance.prop()).toBe(false);
-                expect(pgpssinstance.show).not.toHaveBeenCalled();
+                expect(use_pgpspy.prop).toHaveBeenCalledWith('checked');
+                expect(pgpspanspy.show).not.toHaveBeenCalled();
             });
             it('calls "$(\'#pgp\').hide();" because "checked" is false', function(){
-                expect(pgpcbspyinstance.prop()).toBe(false);
-                expect(pgpssinstance.hide).toHaveBeenCalled();
+                expect(use_pgpspy.prop).toHaveBeenCalledWith('checked');
+                expect(pgpspanspy.hide).toHaveBeenCalled();
             });
         });
     });
 
     describe('the Stripe response handler', function (){
-        //Declare variables needed to isolate and monitor the unit under test.
-        var aside$, asideuse_pgp, ccformspy, use_pgpspy, checkedspy, jquerynodespy, errorfieldspy, button, jQueryspy, findspy;
-        var errormessagespy, striperesponsespy;
-        beforeEach(function () {
-            //Set actual objects that interract with unit under test 'aside'
-            aside$ = window.$;
-            asideuse_pgp = creditcardVerifier.use_pgp;
-            //Dereference Actual objects to isolate the unit under test.
-            window.$ = {};
-            creditcardVerifier.use_pgp = {};
-            //Define spy objects
-            ccformspy = jasmine.createSpyObj('form', ['find', 'append', 'get']);
-            ccformspy.jqnodes = [];
-            ccformspy.append.andCallFake(function (jqnode) {ccformspy.jqnodes.push(jqnode)});
-            use_pgpspy = { prop: function (status) {return checkedspy} };
-            //jquerynodespy = jasmine.createSpyObj('jqnode', ['val']);
-            jquerynodespy = function ( ) {
-                this.value = '';
-                this.val = function ( value = null ) {
-                    if ( value === null ) {
-                        return this.value;
-                    } else {
-                        var jqns = new jquerynodespy();
-                        jqns.value = value;
-                        return jqns
-                    }
-                }
-            }
-            errorfieldspy = jasmine.createSpyObj('errorfield', ['text']);
-            button = jasmine.createSpyObj('button', ['prop']);
-        });
-        afterEach(function () {
-            window.$ = aside$;
-            creditcardVerifier.use_pgp = asideuse_pgp;
-            aside$, ccformspy, use_pgpspy, checkedspy, jquerynodespy, errorfieldspy, button, jQueryspy = {}
-            findspy, errormessagespy, striperesponsespy = {};
-        });
-
         describe('when it receives an error in the response', function () {
+            //Declare variables needed to isolate and monitor the unit under test.
+            var errormessagespy, striperesponsespy, errortextspy, buttonspy;
             beforeEach(function () {
                 //Define spy objects
                 errormessagespy = { message : 'An error.'};
                 striperesponsespy = { error : errormessagespy};
-                //Define spy functions
-                jQueryspy = function ( jtarget ) {
-                    if ( jtarget === '#payment-form' ) {
-                        return ccformspy
-                    } 
+                buttonspy = jasmine.createSpyObj('button', ['prop']);
+                errortextspy = {
+                    text: function(errortxt){}
                 };
-                findspy = function (target) {
-                    if ( target === '.payment-errors'){
-                        return errorfieldspy
-                    } else if (target === 'button'){
-                        return button
+                spyOn(errortextspy, 'text');
+                ccformspy = {
+                    find: function(element_id) {
+                        if (element_id === ".payment-errors") {
+                            return errortextspy;
+                        } else if (element_id === "button") {
+                            return buttonspy;
+                        }
                     }
                 };
-                //Assign spy functions
-                spyOn(window, "$").andCallFake(jQueryspy);
-                ccformspy.find.andCallFake(findspy);
-
+                spyOn(ccformspy, 'find').andCallThrough();
+                creditcardVerifier.stripeResponseHandler(jasmine.createSpy("status"), striperesponsespy);
             });
             afterEach(function () {
-                //Dereference spies to eliminate test specific state.
+                errormessagespy, striperesponsespy, errortextspy, buttonspy = {};
                 errormessagespy.message, striperesponsespy.error = {};
             });
-
             it('finds the .payment-errors DOM object', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
                 expect(striperesponsespy.error).toBeDefined();
                 expect(ccformspy.find.calls[0].args[0]).toEqual('.payment-errors');
-
             });
             it('sets that objects text attribute to the error message', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(errorfieldspy.text).toHaveBeenCalledWith('An error.');
+                creditcardVerifier.stripeResponseHandler(jasmine.createSpy("status"), striperesponsespy);
+                expect(errortextspy.text).toHaveBeenCalledWith('An error.');
             });
             it('finds the button that submitted the form', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
+                creditcardVerifier.stripeResponseHandler(jasmine.createSpy("status"), striperesponsespy);
                 expect(ccformspy.find.calls[1].args[0]).toEqual('button');
             });
             it('activates the form submission button', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(button.prop).toHaveBeenCalledWith('disabled', false);
+                creditcardVerifier.stripeResponseHandler(jasmine.createSpy("status"), striperesponsespy);
+                expect(buttonspy.prop).toHaveBeenCalledWith('disabled', false);
             });
         });
 
         describe('when it does _not_ receive an error', function() {
             //Declare variables needed to isolate and monitor the unit under test.
-            var submitterspy;
+            var striperesponsespy, submitspy, formnodes;
             beforeEach(function () {
-                //Define spy objects
-                striperesponsespy = {
-                    id : 'response_token',
-                    error: false
+                formnodes = []
+                striperesponsespy = {id : 'response_token'};
+                submitspy = {
+                    submit: function(){},
                 };
-                jQueryspy = function ( jtarget ) {
-                    if ( jtarget === '#payment-form' ) {
-                        return ccformspy
-                    } else if ( jtarget === '#use_pgp' ) {
-                        return use_pgpspy; 
-                    } else if ( jtarget === '<input type="hidden" name="pgp_pubkey">' ) {
-                        return new jquerynodespy();
-                    } else if ( jtarget === '<input type="hidden" name="stripeToken">' ) {
-                        return new jquerynodespy();
-                    } else if ( jtarget === '#pgp_pubkey_textarea' ) {
-                        return "PGP PUBLIC KEY INFO";
+                spyOn(submitspy, 'submit');
+                ccformspy = {
+                    get: function(nodenumber){
+                        return submitspy;
+                    },
+                    find: function(){},
+                    append: function(newnode){
+                        formnodes.push(newnode);
+                    },
+                };
+                spyOn(ccformspy, 'find').andCallThrough();
+                spyOn(ccformspy, 'append').andCallThrough();
+                spyOn(ccformspy, 'get').andCallThrough();
+                jquerynodespy = {
+                    val: function() {
+                        if (arguments.length === 0) {
+                            return "PGP PUBLIC KEY INFO";
+                        } else {
+                            return arguments[0];
+                        }
                     }
                 };
-                //Assign spy functions
-                spyOn(window, "$").andCallFake(jQueryspy);
-
-                //ccformspy.append
-                submitterspy = jasmine.createSpyObj('getreturn', ['submit']);
-                ccformspy.get.andReturn(submitterspy);
+                spyOn(jquerynodespy, 'val').andCallThrough();
             });
             afterEach(function () {
-                striperesponsespy.id, submitterspy = {};
+                striperesponsespy.id, striperesponsespy, submitspy, formnodes = {};
             });
-            describe('when a PGP key is _submitted', function() {
+            describe('when a PGP key _is_ submitted', function() {
                 beforeEach(function (){
-                    //Define spy object
-                    checkedspy = false;
-                    creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy );
+                    use_pgpspy = {
+                        prop: function(checkobject) {return true},
+                    };
+                    spyOn(use_pgpspy, 'prop').andCallThrough();
+                    //Invoke the unit under test.
+                    creditcardVerifier.stripeResponseHandler(jasmine.createSpy("status"), striperesponsespy);
                 });
-                afterEach(function () {
-                    checkedspy = {};
+                it('two nodes will be appended to the submission form', function () {
+                    expect(formnodes.length).toBe(2);
                 });
-                it('will append a jqnode with value \"\" to the form', function () {
-                    expect(ccformspy.append.calls[0].args[0].val()).toBe('');
-                    expect(ccformspy.jqnodes[0].val()).toBe('');
+                it('the first node will have value "PGP PUBLIC KEY INFO"', function (){
+                    expect(formnodes[0]).toBe("PGP PUBLIC KEY INFO");
+                });
+                it('the second node have value "response_token"', function (){
+                    expect(formnodes[1]).toBe("response_token");
+                });
+                it('disables the #use_pgp checkbox element', function (){
+                    expect(use_pgpspy.prop.calls[1].args[0]).toBe('disabled');
+                    expect(use_pgpspy.prop.calls[1].args[1]).toBe(true);
+                });
+                it('calls the submit function of the first element of the form DOM', function(){
+                    expect(ccformspy.get).toHaveBeenCalledWith(0);
+                    expect(submitspy.submit).toHaveBeenCalled();
                 });
             });
-            describe('when a PGP key _IS_ submitted', function() {
+            describe('when a PGP key is _not_ submitted', function() {
                 beforeEach(function (){
-                    //Define spy object
-                    checkedspy = true;
-                    creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy );
+                    use_pgpspy = {
+                        prop: function(checkobject) {return false},
+                    };
+                    spyOn(use_pgpspy, 'prop').andCallThrough();
+                    //Invoke the unit under test.
+                    creditcardVerifier.stripeResponseHandler(jasmine.createSpy("status"), striperesponsespy);
                 });
-                afterEach(function () {
-                    checkedspy = {};
+                it('two nodes will be appended to the submission form', function () {
+                    expect(formnodes.length).toBe(2);
                 });
-                it('will append a jqnode with value \"XX\" to the form', function () {
-                    expect(ccformspy.append.calls[0].args[0].val()).toBe('');
-                    expect(ccformspy.jqnodes[0].val()).toBe('');
+                it('the first node will have value ""', function (){
+                    expect(formnodes[0]).toBe("");
                 });
-            });
-
-            it('assigns the response id to a local variable', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(striperesponsespy.id).toBe('response_token');
-            });
-            
-            it("creates a jquery with argument '<input type=\"hidden\" name=\"stripeToken\" />'", function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(window.$).toHaveBeenCalledWith('<input type="hidden" name="stripeToken" />');
-            });
-            it("sets the value of that jquery object to the value obtained from the response id", function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(jquerynodespy.val).toHaveBeenCalledWith('response_token');
-            });
-            it('appends the jquery with the token value to the submission form', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(ccformspy.append).toHaveBeenCalledWith(jquerynodespy);
-            });
-            it('gets the first element of the form', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(ccformspy.get).toHaveBeenCalledWith(0);
-            });
-            it('invokes the form\'s submit action', function () {
-                creditcardVerifier.stripeResponseHandler( jasmine.createSpy("status"), striperesponsespy);
-                expect(ccformspy.get).toHaveBeenCalledWith(0);
-                expect(submitterspy.submit).toHaveBeenCalled();
+                it('the second node have value "response_token"', function (){
+                    expect(formnodes[1]).toBe("response_token");
+                });
+                it('disables the #use_pgp checkbox element', function (){
+                    expect(use_pgpspy.prop.calls[1].args[0]).toBe('disabled');
+                    expect(use_pgpspy.prop.calls[1].args[1]).toBe(true);
+                });
+                it('calls the submit function of the first element of the form DOM', function(){
+                    expect(ccformspy.get).toHaveBeenCalledWith(0);
+                    expect(submitspy.submit).toHaveBeenCalled();
+                });
             });
         });
-    })*/
+    })
 });
 
