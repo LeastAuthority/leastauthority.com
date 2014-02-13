@@ -44,11 +44,13 @@ describe('The subscription signup creditcardVerifier', function () {
     });
     describe('The initialize_page callback', function () {
         //Declare variables needed to isolate and monitor the unit under test.
-        var asideregister_callbacks;
+        var asideregister_callbacks, asideuse_pgp;
         beforeEach(function () {
             //Set up spies to record interractions between the unit under test and its context.
             ccformspy = jasmine.createSpyObj('form', ['show']);
             use_pgpspy = jasmine.createSpyObj('#use_pgp', ['prop']);
+            asideuse_pgp = creditcardVerifier.use_pgp;
+            spyOn(creditcardVerifier, 'use_pgp');
             asideregister_callbacks = creditcardVerifier.register_callbacks
             spyOn(creditcardVerifier, 'register_callbacks');
             pageloadspy = jasmine.createSpyObj('loadspy', ['hide'])
@@ -58,7 +60,8 @@ describe('The subscription signup creditcardVerifier', function () {
 
         afterEach( function () {
             creditcardVerifier.register_callbacks = asideregister_callbacks;
-            asideregister_callbacks = {};
+            creditcardVerifier.use_pgp = asideuse_pgp;
+            asideregister_callbacks, asideuse_pgp = {};
         });
         it('encapsulates DOM objects into JQuery', function () {
             expect(window.$).toBeDefined();
