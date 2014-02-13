@@ -56,7 +56,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             print >>self.out, "Got an exception from the stripe.Customer.create call:"
             print >>self.out, dir(e)
             print >>self.out, repr(e)
-            tmpl = env.get_template('subscription_signup.html')
+            tmpl = env.get_template('s4-subscription-form.html')
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
 
         #log that a new subscription has been created (at stripe)
