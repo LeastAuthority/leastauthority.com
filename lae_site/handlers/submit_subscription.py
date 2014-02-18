@@ -4,6 +4,7 @@ import stripe, traceback, simplejson, sys
 from twisted.python.filepath import FilePath
 
 from lae_util.servers import append_record
+from lae_util.send_email import send_plain_email, FROM_ADDRESS
 
 from lae_site.handlers.web import env
 from lae_util.flapp import FlappCommand
@@ -52,11 +53,42 @@ class SubmitSubscriptionHandler(HandlerBase):
         #invoke cc-charge by requesting subscription to recurring-payment plan
         try:
             customer = stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
-        except stripe.CardError, e:
-            print >>self.out, "Got an exception from the stripe.Customer.create call:"
+        except stripe.CardError, e: # Errors we expect: https://stripe.com/docs/api#errors
+            print >>self.out, "Got a CardError from the stripe.Customer.create call:"
             print >>self.out, dir(e)
             print >>self.out, repr(e)
             tmpl = env.get_template('s4-subscription-form.html')
+            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+        except stripe.APIError, e:
+            print >>self.out, "Got an APIError from the stripe.Customer.create call:"
+            print >>self.out, dir(e)
+            print >>self.out, repr(e)
+            tmpl = env.get_template('s4-subscription-form.html')
+            e.message = "Our payment processor is temporarily unavailable, please try again in a few moments."
+            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+        except stripe.InvalidRequestError, e:
+            print >>self.out, "Got an InvalidRequestError from the stripe.Customer.create call:"
+            print >>self.out, dir(e)
+            print >>self.out, repr(e)
+            headers = {
+                "From": FROM_ADDRESS,
+                "Subject": "InvalidRequestError Stripe API Error.",
+                }
+            send_plain_email('info@leastauthority.com', 'support@leastauthority.com', repr(e), headers)
+            tmpl = env.get_template('s4-subscription-form.html')
+            e.message = "We're having difficulty communicating with our payment processor, please submit your information again."
+            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+        except Exception, e:
+            print >>self.out, "Got unexpected error from the stripe.Customer.create call:"
+            print >>self.out, dir(e)
+            print >>self.out, repr(e)
+            headers = {
+                "From": FROM_ADDRESS,
+                "Subject": "Unexpected Error.",
+                }
+            send_plain_email('info@leastauthority.com', 'support@leastauthority.com', repr(e), headers)
+            tmpl = env.get_template('s4-subscription-form.html')
+            e.message = "We're experiencing unusual interference. Please wait awhile and try again later."
             return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
 
         #log that a new subscription has been created (at stripe)
