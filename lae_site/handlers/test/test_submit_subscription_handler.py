@@ -3,7 +3,7 @@ from twisted.trial.unittest import TestCase
 
 from lae_site.handlers import submit_subscription
 
-class SubmitSubscriptionHandler(TestCase):
+class TestSubmitSubscriptionHandler(TestCase):
     def setUp(self):
         fc, stripe, ws_env = submit_subscription.flappcommand, submit_subscription.stripe, submit_subscription.env
 
