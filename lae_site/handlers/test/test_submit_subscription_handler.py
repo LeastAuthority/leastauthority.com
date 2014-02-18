@@ -4,6 +4,21 @@ from twisted.trial.unittest import TestCase
 from lae_site.handlers import submit_subscription
 
 
+
+class MockRequest(object):
+    def __init__(self, method, d, args):
+        self.responsecode = None
+        self.out = StringIO()
+        self.method = method
+        self.args = args
+        self.d = d
+    def setResponseCode(self, code):
+        self.responsecode = code
+    def write(self, s):
+        self.out.write(s)
+    def finish(self):
+        self.d.callback(self.out.getvalue())
+
 class MockFlappCommand(object):
     def __init__(self, furlfile):
         self.should_succeed = True

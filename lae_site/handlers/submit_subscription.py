@@ -46,7 +46,7 @@ class SubmitSubscriptionHandler(HandlerBase):
 
         #Load apikey
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
-        assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
+        assert (('leastauthority.com' not in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()
 
         #invoke cc-charge by requesting subscription to recurring-payment plan
