@@ -34,7 +34,6 @@ class MockFlappCommand(object):
     def start(self):
         return defer.succeed(None)
     def run(self, content, stdout):
-        print >>stdout, "Starting..."
         return defer.succeed(None)
 
 class MockPlan(object):
