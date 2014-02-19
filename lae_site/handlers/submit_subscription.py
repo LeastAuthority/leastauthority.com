@@ -31,6 +31,36 @@ class SubmitSubscriptionHandler(HandlerBase):
         self._logger_helper(__name__)
         self.basefp = basefp
 
+    def create_cust_errhandler(self, trace_back, errorinstance, details, emailsubj=None):
+        print >>self.out, "Got a %s from the stripe.Customer.create call:" % (errorinstance.__class__.__name__,)
+        print >>self.out, trace_back
+        if emailsubj:
+            headers = {
+                "From": FROM_ADDRESS,
+                "Subject": emailsubj,
+                }
+            send_plain_email('info@leastauthority.com', 'support@leastauthority.com', trace_back, headers)
+        tmpl = env.get_template('s4-subscription-form.html')
+        errorinstance.details = details
+        raise errorinstance
+        
+    def create_customer(self, stripe_api_key, stripe_authorization_token, email_from_form):
+        details = "We're experiencing unusual interference. Please wait awhile and try again later."
+        emailsubj = None
+        try:
+            return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
+        except stripe.CardError, e: # Errors we expect: https://stripe.com/docs/api#errors
+            self.createcust_errhandler(traceback.format_exc(100), e, e.message)
+        except stripe.APIError:
+            details = "Our payment processor is temporarily unavailable, please try again in a few moments."
+            self.createcust_errhandler(traceback.format_exc(100), e, details)
+        except stripe.InvalidRequestError:
+            details = "Our payment processor is temporarily unavailable, please submit your information again."
+            emailsubj = "Stripe Invalid Request Error"
+            self.createcust_errhandler(traceback.format_exc(100), e, details, emailsubj)
+        except Exception, e:
+            self.createcust_errhandler(traceback.format_exc(100), e, details, emailsubj)
+        
     def render(self, request):
         """
         The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
@@ -51,34 +81,10 @@ class SubmitSubscriptionHandler(HandlerBase):
         stripe_api_key = stripefp.getContent().strip()
 
         #invoke cc-charge by requesting subscription to recurring-payment plan
-        details = "We're experiencing unusual interference. Please wait awhile and try again later."
-        emailsubj = None
         try:
-            try:
-                customer = stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
-            except stripe.CardError, e: # Errors we expect: https://stripe.com/docs/api#errors
-                details = e.message
-                raise
-            except stripe.APIError:
-                details = "Our payment processor is temporarily unavailable, please try again in a few moments."
-                raise
-            except stripe.InvalidRequestError:
-                details = "Our payment processor is temporarily unavailable, please submit your information again."
-                emailsubj = "Stripe Invalid Request Error"
-                raise
-        except Exception, e:
-            trace = traceback.format_exc(100)
-            print >>self.out, "Got a %s from the stripe.Customer.create call:" % (e.__class__.__name__,)
-            print >>self.out, trace
-            if emailsubj:
-                headers = {
-                    "From": FROM_ADDRESS,
-                    "Subject": emailsubj,
-                    }
-                send_plain_email('info@leastauthority.com', 'support@leastauthority.com', trace, headers)
-
-            tmpl = env.get_template('s4-subscription-form.html')
-            return tmpl.render({"errorblock": details}).encode('utf-8', 'replace')
+            customer = self.create_customer(stripe_api_key, stripe_authorization_token, email_from_form)
+        except Exception as errorinstance:
+            return tmpl.render({"errorblock": errorinstance.details}).encode('utf-8', 'replace')
 
         #log that a new subscription has been created (at stripe)
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
