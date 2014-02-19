@@ -31,8 +31,8 @@ class SubmitSubscriptionHandler(HandlerBase):
         self._logger_helper(__name__)
         self.basefp = basefp
         
-    def createcust_errhandler(self, ExceptionClass, errorinstance, details, emailsubj=None):
-        print >>self.out, "Got a %s from the stripe.Customer.create call:" % ExceptionClass
+    def createcust_errhandler(self, errorinstance, details, emailsubj=None):
+        print >>self.out, "Got a %s from the stripe.Customer.create call:" % errorinstance.__class__
         print >>self.out, dir(errorinstance)
         print >>self.out, repr(errorinstance)
         errorinstance.message = details
@@ -69,18 +69,18 @@ class SubmitSubscriptionHandler(HandlerBase):
         try:
             customer = stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
         except stripe.CardError, e: # Errors we expect: https://stripe.com/docs/api#errors
-            return self.createcust_errhandler(stripe.CardError, e, e.message)
+            return self.createcust_errhandler(e, e.message)
         except stripe.APIError, e:
             details = "Our payment processor is temporarily unavailable, please try again in a few moments."
-            return self.createcust_errhandler(stripe.APIError, e, details)
+            return self.createcust_errhandler(e, details)
         except stripe.InvalidRequestError, e:
             details = "Our payment processor is temporarily unavailable, please submit your information again."
             emailsubj = "InvalidRequestError Stripe API Error."
-            return self.createcust_errhandler(stripe.InvalidRequestError, e, details, emailsubj)
+            return self.createcust_errhandler(e, details, emailsubj)
         except Exception, e:
             details = "We're experiencing unusual interference. Please wait awhile and try again later."
             emailsubj = "Unexpected Error."
-            return self.createcust_errhandler(Exception, e, details, emailsubj) 
+            return self.createcust_errhandler(e, details, emailsubj) 
 
         #log that a new subscription has been created (at stripe)
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
