@@ -32,6 +32,7 @@ class SubmitSubscriptionHandler(HandlerBase):
         self.basefp = basefp
 
     def create_cust_errhandler(self, trace_back, errorinstance, details, emailsubj=None):
+        errorinstance.details = details
         print >>self.out, "Got a %s from the stripe.Customer.create call:" % (errorinstance.__class__.__name__,)
         print >>self.out, trace_back
         if emailsubj:
@@ -40,26 +41,25 @@ class SubmitSubscriptionHandler(HandlerBase):
                 "Subject": emailsubj,
                 }
             send_plain_email('info@leastauthority.com', 'support@leastauthority.com', trace_back, headers)
-        tmpl = env.get_template('s4-subscription-form.html')
-        errorinstance.details = details
         raise errorinstance
-        
+
     def create_customer(self, stripe_api_key, stripe_authorization_token, email_from_form):
         details = "We're experiencing unusual interference. Please wait awhile and try again later."
         emailsubj = None
         try:
             return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
-        except stripe.CardError, e: # Errors we expect: https://stripe.com/docs/api#errors
-            self.createcust_errhandler(traceback.format_exc(100), e, e.message)
-        except stripe.APIError:
+        except stripe.CardError as e: # Errors we expect: https://stripe.com/docs/api#errors
+            print >>self.out, "It was a stripe.CardError!"
+            self.create_cust_errhandler(traceback.format_exc(100), e, e.message)
+        except stripe.APIError as e:
             details = "Our payment processor is temporarily unavailable, please try again in a few moments."
-            self.createcust_errhandler(traceback.format_exc(100), e, details)
-        except stripe.InvalidRequestError:
+            self.create_cust_errhandler(traceback.format_exc(100), e, details)
+        except stripe.InvalidRequestError as e:
             details = "Our payment processor is temporarily unavailable, please submit your information again."
             emailsubj = "Stripe Invalid Request Error"
-            self.createcust_errhandler(traceback.format_exc(100), e, details, emailsubj)
-        except Exception, e:
-            self.createcust_errhandler(traceback.format_exc(100), e, details, emailsubj)
+            self.create_cust_errhandler(traceback.format_exc(100), e, details, emailsubj)
+        except Exception as e:
+            self.create_cust_errhandler(traceback.format_exc(100), e, details, emailsubj)
         
     def render(self, request):
         """
@@ -78,13 +78,14 @@ class SubmitSubscriptionHandler(HandlerBase):
         #Load apikey
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
         assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
-        stripe_api_key = stripefp.getContent().strip()
+        stripe_api_key = stripefp.getContent().strip()        
 
         #invoke cc-charge by requesting subscription to recurring-payment plan
         try:
             customer = self.create_customer(stripe_api_key, stripe_authorization_token, email_from_form)
-        except Exception as errorinstance:
-            return tmpl.render({"errorblock": errorinstance.details}).encode('utf-8', 'replace')
+        except Exception as e:
+            tmpl = env.get_template('s4-subscription-form.html')
+            return tmpl.render({"errorblock": e.details}).encode('utf-8', 'replace')
 
         #log that a new subscription has been created (at stripe)
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
