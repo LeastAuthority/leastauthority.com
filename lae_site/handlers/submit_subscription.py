@@ -30,6 +30,21 @@ class SubmitSubscriptionHandler(HandlerBase):
         HandlerBase.__init__(self, out=None)
         self._logger_helper(__name__)
         self.basefp = basefp
+        
+    def createcust_errhandler(self, ExceptionClass, errorinstance, details, emailsubj=None):
+        print >>self.out, "Got a %s from the stripe.Customer.create call:" % ExceptionClass
+        print >>self.out, dir(errorinstance)
+        print >>self.out, repr(errorinstance)
+        errorinstance.message = details
+        if emailsubj:
+            headers = {
+                "From": FROM_ADDRESS,
+                "Subject": emailsubj,
+                }
+            send_plain_email('info@leastauthority.com', 'support@leastauthority.com', repr(errorinstance), headers)
+
+        tmpl = env.get_template('s4-subscription-form.html')
+        return tmpl.render({"errorblock": errorinstance.message}).encode('utf-8', 'replace')
 
     def render(self, request):
         """
@@ -54,42 +69,18 @@ class SubmitSubscriptionHandler(HandlerBase):
         try:
             customer = stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
         except stripe.CardError, e: # Errors we expect: https://stripe.com/docs/api#errors
-            print >>self.out, "Got a CardError from the stripe.Customer.create call:"
-            print >>self.out, dir(e)
-            print >>self.out, repr(e)
-            tmpl = env.get_template('s4-subscription-form.html')
-            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+            return self.createcust_errhandler(stripe.CardError, e, e.message)
         except stripe.APIError, e:
-            print >>self.out, "Got an APIError from the stripe.Customer.create call:"
-            print >>self.out, dir(e)
-            print >>self.out, repr(e)
-            tmpl = env.get_template('s4-subscription-form.html')
-            e.message = "Our payment processor is temporarily unavailable, please try again in a few moments."
-            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+            details = "Our payment processor is temporarily unavailable, please try again in a few moments."
+            return self.createcust_errhandler(stripe.APIError, e, details)
         except stripe.InvalidRequestError, e:
-            print >>self.out, "Got an InvalidRequestError from the stripe.Customer.create call:"
-            print >>self.out, dir(e)
-            print >>self.out, repr(e)
-            headers = {
-                "From": FROM_ADDRESS,
-                "Subject": "InvalidRequestError Stripe API Error.",
-                }
-            send_plain_email('info@leastauthority.com', 'support@leastauthority.com', repr(e), headers)
-            tmpl = env.get_template('s4-subscription-form.html')
-            e.message = "We're having difficulty communicating with our payment processor, please submit your information again."
-            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+            details = "Our payment processor is temporarily unavailable, please submit your information again."
+            emailsubj = "InvalidRequestError Stripe API Error."
+            return self.createcust_errhandler(stripe.InvalidRequestError, e, details, emailsubj)
         except Exception, e:
-            print >>self.out, "Got unexpected error from the stripe.Customer.create call:"
-            print >>self.out, dir(e)
-            print >>self.out, repr(e)
-            headers = {
-                "From": FROM_ADDRESS,
-                "Subject": "Unexpected Error.",
-                }
-            send_plain_email('info@leastauthority.com', 'support@leastauthority.com', repr(e), headers)
-            tmpl = env.get_template('s4-subscription-form.html')
-            e.message = "We're experiencing unusual interference. Please wait awhile and try again later."
-            return tmpl.render({"errorblock": e.message}).encode('utf-8', 'replace')
+            details = "We're experiencing unusual interference. Please wait awhile and try again later."
+            emailsubj = "Unexpected Error."
+            return self.createcust_errhandler(Exception, e, details, emailsubj) 
 
         #log that a new subscription has been created (at stripe)
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
