@@ -10,11 +10,13 @@ LAFS Summit Next Week in San Francisco: Nov 11-13
 
 The `next LAFS summit`_ starts next Monday, November 11!
 
-    When: Monday 11-Nov-2013 (afternoon only)
-        Tuesday 12-Nov 2013 (all day)
-        Wednesday 13-Nov-2013 (all day)
+    When:
+     * Monday 11-Nov-2013 (afternoon only)
+     * Tuesday 12-Nov 2013 (all day)
+     *  Wednesday 13-Nov-2013 (all day)
 
     Where: `The Mozilla SF Office, 2 Harrison (at Embarcadero)`_
+
     Who: at least Brian and Daira, plus everyone else who can make it
 
 We'll have drinks and snacks, wifi, and an online videochat going too. We'll also grab dinner together nearby each night. No RSVP needed; we hope you can join us!
