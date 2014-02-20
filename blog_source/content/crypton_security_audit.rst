@@ -44,6 +44,6 @@ published soon, was for the `Cryptocat`_ secure chat app. Stay tuned!
 .. _S4: https://leastauthority.com/product_s4
 .. _our Mission: https://leastauthority.com/about_us
 .. _SpiderOak: https://spideroak.com/
-.. _Crypton: https://crypton.io/
+.. _Crypton.io: https://crypton.io/
 .. _has published the security auditing report: https://spideroak.com/blog/20140220090004-responsibly-bringing-new-cryptography-product-market
 .. _Cryptocat: https://crypto.cat/
