@@ -10,15 +10,19 @@ Least Authority Performs Security Audit For SpiderOak
 :author: Zooko Wilcox-O'Hearn
 :summary: Least Authority performs security audit for SpiderOak
 
-In addition to operating the `S4`_ simple secure storage service, we also
-run a security consulting business. We LeastAuthoritarians have extensive
-experience in security and cryptography, and other companies pay us to
-analyze the security of their protocols and software.
+`Our mission`_ at LeastAuthority is to bring verifiable end-to-end
+security to everyone.
+
+As part of that mission, in addition to operating the `S4`_ simple secure
+storage service, we also run a security consulting business. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies pay us to analyze the security of their
+protocols and software.
 
 Almost all of our consulting clients are making Free and Open Source
 software which protects user freedoms and works against censorship. It is
 wonderful that in this day and age we can get paid to work on software in
-the public interest. And it is also compatible with `our Mission`_.
+the public interest.
 
 One of our clients is `SpiderOak`_, a company who, like LeastAuthority,
 sells cloud storage with end-to-end encryption. They didn't hire us to
@@ -42,7 +46,7 @@ The next security audit that we performed, which will hopefully also get
 published soon, was for the `Cryptocat`_ secure chat app. Stay tuned!
 
 .. _S4: https://leastauthority.com/product_s4
-.. _our Mission: https://leastauthority.com/about_us
+.. _Our mission: https://leastauthority.com/about_us
 .. _SpiderOak: https://spideroak.com/
 .. _Crypton.io: https://crypton.io/
 .. _has published the security auditing report: https://spideroak.com/blog/20140220090004-responsibly-bringing-new-cryptography-product-market
