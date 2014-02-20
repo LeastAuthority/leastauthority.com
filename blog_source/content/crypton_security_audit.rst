@@ -11,7 +11,7 @@ Least Authority Performs Security Audit For SpiderOak
 :summary: Least Authority performs security audit for SpiderOak
 
 In addition to operating the `S4`_ simple secure storage service, we also
-run a security consulting business. We LeastAuthoritarians have deep
+run a security consulting business. We LeastAuthoritarians have extensive
 experience in security and cryptography, and other companies pay us to
 analyze the security of their protocols and software.
 
