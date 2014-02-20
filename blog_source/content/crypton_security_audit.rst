@@ -42,8 +42,9 @@ to thank them for producing `Crypton.io`, subjecting it to this kind of
 independent review, and publishing the complete results. That's the right
 way to do things!
 
-The next security audit that we performed, which will hopefully also get
-published soon, was for the `Cryptocat`_ secure chat app. Stay tuned!
+The next security audit that we performed, was for the `Cryptocat`_
+secure chat app. We expect the report from that to also be published
+soon. Stay tuned!
 
 .. _S4: https://leastauthority.com/product_s4
 .. _Our mission: https://leastauthority.com/about_us
