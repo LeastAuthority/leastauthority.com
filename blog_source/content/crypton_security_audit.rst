@@ -17,8 +17,8 @@ analyze the security of their protocols and software.
 
 Almost all of our consulting clients are making Free and Open Source
 software which protects user freedoms and works against censorship. It is
-wonderful that in this day and age we can get paid to work on such good
-projects, and it is compatible with `our Mission`_.
+wonderful that in this day and age we can get paid to work on software in
+the public interest. And it is also compatible with `our Mission`_.
 
 One of our clients is `SpiderOak`_, a company who, like LeastAuthority,
 sells cloud storage with end-to-end encryption. They didn't hire us to
