@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/news.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-02-20T13:00:00-08:00</updated><entry><title>Least Authority Performs Security Audit For SpiderOak</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_spideroak.html" rel="alternate"></link><updated>2014-02-20T13:00:00-08:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-02-20:least_authority_performs_security_audit_for_spideroak.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
-&lt;p&gt;In addition to operating the &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt; simple secure storage service, we also
-run a security consulting business. We LeastAuthoritarians have deep
-experience in security and cryptography, and other companies pay us to
-analyze the security of their protocols and software.&lt;/p&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;Our mission&lt;/a&gt; at LeastAuthority is to bring verifiable end-to-end
+security to everyone.&lt;/p&gt;
+&lt;p&gt;As part of that mission, in addition to operating the &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt; simple secure
+storage service, we also run a security consulting business. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies pay us to analyze the security of their
+protocols and software.&lt;/p&gt;
 &lt;p&gt;Almost all of our consulting clients are making Free and Open Source
 software which protects user freedoms and works against censorship. It is
 wonderful that in this day and age we can get paid to work on software in
-the public interest. And it is also compatible with &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our Mission&lt;/a&gt;.&lt;/p&gt;
+the public interest.&lt;/p&gt;
 &lt;p&gt;One of our clients is &lt;a class="reference external" href="https://spideroak.com/"&gt;SpiderOak&lt;/a&gt;, a company who, like LeastAuthority,
 sells cloud storage with end-to-end encryption. They didn't hire us to
 evaluate the security of their current storage product (that would be a
@@ -23,6 +26,7 @@ to take the job.&lt;/p&gt;
 to thank them for producing &lt;cite&gt;Crypton.io&lt;/cite&gt;, subjecting it to this kind of
 independent review, and publishing the complete results. That's the right
 way to do things!&lt;/p&gt;
-&lt;p&gt;The next security audit that we performed, which will hopefully also get
-published soon, was for the &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt; secure chat app. Stay tuned!&lt;/p&gt;
+&lt;p&gt;The next security audit that we performed, was for the &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt;
+secure chat app. We expect the report from that to also be published
+soon. Stay tuned!&lt;/p&gt;
 </summary><category term="cloud"></category><category term="lafs"></category><category term="s4"></category><category term="consultancy"></category><category term="spideoak"></category><category term="crypton"></category><category term="cryptocat"></category></entry></feed>
