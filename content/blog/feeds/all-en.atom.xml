@@ -1,14 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all-en.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2013-11-06T20:00:00-08:00</updated><entry><title>LAFS Summit Next Week in San Francisco: Nov 11-13</title><link href="https://leastauthority.com/blog/lafs_summit_san_francisco_nov_11_13.html" rel="alternate"></link><updated>2013-11-06T20:00:00-08:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-11-06:lafs_summit_san_francisco_nov_11_13.html</id><summary type="html">&lt;p&gt;The &lt;a class="reference external" href="https://tahoe-lafs.org/pipermail/tahoe-dev/2013-October/008780.html"&gt;next LAFS summit&lt;/a&gt; starts next Monday, November 11!&lt;/p&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all-en.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-02-20T13:00:00-08:00</updated><entry><title>Least Authority Performs Security Audit For SpiderOak</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_spideroak.html" rel="alternate"></link><updated>2014-02-20T13:00:00-08:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-02-20:least_authority_performs_security_audit_for_spideroak.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;In addition to operating the &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt; simple secure storage service, we also
+run a security consulting business. We LeastAuthoritarians have deep
+experience in security and cryptography, and other companies pay us to
+analyze the security of their protocols and software.&lt;/p&gt;
+&lt;p&gt;Almost all of our consulting clients are making Free and Open Source
+software which protects user freedoms and works against censorship. It is
+wonderful that in this day and age we can get paid to work on software in
+the public interest. And it is also compatible with &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our Mission&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;One of our clients is &lt;a class="reference external" href="https://spideroak.com/"&gt;SpiderOak&lt;/a&gt;, a company who, like LeastAuthority,
+sells cloud storage with end-to-end encryption. They didn't hire us to
+evaluate the security of their current storage product (that would be a
+big job!), but instead to do a limited, two-week long, security audit of
+their new &lt;a class="reference external" href="https://crypton.io/"&gt;Crypton.io&lt;/a&gt; framework.&lt;/p&gt;
+&lt;p&gt;It was a fun project because we got to learn some of the details of the
+&lt;cite&gt;Crypton.io&lt;/cite&gt; design and implementation. We came away with a favorable
+impression of the professionalism and good engineering practices of the
+SpiderOak team. &lt;cite&gt;Crypton.io&lt;/cite&gt; is all Free and Open Source software, and it
+is designed for real, end-to-end security, which is part of why we wanted
+to take the job.&lt;/p&gt;
+&lt;p&gt;Today SpiderOak &lt;a class="reference external" href="https://spideroak.com/blog/20140220090004-responsibly-bringing-new-cryptography-product-market"&gt;has published the security auditing report&lt;/a&gt;. We'd like
+to thank them for producing &lt;cite&gt;Crypton.io&lt;/cite&gt;, subjecting it to this kind of
+independent review, and publishing the complete results. That's the right
+way to do things!&lt;/p&gt;
+&lt;p&gt;The next security audit that we performed, which will hopefully also get
+published soon, was for the &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt; secure chat app. Stay tuned!&lt;/p&gt;
+</summary><category term="cloud"></category><category term="lafs"></category><category term="s4"></category><category term="consultancy"></category><category term="spideoak"></category><category term="crypton"></category><category term="cryptocat"></category></entry><entry><title>LAFS Summit Next Week in San Francisco: Nov 11-13</title><link href="https://leastauthority.com/blog/lafs_summit_san_francisco_nov_11_13.html" rel="alternate"></link><updated>2013-11-06T20:00:00-08:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-11-06:lafs_summit_san_francisco_nov_11_13.html</id><summary type="html">&lt;p&gt;The &lt;a class="reference external" href="https://tahoe-lafs.org/pipermail/tahoe-dev/2013-October/008780.html"&gt;next LAFS summit&lt;/a&gt; starts next Monday, November 11!&lt;/p&gt;
 &lt;blockquote&gt;
 &lt;dl class="docutils"&gt;
 &lt;dt&gt;When: Monday 11-Nov-2013 (afternoon only)&lt;/dt&gt;
 &lt;dd&gt;Tuesday 12-Nov 2013 (all day)
 Wednesday 13-Nov-2013 (all day)&lt;/dd&gt;
 &lt;/dl&gt;
-&lt;div class="system-message"&gt;
-&lt;p class="system-message-title"&gt;System Message: WARNING/2 (&lt;tt class="docutils"&gt;/home/karen/Code/leastauthority.com/blog_source/content/lafs_summit_sf_nov_11.rst&lt;/tt&gt;, line 16)&lt;/p&gt;
-Definition list ends without a blank line; unexpected unindent.&lt;/div&gt;
 &lt;p&gt;Where: &lt;a class="reference external" href="https://maps.google.com/maps?q=Mozilla+San+Francisco&amp;amp;ll=37.789404,-122.389197&amp;amp;spn=0.0097,0.021136&amp;amp;fb=1&amp;amp;gl=us&amp;amp;hq=mozilla&amp;amp;hnear=0x80859a6d00690021:0x4a501367f076adff,San+Francisco,+CA&amp;amp;cid=0,0,10236188160913588323&amp;amp;t=m&amp;amp;z=16&amp;amp;iwloc=A"&gt;The Mozilla SF Office, 2 Harrison (at Embarcadero)&lt;/a&gt;
 Who: at least Brian and Daira, plus everyone else who can make it&lt;/p&gt;
 &lt;/blockquote&gt;
