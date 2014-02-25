@@ -4,7 +4,7 @@ Least Authority Performs Security Audit For SpiderOak
 #####################################################
 
 :date: 2014-02-20 13:00
-:tags: cloud, lafs, s4, consultancy, spideoak, crypton, cryptocat
+:tags: cloud, lafs, s4, consultancy, spideroak, crypton, cryptocat
 :category: News
 :slug: least_authority_performs_security_audit_for_spideroak
 :author: Zooko Wilcox-O'Hearn
