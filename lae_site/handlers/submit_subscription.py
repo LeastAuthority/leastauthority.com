@@ -48,7 +48,8 @@ class SubmitSubscriptionHandler(HandlerBase):
         emailsubj = None
         try:
             return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
-        except stripe.CardError as e: # Errors we expect: https://stripe.com/docs/api#errors
+        except stripe.CardError as e:
+            # Errors we expect: https://stripe.com/docs/api#errors
             print >>self.out, "It was a stripe.CardError!"
             self.create_cust_errhandler(traceback.format_exc(100), e, e.message)
         except stripe.APIError as e:
@@ -62,36 +63,35 @@ class SubmitSubscriptionHandler(HandlerBase):
             self.create_cust_errhandler(traceback.format_exc(100), e, details, emailsubj)
         
     def render(self, request):
-        """
-        The expected HTTP method is a POST from the <form> in templates/subscription_signup.html. 
-        render_POST is handled by the HandlerBase parent which calls this this method after logging 
-        the request.
+        # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
+        # render_POST is handled by the HandlerBase parent which calls this this method after logging
+        # the request.
+        #
+        # The foolscap service registered to run when flappcommand.run is called expects a bytestream
+        # of US-ASCII bytes, because it is reading from its stdin (--accept-stdin flag set).
+        # Therefore the content passed to the command must conform to US-ASCII.
 
-        The foolscap service registered to run when flappcommand.run is called expects a bytestream
-        of US-ascii valid bytes, because it is reading from its stdin (--accept-stdin flag set upon 
-        addition).  Therefore the content passed to the command must conform to US-ascii.
-        """
-        #Parse request, info from stripe and subscriber
+        # Parse request, info from stripe and subscriber.
         stripe_authorization_token = self.get_arg(request, 'stripeToken')
         email_from_form = self.get_arg(request, 'email')
 
-        #Load apikey
+        # Load apikey.
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
         assert (('leastauthority.com' not in stripefp.path) or ('_trial_temp' in stripefp.path)), "secrets must not be in production code repo"
         stripe_api_key = stripefp.getContent().strip()        
 
-        #invoke cc-charge by requesting subscription to recurring-payment plan
+        # Invoke card charge by requesting subscription to recurring-payment plan.
         try:
             customer = self.create_customer(stripe_api_key, stripe_authorization_token, email_from_form)
         except Exception as e:
             tmpl = env.get_template('s4-subscription-form.html')
             return tmpl.render({"errorblock": e.details}).encode('utf-8', 'replace')
 
-        #log that a new subscription has been created (at stripe)
+        # Log that a new subscription has been created (at stripe).
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
-        append_record(subscriptions_fp, customer.subscription.id)       
+        append_record(subscriptions_fp, customer.subscription.id)
 
-        def when_done(ignored_None):
+        def when_done(ign):
             service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
             try:
                 append_record(service_confirmed_fp, customer.subscription.id)
@@ -99,7 +99,7 @@ class SubmitSubscriptionHandler(HandlerBase):
                 # The request really did succeed, we just failed to record that it did. Log the error locally.
                 traceback.print_exc(100, sys.stderr)
 
-        def when_failed(ignored_None):
+        def when_failed(ign):
             try:
                 pass  #XXX  Inform operations that a subscribed customer has a broken service!!
             except Exception:
@@ -119,4 +119,4 @@ class SubmitSubscriptionHandler(HandlerBase):
         d.addErrback(when_failed)
 
         tmpl = env.get_template('payment_verified.html')
-        return tmpl.render({"productfullname":"Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')
+        return tmpl.render({"productfullname": "Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')
