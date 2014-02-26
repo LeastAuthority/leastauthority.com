@@ -83,7 +83,7 @@ class SubmitSubscriptionHandler(HandlerBase):
                                             " <support@leastauthority.com>.",
                                         email_subject="Stripe unexpected error")
 
-    def run_full_signup(self, customer, customer_pgpinfo, request):
+    def run_full_signup(self, customer, request):
         def when_done(ign):
             service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
             try:
@@ -103,6 +103,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             except Exception:
                 traceback.print_exc(100, sys.stderr)
 
+        customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
         stdin = simplejson.dumps((customer.email,
                                   customer_pgpinfo,
                                   customer.id,
@@ -114,8 +115,6 @@ class SubmitSubscriptionHandler(HandlerBase):
         d = flappcommand.run(stdin, self.out)
         d.addCallback(when_done)
         d.addErrback(when_failed)
-        return d
-
 
     def render(self, request):
         # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
@@ -128,8 +127,8 @@ class SubmitSubscriptionHandler(HandlerBase):
 
         # Get information needed to create the new stripe subscription to the S4 plan
         stripe_api_key, stripe_authorization_token, user_email = self.get_creation_parameters(request)
-        # Invoke card charge by requesting subscription to recurring-payment plan.
         try:
+            # Invoke card charge by requesting subscription to recurring-payment plan.
             customer = self.create_customer(stripe_api_key, stripe_authorization_token, user_email)
         except Exception as e:
             tmpl = env.get_template('s4-subscription-form.html')
@@ -139,7 +138,6 @@ class SubmitSubscriptionHandler(HandlerBase):
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
         append_record(subscriptions_fp, customer.subscription.id)
 
-        customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
-        d = self.run_full_signup(customer, customer_pgpinfo, request)
+        self.run_full_signup(customer, request)
         tmpl = env.get_template('payment_verified.html')
         return tmpl.render({"productfullname": "Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')
