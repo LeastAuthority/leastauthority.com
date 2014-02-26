@@ -31,6 +31,20 @@ class SubmitSubscriptionHandler(HandlerBase):
         self._logger_helper(__name__)
         self.basefp = basefp
 
+    def get_stripe_api_key(self):
+        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
+        if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
+            raise AssertionError("Secrets are not allowed in the production code repo: %r" % (stripefp.path,))
+        return stripefp.getContent().strip()
+
+    def get_creation_parameters(self, request):
+        # Load apikey.
+        stripe_api_key = self.get_stripe_api_key()
+        # Parse request, info from stripe and subscriber.
+        stripe_authorization_token = self.get_arg(request, 'stripeToken')
+        user_email = self.get_arg(request, 'email')
+        return stripe_api_key, stripe_authorization_token, user_email
+
     def create_cust_errhandler(self, trace_back, error, details, email_subject):
         error.details = details
         print >>self.out, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
@@ -41,7 +55,7 @@ class SubmitSubscriptionHandler(HandlerBase):
         }
         send_plain_email('info@leastauthority.com', 'support@leastauthority.com', trace_back, headers)
         raise error
-
+        
     def create_customer(self, stripe_api_key, stripe_authorization_token, email_from_form):
         try:
             return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', 
@@ -69,12 +83,6 @@ class SubmitSubscriptionHandler(HandlerBase):
                                             " <support@leastauthority.com>.",
                                         email_subject="Stripe unexpected error")
 
-    def get_stripe_api_key(self):
-        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
-        if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
-            raise AssertionError("secrets must not be in production code repo: %r" % (stripefp.path,))
-        return stripefp.getContent().strip()
-        
     def render(self, request):
         # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
         # render_POST is handled by the HandlerBase parent which calls this this method after logging
@@ -84,14 +92,11 @@ class SubmitSubscriptionHandler(HandlerBase):
         # of US-ASCII bytes, because it is reading from its stdin (--accept-stdin flag set).
         # Therefore the content passed to the command must conform to US-ASCII.
 
-        # Parse request, info from stripe and subscriber.
-        stripe_authorization_token = self.get_arg(request, 'stripeToken')
-        email_from_form = self.get_arg(request, 'email')
-        # Load apikey.
-        stripe_api_key = self.get_stripe_api_key()
+        # Get information needed to create the new stripe subscription to the S4 plan
+        stripe_api_key, stripe_authorization_token, user_email = self.get_creation_parameters(request)
         # Invoke card charge by requesting subscription to recurring-payment plan.
         try:
-            customer = self.create_customer(stripe_api_key, stripe_authorization_token, email_from_form)
+            customer = self.create_customer(stripe_api_key, stripe_authorization_token, user_email)
         except Exception as e:
             tmpl = env.get_template('s4-subscription-form.html')
             return tmpl.render({"errorblock": e.details}).encode('utf-8', 'replace')
@@ -115,7 +120,7 @@ class SubmitSubscriptionHandler(HandlerBase):
                     "Subject": "Sign-up error",
                 }
                 send_plain_email('info@leastauthority.com', 'support@leastauthority.com',
-                                 "A sign-up failed for <%s>." % (email_from_form,), headers)
+                                 "A sign-up failed for <%s>." % (user_email,), headers)
             except Exception:
                 traceback.print_exc(100, sys.stderr)
 
