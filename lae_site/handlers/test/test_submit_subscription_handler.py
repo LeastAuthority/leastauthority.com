@@ -15,18 +15,8 @@ REQUESTARGS = {'stripeToken':"STUB", 'email':"STUB2", 'pgp_pubkey':"STUB3"}
 MOCKFURLFP = "FAKEPATH"
 
 class MockRequest(object):
-    def __init__(self, method, d, args):
-        self.responsecode = None
-        self.out = StringIO()
-        self.method = method
-        self.args = args
-        self.d = d
-    def setResponseCode(self, code):
-        self.responsecode = code
-    def write(self, s):
-        self.out.write(s)
-    def finish(self):
-        self.d.callback(self.out.getvalue())
+    def __init__(self, argdict):
+        self.args = argdict
 
 class MockFlappCommand(object):
     def __init__(self, furlfile):
@@ -108,5 +98,8 @@ class TestSubmitSubscriptionHandler(TestCase):
 
     def test_render(self):
         ssubhand_obj = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
-        mockrequest = MockRequest('POST', defer, REQUESTARGS)
+        mockrequest = MockRequest(REQUESTARGS)
         ssubhand_obj.render(mockrequest)
+
+    def test_successful_subscription(self):
+        ssubhand_obj = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
