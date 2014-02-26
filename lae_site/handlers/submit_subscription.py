@@ -83,6 +83,40 @@ class SubmitSubscriptionHandler(HandlerBase):
                                             " <support@leastauthority.com>.",
                                         email_subject="Stripe unexpected error")
 
+    def run_full_signup(self, customer, customer_pgpinfo, request):
+        def when_done(ign):
+            service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
+            try:
+                append_record(service_confirmed_fp, customer.subscription.id)
+            except Exception:
+                # The request really did succeed, we just failed to record that it did. Log the error locally.
+                traceback.print_exc(100, sys.stderr)
+
+        def when_failed(ign):
+            try:
+                headers = {
+                    "From": FROM_ADDRESS,
+                    "Subject": "Sign-up error",
+                }
+                send_plain_email('info@leastauthority.com', 'support@leastauthority.com',
+                                 "A sign-up failed for <%s>." % (customer.email,), headers)
+            except Exception:
+                traceback.print_exc(100, sys.stderr)
+
+        stdin = simplejson.dumps((customer.email,
+                                  customer_pgpinfo,
+                                  customer.id,
+                                  customer.subscription.plan.id,
+                                  customer.subscription.id),
+                                 ensure_ascii=True
+                                 )
+
+        d = flappcommand.run(stdin, self.out)
+        d.addCallback(when_done)
+        d.addErrback(when_failed)
+        return d
+
+
     def render(self, request):
         # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
         # render_POST is handled by the HandlerBase parent which calls this this method after logging
@@ -105,37 +139,7 @@ class SubmitSubscriptionHandler(HandlerBase):
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
         append_record(subscriptions_fp, customer.subscription.id)
 
-        def when_done(ign):
-            service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
-            try:
-                append_record(service_confirmed_fp, customer.subscription.id)
-            except Exception:
-                # The request really did succeed, we just failed to record that it did. Log the error locally.
-                traceback.print_exc(100, sys.stderr)
-
-        def when_failed(ign):
-            try:
-                headers = {
-                    "From": FROM_ADDRESS,
-                    "Subject": "Sign-up error",
-                }
-                send_plain_email('info@leastauthority.com', 'support@leastauthority.com',
-                                 "A sign-up failed for <%s>." % (user_email,), headers)
-            except Exception:
-                traceback.print_exc(100, sys.stderr)
-
         customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
-        stdin = simplejson.dumps((customer.email,
-                                  customer_pgpinfo,
-                                  customer.id,
-                                  customer.subscription.plan.id,
-                                  customer.subscription.id),
-                                 ensure_ascii=True
-                                 )
-
-        d = flappcommand.run(stdin, self.out)
-        d.addCallback(when_done)
-        d.addErrback(when_failed)
-
+        d = self.run_full_signup(customer, customer_pgpinfo, request)
         tmpl = env.get_template('payment_verified.html')
         return tmpl.render({"productfullname": "Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')
