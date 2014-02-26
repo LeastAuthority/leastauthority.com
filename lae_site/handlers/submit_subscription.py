@@ -24,13 +24,14 @@ def start(basefp):
     flappcommand = FlappCommand(signup_furl_fp.path)
     return flappcommand.start()
 
-class SubmitSubscriptionHandler(HandlerBase):
 
+class SubmitSubscriptionHandler(HandlerBase):
     def __init__(self, basefp):
         HandlerBase.__init__(self, out=None)
         self._logger_helper(__name__)
         self.basefp = basefp
 
+    #The following helper methods are all called directly-or-indirectly by render.
     def get_stripe_api_key(self):
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
         if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
@@ -104,6 +105,9 @@ class SubmitSubscriptionHandler(HandlerBase):
                 traceback.print_exc(100, sys.stderr)
 
         customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
+        # The foolscap service registered to run when flappcommand.run is called expects a bytestream
+        # of US-ASCII bytes, because it is reading from its stdin (--accept-stdin flag set).
+        # Therefore the content passed to the command must conform to US-ASCII.
         stdin = simplejson.dumps((customer.email,
                                   customer_pgpinfo,
                                   customer.id,
@@ -120,10 +124,6 @@ class SubmitSubscriptionHandler(HandlerBase):
         # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
         # render_POST is handled by the HandlerBase parent which calls this this method after logging
         # the request.
-        #
-        # The foolscap service registered to run when flappcommand.run is called expects a bytestream
-        # of US-ASCII bytes, because it is reading from its stdin (--accept-stdin flag set).
-        # Therefore the content passed to the command must conform to US-ASCII.
 
         # Get information needed to create the new stripe subscription to the S4 plan
         stripe_api_key, stripe_authorization_token, user_email = self.get_creation_parameters(request)
@@ -137,7 +137,8 @@ class SubmitSubscriptionHandler(HandlerBase):
         # Log that a new subscription has been created (at stripe).
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
         append_record(subscriptions_fp, customer.subscription.id)
-
+        # Initiate the provisioning service
         self.run_full_signup(customer, request)
+        # Return the a page notifying the user that they've been charged and their service is being set up.
         tmpl = env.get_template('payment_verified.html')
         return tmpl.render({"productfullname": "Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')
