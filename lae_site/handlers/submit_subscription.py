@@ -44,7 +44,8 @@ class SubmitSubscriptionHandler(HandlerBase):
 
     def create_customer(self, stripe_api_key, stripe_authorization_token, email_from_form):
         try:
-            return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', email=email_from_form)
+            return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', 
+                                          email=email_from_form)
         except stripe.CardError as e:
             # Errors we expect: https://stripe.com/docs/api#errors
             self.create_cust_errhandler(traceback.format_exc(100), e,
@@ -52,15 +53,20 @@ class SubmitSubscriptionHandler(HandlerBase):
                                         email_subject="Stripe Card error")
         except stripe.APIError as e:
             self.create_cust_errhandler(traceback.format_exc(100), e,
-                                        details="Our payment processor is temporarily unavailable, please try again in a few moments.",
+                                        details="Our payment processor is temporarily unavailable,"+\
+                                            " please try again in\ a few moments.",
                                         email_subject="Stripe API error")
         except stripe.InvalidRequestError as e:
             self.create_cust_errhandler(traceback.format_exc(100), e,
-                                        details="Our payment processor is temporarily unavailable, please submit your information again.",
+                                        details="Due to technical difficulties unrelated to your card"+\
+                                            " details, we were unable to charge your account. Our"+\
+                                            " engineers have been notified and will contact you with"+\
+                                            " an update shortly.",
                                         email_subject="Stripe Invalid Request error")
         except Exception as e:
             self.create_cust_errhandler(traceback.format_exc(100), e,
-                                        details="Something went wrong. Please try again, or contact <support@leastauthority.com>.",
+                                        details="Something went wrong. Please try again, or contact"+\
+                                            " <support@leastauthority.com>.",
                                         email_subject="Stripe unexpected error")
 
     def render(self, request):
