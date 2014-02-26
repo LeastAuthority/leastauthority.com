@@ -69,6 +69,12 @@ class SubmitSubscriptionHandler(HandlerBase):
                                             " <support@leastauthority.com>.",
                                         email_subject="Stripe unexpected error")
 
+    def get_stripe_api_key(self):
+        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
+        if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
+            raise AssertionError("secrets must not be in production code repo: %r" % (stripefp.path,))
+        return stripefp.getContent().strip()
+        
     def render(self, request):
         # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
         # render_POST is handled by the HandlerBase parent which calls this this method after logging
@@ -81,13 +87,8 @@ class SubmitSubscriptionHandler(HandlerBase):
         # Parse request, info from stripe and subscriber.
         stripe_authorization_token = self.get_arg(request, 'stripeToken')
         email_from_form = self.get_arg(request, 'email')
-
         # Load apikey.
-        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
-        if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
-            raise AssertionError("secrets must not be in production code repo: %r" % (stripefp.path,))
-        stripe_api_key = stripefp.getContent().strip()
-
+        stripe_api_key = self.get_stripe_api_key()
         # Invoke card charge by requesting subscription to recurring-payment plan.
         try:
             customer = self.create_customer(stripe_api_key, stripe_authorization_token, email_from_form)
