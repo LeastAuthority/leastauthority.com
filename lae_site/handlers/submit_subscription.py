@@ -57,10 +57,10 @@ class SubmitSubscriptionHandler(HandlerBase):
         send_plain_email('info@leastauthority.com', 'support@leastauthority.com', trace_back, headers)
         raise error
         
-    def create_customer(self, stripe_api_key, stripe_authorization_token, email_from_form):
+    def create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
         try:
             return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4', 
-                                          email=email_from_form)
+                                          email=user_email)
         except stripe.CardError as e:
             # Errors we expect: https://stripe.com/docs/api#errors
             self.create_cust_errhandler(traceback.format_exc(100), e,
