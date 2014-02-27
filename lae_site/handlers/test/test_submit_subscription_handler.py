@@ -7,7 +7,8 @@ from twisted.python.filepath import FilePath
 from lae_util.fileutil import make_dirs
 from lae_site.handlers import submit_subscription
 from lae_util import send_email
-from stripe import Customer
+from lae_site.handlers.submit_subscription import stripe
+
 
 MOCKAPIKEY = "sk_live_"+"A"*24
 MOCKSMTPPASSWORD = "beef"*4 
@@ -37,14 +38,17 @@ class MockSubscription(object):
         self.plan = MockPlan()
 
 class MockCustomer(object):
-    def __init__(self):
+    def __init__(self, api_key, card, plan, email):
         self.subscription = MockSubscription()
-        self.email = 'EMAILSTUB'
+        self.email = email
         self.id = 'IDSTUB'
+        self.init_key = api_key
+        self.init_email = email
+        self.init_plan = plan
 
     @classmethod
     def create(cls, api_key, card, plan, email):
-        return MockCustomer()
+        return MockCustomer(api_key, card, plan, email)
 
 class MockCardError(Exception):
     def __init__(self, value):
@@ -74,10 +78,7 @@ class TestSubscribedCustomerCreation(TestCase):
     def setUp(self):
         #Patch out environment
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
-        self.patch(submit_subscription.stripe, 'Customer', MockCustomer)
-        self.patch(submit_subscription.stripe, 'CardError', MockCardError)
-        self.patch(submit_subscription.stripe, 'APIError', MockAPIError)
-        self.patch(submit_subscription.stripe, 'InvalidRequestError', MockInvalidRequestError)
+        #self.patch(submit_subscription.stripe, 'Customer', MockCustomer)
         self.patch(submit_subscription, 'env', MockEnv())
 
         #Create directory for file IO
@@ -92,31 +93,23 @@ class TestSubscribedCustomerCreation(TestCase):
         self.mocksmtppswdpath = self.basedirfp.child('secret_config').child('smtppassword').path
         self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mocksmtppswdpath)
         
-        self.api_key = None
-        self.stripe_auth_token = None
-        self.user_email = None
-
+        self.mc = 'SettingUp'
+        self.ssubhand_obj = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
     def tearDown(self):
-        self.basedirfp = None
-        self.api_key = None
-        self.stripe_auth_token = None
-        self.user_email = None
-
-    def test_render(self):
-        ssubhand_obj = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
-        mockrequest = MockRequest(REQUESTARGS)
-        ssubhand_obj.render(mockrequest)
+        self.basedirfp = 'TornDown'
+        self.mc = 'TornDown'
+        self.ssubhand_obj = 'TornDown'
 
     def test_successful_customer_creation(self):
         mockrequest = MockRequest(REQUESTARGS)
-        def call_stripe_Customer_create(api_key, stripe_auth_token, user_email):
-            self.api_key = api_key
-            self.stripe_auth_token = stripe_auth_token
-            self.user_email = user_email
+        def call_stripe_Customer_create(api_key, stripe_auth_token, plan, user_email):
+            print "api_key: %s" % api_key
+            self.mc = MockCustomer.create(api_key, stripe_auth_token, plan, user_email) 
+            return self.mc
+        
+        self.patch(stripe, 'Customer', MockCustomer)
+        self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
+        self.ssubhand_obj.render(mockrequest)
 
-        self.patch(Customer, 'create', call_stripe_Customer_create)
-
-
-        ssubhand_obj = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
-        ssubhand_obj.render(mockrequest)
+        #self.failUnlessEqual(self.mc, 'fruitcake')
