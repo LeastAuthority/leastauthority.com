@@ -109,7 +109,7 @@ server {
 class NotListeningError(Exception):
     pass
 
-INSTALL_TXAWS_VERSION = "0.2.1.post4"
+INSTALL_TXAWS_VERSION = "0.2.1.post5"
 INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
 INSTALL_STATMOVER_VERSION = "2013-04-20T02_25_53+0000"
