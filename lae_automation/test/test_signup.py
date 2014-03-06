@@ -1,3 +1,6 @@
+
+from base64 import b32encode
+
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
@@ -117,6 +120,7 @@ class TestSignupModule(TestCase):
         self.MSUBSCRIPTION_ID = 'sub_x14Characterx'
         self.MPLAN_ID = 'XX'
         self.MSECRETSFILE = 'MSECRETSFILE'
+        self.MENCODED_IDS = 'on2wex3yge2eg2dbojqwg5dfoj4a-mn2xgx3yge2eg2dbojqwg5dfojzxq'
 
         FilePath(self.SIGNUPSPATH).setContent('')
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
@@ -159,7 +163,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(header_dict['Date'], 'Thu, 01 Jan 1970 00:00:00 GMT')
             self.failUnlessEqual(header_dict['Content-Length'], 0)
             self.failUnlessEqual(header_dict['Authorization'],
-                                 'AWS TESTAAAAAAAAAAAAAAAA:vrD/fHva81OWv9YM4EopWeIeitk=')
+                                 'AWS TESTAAAAAAAAAAAAAAAA:QuIggXzafsFXKsGAMs8tDAq7M70=')
             self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
 
             return defer.succeed('Completed devpay bucket creation submission.')
@@ -208,9 +212,9 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(privatehost, '0.0.0.1')
             self.failUnlessEqual(AWSaccesskeyid, 'TESTAAAAAAAAAAAAAAAA')
             self.failUnlessEqual(AWSsecretkey, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
-            self.failUnlessEqual(bucket_name, 'lae-sub-x14characterx-cus-x14charactersx')
+            self.failUnlessEqual(bucket_name, "lae-" + self.MENCODED_IDS)
             self.failUnlessEqual(oldsecrets, None)
-            self.failUnlessEqual(secretsfile.name[-72:], 'secrets/XX/1970-01-01T000000Z-cus_x14Charactersx-sub_x14Characterx/SSEC2')
+            self.failUnless(secretsfile.name.endswith('secrets/XX/1970-01-01T000000Z-%s/SSEC2' % (self.MENCODED_IDS,)), secretsfile.name)
         self.patch(signup, 'bounce_server', call_bounce_server)
 
         def call_send_signup_confirmation(publichost, customer_email, furl, customer_keyinfo, stdout, 
@@ -225,8 +229,7 @@ class TestSignupModule(TestCase):
         def call_send_notify_failure(f, customer_email, logfilename, stdout, stderr):
             self.failUnless(isinstance(f, Failure), f)
             self.failUnlessEqual(customer_email, 'MEMAIL')
-            logfile_end = logfilename[-78:]
-            self.failUnlessEqual(logfile_end, 'secrets/XX/1970-01-01T000000Z-cus_x14Charactersx-sub_x14Characterx/signup_logs')
+            self.failUnless(logfilename.endswith('secrets/XX/1970-01-01T000000Z-%s/signup_logs' % (self.MENCODED_IDS,)), logfilename)
             return f
         self.patch(signup, 'send_notify_failure', call_send_notify_failure)
 
@@ -244,7 +247,7 @@ class TestSignupModule(TestCase):
     def initialize_testlocal_state(self, test_name):
         timestamp = '1970-01-01T00:00:00Z'
         fpcleantimestamp = timestamp.replace(':', '')
-        logdirname = "%s-%s-%s" % (fpcleantimestamp, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID)
+        logdirname = "%s-%s" % (fpcleantimestamp, self.MENCODED_IDS)
         testconfigdir = self.mockconfigdir.child(test_name).child('secrets').child(self.MPLAN_ID).child(logdirname)
         testconfigdir.makedirs()
         MLOGFILE_fp = FilePath(testconfigdir.path + '/signup_logs')
@@ -332,3 +335,8 @@ class TestSignupModule(TestCase):
             self.failUnlessIn("Timed out", out)
         d.addCallbacks(_bad_success, _check_failure)
         return d
+
+    def test_get_bucket_name(self):
+        self.failUnlessEqual(b32encode("abc"), "MFRGG===")
+        self.failUnlessEqual(b32encode("def"), "MRSWM===")
+        self.failUnlessEqual(signup.get_bucket_name("abc", "def"), "lae-mfrgg-mrswm")

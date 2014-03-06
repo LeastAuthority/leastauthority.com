@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 import time
+from base64 import b32encode
+
 from twisted.internet import defer, reactor, task
 from twisted.python.filepath import FilePath
 
@@ -37,6 +39,14 @@ def lookup_product(config, productcode):
 
     return ps[0]
 
+
+def encode_id(ident):
+    return b32encode(ident).rstrip("=").lower()
+
+def get_bucket_name(subscription_id, customer_id):
+    return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
+
+
 def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, subscription_id, 
                                 plan_id, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
@@ -48,11 +58,7 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
     AWSaccesskeyid = config.other["ec2_access_key_id"]
     AWSsecretkeypath = config.other["ec2_secret_path"]
     AWSsecretkey = FilePath(AWSsecretkeypath).getContent().strip()
-    #AWS REST API encodes requests in lowercase, so send the id's to _lowercase_ before naming the buckets.  Terrible idea?
-    #Hmmm...  due to the nature of bucketnames these need to be url-encoded...
-    cust_sub_id_for_bucket = subscription_id.lower().replace('_','-')
-    cust_id_for_bucket = customer_id.lower().replace('_','-')
-    bucketname = "lae-%s-%s" % (cust_sub_id_for_bucket, cust_id_for_bucket) 
+    bucketname = get_bucket_name(subscription_id, customer_id)
     location = None  # default S3 location for now
     print >> stderr, "plan_id is %s" % plan_id
     product = lookup_product(config, plan_id)
@@ -272,7 +278,7 @@ def create_log_filepaths(stripe_plan_id, stripe_customer_id, stripe_subscription
     logdir_parent_fp = FilePath('../').child('secrets').child(stripe_plan_id)
     timestamp = format_iso_time(time.time())
     fpcleantimestamp = timestamp.replace(':', '')
-    logdirname = "%s-%s-%s" % (fpcleantimestamp, stripe_customer_id, stripe_subscription_id)
+    logdirname = "%s-%s" % (fpcleantimestamp, get_bucket_name(stripe_customer_id, stripe_subscription_id)[len('lae-') :])
     abslogdir_fp = logdir_parent_fp.child(logdirname)
     abslogdir_fp.makedirs()
     stripelog_fp = abslogdir_fp.child('stripe')
