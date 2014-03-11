@@ -4,7 +4,7 @@ from twisted.web.static import File
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
 
-from lae_site.handlers.devpay_complete import CollectEmailHandler, DevPayPurchaseHandler, ActivationRequestHandler
+from lae_site.handlers.devpay_complete import CollectEmailHandler
 from lae_site.handlers.signup import SignupHandler
 from lae_site.handlers.web import JinjaHandler
 
@@ -15,8 +15,6 @@ def make_site(basefp, config):
     resource.putChild('blog', File('content/blog'))
     resource.putChild('collect-email', CollectEmailHandler(basefp, config.products))
     resource.putChild('signup', SignupHandler(config.products))
-    resource.putChild('devpay-complete', DevPayPurchaseHandler(basefp, config.products))
-    resource.putChild('activation-request', ActivationRequestHandler(basefp, config.products))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
     site = Site(resource, logPath=basefp.child('sitelogs').path)
