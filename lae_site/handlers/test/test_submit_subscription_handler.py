@@ -54,6 +54,7 @@ class MockCustomer(object):
 class MockCardError(Exception):
     def __init__(self, value):
         self.value = value
+        self.message = value
 
 
 class MockAPIError(Exception):
@@ -128,9 +129,10 @@ class TestSubscribedCustomerCreation(TestCase):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockCardError('THIS SHOULD BE THE VALUE STRIPE SENDS.')
 
-        def call_create_cust_errhandler(self):
+        def call_create_cust_errhandler(self, trace_back, error, details, email_subject):
+            print >> sys.stdout, "details"
             
         self.patch(SubmitSubscriptionHandler, 'create_cust_errhandler', call_create_cust_errhandler)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.patch(stripe, 'CardError', MockCardError) 
-        self.ssubhand_obj.render(mockrequest)
+        self.ssubhand_obj.create_customer()
