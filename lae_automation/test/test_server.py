@@ -213,8 +213,6 @@ class TestServerModule(TestCase):
         MPRIVHOST = '1.1.1.1'
         ACCESSKEYID = 'TEST'+'A'*16
         SECRETACCESSKEY = 'TEST'+'A'*36
-        USERTOKEN = 'TESTUSERTOKEN'+'A'*385
-        PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
         BUCKETNAME = 'foooooo'
         STDOUT = StringIO()
         STDERR = StringIO()
@@ -226,7 +224,7 @@ class TestServerModule(TestCase):
                                       'publichost': MHOSTNAME,
                                       'privatehost': MPRIVHOST,
                                       'introducer_furl': INTERNALINTROFURL,
-                                      'access_key_id': ACCESSKEYID,
+                                      'AWSaccess_key_id': ACCESSKEYID,
                                       'bucket_name': BUCKETNAME,
                                       'incident_gatherer_furl': "MOCK_incident_gatherer_furl",
                                       'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
@@ -252,13 +250,11 @@ class TestServerModule(TestCase):
                 (SERVER_PORT + '\n', '/home/customer/storageserver/client.port', False, None),
                 (test_tahoe_cfg, '/home/customer/storageserver/tahoe.cfg', False, None),
                 (SECRETACCESSKEY, '/home/customer/storageserver/private/s3secret', False, 0640),
-                (USERTOKEN, '/home/customer/storageserver/private/s3usertoken', False, 0640),
-                (PRODUCTTOKEN, '/home/customer/storageserver/private/s3producttoken', False, 0640),
                 (RESTART_SCRIPT, '/home/customer/restart.sh', False, 0750),
                 ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
                 ])
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
-                             SECRETACCESSKEY, USERTOKEN, PRODUCTTOKEN, BUCKETNAME, None, \
+                             SECRETACCESSKEY, BUCKETNAME, None, \
                              STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
         self._check_all_done()
 
