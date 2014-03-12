@@ -1,3 +1,3 @@
 #!/bin/sh
 cd /home/website/leastauthority.com
-PYTHONPATH=. python ./full_signup.py
+PYTHONPATH=. timeout --kill-after=121m 2h python ./full_signup.py
