@@ -394,6 +394,12 @@ def set_up_reboot(stdout, stderr):
     write('@reboot /home/customer/restart.sh\n', '/home/customer/ctab')
     run('crontab /home/customer/ctab')
 
+def create_secrets_file(basefp, timestamp, stripe_customer_id):
+    logfilename = "%s-%s" % (timestamp, stripe_customer_id)
+
+    secretsfile = basefp.child('secrets').child(logfilename)
+    logfile = basefp.child('signup_logs').child(logfilename)
+    return secretsfile, logfile
 
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
@@ -470,10 +476,9 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
-                              secret_key, user_token, product_token, bucket_name,
-                              oldsecrets, stdout, stderr, secretsfile,
-                              configpath='../secret_config/lae_automation_config.json'):
+def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id, secret_key, user_token, 
+                  product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
+                  configpath='../secret_config/lae_automation_config.json'):
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
