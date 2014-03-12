@@ -1,5 +1,4 @@
 import sys
-from cStringIO import StringIO
 
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
@@ -8,8 +7,7 @@ from twisted.python.failure import Failure
 import mock
 
 import lae_automation.initialize
-from lae_automation.initialize import activate_user_account_desktop, \
-    verify_and_store_serverssh_pubkey, PublicKeyMismatch
+from lae_automation.initialize import verify_and_store_serverssh_pubkey, PublicKeyMismatch
 
 
 ACTIVATIONKEY= 'MOCKACTIVATONKEY'
@@ -29,24 +27,6 @@ class InitializationTests (TestCase):
         self.mockwaitfor_keyscan = self._patch_mock(lae_automation.initialize,
                                                     'wait_for_and_store_pubkeyfp_from_keyscan')
         self.mocklsc = self._patch_mock(lae_automation.initialize, 'LicenseServiceClient')
-
-
-    def test_activate_user_account_desktop(self):
-        def call_adpr(activationkey, producttoken):
-            mockadpr = mock.Mock(name='ActivateDesktopProductResponse')
-            mockadpr.usertoken = USERTOKEN
-            return defer.succeed(mockadpr)
-
-        adprcallmock = self.mocklsc.return_value.activate_desktop_product
-        adprcallmock.side_effect = call_adpr
-
-        activate_returnval = activate_user_account_desktop(ACTIVATIONKEY,
-            PRODUCTTOKEN,
-            stdout = StringIO(),
-            stderr = StringIO())
-
-        adprcallmock.assert_called_once_with(ACTIVATIONKEY, PRODUCTTOKEN)
-        return activate_returnval
 
     def test_verify_and_store_serverssh_pubkey(self):
         self.mockwaitfor_console.side_effect = lambda *args: defer.succeed(
