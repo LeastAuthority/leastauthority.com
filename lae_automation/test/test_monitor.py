@@ -117,7 +117,7 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_success(self):
         LOCINSTANCEID = 'i-aaaaaaaa'
-        LOCSTARTTIME  = '2112-01-01T00:00:00.000Z'
+        LOCSTARTTIME  = '2012-01-01T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCSTATE = 'running'
         LOCALSTATEDICT = {LOCINSTANCEID : (LOCSTARTTIME, LOCPUBIP, LOCSTATE)}
@@ -132,7 +132,7 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_unexpectedinstance(self):
         LOCINSTANCEID = 'i-'+'a'*8
-        LOCSTARTTIME  = '2112-01-01T00:00:00.000Z'
+        LOCSTARTTIME  = '2012-01-01T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCSTATE = 'running'
         LOCALSTATEDICT = {LOCINSTANCEID : (LOCSTARTTIME, LOCPUBIP, LOCSTATE)}
@@ -143,7 +143,7 @@ class TestServerMonitoring(TestCase):
         STATE = 'running'
 
         INSTANCEID2 = 'i-'+'b'*8
-        STARTTIME2 = '2112-01-01T01:00:00.000Z'
+        STARTTIME2 = '2012-01-01T01:00:00.000Z'
         PUBDNSNAME2 = 'ec2-2-2-2-2.c'
         STATE2 = 'running'
         REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, PUBDNSNAME, STATE),
@@ -153,7 +153,7 @@ class TestServerMonitoring(TestCase):
 
     def test_compare_servers_to_local_missingremoteinstance(self):
         LOCINSTANCEID = 'i-'+'a'*8
-        LOCSTARTTIME  = '2112-01-01T00:00:00.000Z'
+        LOCSTARTTIME  = '2012-01-01T00:00:00.000Z'
         LOCPUBIP = '0.0.0.0'
         LOCSTATE = 'running'
         LOCINSTANCEID2 = 'i-'+'b'*8
