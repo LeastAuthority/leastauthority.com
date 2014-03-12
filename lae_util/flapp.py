@@ -1,7 +1,12 @@
-
 from twisted.internet import defer
 from foolscap.api import Tub
 from foolscap.appserver.client import RunCommand, ClientOptions
+
+
+class CommandFailed(Exception):
+    def __init__(self, rc):
+        Exception.__init__(self, "Command failed with exit code %d" % (rc,))
+        self.rc = rc
 
 
 class FlappCommand(object):
@@ -22,42 +27,35 @@ class FlappCommand(object):
         def _got_rref(rref):
             self.rref = rref
             done.callback(None)
-        self.d.addCallbacks(_got_rref, done.errback)
+        def _failed(f):
+            done.errback(f)
+            return f
+        self.d.addCallbacks(_got_rref, _failed)
         return done
 
-    def run(self, content, stdout, stderr, when_done, when_failed):
+    def run(self, content, log):
+        assert isinstance(content, bytes), (`content`, type(content))
         assert self.rref is not None
         options = ClientOptions()
-        options.stdout = stdout
-        options.stderr = stderr
         options.parseOptions(self.flappclient_args)
 
         def stdio(proto):
+            # This value is being sent to the stdin of the flapp.
             proto.dataReceived(content)
             proto.connectionLost("EOF")
 
         options.subOptions.stdio = stdio
-        options.subOptions.stdout = stdout
-        options.subOptions.stderr = stderr
 
-        def _go(ign):
-            print >>stdout, "Starting..."
-            return RunCommand().run(self.rref, options.subOptions)
-        def _done(rc):
-            if rc == 0:
-                when_done()
-            else:
-                print >>stdout, "Command failed with exit code %r." % (rc,)
-                when_failed()
-        def _error(f):
-            print >>stdout, str(f)
-            when_failed()
-        def _recover(f):
-            try:
-                print >>stderr, str(f)
-            except Exception:
-                print >>stderr, "something weird"
+        # These are not used.
+        options.subOptions.stdout = None
+        options.subOptions.stderr = None
 
-        self.d.addCallback(_go)
-        self.d.addCallbacks(_done, _error)
-        self.d.addErrback(_recover)
+        print >>log, "Starting command."
+        self.d = RunCommand().run(self.rref, options.subOptions)
+        def _log_return_code(rc):
+            print >>log, "Command completed with exit code %r" % (rc,)
+        def _log_failure(f):
+            print >>log, "Command failed with %r" % (f,)
+
+        self.d.addCallbacks(_log_return_code, _log_failure)
+        return self.d
