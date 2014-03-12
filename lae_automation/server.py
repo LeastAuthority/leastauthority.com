@@ -44,7 +44,7 @@ stats_gatherer.furl = %(stats_gatherer_furl)s
 # Shall this node provide storage service?
 enabled = true
 backend = s3
-s3.access_key_id = %(access_key_id)s
+s3.access_key_id = %(AWSaccess_key_id)s
 s3.bucket = %(bucket_name)s
 
 [helper]
@@ -285,7 +285,9 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 python-nevow '
                  'python-dateutil fabric python-foolscap python-twisted-mail python-six '
-                 'python-unidecode python-tz python-docutils python-markdown')
+                 'python-unidecode python-tz python-docutils python-markdown python-pip')
+    # From:  https://stripe.com/docs/libraries
+    sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
     sudo_apt_get('install -y postfix')
@@ -334,7 +336,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
         #FIXME: make idempotent
         if not files.exists('/home/website/leastauthority.com/flapp'):
             run('flappserver create /home/website/leastauthority.com/flapp')
-            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
+            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
 INTRODUCER_PORT = '12345'
@@ -395,16 +397,19 @@ def set_up_reboot(stdout, stderr):
     write('@reboot /home/customer/restart.sh\n', '/home/customer/ctab')
     run('crontab /home/customer/ctab')
 
-
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
-
-    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+    dirfp = basefp.child('secrets').child('active_SSEC2s')
+    try:
+        dirfp.makedirs()
+    except OSError:
+        pass
+    secretsfile = dirfp.child(logfilename).open('a+')
     logfile = basefp.child('signup_logs').child(logfilename).open('a+')
 
-    stdout = LoggingStream(raw_stdout, logfile, '>')
-    stderr = LoggingStream(raw_stderr, logfile, '')
+    stdout = LoggingStream(logfile, '>')
+    stderr = LoggingStream(logfile, '')
 
     # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
     # It does have a way to disable that, but not (easily) to redirect it.
@@ -471,10 +476,9 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
-                              secret_key, user_token, product_token, bucket_name,
-                              oldsecrets, stdout, stderr, secretsfile,
-                              configpath='../secret_config/lae_automation_config.json'):
+def bounce_server(publichost, admin_privkey_path, privatehost, AWSaccess_key_id, AWSsecret_key, 
+                  bucket_name, oldsecrets, stdout, stderr, secretsfile,
+                  configpath='../secret_config/lae_automation_config.json'):
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
@@ -497,7 +501,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
                                       'publichost': publichost,
                                       'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
-                                      'access_key_id': access_key_id,
+                                      'AWSaccess_key_id': AWSaccess_key_id,
                                       'bucket_name': bucket_name,
                                       'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
                                       'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
@@ -507,9 +511,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
         restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
 
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
-    write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
-    write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
+    write(AWSsecret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
 
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
@@ -525,7 +527,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
     server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
     server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
                               ' then cat /home/customer/storageserver/private/node.privkey; fi')
-
+    
     print >>stdout, "The introducer and storage server are running."
 
     external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
@@ -546,10 +548,6 @@ shares.total = 1
     print >>secretsfile, simplejson.dumps({
         'publichost':               publichost,
         'privatehost':              privatehost,
-        'access_key_id':            access_key_id,
-        'secret_key':               secret_key,
-        'user_token':               user_token,
-        'product_token':            product_token,
         'bucket_name':              bucket_name,
         'introducer_node_pem':      introducer_node_pem,
         'introducer_nodeid':        introducer_nodeid,
