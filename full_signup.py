@@ -1,75 +1,82 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
-import time, os, sys, base64
+import simplejson, sys
 
 from twisted.internet import defer, reactor
+from lae_automation.signup import create_log_filepaths
+from lae_automation.signup import activate_subscribed_service
+from lae_util.streams import LoggingStream
+from lae_util.servers import append_record
+from lae_util.fileutil import make_dirs
 from twisted.python.filepath import FilePath
 
-from lae_util.streams import LoggingStream
-from lae_util.timestamp import format_iso_time
+def main(stdin, flapp_stdout, flapp_stderr):
+    append_record(flapp_stdout, "Automation script started.")
+    (customer_email,
+     customer_pgpinfo,
+     customer_id,
+     plan_id,
+     subscription_id) = simplejson.loads(stdin.read())
 
+    abslogdir_fp, stripesecrets_log_fp, SSEC2secrets_log_fp, signup_log_fp = \
+        create_log_filepaths(plan_id,
+                             customer_id, 
+                             subscription_id)
+    append_record(flapp_stdout, "Writing logs to %r." % (abslogdir_fp.path,))
 
-def main(stdin, stdout, stderr, seed, secretsfile, logfilename):
-    print >>stdout, "Automation script started."
-    print >>stderr, "On separate lines: Activation key, Product code, Name, Email, Key info"
-    activationkey = stdin.readline().strip()
-    productcode = stdin.readline().strip()
-    name = stdin.readline().strip()
-    email = stdin.readline().strip()
-    keyinfo = stdin.readline().strip()
+    stripesecrets_log_fp.setContent(simplejson.dumps({
+                'customer_email':                customer_email,
+                'customer_pgpinfo':              customer_pgpinfo,
+                'customer_id':                   customer_id,
+                'plan_id':                       plan_id,
+                'subscription_id':               subscription_id
+                } ) )
 
-    if keyinfo is None:
-        # EOF reached before 5 lines (including blank lines) were input
-        raise AssertionError("full_signup.py: some information was not received. Please report this to <info@leastauthority.com>.")
+    SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
+    signup_logfile = signup_log_fp.open('a+')
+    signup_stdout = LoggingStream(signup_logfile, '>')
+    signup_stderr = LoggingStream(signup_logfile, '')
 
-    print >>stderr, "Received all fields, thanks."
-    try:
-        from lae_automation.signup import signup
-        return signup(activationkey, productcode, name, email, keyinfo, stdout, stderr, seed, secretsfile, logfilename)
-    except Exception:
-        import traceback
-        traceback.print_exc(100, stdout)
-        raise
+    def errhandler(err):
+        fh = flapp_stderr.open('a+')
+        fh.write(repr(err))
+        fh.close()
+        return err
+
+    d = defer.succeed(None)
+    d.addCallback(lambda ign: activate_subscribed_service(customer_email, customer_pgpinfo, 
+                                                          customer_id, subscription_id, 
+                                                          plan_id,  
+                                                          signup_stdout, signup_stderr, 
+                                                          SSEC2_secretsfile, signup_log_fp.path)
+                  )
+    d.addErrback(errhandler)
+    d.addBoth(lambda ign: signup_logfile.close())
 
 if __name__ == '__main__':
+
+    defer.setDebugging(True)
+    stdin = sys.stdin
+    logDir = FilePath('../secrets/flappserver_logs')
+    if not logDir.isdir():
+        make_dirs(logDir.path)
+    flapp_stdout = logDir.child('stdout')
+    flapp_stderr = logDir.child('stderr')
+    
+    d = defer.succeed(None)
+    d.addCallback(lambda ign: main(stdin, flapp_stdout, flapp_stderr))
+    def _print_except(f):
+        fh = flapp_stderr.open('a+')
+        f.print_stack(file=fh)
+        fh.close()
+
+    d.addErrback(_print_except)
+    d.addCallbacks(lambda ign: sys.exit(0), lambda ign: sys.exit(8))
     try:
-        defer.setDebugging(True)
-        basefp = FilePath('..')
-        seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
-        logfilename = "%s-%s" % (format_iso_time(time.time()).replace(':', ''), seed)
-
-        secretsfile = basefp.child('secrets').child(logfilename).open('a+')
-        logfile = basefp.child('signup_logs').child(logfilename).open('a+')
-        stdin = sys.stdin
-        stdout = LoggingStream(sys.stdout, logfile, '>')
-        stderr = LoggingStream(sys.stderr, logfile, '')
-
-        # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
-        # It does have a way to disable that, but not (easily) to redirect it.
-        sys.stdout = stderr
-
-        def _close(res):
-            stdout.flush()
-            stderr.flush()
-            secretsfile.close()
-            logfile.close()
-            return res
-        def _err(f):
-            print >>stderr, str(f)
-            if hasattr(f.value, 'response'):
-                print >>stderr, f.value.response
-            print >>stdout, "%s: %s" % (f.value.__class__.__name__, f.value)
-            return f
-
-        d = defer.succeed(None)
-        d.addCallback(lambda ign: main(stdin, stdout, stderr, seed, secretsfile, logfilename))
-        d.addErrback(_err)
-        d.addBoth(_close)
-        d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
         reactor.run()
     except Exception:
         import traceback
-        traceback.print_exc(file=sys.stderr)
-        sys.stderr.flush()
-        os._exit(1)
-
+        fh = flapp_stderr.open('a+')
+        traceback.print_exc(file=fh)
+        fh.close()
+        sys.exit(7)
