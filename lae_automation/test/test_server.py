@@ -213,6 +213,8 @@ class TestServerModule(TestCase):
         MPRIVHOST = '1.1.1.1'
         ACCESSKEYID = 'TEST'+'A'*16
         SECRETACCESSKEY = 'TEST'+'A'*36
+        MUSERTOKEN = None
+        MPRODUCTTOKEN = None
         BUCKETNAME = 'foooooo'
         STDOUT = StringIO()
         STDERR = StringIO()
@@ -253,8 +255,8 @@ class TestServerModule(TestCase):
                 (RESTART_SCRIPT, '/home/customer/restart.sh', False, 0750),
                 ('@reboot /home/customer/restart.sh\n', '/home/customer/ctab', False, None)
                 ])
-        server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, \
-                             SECRETACCESSKEY, BUCKETNAME, None, \
+        server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, SECRETACCESSKEY, \
+                             MUSERTOKEN, MPRODUCTTOKEN, BUCKETNAME, None, \
                              STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
         self._check_all_done()
 
