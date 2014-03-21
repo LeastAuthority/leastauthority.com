@@ -511,9 +511,10 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
         restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
 
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(s3secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
-    write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
-    write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
+    write(s3_secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
+    if user_token and product_token:
+        write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
+        write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
 
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')

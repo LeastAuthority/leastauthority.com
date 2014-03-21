@@ -221,13 +221,13 @@ class TestServerModule(TestCase):
         from lae_automation.server import TAHOE_CFG_TEMPLATE
         from lae_automation.server import RESTART_SCRIPT
         test_tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': BUCKETNAME,
-                                      'publichost': MHOSTNAME,
-                                      'privatehost': MPRIVHOST,
-                                      'introducer_furl': INTERNALINTROFURL,
-                                      'AWSaccess_key_id': ACCESSKEYID,
-                                      'bucket_name': BUCKETNAME,
-                                      'incident_gatherer_furl': "MOCK_incident_gatherer_furl",
-                                      'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
+                                               'publichost': MHOSTNAME,
+                                               'privatehost': MPRIVHOST,
+                                               'introducer_furl': INTERNALINTROFURL,
+                                               's3_access_key_id': ACCESSKEYID,
+                                               'bucket_name': BUCKETNAME,
+                                               'incident_gatherer_furl': "MOCK_incident_gatherer_furl",
+                                               'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
         self.WHOAMI_FIFO = []
         self.RUNARGS_FIFO = fifo([
                 ('rm -f /home/customer/introducer/introducer.furl /home/customer/introducer/logport.furl', False, {}),
