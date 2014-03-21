@@ -18,9 +18,9 @@ was about our security audit of SpiderOak's `crypton`_ project.
 security to everyone.
 
 As part of that mission, in addition to operating the `S4`_ simple secure
-storage service, we also run a security consulting business. We
+storage service, we also perform security consulting. We
 LeastAuthoritarians have extensive experience in security and
-cryptography, and other companies pay us to analyze the security of their
+cryptography, and other companies hire us to analyze the security of their
 protocols and software.
 
 We audited the widely-used `CryptoCat`_ encrypted chat program. This
@@ -32,7 +32,7 @@ What were the results?
 ----------------------
 
 We found several security issues in the version of CryptoCat that we
-examined (CryptoCat v2.1.15). For each one we reported it to the
+examined (CryptoCat v2.1.15). For each one, we reported it to the
 CryptoCat developers, and they have either deployed a fix in a newer
 release of CryptoCat or else disabled the feature that has the
 vulnerability.
@@ -70,9 +70,9 @@ any questions?
 
 If you have any questions about these results or the process, the
 CryptoCat developers and we of LeastAuthority.com will be available on a
-reddit "Ask Me Anything" next week blah blah blah to do Q&A about it.
+reddit "Ask Me Anything" Monday of next week for Q&A.
 
-The next audit we are doing is for `GlobaLeaks`_, so stay tuned.
+The next project we are auditing is `GlobaLeaks`_, so stay tuned.
 
 XXX list issues
 XXX link to report
@@ -83,3 +83,10 @@ XXX link to report
 .. _Open Technology Fund: https://www.opentechfund.org/
 .. _Red Team: https://www.opentechfund.org/labs#redteam
 .. _GlobaLeaks: https://globaleaks.org/
+
+.. _S4: https://leastauthority.com/product_s4
+.. _Our mission: https://leastauthority.com/about_us
+.. _SpiderOak: https://spideroak.com/
+.. _Crypton.io: https://crypton.io/
+.. _has published the security auditing report: https://spideroak.com/blog/20140220090004-responsibly-bringing-new-cryptography-product-market
+.. _Cryptocat: https://crypto.cat/
