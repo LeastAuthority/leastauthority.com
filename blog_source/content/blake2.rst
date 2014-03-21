@@ -4,7 +4,7 @@
 BLAKE2: “Harder Better Faster Stronger” Than MD5
 ================================================
 
-:date: 2014-03-16 16:00Z
+:date: 2014-03-21 22:00Z
 :tags: cryptography, engineering
 :category: Essay
 :slug: BLAKE2-harder-better-faster-than-MD5
