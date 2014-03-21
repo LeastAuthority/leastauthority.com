@@ -44,7 +44,7 @@ stats_gatherer.furl = %(stats_gatherer_furl)s
 # Shall this node provide storage service?
 enabled = true
 backend = s3
-s3.access_key_id = %(AWSaccess_key_id)s
+s3.access_key_id = %(s3access_key_id)s
 s3.bucket = %(bucket_name)s
 
 [helper]
@@ -476,8 +476,8 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def bounce_server(publichost, admin_privkey_path, privatehost, AWSaccess_key_id, AWSsecret_key, 
-                  bucket_name, oldsecrets, stdout, stderr, secretsfile,
+def bounce_server(publichost, admin_privkey_path, privatehost, s3access_key_id, s3secret_key,
+                  user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
                   configpath='../secret_config/lae_automation_config.json'):
     nickname = bucket_name
 
@@ -501,7 +501,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, AWSaccess_key_id,
                                       'publichost': publichost,
                                       'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
-                                      'AWSaccess_key_id': AWSaccess_key_id,
+                                      's3access_key_id': s3access_key_id,
                                       'bucket_name': bucket_name,
                                       'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
                                       'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
@@ -511,7 +511,9 @@ def bounce_server(publichost, admin_privkey_path, privatehost, AWSaccess_key_id,
         restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
 
     run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(AWSsecret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
+    write(s3secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
+    write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
+    write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
 
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
@@ -548,6 +550,10 @@ shares.total = 1
     print >>secretsfile, simplejson.dumps({
         'publichost':               publichost,
         'privatehost':              privatehost,
+        's3access_key_id':          s3access_key_id,
+        's3secret_key':             s3secret_key,
+        'user_token':               user_token,
+        'product_token':            product_token,
         'bucket_name':              bucket_name,
         'introducer_node_pem':      introducer_node_pem,
         'introducer_nodeid':        introducer_nodeid,
