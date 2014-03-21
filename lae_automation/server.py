@@ -44,7 +44,7 @@ stats_gatherer.furl = %(stats_gatherer_furl)s
 # Shall this node provide storage service?
 enabled = true
 backend = s3
-s3.access_key_id = %(s3access_key_id)s
+s3.access_key_id = %(s3_access_key_id)s
 s3.bucket = %(bucket_name)s
 
 [helper]
@@ -476,7 +476,7 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def bounce_server(publichost, admin_privkey_path, privatehost, s3access_key_id, s3secret_key,
+def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
                   user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
                   configpath='../secret_config/lae_automation_config.json'):
     nickname = bucket_name
@@ -501,7 +501,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3access_key_id, 
                                       'publichost': publichost,
                                       'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
-                                      's3access_key_id': s3access_key_id,
+                                      's3_access_key_id': s3_access_key_id,
                                       'bucket_name': bucket_name,
                                       'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
                                       'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
@@ -529,7 +529,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3access_key_id, 
     server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
     server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
                               ' then cat /home/customer/storageserver/private/node.privkey; fi')
-    
+
     print >>stdout, "The introducer and storage server are running."
 
     external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
@@ -550,8 +550,8 @@ shares.total = 1
     print >>secretsfile, simplejson.dumps({
         'publichost':               publichost,
         'privatehost':              privatehost,
-        's3access_key_id':          s3access_key_id,
-        's3secret_key':             s3secret_key,
+        'access_key_id':            s3_access_key_id,
+        'secret_key':               s3_secret_key,
         'user_token':               user_token,
         'product_token':            product_token,
         'bucket_name':              bucket_name,
