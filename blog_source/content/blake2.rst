@@ -1,17 +1,17 @@
 ﻿.. -*- coding: utf-8-with-signature-unix; fill-column: 73;
 .. -*- indent-tabs-mode: nil -*-
 
-BLAKE2: “Harder Better Faster Stronger” Than MD5
-================================================
+BLAKE2: “Harder, Better, Faster, Stronger” Than MD5
+===================================================
 
-:date: 2014-03-21 22:00Z
+:date: 2014-03-21 22:00
 :tags: cryptography, engineering
 :category: Essay
-:slug: BLAKE2-harder-better-faster-than-MD5
+:slug: BLAKE2-harder-better-faster-stronger-than-MD5
 :author: Zooko Wilcox-O'Hearn
-:summary: BLAKE2: “Harder Better Faster” Than MD5
+:summary: BLAKE2: “Harder, Better, Faster, Stronger” Than MD5
 
-Best read while listening to Daft Punk: `Harder, Better, Faster, Stronger`_
+*best read while listening to Daft Punk:* `Harder, Better, Faster, Stronger`_
 
 .. _`Harder, Better, Faster, Stronger`: https://youtu.be/gAjR4_CbPpQ
 
