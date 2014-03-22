@@ -45,9 +45,9 @@ finalists (which included BLAKE, Keccak, Skein, and Grøstl):
 but BLAKE was similar to SHA-2
 ------------------------------
 
-So if BLAKE1 was in the top tier in all three of these measures, why didn't
-NIST choose BLAKE1 to be the winner of the SHA-3 contest? The main reason is
-given in §3.4 of the final report: because BLAKE1's design was similar to
+So if BLAKE was in the top tier in all three of these measures, why didn't
+NIST choose BLAKE to be the winner of the SHA-3 contest? The main reason is
+given in §3.4 of the final report: because BLAKE's design was similar to
 SHA-2's.
 
 When the SHA-3 project was announced, being like SHA-2 was explicitly listed
@@ -86,7 +86,7 @@ seem to reflect badly on BLAKE at all.
 .. This would be a perfect place to be able to link to your tables of comparison, thereby giving context to "twelve years".
    I would be happy to help you with that post, too. —Am
 
-BLAKE1 compares well to the modern hash functions Keccak and Skein.  There is
+BLAKE compares well to the modern hash functions Keccak and Skein.  There is
 good reason to think that it is secure, and it has better performance (in
 software, on Intel or ARM CPUs) than Keccak. However, the other two are also
 good—there is no reason to suspect any of them of any weakness.
@@ -104,8 +104,8 @@ hypothesized that offering engineers a hash function that was *both* faster
 and more secure than their beloved MD5 or SHA-1 might be more successful than
 haranguing them to upgrade to an alternative that is more secure but slower.
 
-So, we took BLAKE1 (Jean-Philippe Aumasson had been one of the designers of
-BLAKE1), traded-off a little of its generous security margin in return for
+So, we took BLAKE (Jean-Philippe Aumasson had been one of the designers of
+BLAKE), traded-off a little of its generous security margin in return for
 more efficiency, and optimized it to produce *BLAKE2*, which is faster than
 MD5 (on a modern Intel CPU). On top of that, we added an optional parallel
 mode so that if you have 4 or 8 CPU cores available you can run your BLAKE2
