@@ -137,9 +137,9 @@ Here is `an essay I posted`_ in April 13, 2012 and updated in October 3,
        unwise to rely on this for two reasons. One is that there could be
        more efficient techniques to compute SHA-1 collisions that we don't
        know about. Another is that the cost of doing 2⁶⁹ computations is
-       falling rapidly—at the time of this writing (XXX February 26, 2014),
-       the Bitcoin network is performing `enough computation to generate
-       SHA-1 collisions`_ every 131 minutes!
+       falling rapidly—at the time of this writing (March 22, 2014), the
+       Bitcoin network is performing `enough computation to generate SHA-1
+       collisions`_ every 131 minutes!
 
 .. _git: http://www.git-scm.com/
 
