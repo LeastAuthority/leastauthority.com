@@ -101,7 +101,7 @@ hash function that was faster than Keccak, but one that was faster than MD5!
 This is because MD5 (and SHA-1) continue to be very widely used, even in new
 applications, even though MD5 and SHA-1 are unsafe for many uses. We
 hypothesized that offering engineers a hash function that was *both* faster
-and more secure than their beloved MD5 or SHA-1 might be more successful than
+and more secure than their beloved MD5 or SHA-1 might be more effective than
 haranguing them to upgrade to an alternative that is more secure but slower.
 
 So, we took BLAKE (Jean-Philippe Aumasson had been one of the designers of
