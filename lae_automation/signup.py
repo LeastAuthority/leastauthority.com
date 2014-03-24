@@ -56,9 +56,9 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
     config = Config(configpath)
     myclock = clock or reactor
 
-    s3accesskeyid = config.other["s3_access_key_id"]
+    s3_access_key_id = config.other["s3_access_key_id"]
     s3secretpath = config.other["s3_secret_path"]
-    s3secretkey = FilePath(s3secretpath).getContent().strip()
+    s3_secretkey = FilePath(s3secretpath).getContent().strip()
 
     bucketname = get_bucket_name(subscription_id, customer_id)
     location = None  # default S3 location for now
@@ -71,17 +71,17 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
 
     print >>stdout, "Signing up customer for %s..." % (fullname,)
 
-    d = create_stripe_user_bucket(s3accesskeyid, s3secretkey, bucketname, stdout, stderr, location)
+    d = create_stripe_user_bucket(s3_access_key_id, s3_secretkey, bucketname, stdout, stderr, location)
 
     print >>stdout, "After create_stripe_account_user_bucket %s..." % str(
-        (s3accesskeyid, s3secretkey, bucketname,
+        (s3_access_key_id, s3_secretkey, bucketname,
          None, amiimageid, instancesize,
          customer_email, customer_pgpinfo, stdout, stderr,
          secretsfile, config, serverinfopath, myclock))
 
     # We could deploy and configure the instance in parallel with the above wait and delete it
     # if necessary, but let's keep it simple and sequential.
-    d.addCallback(lambda ign: deploy_server(s3accesskeyid, s3secretkey, bucketname,
+    d.addCallback(lambda ign: deploy_server(s3_access_key_id, s3_secretkey, None, None, bucketname,
                                             None, amiimageid, instancesize,
                                             customer_email, customer_pgpinfo, stdout, stderr,
                                             secretsfile, config, serverinfopath, clock=myclock))
@@ -94,13 +94,13 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
                    configpath='../secret_config/lae_automation_config.json',
                    serverinfopath=None, clock=None):
     config = Config(configpath)
-    s3accesskeyid = oldsecrets['access_key_id']
-    s3secretkey   = oldsecrets['secret_key']
+    s3_access_key_id = oldsecrets['access_key_id']
+    s3_secretkey   = oldsecrets['secret_key']
     usertoken     = oldsecrets.get('user_token', None)     # DevPay only
     producttoken  = oldsecrets.get('product_token', None)  # DevPay only
     bucketname    = oldsecrets["bucket_name"]
 
-    d = deploy_server(s3accesskeyid, s3secretkey, usertoken, producttoken,
+    d = deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
                       bucketname, oldsecrets, amiimageid, instancesize,
                       customer_email, None, stdout, stderr,
                       secretsfile, config, serverinfopath, clock)
@@ -109,7 +109,7 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     return d
 
 # TODO: too many args. Consider passing them in a dict.
-def deploy_server(s3accesskeyid, s3secretkey, usertoken, producttoken,
+def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
                   bucketname, oldsecrets, amiimageid, instancesize,
                   customer_email, customer_pgpinfo, stdout, stderr,
                   secretsfile, config, serverinfopath=None, clock=None):
@@ -164,8 +164,8 @@ def deploy_server(s3accesskeyid, s3secretkey, usertoken, producttoken,
                         time.sleep(LISTEN_POLL_TIME)
                         continue
 
-                furl = bounce_server(publichost, admin_privkey_path, privatehost, s3accesskeyid,
-                                     s3secretkey, usertoken, producttoken, bucketname, oldsecrets,
+                furl = bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
+                                     s3_secretkey, usertoken, producttoken, bucketname, oldsecrets,
                                      stdout, stderr, secretsfile)
 
                 # Disabled for now.

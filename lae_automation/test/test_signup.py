@@ -79,8 +79,10 @@ CONFIGFILEJSON = """{
       "instance_size": "t9.sizeo"
     }
   ],
-  "ec2_access_key_id":      "TESTAAAAAAAAAAAAAAAA",
-  "ec2_secret_path":        "mock_ec2secret",
+  "ec2_access_key_id":      "TESTEC2EC2EC2EC2EC2E",
+  "ec2_secret_path":        "mock_ec2_secret",
+  "s3_access_key_id":       "TESTS3S3S3S3S3S3S3S3",
+  "s3_secret_path":         "mock_s3_secret",
   "admin_keypair_name":     "ADMINKEYS",
   "admin_privkey_path":     "ADMINKEYS.pem",
   "monitor_pubkey_path":    "MONITORKEYS.pub",
@@ -92,15 +94,18 @@ CONFIGFILEJSON = """{
 
 ZEROPRODUCT = """{
   "products": [],
-  "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
-  "ec2_secret_path":      "mock_ec2secret",
+  "ec2_access_key_id":    "TESTEC2EC2EC2EC2EC2E",
+  "ec2_secret_path":      "mock_ec2_secret",
+  "s3_access_key_id":     "TESTS3S3S3S3S3S3S3S3",
+  "s3_secret_path":       "mock_s3_secret",
   "admin_keypair_name":   "ADMINKEYS",
   "admin_privkey_path":   "ADMINKEYS.pem",
   "monitor_pubkey_path":  "MONITORKEYS.pub",
   "monitor_privkey_path": "MONITORKEYS.pem"
 }"""
 
-MOCKEC2SECRETCONTENTS = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'
+MOCKEC2SECRETCONTENTS = 'EC2'*13+'E'
+MOCKS3SECRETCONTENTS = 'S3'*20
 MONITORPUBKEY = 'MONITOR PUBLIC KEY'
 
 
@@ -111,7 +116,8 @@ class TestSignupModule(TestCase):
         self.SIGNUPSPATH = 'mock_signups.csv'
         self.CONFIGFILEPATH = 'init_test_config.json'
         self.SERVERINFOPATH = 'mock_serverinfo.csv'
-        self.EC2SECRETPATH = 'mock_ec2secret'
+        self.EC2SECRETPATH = 'mock_ec2_secret'
+        self.S3SECRETPATH = 'mock_s3_secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
 
         self.MEMAIL = 'MEMAIL'
@@ -126,6 +132,7 @@ class TestSignupModule(TestCase):
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
         FilePath(self.SERVERINFOPATH).setContent('')
         FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
+        FilePath(self.S3SECRETPATH).setContent(MOCKS3SECRETCONTENTS)
         FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
 
         self.patch(signup, 'POLL_TIME', 0.1)
@@ -163,7 +170,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(header_dict['Date'], 'Thu, 01 Jan 1970 00:00:00 GMT')
             self.failUnlessEqual(header_dict['Content-Length'], 0)
             self.failUnlessEqual(header_dict['Authorization'],
-                                 'AWS TESTAAAAAAAAAAAAAAAA:QuIggXzafsFXKsGAMs8tDAq7M70=')
+                                 'AWS TESTS3S3S3S3S3S3S3S3:6k3/9M2RYfjOEcBm6o5p8f9oDMs=')
             self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
 
             return defer.succeed('Completed devpay bucket creation submission.')
@@ -205,13 +212,14 @@ class TestSignupModule(TestCase):
                 raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
-        def call_bounce_server(publichost, admin_privkey_path, privatehost, AWSaccesskeyid,
-                               AWSsecretkey, bucket_name, oldsecrets, stdout, stderr, secretsfile):
+        def call_bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
+                               s3_secretkey, user_token, product_token, bucket_name, oldsecrets, 
+                               stdout, stderr, secretsfile):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(privatehost, '0.0.0.1')
-            self.failUnlessEqual(AWSaccesskeyid, 'TESTAAAAAAAAAAAAAAAA')
-            self.failUnlessEqual(AWSsecretkey, 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+            self.failUnlessEqual(s3_access_key_id, 'TEST'+'S3'*8)
+            self.failUnlessEqual(s3_secretkey, 'S3'*20)
             self.failUnlessEqual(bucket_name, "lae-" + self.MENCODED_IDS)
             self.failUnlessEqual(oldsecrets, None)
             self.failUnless(secretsfile.name.endswith('secrets/XX/1970-01-01T000000Z-%s/SSEC2' % (self.MENCODED_IDS,)), secretsfile.name)
