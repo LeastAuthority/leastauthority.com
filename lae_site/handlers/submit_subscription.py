@@ -63,8 +63,10 @@ class SubmitSubscriptionHandler(HandlerBase):
                                           email=user_email)
         except stripe.CardError as e:
             # Errors we expect: https://stripe.com/docs/api#errors
+            full_details = "Note this error could be caused by insufficient funds, or other charge-disabling "+\
+                           "factors related to the User's payment credential.\n"+e.message
             self.create_cust_errhandler(traceback.format_exc(100), e,
-                                        details=e.message,
+                                        details=full_details,
                                         email_subject="Stripe Card error")
         except stripe.APIError as e:
             self.create_cust_errhandler(traceback.format_exc(100), e,
