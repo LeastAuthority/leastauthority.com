@@ -101,12 +101,12 @@ class TestSubscribedCustomerCreation(TestCase):
         self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mocksmtppswdpath)
 
         self.mc = 'SettingUp'
-        self.ssubhand_obj = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
     def tearDown(self):
         self.basedirfp = 'TornDown'
         self.mc = 'TornDown'
-        self.ssubhand_obj = 'TornDown'
+        self.subscription_handler = 'TornDown'
 
     def test_successful_customer_creation(self):
         mockrequest = MockRequest(REQUESTARGS)
@@ -116,23 +116,24 @@ class TestSubscribedCustomerCreation(TestCase):
             return self.mc
 
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
-        self.ssubhand_obj.render(mockrequest)
+        self.subscription_handler.render(mockrequest)
 
         self.failUnless(isinstance(self.mc, MockCustomer))
         self.failUnlessEqual(self.mc.init_key, 'sk_live_AAAAAAAAAAAAAAAAAAAAAAAA')
         self.failUnlessEqual(self.mc.init_email, 'test@test')
         self.failUnlessEqual(self.mc.email, 'test@test')
         self.failUnlessEqual(self.mc.init_plan, 'S4')
-        
+
     def test_stripe_CardError(self):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockCardError('THIS SHOULD BE THE VALUE STRIPE SENDS.')
 
-        def call_create_cust_errhandler(submit_s_handler_obj, trace_back, error, details, email_subject):
-            print >>sys.stdout, details
-            self.failUnless(details.startswith('ggg'))
+        def call_create_cust_errhandler(submit_subscription_handler_obj, trace_back, error, details,
+                                        email_subject):
+            self.failUnless(details.startswith('Note: '))
         self.patch(SubmitSubscriptionHandler, 'create_cust_errhandler', call_create_cust_errhandler)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
-        self.patch(stripe, 'CardError', MockCardError) 
-        self.ssubhand_obj.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0], REQUESTARGS['email'][0])
+        self.patch(stripe, 'CardError', MockCardError)
+        self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
+                                                  REQUESTARGS['email'][0])
 
