@@ -128,7 +128,7 @@ class TestSubscribedCustomerCreation(TestCase):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockCardError('THIS SHOULD BE THE VALUE STRIPE SENDS.')
 
-        def call_create_cust_errhandler(sshobj, trace_back, error, details, email_subject):
+        def call_create_cust_errhandler(submit_s_handler_obj, trace_back, error, details, email_subject):
             print >>sys.stdout, details
             self.failUnless(details.startswith('ggg'))
         self.patch(SubmitSubscriptionHandler, 'create_cust_errhandler', call_create_cust_errhandler)
