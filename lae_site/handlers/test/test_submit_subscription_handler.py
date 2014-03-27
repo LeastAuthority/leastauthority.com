@@ -1,4 +1,4 @@
-import os, sys
+import os
 
 from twisted.internet import defer
 from twisted.trial.unittest import TestCase
