@@ -116,16 +116,20 @@ class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
     def test_stripe_CardError(self):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockCardError('THIS SHOULD BE THE VALUE STRIPE SENDS.')
-
+        calls = []
         def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
-            self.failUnless(details.startswith('Note: '), details)
-            self.failUnlessEquals(email_subject, "Stripe Card error")
+            calls.append((details, email_subject))
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.patch(stripe, 'CardError', MockCardError)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
                                                   REQUESTARGS['email'][0])
+
+        self.failUnlessEqual(len(calls), 1)
+        (details, email_subject) = calls[0]
+        self.failUnless(details.startswith('Note: '), details)
+        self.failUnlessEquals(email_subject, "Stripe Card error")
 
     def test_stripe_APIError(self):
         def call_stripe_Customer_create(api_key, card, plan, email):
