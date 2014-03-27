@@ -128,6 +128,7 @@ class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
                                                   REQUESTARGS['email'][0])
+        #Expectation assertion block
         self.failUnlessEqual(len(calls), 1)
         (details, email_subject) = calls[0]
         self.failUnless(details.startswith(expected_details_prefix), details)
