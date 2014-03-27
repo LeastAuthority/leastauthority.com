@@ -81,7 +81,7 @@ class MockEnv(object):
         return MockTemplate(repr(htmltemplate))
 
 
-class TestSubscribedCustomerCreation(TestCase):
+class TestStripeErrorMessageHandling(TestCase):
     def setUp(self):
         #Patch out environment
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
@@ -107,22 +107,6 @@ class TestSubscribedCustomerCreation(TestCase):
         self.basedirfp = 'TornDown'
         self.mc = 'TornDown'
         self.subscription_handler = 'TornDown'
-
-    def test_successful_customer_creation(self):
-        mockrequest = MockRequest(REQUESTARGS)
-        def call_stripe_Customer_create(api_key, card, plan, email):
-            self.mc = MockCustomer()
-            MockCustomer.create(self.mc, api_key, card, plan, email)
-            return self.mc
-
-        self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
-        self.subscription_handler.render(mockrequest)
-
-        self.failUnless(isinstance(self.mc, MockCustomer))
-        self.failUnlessEqual(self.mc.init_key, 'sk_live_AAAAAAAAAAAAAAAAAAAAAAAA')
-        self.failUnlessEqual(self.mc.init_email, 'test@test')
-        self.failUnlessEqual(self.mc.email, 'test@test')
-        self.failUnlessEqual(self.mc.init_plan, 'S4')
 
     def test_stripe_CardError(self):
         def call_stripe_Customer_create(api_key, card, plan, email):
@@ -179,3 +163,45 @@ class TestSubscribedCustomerCreation(TestCase):
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
                                                   REQUESTARGS['email'][0])
 
+class TestSubscribedCustomerCreation(TestCase):
+    def setUp(self):
+        #Patch out environment
+        self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
+        self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
+        self.patch(submit_subscription, 'env', MockEnv())
+
+        #Create directory for file IO
+        temp = self.mktemp()
+        self.basedirfp = FilePath(temp.rsplit('/',2)[0])
+        os.rmdir(temp.rsplit('/',1)[0])
+
+        #Create mock api key
+        make_dirs(self.basedirfp.child('secret_config').path)
+        self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
+        self.basedirfp.child('secret_config').child('smtppassword').setContent(MOCKSMTPPASSWORD)
+        self.mocksmtppswdpath = self.basedirfp.child('secret_config').child('smtppassword').path
+        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mocksmtppswdpath)
+
+        self.mc = 'SettingUp'
+        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+
+    def tearDown(self):
+        self.basedirfp = 'TornDown'
+        self.mc = 'TornDown'
+        self.subscription_handler = 'TornDown'
+
+    def test_successful_customer_creation(self):
+        mockrequest = MockRequest(REQUESTARGS)
+        def call_stripe_Customer_create(api_key, card, plan, email):
+            self.mc = MockCustomer()
+            MockCustomer.create(self.mc, api_key, card, plan, email)
+            return self.mc
+
+        self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
+        self.subscription_handler.render(mockrequest)
+
+        self.failUnless(isinstance(self.mc, MockCustomer))
+        self.failUnlessEqual(self.mc.init_key, 'sk_live_AAAAAAAAAAAAAAAAAAAAAAAA')
+        self.failUnlessEqual(self.mc.init_email, 'test@test')
+        self.failUnlessEqual(self.mc.email, 'test@test')
+        self.failUnlessEqual(self.mc.init_plan, 'S4')
