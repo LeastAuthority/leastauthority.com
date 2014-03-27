@@ -108,6 +108,9 @@ class TestStripeErrorMessageHandling(TestCase):
         self.mc = 'TornDown'
         self.subscription_handler = 'TornDown'
 
+class TestErrorHandler(TestStripeErrorMessageHandling):
+    def test_handle_stripe_create_customer_errors(self):
+        pass
 
 class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
     def test_stripe_CardError(self):
