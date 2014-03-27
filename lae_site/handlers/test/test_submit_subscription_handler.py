@@ -83,17 +83,17 @@ class MockEnv(object):
 
 class TestStripe(TestCase):
     def setUp(self):
-        #Patch out environment
+        # Patch out environment.
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
         self.patch(submit_subscription, 'env', MockEnv())
 
-        #Create directory for file IO
+        # Create directory for file I/O.
         temp = self.mktemp()
         self.basedirfp = FilePath(temp.rsplit('/',2)[0])
         os.rmdir(temp.rsplit('/',1)[0])
 
-        #Create mock api key
+        # Create mock API key.
         make_dirs(self.basedirfp.child('secret_config').path)
         self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
         self.basedirfp.child('secret_config').child('smtppassword').setContent(MOCKSMTPPASSWORD)
@@ -122,7 +122,8 @@ class TestStripe(TestCase):
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
                                                   REQUESTARGS['email'][0])
-        #Expectation assertion block
+
+        # Check expectations.
         self.failUnlessEqual(len(calls), 1)
         (details, email_subject) = calls[0]
         self.failUnless(details.startswith(expected_details_prefix), details)

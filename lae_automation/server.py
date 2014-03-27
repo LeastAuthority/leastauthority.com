@@ -14,8 +14,8 @@ from fabric.contrib import files
 
 from lae_util.streams import LoggingStream
 
-#The incident gatherer's furl is a secret, so it is obtained from lae_automation_config.
-#The stats gatherer's furl is a secret, so it is obtained from lae_automation_config.
+# The incident gatherer and stats gatherer furls are secret, so they are obtained from
+# lae_automation_config.
 from lae_automation.config import Config
 
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
@@ -297,7 +297,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
 #    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
 #    sudo('rm /etc/nginx/sites-enabled/default')
 #    sudo('service nginx restart')
-    
+
     run('wget https://pypi.python.org/packages/source/p/pelican/pelican-3.2.2.tar.gz')
     run('tar zxf pelican-3.2.2.tar.gz')
     with cd('pelican-3.2.2'):
@@ -309,7 +309,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('touch /etc/authbind/byport/{443,80}')
     sudo('chown website:root /etc/authbind/byport/{443,80}')
     sudo('chmod 744 /etc/authbind/byport/{443,80}')
-    
+
     run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
@@ -333,7 +333,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
         run('chmod 400 *pem')
 
     with cd('/home/website/leastauthority.com'):
-        #FIXME: make idempotent
+        # FIXME: make idempotent
         if not files.exists('/home/website/leastauthority.com/flapp'):
             run('flappserver create /home/website/leastauthority.com/flapp')
             run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
@@ -629,7 +629,7 @@ def get_emission_list(jsonconfigfile):
             assert field in eventemit, eventemit
             cleandict[field] = str(eventemit.pop(field))
             assert isinstance(cleandict[field], str), field
-        assert len(eventemit) == 0, eventemit #Check to see there aren't unexpected fields.
+        assert len(eventemit) == 0, eventemit   # Check to see there aren't unexpected fields.
         freshlist.append(cleandict)
     return freshlist
 
@@ -693,7 +693,7 @@ def main():
     PID = get_pid(STORAGESERVER_PID_PATH)
     for event_to_emit in emiteventlist:
         if 'rss' in event_to_emit['name']:
-            kbofrss = get_mem_used(PID)[0]/1000 #Perhaps change to emitting bytes.
+            kbofrss = get_mem_used(PID)[0]/1000   # Perhaps change to emitting bytes.
             emit_time = int(time.time())
             emitstring = make_emit_string(str( event_to_emit['name'] ),
                                           int( emit_time*1000 ),
@@ -780,9 +780,8 @@ def restore_secrets(secrets, nodetype, stdout, stderr):
 
 
 def setremoteconfigoption(pathtoremote, section, option, value):
-    """This function expects set_host_and_key have already been run!"""
-    #api.get does not appear to actually use StringIO's yet!
-    #So I had to use a temp file.
+    """This function expects set_host_and_key to have already been run!"""
+    # api.get does not appear to actually use StringIO instances yet, so this uses a temp file.
     tempfhandle = open('tempconfigfile','w')
     api.get(pathtoremote, tempfhandle)
     configparser = SafeConfigParser()
