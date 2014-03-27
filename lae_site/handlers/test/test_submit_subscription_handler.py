@@ -1,4 +1,4 @@
-import os
+import os, sys
 
 from twisted.internet import defer
 from twisted.trial.unittest import TestCase
@@ -81,37 +81,31 @@ class MockEnv(object):
         return MockTemplate(repr(htmltemplate))
 
 
-class TestStripe(TestCase):
+class CommonFixture(TestCase):
     def setUp(self):
-        # Patch out environment.
-        self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
-        self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
-        self.patch(submit_subscription, 'env', MockEnv())
-
         # Create directory for file I/O.
         temp = self.mktemp()
         self.basedirfp = FilePath(temp.rsplit('/',2)[0])
         os.rmdir(temp.rsplit('/',1)[0])
-
-        # Create mock API key.
-        make_dirs(self.basedirfp.child('secret_config').path)
-        self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
-        self.basedirfp.child('secret_config').child('smtppassword').setContent(MOCKSMTPPASSWORD)
-        self.mocksmtppswdpath = self.basedirfp.child('secret_config').child('smtppassword').path
-        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mocksmtppswdpath)
-
+        # There should never be a "real" customer instance
+        self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
+        # Wipe MockCustomer Instance, which may have test specific properties
         self.mc = 'SettingUp'
+        # The Subcription Handler Instance
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
     def tearDown(self):
+        # These variables must _not_ maintain state across TestCases.
         self.basedirfp = 'TornDown'
         self.mc = 'TornDown'
         self.subscription_handler = 'TornDown'
 
-
+class TestStripeErrorHandling(CommonFixture):
     def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
+        self.mc = MockCustomer()
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockErrorClass('THIS SHOULD BE THE VALUE STRIPE SENDS.')
+        self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
 
         calls = []
         def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back,
@@ -119,7 +113,7 @@ class TestStripe(TestCase):
             calls.append((details, email_subject))
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors',
                    call_handle_stripe_create_customer_errors)
-        self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
+
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
                                                   REQUESTARGS['email'][0])
 
@@ -129,6 +123,7 @@ class TestStripe(TestCase):
         self.failUnless(details.startswith(expected_details_prefix), details)
         self.failUnlessEquals(email_subject, expected_subject)
 
+    # fixture code complete, actual tests follow
     def test_stripe_CardError(self):
         self.patch(stripe, 'CardError', MockCardError)
         return self._test_stripe_error(MockCardError, "Note: ", "Stripe Card error")
@@ -144,6 +139,26 @@ class TestStripe(TestCase):
     def test_stripe_UnexpectedError(self):
         return self._test_stripe_error(Exception, "Something ", "Stripe unexpected error")
 
+class TestRender(CommonFixture):
+    def setUp(self):
+        super(TestRender, self).setUp()
+        # Patch out environment.
+        self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
+        self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
+        self.patch(submit_subscription, 'env', MockEnv())
+
+        # Create mock API key.
+        make_dirs(self.basedirfp.child('secret_config').path)
+        self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
+        self.basedirfp.child('secret_config').child('smtppassword').setContent(MOCKSMTPPASSWORD)
+        self.mocksmtppswdpath = self.basedirfp.child('secret_config').child('smtppassword').path
+        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mocksmtppswdpath)
+
+        self.mc = 'SettingUp'
+        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+
+    def tearDown(self):
+        super(TestRender, self).tearDown()
 
     def test_stripe_successful_customer_creation(self):
         mockrequest = MockRequest(REQUESTARGS)
