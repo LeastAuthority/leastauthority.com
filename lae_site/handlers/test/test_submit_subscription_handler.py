@@ -119,7 +119,7 @@ class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
 
         def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
-            self.failUnless(details.startswith('Note: '))
+            self.failUnless(details.startswith('Note: '), details)
             self.failUnlessEquals(email_subject, "Stripe Card error")
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
@@ -133,7 +133,7 @@ class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
 
         def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
-            self.failUnless(details.startswith('Our '))
+            self.failUnless(details.startswith('Our '), details)
             self.failUnlessEquals(email_subject, "Stripe API error")
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
@@ -147,7 +147,7 @@ class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
 
         def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
-            self.failUnless(details.startswith('Due '))
+            self.failUnless(details.startswith('Due '), details)
             self.failUnlessEquals(email_subject, "Stripe Invalid Request error")
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
@@ -161,7 +161,7 @@ class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
 
         def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
-            self.failUnless(details.startswith('Something '))
+            self.failUnless(details.startswith('Something '), details)
             self.failUnlessEquals(email_subject, "Stripe unexpected error")
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
