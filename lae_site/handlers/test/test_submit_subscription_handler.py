@@ -108,9 +108,11 @@ class TestStripeErrorMessageHandling(TestCase):
         self.mc = 'TornDown'
         self.subscription_handler = 'TornDown'
 
+
 class TestErrorHandler(TestStripeErrorMessageHandling):
     def test_handle_stripe_create_customer_errors(self):
         pass
+
 
 class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
     def test_stripe_CardError(self):
@@ -176,6 +178,7 @@ class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
                                                   REQUESTARGS['email'][0])
+
 
 class TestSubscribedCustomerCreation(TestCase):
     def setUp(self):
