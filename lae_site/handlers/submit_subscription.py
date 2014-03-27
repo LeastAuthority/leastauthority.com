@@ -70,19 +70,19 @@ class SubmitSubscriptionHandler(HandlerBase):
                                         email_subject="Stripe Card error")
         except stripe.APIError as e:
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                        details="Our payment processor is temporarily unavailable,"+\
+                                        details="Our payment processor is temporarily unavailable,"+
                                             " please try again in\ a few moments.",
                                         email_subject="Stripe API error")
         except stripe.InvalidRequestError as e:
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                        details="Due to technical difficulties unrelated to your card"+\
-                                            " details, we were unable to charge your account. Our"+\
-                                            " engineers have been notified and will contact you with"+\
+                                        details="Due to technical difficulties unrelated to your card"+
+                                            " details, we were unable to charge your account. Our"+
+                                            " engineers have been notified and will contact you with"+
                                             " an update shortly.",
                                         email_subject="Stripe Invalid Request error")
         except Exception as e:
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                        details="Something went wrong. Please try again, or contact"+\
+                                        details="Something went wrong. Please try again, or contact"+
                                             " <support@leastauthority.com>.",
                                         email_subject="Stripe unexpected error")
 
