@@ -108,15 +108,17 @@ class TestStripeErrorMessageHandling(TestCase):
         self.mc = 'TornDown'
         self.subscription_handler = 'TornDown'
 
+
+class TestSpecificErrorTypes(TestStripeErrorMessageHandling):
     def test_stripe_CardError(self):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockCardError('THIS SHOULD BE THE VALUE STRIPE SENDS.')
 
-        def call_create_cust_errhandler(submit_subscription_handler_obj, trace_back, error, details,
+        def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
             self.failUnless(details.startswith('Note: '))
             self.failUnlessEquals(email_subject, "Stripe Card error")
-        self.patch(SubmitSubscriptionHandler, 'create_cust_errhandler', call_create_cust_errhandler)
+        self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.patch(stripe, 'CardError', MockCardError)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
@@ -126,11 +128,11 @@ class TestStripeErrorMessageHandling(TestCase):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockAPIError('THIS SHOULD BE THE VALUE STRIPE SENDS.')
 
-        def call_create_cust_errhandler(submit_subscription_handler_obj, trace_back, error, details,
+        def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
             self.failUnless(details.startswith('Our '))
             self.failUnlessEquals(email_subject, "Stripe API error")
-        self.patch(SubmitSubscriptionHandler, 'create_cust_errhandler', call_create_cust_errhandler)
+        self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.patch(stripe, 'APIError', MockAPIError)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
@@ -140,11 +142,11 @@ class TestStripeErrorMessageHandling(TestCase):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockInvalidRequestError('THIS SHOULD BE THE VALUE STRIPE SENDS.')
 
-        def call_create_cust_errhandler(submit_subscription_handler_obj, trace_back, error, details,
+        def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
             self.failUnless(details.startswith('Due '))
             self.failUnlessEquals(email_subject, "Stripe Invalid Request error")
-        self.patch(SubmitSubscriptionHandler, 'create_cust_errhandler', call_create_cust_errhandler)
+        self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.patch(stripe, 'InvalidRequestError', MockInvalidRequestError)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
@@ -154,11 +156,11 @@ class TestStripeErrorMessageHandling(TestCase):
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise Exception('THIS SHOULD BE THE VALUE STRIPE SENDS.')
 
-        def call_create_cust_errhandler(submit_subscription_handler_obj, trace_back, error, details,
+        def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back, error, details,
                                         email_subject):
             self.failUnless(details.startswith('Something '))
             self.failUnlessEquals(email_subject, "Stripe unexpected error")
-        self.patch(SubmitSubscriptionHandler, 'create_cust_errhandler', call_create_cust_errhandler)
+        self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors', call_handle_stripe_create_customer_errors)
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
         self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
                                                   REQUESTARGS['email'][0])
