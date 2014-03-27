@@ -31,7 +31,7 @@ class SubmitSubscriptionHandler(HandlerBase):
         self._logger_helper(__name__)
         self.basefp = basefp
 
-    #The following helper methods are all called directly-or-indirectly by render.
+    # The following helper methods are all called directly or indirectly by render.
     def get_stripe_api_key(self):
         stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
         if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
