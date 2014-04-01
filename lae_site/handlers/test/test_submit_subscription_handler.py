@@ -1,4 +1,4 @@
-import os, sys
+import os#, sys
 
 from twisted.internet import defer
 from twisted.trial.unittest import TestCase
@@ -82,7 +82,8 @@ class MockEnv(object):
 
 class CommonFixture(TestCase):
     def setUp(self):
-        # Create directory for file I/O.
+        # Create Unique Test Specific directory for file I/O.
+        # obtain unique name
         temp = self.mktemp()
         self.basedirfp = FilePath(temp.rsplit('/',2)[0])
         os.rmdir(temp.rsplit('/',1)[0])
@@ -101,6 +102,10 @@ class CommonFixture(TestCase):
 
 class TestStripeErrorHandling(CommonFixture):
     def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
+        """
+        This helper method eliminates repitition of code across
+        the four very similar tests.
+        """
         self.mc = MockCustomer()
         def call_stripe_Customer_create(api_key, card, plan, email):
             raise MockErrorClass('THIS SHOULD BE THE VALUE STRIPE SENDS.')
@@ -145,9 +150,12 @@ class TestRender(CommonFixture):
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
         self.patch(submit_subscription, 'env', MockEnv())
+        # Define mocks for methods to be patched
+        def mock_get_creation_parameters(subscription_handler_instance, request):
+            return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
         # Patch out called methods:
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
-                   self.mock_get_creation_parameters)
+                   mock_get_creation_parameters)
         # Create mock API key.
         make_dirs(self.basedirfp.child('secret_config').path)
         self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
@@ -159,9 +167,6 @@ class TestRender(CommonFixture):
 
     def tearDown(self):
         super(TestRender, self).tearDown()
-
-    def mock_get_creation_parameters(self, request):
-        return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
 
     def mock_create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
         return MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
