@@ -6,7 +6,7 @@ AUTHOR = u"Zooko Wilcox-O'Hearn"
 SITENAME = u'Least Authority Blog'
 SITEURL = 'https://leastauthority.com/blog'
 
-TIMEZONE = 'America/Los_Angeles'
+TIMEZONE = 'UTC'
 
 DEFAULT_LANG = u'en'
 FEED_ALL_ATOM = 'feeds/all.atom.xml'
