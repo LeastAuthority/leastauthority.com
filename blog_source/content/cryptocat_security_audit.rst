@@ -3,7 +3,7 @@
 Least Authority Performs Security Audit For CryptoCat
 =====================================================
 
-:date: 2014-04-02 16:00 UTC
+:date: 2014-04-02 16:00
 :tags: consultancy, cryptocat
 :category: News
 :slug: least_authority_performs_security_audit_for_cryptocat
