@@ -94,14 +94,11 @@ Tickets on the Cryptocat github issue tracker to track the status of each issue:
 .. _Issue E: https://github.com/cryptocat/cryptocat/issues/606
 .. _Issue F: https://github.com/cryptocat/cryptocat/issues/607
 .. _Issue G: https://github.com/cryptocat/cryptocat/issues/608
-
 .. _crypton: /blog/least_authority_performs_security_audit_for_spideroak.html
 .. _Our mission: https://leastauthority.com/about_us
 .. _Open Technology Fund: https://www.opentechfund.org/
 .. _Red Team: https://www.opentechfund.org/labs#redteam
 .. _GlobaLeaks: https://globaleaks.org/
-
 .. _S4: https://leastauthority.com/product_s4
 .. _Cryptocat: https://crypto.cat/
-.. _Report of Security Audit of Cryptocat: /publications/LeastAuthority-Cryptocat-audit-report.pdf
-
+.. _Report of Security Audit of Cryptocat: /static/publications/LeastAuthority-Cryptocat-audit-report.pdf
