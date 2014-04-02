@@ -1,0 +1,413 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="Docutils 0.8.1: http://docutils.sourceforge.net/" />
+<title>Least Authority Performs Security Audit For CryptoCat</title>
+<meta name="date" content="2014-04-02 15:00 UTC" />
+<meta name="author" content="Zooko Wilcox-O'Hearn" />
+<style type="text/css">
+
+/*
+:Author: David Goodger (goodger@python.org)
+:Id: $Id: html4css1.css 7056 2011-06-17 10:50:48Z milde $
+:Copyright: This stylesheet has been placed in the public domain.
+
+Default cascading style sheet for the HTML output of Docutils.
+
+See http://docutils.sf.net/docs/howto/html-stylesheets.html for how to
+customize this style sheet.
+*/
+
+/* used to remove borders from tables and images */
+.borderless, table.borderless td, table.borderless th {
+  border: 0 }
+
+table.borderless td, table.borderless th {
+  /* Override padding for "table.docutils td" with "! important".
+     The right padding separates the table cells. */
+  padding: 0 0.5em 0 0 ! important }
+
+.first {
+  /* Override more specific margin styles with "! important". */
+  margin-top: 0 ! important }
+
+.last, .with-subtitle {
+  margin-bottom: 0 ! important }
+
+.hidden {
+  display: none }
+
+a.toc-backref {
+  text-decoration: none ;
+  color: black }
+
+blockquote.epigraph {
+  margin: 2em 5em ; }
+
+dl.docutils dd {
+  margin-bottom: 0.5em }
+
+object[type="image/svg+xml"], object[type="application/x-shockwave-flash"] {
+  overflow: hidden;
+}
+
+/* Uncomment (and remove this text!) to get bold-faced definition list terms
+dl.docutils dt {
+  font-weight: bold }
+*/
+
+div.abstract {
+  margin: 2em 5em }
+
+div.abstract p.topic-title {
+  font-weight: bold ;
+  text-align: center }
+
+div.admonition, div.attention, div.caution, div.danger, div.error,
+div.hint, div.important, div.note, div.tip, div.warning {
+  margin: 2em ;
+  border: medium outset ;
+  padding: 1em }
+
+div.admonition p.admonition-title, div.hint p.admonition-title,
+div.important p.admonition-title, div.note p.admonition-title,
+div.tip p.admonition-title {
+  font-weight: bold ;
+  font-family: sans-serif }
+
+div.attention p.admonition-title, div.caution p.admonition-title,
+div.danger p.admonition-title, div.error p.admonition-title,
+div.warning p.admonition-title {
+  color: red ;
+  font-weight: bold ;
+  font-family: sans-serif }
+
+/* Uncomment (and remove this text!) to get reduced vertical space in
+   compound paragraphs.
+div.compound .compound-first, div.compound .compound-middle {
+  margin-bottom: 0.5em }
+
+div.compound .compound-last, div.compound .compound-middle {
+  margin-top: 0.5em }
+*/
+
+div.dedication {
+  margin: 2em 5em ;
+  text-align: center ;
+  font-style: italic }
+
+div.dedication p.topic-title {
+  font-weight: bold ;
+  font-style: normal }
+
+div.figure {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+div.footer, div.header {
+  clear: both;
+  font-size: smaller }
+
+div.line-block {
+  display: block ;
+  margin-top: 1em ;
+  margin-bottom: 1em }
+
+div.line-block div.line-block {
+  margin-top: 0 ;
+  margin-bottom: 0 ;
+  margin-left: 1.5em }
+
+div.sidebar {
+  margin: 0 0 0.5em 1em ;
+  border: medium outset ;
+  padding: 1em ;
+  background-color: #ffffee ;
+  width: 40% ;
+  float: right ;
+  clear: right }
+
+div.sidebar p.rubric {
+  font-family: sans-serif ;
+  font-size: medium }
+
+div.system-messages {
+  margin: 5em }
+
+div.system-messages h1 {
+  color: red }
+
+div.system-message {
+  border: medium outset ;
+  padding: 1em }
+
+div.system-message p.system-message-title {
+  color: red ;
+  font-weight: bold }
+
+div.topic {
+  margin: 2em }
+
+h1.section-subtitle, h2.section-subtitle, h3.section-subtitle,
+h4.section-subtitle, h5.section-subtitle, h6.section-subtitle {
+  margin-top: 0.4em }
+
+h1.title {
+  text-align: center }
+
+h2.subtitle {
+  text-align: center }
+
+hr.docutils {
+  width: 75% }
+
+img.align-left, .figure.align-left, object.align-left {
+  clear: left ;
+  float: left ;
+  margin-right: 1em }
+
+img.align-right, .figure.align-right, object.align-right {
+  clear: right ;
+  float: right ;
+  margin-left: 1em }
+
+img.align-center, .figure.align-center, object.align-center {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.align-left {
+  text-align: left }
+
+.align-center {
+  clear: both ;
+  text-align: center }
+
+.align-right {
+  text-align: right }
+
+/* reset inner alignment in figures */
+div.align-right {
+  text-align: inherit }
+
+/* div.align-center * { */
+/*   text-align: left } */
+
+ol.simple, ul.simple {
+  margin-bottom: 1em }
+
+ol.arabic {
+  list-style: decimal }
+
+ol.loweralpha {
+  list-style: lower-alpha }
+
+ol.upperalpha {
+  list-style: upper-alpha }
+
+ol.lowerroman {
+  list-style: lower-roman }
+
+ol.upperroman {
+  list-style: upper-roman }
+
+p.attribution {
+  text-align: right ;
+  margin-left: 50% }
+
+p.caption {
+  font-style: italic }
+
+p.credits {
+  font-style: italic ;
+  font-size: smaller }
+
+p.label {
+  white-space: nowrap }
+
+p.rubric {
+  font-weight: bold ;
+  font-size: larger ;
+  color: maroon ;
+  text-align: center }
+
+p.sidebar-title {
+  font-family: sans-serif ;
+  font-weight: bold ;
+  font-size: larger }
+
+p.sidebar-subtitle {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+p.topic-title {
+  font-weight: bold }
+
+pre.address {
+  margin-bottom: 0 ;
+  margin-top: 0 ;
+  font: inherit }
+
+pre.literal-block, pre.doctest-block, pre.math {
+  margin-left: 2em ;
+  margin-right: 2em }
+
+span.classifier {
+  font-family: sans-serif ;
+  font-style: oblique }
+
+span.classifier-delimiter {
+  font-family: sans-serif ;
+  font-weight: bold }
+
+span.interpreted {
+  font-family: sans-serif }
+
+span.option {
+  white-space: nowrap }
+
+span.pre {
+  white-space: pre }
+
+span.problematic {
+  color: red }
+
+span.section-subtitle {
+  /* font-size relative to parent (h1..h6 element) */
+  font-size: 80% }
+
+table.citation {
+  border-left: solid 1px gray;
+  margin-left: 1px }
+
+table.docinfo {
+  margin: 2em 4em }
+
+table.docutils {
+  margin-top: 0.5em ;
+  margin-bottom: 0.5em }
+
+table.footnote {
+  border-left: solid 1px black;
+  margin-left: 1px }
+
+table.docutils td, table.docutils th,
+table.docinfo td, table.docinfo th {
+  padding-left: 0.5em ;
+  padding-right: 0.5em ;
+  vertical-align: top }
+
+table.docutils th.field-name, table.docinfo th.docinfo-name {
+  font-weight: bold ;
+  text-align: left ;
+  white-space: nowrap ;
+  padding-left: 0 }
+
+h1 tt.docutils, h2 tt.docutils, h3 tt.docutils,
+h4 tt.docutils, h5 tt.docutils, h6 tt.docutils {
+  font-size: 100% }
+
+ul.auto-toc {
+  list-style-type: none }
+
+</style>
+</head>
+<body>
+<div class="document" id="least-authority-performs-security-audit-for-cryptocat">
+<h1 class="title">Least Authority Performs Security Audit For CryptoCat</h1>
+<table class="docinfo" frame="void" rules="none">
+<col class="docinfo-name" />
+<col class="docinfo-content" />
+<tbody valign="top">
+<tr><th class="docinfo-name">Date:</th>
+<td>2014-04-02 15:00 UTC</td></tr>
+<tr class="field"><th class="docinfo-name">tags:</th><td class="field-body">consultancy, cryptocat</td>
+</tr>
+<tr class="field"><th class="docinfo-name">category:</th><td class="field-body">News</td>
+</tr>
+<tr class="field"><th class="docinfo-name">slug:</th><td class="field-body">least_authority_performs_security_audit_for_cryptocat</td>
+</tr>
+<tr><th class="docinfo-name">Author:</th>
+<td>Zooko Wilcox-O'Hearn</td></tr>
+<tr class="field"><th class="docinfo-name">summary:</th><td class="field-body">Least Authority performs security audit for CryptoCat</td>
+</tr>
+</tbody>
+</table>
+<!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- -->
+<p>This is the second post in our series about security audits of Free and
+Open Source end-to-end encryption software. The first post in the series
+was about our security audit of SpiderOak's <a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html">crypton</a> project.</p>
+<p><a class="reference external" href="https://leastauthority.com/about_us">Our mission</a> at LeastAuthority is to bring verifiable end-to-end
+security to everyone.</p>
+<p>As part of that mission, in addition to operating the <a class="reference external" href="https://leastauthority.com/product_s4">S4</a> simple secure
+storage service, we also perform security consulting. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies sometimes ask us to analyze the
+security of their protocols and software.</p>
+<p>We audited the widely-used <a class="reference external" href="https://crypto.cat/">CryptoCat</a> encrypted chat program. This
+audit was funded by <a class="reference external" href="https://www.opentechfund.org/">Open Technology Fund</a> as part of their <a class="reference external" href="https://www.opentechfund.org/labs#redteam">Red Team</a>
+project to provide multiple professional security audits to Internet
+freedom projects.</p>
+<div class="section" id="what-were-the-results">
+<h1>What were the results?</h1>
+<p>We found several security issues in the version of CryptoCat that we
+examined (CryptoCat v2.1.15). For each one, we reported it to the
+CryptoCat developers, and they have either deployed a fix in a newer
+release of CryptoCat or else disabled the feature that has the
+vulnerability.</p>
+<p>The complete list of the issues we found is at the end of this article,
+along with a link to the report document.</p>
+<p>Unfortunately we didn't have time to examine all parts of CryptoCat that
+we wanted to. We concentrated on the “crypto-related” parts: key
+generation and key management, random number generation, encryption and
+decryption, authentication and integrity, and the new file transfer
+feature. Most of the issues that we found were in those areas.</p>
+<p>Our report explains what parts of it we looked at most closely (this is
+called the &quot;coverage&quot; results of the audit).</p>
+</div>
+<div class="section" id="parting-thoughts">
+<h1>parting thoughts</h1>
+<p>I would like to thank the CryptoCat project, led by Nadim Kobeissi, for
+their commitment to doing development in the open, inviting external
+review, and moving to address the issues we uncovered. This open
+development process is a good complement to CryptoCat's Free and Open
+Source publication of their code and their commitment to providing
+end-to-end security for their users.</p>
+<p>On top of that, I'd like to thank CryptoCat for their unflagging focus on
+<em>usability</em>. Usability is a critical factor if we are going to succeed at
+bringing verifiable end-to-end security to everyone, and it is an area
+where we as a community and as a society need to improve.</p>
+</div>
+<div class="section" id="any-questions">
+<h1>any questions?</h1>
+<p>If you have any questions about these results or the process, the
+CryptoCat developers and we of LeastAuthority.com will be available on a
+reddit &quot;Ask Me Anything&quot; Monday of next week for Q&amp;A.</p>
+<p>The next project we are auditing is <a class="reference external" href="https://globaleaks.org/">GlobaLeaks</a>, so stay tuned.</p>
+</div>
+<div class="section" id="further-reading">
+<h1>further reading</h1>
+<p>The full report:</p>
+<p>Tickets on the Cryptocat github issue tracker to track the status of each issue:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/575">Issue A</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/576">Issue B</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/577">Issue C</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/578">Issue D</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/606">Issue E</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/607">Issue F</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/608">Issue G</a></li>
+</ul>
+</div>
+<div class="system-messages section">
+<h1>Docutils System Messages</h1>
+<div class="system-message">
+<p class="system-message-title">System Message: INFO/1 (<tt class="docutils">cryptocat_security_audit.rst</tt>, line 106)</p>
+Hyperlink target &quot;has published the security auditing report&quot; is not referenced.</div>
+</div>
+</div>
+</body>
+</html>
