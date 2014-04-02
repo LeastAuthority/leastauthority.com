@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all-en.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-04-02T16:00:00+00:00</updated><entry><title>Least Authority Performs Security Audit For CryptoCat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all-en.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-04-02T16:00:00+00:00</updated><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
 &lt;p&gt;This is the second post in our series about security audits of Free and
 Open Source end-to-end encryption software. The first post in the series
 was about our security audit of SpiderOak's &lt;a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;crypton&lt;/a&gt; project.&lt;/p&gt;
@@ -10,20 +10,20 @@ storage service, we also perform security consulting. We
 LeastAuthoritarians have extensive experience in security and
 cryptography, and other companies sometimes ask us to analyze the
 security of their protocols and software.&lt;/p&gt;
-&lt;p&gt;We audited the widely-used &lt;a class="reference external" href="https://crypto.cat/"&gt;CryptoCat&lt;/a&gt; encrypted chat program. This
+&lt;p&gt;We audited the widely-used &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt; encrypted chat program. This
 audit was funded by &lt;a class="reference external" href="https://www.opentechfund.org/"&gt;Open Technology Fund&lt;/a&gt; as part of their &lt;a class="reference external" href="https://www.opentechfund.org/labs#redteam"&gt;Red Team&lt;/a&gt;
 project to provide multiple professional security audits to Internet
 freedom projects.&lt;/p&gt;
 &lt;div class="section" id="what-were-the-results"&gt;
 &lt;h2&gt;What were the results?&lt;/h2&gt;
-&lt;p&gt;We found several security issues in the version of CryptoCat that we
-examined (CryptoCat v2.1.15). For each one, we reported it to the
-CryptoCat developers, and they have either deployed a fix in a newer
-release of CryptoCat or else disabled the feature that has the
+&lt;p&gt;We found several security issues in the version of Cryptocat that we
+examined (Cryptocat v2.1.15). For each one, we reported it to the
+Cryptocat developers, and they have either deployed a fix in a newer
+release of Cryptocat or else disabled the feature that has the
 vulnerability.&lt;/p&gt;
 &lt;p&gt;The complete list of the issues we found is at the end of this article,
 along with a link to the report document.&lt;/p&gt;
-&lt;p&gt;Unfortunately we didn't have time to examine all parts of CryptoCat that
+&lt;p&gt;Unfortunately we didn't have time to examine all parts of Cryptocat that
 we wanted to. We concentrated on the “crypto-related” parts: key
 generation and key management, random number generation, encryption and
 decryption, authentication and integrity, and the new file transfer
@@ -33,13 +33,13 @@ called the &amp;quot;coverage&amp;quot; results of the audit).&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="parting-thoughts"&gt;
 &lt;h2&gt;parting thoughts&lt;/h2&gt;
-&lt;p&gt;I would like to thank the CryptoCat project, led by Nadim Kobeissi, for
+&lt;p&gt;I would like to thank the Cryptocat project, led by Nadim Kobeissi, for
 their commitment to doing development in the open, inviting external
 review, and moving to address the issues we uncovered. This open
-development process is a good complement to CryptoCat's Free and Open
+development process is a good complement to Cryptocat's Free and Open
 Source publication of their code and their commitment to providing
 end-to-end security for their users.&lt;/p&gt;
-&lt;p&gt;On top of that, I'd like to thank CryptoCat for their unflagging focus on
+&lt;p&gt;On top of that, I'd like to thank Cryptocat for their unflagging focus on
 &lt;em&gt;usability&lt;/em&gt;. Usability is a critical factor if we are going to succeed at
 bringing verifiable end-to-end security to everyone, and it is an area
 where we as a community and as a society need to improve.&lt;/p&gt;
