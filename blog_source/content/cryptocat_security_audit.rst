@@ -3,7 +3,7 @@
 Least Authority Performs Security Audit For CryptoCat
 =====================================================
 
-:date: 2014-03-20 01:00
+:date: 2014-04-02 16:00 UTC
 :tags: consultancy, cryptocat
 :category: News
 :slug: least_authority_performs_security_audit_for_cryptocat
@@ -20,8 +20,8 @@ security to everyone.
 As part of that mission, in addition to operating the `S4`_ simple secure
 storage service, we also perform security consulting. We
 LeastAuthoritarians have extensive experience in security and
-cryptography, and other companies hire us to analyze the security of their
-protocols and software.
+cryptography, and other companies sometimes ask us to analyze the
+security of their protocols and software.
 
 We audited the widely-used `CryptoCat`_ encrypted chat program. This
 audit was funded by `Open Technology Fund`_ as part of their `Red Team`_
@@ -59,34 +59,49 @@ development process is a good complement to CryptoCat's Free and Open
 Source publication of their code and their commitment to providing
 end-to-end security for their users.
 
-On top of all of the above, I'd like to thank CryptoCat for their
-unflagging focus on *usability*. Usability is a critical factor if we are
-going to succeed at bringing verifiable end-to-end security to everyone,
-and it is an area where we as a community and as a society need to
-improve.
+On top of that, I'd like to thank CryptoCat for their unflagging focus on
+*usability*. Usability is a critical factor if we are going to succeed at
+bringing verifiable end-to-end security to everyone, and it is an area
+where we as a community and as a society need to improve.
 
 any questions?
 --------------
 
-If you have any questions about these results or the process, the
-CryptoCat developers and we of LeastAuthority.com will be available on a
-reddit "Ask Me Anything" Monday of next week for Q&A.
+If you have any questions about these results or the process, please
+contact us or the Cryptocat developers.
 
 The next project we are auditing is `GlobaLeaks`_, so stay tuned.
 
-XXX list issues
-XXX link to report
+further reading
+---------------
+
+The full report: `Report of Security Audit of Cryptocat`_
+
+Tickets on the Cryptocat github issue tracker to track the status of each issue:
+
+* `Issue A`_
+* `Issue B`_
+* `Issue C`_
+* `Issue D`_
+* `Issue E`_
+* `Issue F`_
+* `Issue G`_
+
+.. _Issue A: https://github.com/cryptocat/cryptocat/issues/575
+.. _Issue B: https://github.com/cryptocat/cryptocat/issues/576
+.. _Issue C: https://github.com/cryptocat/cryptocat/issues/577
+.. _Issue D: https://github.com/cryptocat/cryptocat/issues/578
+.. _Issue E: https://github.com/cryptocat/cryptocat/issues/606
+.. _Issue F: https://github.com/cryptocat/cryptocat/issues/607
+.. _Issue G: https://github.com/cryptocat/cryptocat/issues/608
 
 .. _crypton: /blog/least_authority_performs_security_audit_for_spideroak.html
 .. _Our mission: https://leastauthority.com/about_us
-.. _CryptoCat: https://crypto.cat/
 .. _Open Technology Fund: https://www.opentechfund.org/
 .. _Red Team: https://www.opentechfund.org/labs#redteam
 .. _GlobaLeaks: https://globaleaks.org/
 
 .. _S4: https://leastauthority.com/product_s4
-.. _Our mission: https://leastauthority.com/about_us
-.. _SpiderOak: https://spideroak.com/
-.. _Crypton.io: https://crypton.io/
-.. _has published the security auditing report: https://spideroak.com/blog/20140220090004-responsibly-bringing-new-cryptography-product-market
 .. _Cryptocat: https://crypto.cat/
+.. _Report of Security Audit of Cryptocat: /publications/LeastAuthority-Cryptocat-audit-report.pdf
+
