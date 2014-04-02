@@ -52,7 +52,7 @@ contact us or the Cryptocat developers.&lt;/p&gt;
 &lt;/div&gt;
 &lt;div class="section" id="further-reading"&gt;
 &lt;h2&gt;further reading&lt;/h2&gt;
-&lt;p&gt;The full report: &lt;a class="reference external" href="/publications/LeastAuthority-Cryptocat-audit-report.pdf"&gt;Report of Security Audit of Cryptocat&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The full report: &lt;a class="reference external" href="/static/publications/LeastAuthority-Cryptocat-audit-report.pdf"&gt;Report of Security Audit of Cryptocat&lt;/a&gt;&lt;/p&gt;
 &lt;p&gt;Tickets on the Cryptocat github issue tracker to track the status of each issue:&lt;/p&gt;
 &lt;ul class="simple"&gt;
 &lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/575"&gt;Issue A&lt;/a&gt;&lt;/li&gt;
