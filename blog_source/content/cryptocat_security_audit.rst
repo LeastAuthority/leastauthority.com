@@ -64,7 +64,7 @@ On top of that, I'd like to thank CryptoCat for their unflagging focus on
 bringing verifiable end-to-end security to everyone, and it is an area
 where we as a community and as a society need to improve.
 
-any questions?
+Any questions?
 --------------
 
 If you have any questions about these results or the process, please
