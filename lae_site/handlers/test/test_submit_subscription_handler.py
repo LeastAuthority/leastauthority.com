@@ -150,12 +150,17 @@ class TestRender(CommonFixture):
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
         self.patch(submit_subscription, 'env', MockEnv())
-        # Define mocks for methods to be patched
+        # Define mocks for methods to be patched, and patches them
         def mock_get_creation_parameters(subscription_handler_instance, request):
             return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
-        # Patch out called methods:
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    mock_get_creation_parameters)
+
+        def mock_create_customer():
+            pass
+        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
+                   mock_get_creation_parameters)
+
         # Create mock API key.
         make_dirs(self.basedirfp.child('secret_config').path)
         self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
