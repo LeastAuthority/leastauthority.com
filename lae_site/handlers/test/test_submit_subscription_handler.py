@@ -15,6 +15,7 @@ MOCKSMTPPASSWORD = "beef"*4
 REQUESTARGS = {'stripeToken':["MOCK_stripe_token"], 'email':["test@test"], 'pgp_pubkey':["testpgppubkey"]}
 MOCKFURLFP = "FAKEPATH"
 
+
 class MockRequest(object):
     def __init__(self, argdict):
         self.args = argdict
@@ -69,8 +70,9 @@ class MockInvalidRequestError(Exception):
 class MockTemplate(object):
     def __init__(self, args):
         self.args = args
-    def render(self, characters):
-        return "STUB"
+    def render(self, section_dict):
+        # XXX TODO make return value "realistic" function of section_dict
+        return "FAKEVALUESTRING"
 
 
 class MockEnv(object):
@@ -141,16 +143,28 @@ class TestStripeErrorHandling(CommonFixture):
 class TestRender(CommonFixture):
     def setUp(self):
         super(TestRender, self).setUp()
-        # Patch out environment.
-        self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
-        self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
-        self.patch(submit_subscription, 'env', MockEnv())
         # Define mocks and patch out called functions
         def mock_get_creation_parameters(submit_subscription_handler_instance, request):
             return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
-
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    mock_get_creation_parameters)
+        def mock_create_customer(submit_subscription_handler_instance, stripe_api_key,
+                                 stripe_authorization_token, user_email):
+            return MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
+        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
+                   mock_create_customer)
+        def mock_env_dot_get_template(template_name):
+            return MockTemplate(template_name)
+        self.patch(submit_subscription.env, 'get_template',
+                   mock_env_dot_get_template)
+        def mock_append_record(log_file_path, customer_subscription_id):
+            pass # XXX TODO make this more interesting
+        self.patch(submit_subscription, 'append_record',
+                   mock_append_record)
+        def mock_run_full_signup(submit_subscription_handler_instance, customer, request):
+            pass # XXX TODO make this more interesting
+        self.patch(submit_subscription.SubmitSubscriptionHandler, 'run_full_signup',
+                   mock_run_full_signup)
 
         # Create mock API key.
         make_dirs(self.basedirfp.child('secret_config').path)
@@ -163,13 +177,6 @@ class TestRender(CommonFixture):
 
     def tearDown(self):
         super(TestRender, self).tearDown()
-
-    def mock_create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
-        return MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
-
-    def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
-        self.mc = MockCustomer()
-
 
     def test_stripe_successful_customer_creation(self):
         mockrequest = MockRequest(REQUESTARGS)
