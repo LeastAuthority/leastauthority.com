@@ -145,9 +145,13 @@ class TestRender(CommonFixture):
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(MOCKFURLFP))
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
         self.patch(submit_subscription, 'env', MockEnv())
-        # Patch out called methods:
+        # Define mocks and patch out called functions
+        def mock_get_creation_parameters(submit_subscription_handler_instance, request):
+            return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
+
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
-                   self.mock_get_creation_parameters)
+                   mock_get_creation_parameters)
+
         # Create mock API key.
         make_dirs(self.basedirfp.child('secret_config').path)
         self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
@@ -159,9 +163,6 @@ class TestRender(CommonFixture):
 
     def tearDown(self):
         super(TestRender, self).tearDown()
-
-    def mock_get_creation_parameters(self, request):
-        return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
 
     def mock_create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
         return MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
