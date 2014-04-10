@@ -162,8 +162,8 @@ class TestRender(CommonFixture):
         make_dirs(self.basedirfp.child('secret_config').path)
         self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
         self.basedirfp.child('secret_config').child('smtppassword').setContent(MOCKSMTPPASSWORD)
-        self.mocksmtppswdpath = self.basedirfp.child('secret_config').child('smtppassword').path
-        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mocksmtppswdpath)
+        self.mock_smtp_password_path = self.basedirfp.child('secret_config').child('smtppassword').path
+        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mock_smtp_password_path)
 
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
