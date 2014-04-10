@@ -4,6 +4,7 @@ from twisted.internet import defer
 from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
 
+from lae_util.testutil import TestUtilitiesMixin
 from lae_util.fileutil import make_dirs
 from lae_site.handlers import submit_subscription
 from lae_util import send_email
@@ -82,12 +83,10 @@ class MockEnv(object):
         return MockTemplate(repr(htmltemplate))
 
 
-class CommonFixture(TestCase):
+class CommonFixture(TestCase, TestUtilitiesMixin):
     def setUp(self):
         # Create directory for file I/O.
-        temp = self.mktemp()
-        self.basedirfp = FilePath(temp.rsplit('/',2)[0])
-        os.rmdir(temp.rsplit('/',1)[0])
+        self.basedirfp = self.create_workdir()
         # There should never be a "real" customer instance
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
         # Wipe MockCustomer Instance, which may have test specific properties
