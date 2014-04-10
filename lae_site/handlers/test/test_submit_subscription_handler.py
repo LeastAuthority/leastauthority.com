@@ -84,9 +84,11 @@ class MockEnv(object):
 class CommonFixture(TestCase, TestUtilitiesMixin):
     def setUp(self):
         # Create directory for file I/O.
-        self.basedirfp = self.create_workdir()
+        self.basedirfp = self.create_workdirfp()
+
         # There should never be a "real" customer instance
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
+
         # The Subcription Handler Instance
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
