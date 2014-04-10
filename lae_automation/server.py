@@ -57,53 +57,53 @@ enabled = false
 local.directory =
 """
 
-NGINX_CONFIG = """# You may add here your                                                                                             
-# server {                                                                                                          
-#       ...                                                                                                         
-# }                                                                                                                 
-# statements for each of your virtual hosts                                                                         
-                                                                                                                    
-server {                                                                                                            
-    listen 8443 default ssl;                                                                                        
-    server_name leastauthority.com;                                                                                 
-    ssl on;                                                                                                         
-    ssl_certificate /home/website/secret_config/rapidssl/server.crt;                                                                  
-    ssl_certificate_key /home/website/secret_config/rapidssl/server.key;                                                              
-                                                                                                                    
-    ssl_session_cache    shared:SSL:10m;                                                                            
-    ssl_session_timeout 10000m;                                                                                     
-                                                                                                                    
-    ssl_protocols SSLv3 TLSv1;                                                                                      
+NGINX_CONFIG = """# You may add here your
+# server {
+#       ...
+# }
+# statements for each of your virtual hosts
+
+server {
+    listen 8443 default ssl;
+    server_name leastauthority.com;
+    ssl on;
+    ssl_certificate /home/website/secret_config/rapidssl/server.crt;
+    ssl_certificate_key /home/website/secret_config/rapidssl/server.key;
+
+    ssl_session_cache    shared:SSL:10m;
+    ssl_session_timeout 10000m;
+
+    ssl_protocols SSLv3 TLSv1;
     ssl_ciphers RC4-SHA:AES128-SHA:DHE-DSS-AES128-SHA:DHE-RSA-AES128-SHA:AES256-SHA:DHE-DSS-AES256-SHA:DHE-RSA-AES25
-6-SHA;                                                                                                              
-    ssl_prefer_server_ciphers on;                                                                                   
-                                                                                                                    
-    add_header Strict-Transport-Security max-age=100000;                                                            
-                                                                                                                    
-    add_header  Cache-Control public;                                                                               
-    expires 30d;                                                                                                    
-                                                                                                                    
-    gzip on;                                                                                                        
-    gzip_static on;                                                                                                 
-    gzip_comp_level 9;                                                                                              
-    gzip_types *;                                                                                                   
-                                                                                                                    
-    access_log /home/website/mailman/server.log;                                                                    
-                                                                                                                    
-    # match https://leastauthority.com:8443/cgi-bin/mailman/listinfo/*                                              
-    # and ask thttpd to run the CGI for us                                                                          
-    location /cgi-bin {                                                                                             
-        expires off;                                                                                                
-        include proxy_params;                                                                                       
-        proxy_pass http://127.0.0.1:8581;                                                                           
-    }                                                                                                               
-    location /images/mailman {                                                                                      
-        alias /var/lib/mailman/icons;                                                                               
-    }                                                                                                               
-    location /pipermail {                                                                                           
-        alias /var/lib/mailman/archives/public;                                                                     
-        autoindex on;                                                                                               
-    }                                                                                                               
+6-SHA;
+    ssl_prefer_server_ciphers on;
+
+    add_header Strict-Transport-Security max-age=100000;
+
+    add_header  Cache-Control public;
+    expires 30d;
+
+    gzip on;
+    gzip_static on;
+    gzip_comp_level 9;
+    gzip_types *;
+
+    access_log /home/website/mailman/server.log;
+
+    # match https://leastauthority.com:8443/cgi-bin/mailman/listinfo/*
+    # and ask thttpd to run the CGI for us
+    location /cgi-bin {
+        expires off;
+        include proxy_params;
+        proxy_pass http://127.0.0.1:8581;
+    }
+    location /images/mailman {
+        alias /var/lib/mailman/icons;
+    }
+    location /pipermail {
+        alias /var/lib/mailman/archives/public;
+        autoindex on;
+    }
 }"""
 
 class NotListeningError(Exception):
@@ -252,15 +252,15 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     run('chmod +x %s' % (live_commit_hook_path,))
 
     print "live_path is %s" % (live_path,)
-    local_git_push = ['/usr/bin/git', 
-                        '--git-dir=%s' % (local_repo_path,), 
+    local_git_push = ['/usr/bin/git',
+                        '--git-dir=%s' % (local_repo_path,),
                         'push',
                         'website@%s:%s' % (hostname, hub_path),
                         '%s:master' % (src_ref,)]
-    subprocess.check_call(local_git_push)    
+    subprocess.check_call(local_git_push)
 
-def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo, 
-                                  la_commit_hash, secretconf_repo, sc_commit_hash, 
+def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
+                                  la_commit_hash, secretconf_repo, sc_commit_hash,
                                   stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
@@ -287,7 +287,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
                             'python-nevow python-dateutil fabric python-foolscap')
     #sudo_easy_install('foolscap')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
-    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
+    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
     sudo_apt_get('install -y postfix')
     sudo_apt_get('install -y darcs')
 
@@ -295,14 +295,14 @@ postfix	postfix/main_mailer_type select	No configuration"""
 #    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
 #    sudo('rm /etc/nginx/sites-enabled/default')
 #    sudo('service nginx restart')
-    
+
     create_account('website', website_pubkey, stdout, stderr)
 
     sudo_apt_get('install -y authbind')
     sudo('touch /etc/authbind/byport/{443,80}')
     sudo('chown website:root /etc/authbind/byport/{443,80}')
     sudo('chmod 744 /etc/authbind/byport/{443,80}')
-    
+
     run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
@@ -644,7 +644,7 @@ def get_mem_used(process_id_int):
         raise NotSupportedException(a)
     virtual_mem_in_page_units = int(a[0])
     resident_set_size_in_page_units = int(a[1])
-    return (resident_set_size_in_page_units * resource.getpagesize(), 
+    return (resident_set_size_in_page_units * resource.getpagesize(),
             virtual_mem_in_page_units * resource.getpagesize())
 
 # copied from nejucomo
