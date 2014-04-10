@@ -89,16 +89,9 @@ class CommonFixture(TestCase, TestUtilitiesMixin):
         self.basedirfp = self.create_workdir()
         # There should never be a "real" customer instance
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
-        # Wipe MockCustomer Instance, which may have test specific properties
-        self.mc = 'SettingUp'
         # The Subcription Handler Instance
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
-    def tearDown(self):
-        # These variables must _not_ maintain state across TestCases.
-        self.basedirfp = 'TornDown'
-        self.mc = 'TornDown'
-        self.subscription_handler = 'TornDown'
 
 class TestStripeErrorHandling(CommonFixture):
     def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
