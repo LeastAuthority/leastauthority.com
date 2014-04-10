@@ -136,27 +136,27 @@ class TestRender(CommonFixture):
     def setUp(self):
         super(TestRender, self).setUp()
         # Define mocks and patch out called functions
-        def mock_get_creation_parameters(submit_subscription_handler_instance, request):
+        def call_get_creation_parameters(submit_subscription_handler_instance, request):
             return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
-                   mock_get_creation_parameters)
-        def mock_create_customer(submit_subscription_handler_instance, stripe_api_key,
+                   call_get_creation_parameters)
+        def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
                                  stripe_authorization_token, user_email):
             return MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
-                   mock_create_customer)
-        def mock_env_dot_get_template(template_name):
+                   call_create_customer)
+        def call_env_dot_get_template(template_name):
             return MockTemplate(template_name)
         self.patch(submit_subscription.env, 'get_template',
-                   mock_env_dot_get_template)
-        def mock_append_record(log_file_path, customer_subscription_id):
+                   call_env_dot_get_template)
+        def call_append_record(log_file_path, customer_subscription_id):
             pass # XXX TODO make this more interesting
         self.patch(submit_subscription, 'append_record',
-                   mock_append_record)
-        def mock_run_full_signup(submit_subscription_handler_instance, customer, request):
+                   call_append_record)
+        def call_run_full_signup(submit_subscription_handler_instance, customer, request):
             pass # XXX TODO make this more interesting
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'run_full_signup',
-                   mock_run_full_signup)
+                   call_run_full_signup)
 
         # Create mock API key.
         make_dirs(self.basedirfp.child('secret_config').path)
