@@ -1,6 +1,4 @@
 
-import os
-
 from twisted.python.filepath import FilePath
 
 
