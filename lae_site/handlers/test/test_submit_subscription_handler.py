@@ -1,8 +1,6 @@
-import os, sys
 
 from twisted.internet import defer
 from twisted.trial.unittest import TestCase
-from twisted.python.filepath import FilePath
 
 from lae_util.testutil import TestUtilitiesMixin
 from lae_util.fileutil import make_dirs
@@ -131,6 +129,7 @@ class TestStripeErrorHandling(CommonFixture):
 
     def test_stripe_UnexpectedError(self):
         return self._test_stripe_error(Exception, "Something ", "Stripe unexpected error")
+
 
 class TestRender(CommonFixture):
     def setUp(self):
