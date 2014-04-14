@@ -136,14 +136,20 @@ class TestStripeErrorHandling(CommonFixture):
 class TestRender(CommonFixture):
     def setUp(self):
         super(TestRender, self).setUp()
+        # In render method assignment list, stores local variables for checking
+        self.render_method_local_assignments = []
         # Define mocks and patch out called functions
         def call_get_creation_parameters(submit_subscription_handler_instance, request):
-            return MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0]
+            return_value = MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0] 
+            self.render_method_local_assignments.append(return_value)
+            return return_value
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
         def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
                                  stripe_authorization_token, user_email):
-            return MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
+            return_value = MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
+            self.render_method_local_assignments.append(return_value)
+            return return_value
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
         def call_env_dot_get_template(template_name):
@@ -176,6 +182,9 @@ class TestRender(CommonFixture):
         self.subscription_handler.render(mockrequest)
 
         # self.failUnless(isinstance(self.mc, MockCustomer))
-        # self.failUnlessEqual(self.mc.init_email, 'test@test')
+        self.failUnlessEqual(self.render_method_local_assignments[0], (MOCKAPIKEY,
+                                                                       REQUESTARGS['stripeToken'][0],
+                                                                       REQUESTARGS['email'][0]))
+        self.failUnless(isinstance(self.render_method_local_assignments[1], MockCustomer))
         # self.failUnlessEqual(self.mc.email, 'test@test')
         # self.failUnlessEqual(self.mc.init_plan, 'S4')
