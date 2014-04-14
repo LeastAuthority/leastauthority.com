@@ -134,22 +134,28 @@ class TestStripeErrorHandling(CommonFixture):
 
 
 class TestRender(CommonFixture):
+        
+    def record_return_values(self, *return_values):
+        if len(return_values) == 1:
+            self.render_method_local_assignments.append(return_values[0])
+            return return_values[0]
+        else:
+            self.render_method_local_assignments.append(return_values)
+            return return_values
     def setUp(self):
         super(TestRender, self).setUp()
         # In render method assignment list, stores local variables for checking
         self.render_method_local_assignments = []
         # Define mocks and patch out called functions
         def call_get_creation_parameters(submit_subscription_handler_instance, request):
-            return_value = MOCKAPIKEY, request.args['stripeToken'][0], request.args['email'][0] 
-            self.render_method_local_assignments.append(return_value)
-            return return_value
+            return self.record_return_values(MOCKAPIKEY, request.args['stripeToken'][0],
+                                             request.args['email'][0])
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
         def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
                                  stripe_authorization_token, user_email):
-            return_value = MockCustomer.create(MockCustomer(), stripe_api_key, 'card', 's4', user_email)
-            self.render_method_local_assignments.append(return_value)
-            return return_value
+            return self.record_return_values(MockCustomer.create(MockCustomer(), stripe_api_key,
+                                                                 'card', 's4', user_email))
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
         def call_env_dot_get_template(template_name):
@@ -173,18 +179,22 @@ class TestRender(CommonFixture):
         self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mock_smtp_password_path)
 
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+
 
     def tearDown(self):
         super(TestRender, self).tearDown()
 
-    def test_stripe_successful_customer_creation(self):
-        mockrequest = MockRequest(REQUESTARGS)
-        self.subscription_handler.render(mockrequest)
-
-        # self.failUnless(isinstance(self.mc, MockCustomer))
+    def test_get_creation_parameters(self):
         self.failUnlessEqual(self.render_method_local_assignments[0], (MOCKAPIKEY,
                                                                        REQUESTARGS['stripeToken'][0],
-                                                                       REQUESTARGS['email'][0]))
-        self.failUnless(isinstance(self.render_method_local_assignments[1], MockCustomer))
+                                                                       REQUESTARGS['email'][0]),
+                             self.render_method_local_assignments[0])
+    def test_create_customer(self):
+        self.failUnless(isinstance(self.render_method_local_assignments[1], MockCustomer),
+                        self.render_method_local_assignments[1])
+        #self.failUnlessEqual(self.render_method_local_assignments[1].id, 'IDSTUB',
+        #                     self.render_method_local_assignments[1].id)
+
         # self.failUnlessEqual(self.mc.email, 'test@test')
         # self.failUnlessEqual(self.mc.init_plan, 'S4')
