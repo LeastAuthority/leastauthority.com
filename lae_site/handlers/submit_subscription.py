@@ -24,6 +24,10 @@ def start(basefp):
     flappcommand = FlappCommand(signup_furl_fp.path)
     return flappcommand.start()
 
+class RenderErrorDetailsForBrowser(Exception):
+    def __init__(self, details):
+        self.details = details
+
 
 class SubmitSubscriptionHandler(HandlerBase):
     def __init__(self, basefp):
@@ -47,7 +51,6 @@ class SubmitSubscriptionHandler(HandlerBase):
         return stripe_api_key, stripe_authorization_token, user_email
 
     def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject):
-        error.details = details
         print >>self.out, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
         print >>self.out, trace_back
         headers = {
@@ -55,7 +58,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             "Subject": email_subject,
         }
         send_plain_email('info@leastauthority.com', 'support@leastauthority.com', trace_back, headers)
-        raise error
+        raise RenderErrorDetailsForBrowser(details)
 
     def create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
         try:
@@ -132,7 +135,7 @@ class SubmitSubscriptionHandler(HandlerBase):
         try:
             # Invoke card charge by requesting subscription to recurring-payment plan.
             customer = self.create_customer(stripe_api_key, stripe_authorization_token, user_email)
-        except Exception as e:
+        except RenderErrorDetailsForBrowser as e:
             tmpl = env.get_template('s4-subscription-form.html')
             return tmpl.render({"errorblock": e.details}).encode('utf-8', 'replace')
 
