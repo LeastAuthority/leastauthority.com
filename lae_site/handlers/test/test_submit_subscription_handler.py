@@ -71,7 +71,7 @@ class MockTemplate(object):
     def __init__(self, definition_string):
         self.definition_string = definition_string
     def render(self, **kwargs):
-        return self.definition_string.format(**kwargs) 
+        return self.definition_string.format(**kwargs)
 
 
 class MockEnv(object):
@@ -134,7 +134,7 @@ class TestStripeErrorHandling(CommonFixture):
 
 
 class TestRender(CommonFixture):
-        
+
     def record_return_values(self, return_value):
         self.render_method_local_assignments.append(return_value)
         return return_value
@@ -202,7 +202,7 @@ class TestRender(CommonFixture):
         self.failUnlessEqual(self.render_method_local_assignments[1].init_plan,
                              's4',
                              self.render_method_local_assignments[1].init_plan)
-    
+
     def test_exceptional_get_tmpl_and_tmpl_render(self):
         # Stripe service returns exception raising error message, AND
         # Handling of stripe generated exceptions succeeds.
@@ -212,13 +212,10 @@ class TestRender(CommonFixture):
                                                    'without generating "local" exception.')
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
-        
+
         # Call render
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         #self.subscription_handler.render(MockRequest(REQUESTARGS))
 
         #self.failUnless(isinstance(self.render_method_local_assignments[1], MockTemplate),
         #                self.render_method_local_assignments)
-
-        
-        
