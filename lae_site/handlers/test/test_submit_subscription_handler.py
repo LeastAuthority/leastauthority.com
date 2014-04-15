@@ -8,6 +8,7 @@ from lae_site.handlers import submit_subscription
 from lae_util import send_email
 from lae_site.handlers.submit_subscription import stripe
 from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
+from lae_site.handlers.submit_subscription import RenderErrorDetailsForBrowser
 
 MOCKAPIKEY = "sk_live_"+"A"*24
 MOCKSMTPPASSWORD = "beef"*4
@@ -67,11 +68,10 @@ class MockInvalidRequestError(Exception):
 
 
 class MockTemplate(object):
-    def __init__(self, args):
-        self.args = args
-    def render(self, section_dict):
-        # XXX TODO make return value "realistic" function of section_dict
-        return "FAKEVALUESTRING"
+    def __init__(self, definition_string):
+        self.definition_string = definition_string
+    def render(self, **kwargs):
+        return self.definition_string.format(**kwargs) 
 
 
 class MockEnv(object):
@@ -135,33 +135,28 @@ class TestStripeErrorHandling(CommonFixture):
 
 class TestRender(CommonFixture):
         
-    def record_return_values(self, *return_values):
-        if len(return_values) == 1:
-            self.render_method_local_assignments.append(return_values[0])
-            return return_values[0]
-        else:
-            self.render_method_local_assignments.append(return_values)
-            return return_values
+    def record_return_values(self, return_value):
+        self.render_method_local_assignments.append(return_value)
+        return return_value
     def setUp(self):
         super(TestRender, self).setUp()
         # In render method assignment list, stores local variables for checking
         self.render_method_local_assignments = []
         # Define mocks and patch out called functions
         def call_get_creation_parameters(submit_subscription_handler_instance, request):
-            return self.record_return_values(MOCKAPIKEY, request.args['stripeToken'][0],
-                                             request.args['email'][0])
+            return self.record_return_values((MOCKAPIKEY, request.args['stripeToken'][0],
+                                             request.args['email'][0]))
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
         def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
                                  stripe_authorization_token, user_email):
-            return self.record_return_values(MockCustomer.create(MockCustomer(), stripe_api_key,
-                                                                 'card', 's4', user_email))
+            return self.record_return_values((MockCustomer.create(MockCustomer(), stripe_api_key,
+                                                                 'card', 's4', user_email)))
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
-        def call_env_dot_get_template(template_name):
-            return MockTemplate(template_name)
-        self.patch(submit_subscription.env, 'get_template',
-                   call_env_dot_get_template)
+        def call_get_template(target_template):
+            return self.record_return_values(MockTemplate("Test template:\nerrorblock: {errorblock}\nproductfullname: {productfullname}\nproductname: {productname}"))
+        self.patch(submit_subscription.env, 'get_template', call_get_template)
         def call_append_record(log_file_path, customer_subscription_id):
             pass # XXX TODO make this more interesting
         self.patch(submit_subscription, 'append_record',
@@ -178,23 +173,52 @@ class TestRender(CommonFixture):
         self.mock_smtp_password_path = self.basedirfp.child('secret_config').child('smtppassword').path
         self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mock_smtp_password_path)
 
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
-
 
     def tearDown(self):
         super(TestRender, self).tearDown()
 
+
     def test_get_creation_parameters(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.render_method_local_assignments[0], (MOCKAPIKEY,
                                                                        REQUESTARGS['stripeToken'][0],
                                                                        REQUESTARGS['email'][0]),
                              self.render_method_local_assignments[0])
+
     def test_create_customer(self):
         self.failUnless(isinstance(self.render_method_local_assignments[1], MockCustomer),
                         self.render_method_local_assignments[1])
-        #self.failUnlessEqual(self.render_method_local_assignments[1].id, 'IDSTUB',
-        #                     self.render_method_local_assignments[1].id)
+        self.failUnless(isinstance(self.render_method_local_assignments[1].subscription,
+                                   MockSubscription),
+                        self.render_method_local_assignments[1].subscription)
+        self.failUnlessEqual(self.render_method_local_assignments[1].email,
+                             REQUESTARGS['email'][0],
+                             self.render_method_local_assignments[1].email)
+        self.failUnlessEqual(self.render_method_local_assignments[1].id, 'IDSTUB',
+                             self.render_method_local_assignments[1].id)
+        self.failUnlessEqual(self.render_method_local_assignments[1].init_email,
+                             REQUESTARGS['email'][0],
+                             self.render_method_local_assignments[1].init_email)
+        self.failUnlessEqual(self.render_method_local_assignments[1].init_plan,
+                             's4',
+                             self.render_method_local_assignments[1].init_plan)
+    
+    def test_exceptional_get_tmpl_and_tmpl_render(self):
+        # Stripe service returns exception raising error message, AND
+        # Handling of stripe generated exceptions succeeds.
+        def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
+                                 stripe_authorization_token, user_email):
+            raise RenderErrorDetailsForBrowser('Handling of stripe generated exceptions succeeds,'\
+                                                   'without generating "local" exception.')
+        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
+                   call_create_customer)
+        
+        # Call render
+        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+        #self.subscription_handler.render(MockRequest(REQUESTARGS))
 
-        # self.failUnlessEqual(self.mc.email, 'test@test')
-        # self.failUnlessEqual(self.mc.init_plan, 'S4')
+        #self.failUnless(isinstance(self.render_method_local_assignments[1], MockTemplate),
+        #                self.render_method_local_assignments)
+
+        
+        
