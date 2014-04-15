@@ -70,7 +70,7 @@ class MockInvalidRequestError(Exception):
 class MockTemplate(object):
     def __init__(self, definition_string):
         self.definition_string = definition_string
-    def render(self, **kwargs):
+    def render(self, kwargs):
         return self.definition_string.format(**kwargs)
 
 
@@ -135,7 +135,7 @@ class TestStripeErrorHandling(CommonFixture):
 
 class TestRender(CommonFixture):
 
-    def record_return_values(self, return_value):
+    def record_return_value(self, return_value):
         self.render_method_local_assignments.append(return_value)
         return return_value
     def setUp(self):
@@ -144,18 +144,18 @@ class TestRender(CommonFixture):
         self.render_method_local_assignments = []
         # Define mocks and patch out called functions
         def call_get_creation_parameters(submit_subscription_handler_instance, request):
-            return self.record_return_values((MOCKAPIKEY, request.args['stripeToken'][0],
+            return self.record_return_value((MOCKAPIKEY, request.args['stripeToken'][0],
                                              request.args['email'][0]))
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
         def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
                                  stripe_authorization_token, user_email):
-            return self.record_return_values((MockCustomer.create(MockCustomer(), stripe_api_key,
+            return self.record_return_value((MockCustomer.create(MockCustomer(), stripe_api_key,
                                                                  'card', 's4', user_email)))
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
         def call_get_template(target_template):
-            return self.record_return_values(MockTemplate("Test template:\nerrorblock: {errorblock}\nproductfullname: {productfullname}\nproductname: {productname}"))
+            return self.record_return_value(MockTemplate("Test template:\nproductfullname: {productfullname}\nproductname: {productname}"))
         self.patch(submit_subscription.env, 'get_template', call_get_template)
         def call_append_record(log_file_path, customer_subscription_id):
             pass # XXX TODO make this more interesting
@@ -202,7 +202,7 @@ class TestRender(CommonFixture):
         self.failUnlessEqual(self.render_method_local_assignments[1].init_plan,
                              's4',
                              self.render_method_local_assignments[1].init_plan)
-
+    """
     def test_exceptional_get_tmpl_and_tmpl_render(self):
         # Stripe service returns exception raising error message, AND
         # Handling of stripe generated exceptions succeeds.
@@ -219,3 +219,4 @@ class TestRender(CommonFixture):
 
         #self.failUnless(isinstance(self.render_method_local_assignments[1], MockTemplate),
         #                self.render_method_local_assignments)
+     """
