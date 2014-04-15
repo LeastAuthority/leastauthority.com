@@ -213,7 +213,7 @@ class TestRender(CommonFixture):
         self.failUnlessEqual(self.render_method_local_assignments[1].init_plan,
                              's4',
                              self.render_method_local_assignments[1].init_plan)
-    """
+
     def test_exceptional_get_tmpl_and_tmpl_render(self):
         # Stripe service returns exception raising error message, AND
         # Handling of stripe generated exceptions succeeds.
@@ -224,10 +224,14 @@ class TestRender(CommonFixture):
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
 
+        def call_get_template(target_template):
+            return self.record_return_value(MockTemplate("Test template:\nerrorblock: {errorblock}"))
+        self.patch(submit_subscription.env, 'get_template', call_get_template)
+
         # Call render
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
-        #self.subscription_handler.render(MockRequest(REQUESTARGS))
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
 
-        #self.failUnless(isinstance(self.render_method_local_assignments[1], MockTemplate),
-        #                self.render_method_local_assignments)
-     """
+        self.failUnless(isinstance(self.render_method_local_assignments[1], MockTemplate),
+                        self.render_method_local_assignments)
+
