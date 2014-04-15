@@ -234,4 +234,4 @@ class TestRender(CommonFixture):
 
         self.failUnless(isinstance(self.render_method_local_assignments[1], MockTemplate),
                         self.render_method_local_assignments)
-
+        self.failUnlessEqual(len(self.render_method_local_assignments), 2)
