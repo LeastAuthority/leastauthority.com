@@ -71,10 +71,13 @@ class MockInvalidRequestError(Exception):
 
 
 class MockTemplate(object):
-    def __init__(self, definition_string):
+    def __init__(self, fixture, definition_string):
+        self.fixture = fixture
         self.definition_string = definition_string
     def render(self, kwargs):
-        return self.definition_string.format(**kwargs)
+        rendered_string = self.definition_string.format(**kwargs)
+        self.fixture.template_render_return_values.append(rendered_string)
+        return rendered_string
 
 
 class MockEnv(object):
@@ -176,215 +179,147 @@ class TestRenderWithoutExceptions(CommonFixture):
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
 
-        def call_get_template(target_template):
-            return _append(self.env_get_template_return_values,
-                           MockTemplate("Test template:\n"+
-                                        "productfullname: {productfullname}\n"+
-                                        "productname: {productname}"))
-        self.patch(submit_subscription.env, 'get_template', call_get_template)
-
         def call_basefp_child(PATH_TO_SUBSCRIPTIONS_FILE):
             return _append(self.basefp_child_return_values,
                            PATH_TO_SUBSCRIPTIONS_FILE)
-        self.patch(self.subscription_handler.basefp, 'child',
-                   call_basefp_child)
+        self.patch(self.subscription_handler.basefp, 'child', call_basefp_child)
 
-        def call_append_record(log_file_path, customer_subscription_id):
-            return _append(self.append_record_return_values,
-                           ())
+        def call_append_record(mock_log_file_path, customer_subscription_id):
+            self.failUnlessEqual(mock_log_file_path, 'subscriptions.csv')
+            self.failUnlessEqual(customer_subscription_id, 'sub_AAAAAAAAAAAAAA')
+            return _append(self.append_record_return_values, None)
         self.patch(submit_subscription, 'append_record',
                    call_append_record)
 
         def call_run_full_signup(submit_subscription_handler_instance, customer, request):
-            pass # XXX TODO make this more interesting
+            self.failUnless(isinstance(customer, MockCustomer), customer)
+            self.failUnless(isinstance(request, MockRequest), request)
+            return _append(self.run_full_signup_return_values, None)
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'run_full_signup',
                    call_run_full_signup)
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
 
+        def call_get_template(target_template):
+            self.mock_template = MockTemplate(self, "Test template:\n"+
+                                        "productfullname: {productfullname}\n"+
+                                        "productname: {productname}")
+            return _append(self.env_get_template_return_values, self.mock_template)
+        self.patch(submit_subscription.env, 'get_template', call_get_template)
+
+        # Note render mockery is handled inside of MockTemplate
 
     def tearDown(self):
         super(TestRenderWithoutExceptions, self).tearDown()
 
     def test_get_creation_parameters_calls(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
         self.failUnlessEqual(len(self.get_creation_parameters_return_values), 1)
 
     def test_create_customer_calls(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
         self.failUnlessEqual(len(self.create_customers_return_values), 1)
-        self.failUnless(isinstance(self.create_customers_return_values[0], MockCustomer))
+        self.failUnless(isinstance(self.create_customers_return_values[0], MockCustomer),
+                        self.create_customers_return_values[0])
 
     def test_basefp_child_calls(self):
-        #self.failUnlessEqual(len(self.basefp_child_return_values), 1)
-        self.failUnlessEqual(self.basefp_child_return_values, ['subscriptions.csv'])
-        #self.failUnlessEqual(len(self.env_get_template_return_values), 1)
-
-    """
-    def test_create_customer(self):
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.basefp_child_return_values), 1)
+        self.failUnlessEqual(self.basefp_child_return_values, ['subscriptions.csv'])
 
-        self.failUnlessEqual(len(self), 2)
-        self.failUnless(isinstance(self.render_method_local_assignments[1], MockCustomer),
-                        self.render_method_local_assignments[1])
-        self.failUnless(isinstance(self.render_method_local_assignments[1].subscription,
-                                   MockSubscription),
-                        self.render_method_local_assignments[1].subscription)
-        self.failUnlessEqual(self.render_method_local_assignments[1].email,
-                             REQUESTARGS['email'][0],
-                             self.render_method_local_assignments[1].email)
-        self.failUnlessEqual(self.render_method_local_assignments[1].id, 'IDSTUB',
-                             self.render_method_local_assignments[1].id)
-        self.failUnlessEqual(self.render_method_local_assignments[1].init_email,
-                             REQUESTARGS['email'][0],
-                             self.render_method_local_assignments[1].init_email)
-        self.failUnlessEqual(self.render_method_local_assignments[1].init_plan,
-                             's4',
-                             self.render_method_local_assignments[1].init_plan)
-   """
+    def test_append_record_calls(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        self.failUnlessEqual(len(self.append_record_return_values), 1)
+        self.failUnlessEqual(self.append_record_return_values[0], None)
 
-"""
-class TestRenderWithException(CommonFixture):
-    def record_return_value(self, return_value):
-        self.render_method_local_assignments.append(return_value)
-        return return_value
+    def test_run_full_signup_calls(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.append_record_return_values), 1)
+        self.failUnlessEqual(self.append_record_return_values[0], None)
 
+    def test_env_get_template_calls(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.env_get_template_return_values), 1)
+        self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
+                        self.env_get_template_return_values[0])
+
+    def test_env_get_template(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.env_get_template_return_values), 1)
+        self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
+                        self.env_get_template_return_values[0])
+
+    def test_template_render(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.template_render_return_values), 1)
+        self.failUnlessEqual(self.template_render_return_values[0],
+                             "Test template:\nproductfullname: Simple Secure Storage Service\nproductname: S4",
+                             self.template_render_return_values[0])
+
+
+
+class TestRenderWithException(TestRenderWithoutExceptions):
     def setUp(self):
         super(TestRenderWithException, self).setUp()
-
-        # In render method assignment list, stores local variables for checking
-        self.get_creation_parameters_return_values = []
-        self.create_customers_return_values = []
-        self.env_get_template_return_values = []
-        self.template_render_return_values = []
-        self.basefp_child_return_values = []
-        self.append_record_return_values = []
-        self.run_full_signup_return_values = []
-
-        # Define mocks and patch out called functions
-        def call_get_creation_parameters(submit_subscription_handler_instance, request):
-            return _append(self.get_creation_parameters_return_values,
-                           (MOCKAPIKEY,
-                            request.args['stripeToken'][0],
-                            request.args['email'][0]))
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
-                   call_get_creation_parameters)
-
         def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
                                  stripe_authorization_token, user_email):
-            return _append(self.create_customers_return_values,
-                           MockCustomer.create(MockCustomer(),
-                                               stripe_api_key,
-                                               'card', 's4',
-                                               user_email))
+            self.create_customers_return_values.append(None)
+            raise RenderErrorDetailsForBrowser, 'MOCKERROR'
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
 
         def call_get_template(target_template):
-            return _append(self.env_get_template_return_values,
-                           MockTemplate("Test template:\n"+
-                                        "productfullname: {productfullname}\n"+
-                                        "productname: {productname}"))
+            self.mock_template = MockTemplate(self,"Test template:\n"+
+                                              "errorblock: {errorblock}")
+            return _append(self.env_get_template_return_values, self.mock_template)
         self.patch(submit_subscription.env, 'get_template', call_get_template)
-
-        def call_basefp_child(submit_subscription_handler_instance, PATH_TO_SUBSCRIPTIONS_FILE):
-            return_value = submit_subscription_handler_instance.basefp.child(PATH_TO_SUBSCRIPTIONS_FILE)
-            return _append(self.basefp_child_return_values,
-                           return_value)
-
-        def call_append_record(log_file_path, customer_subscription_id):
-            return _append(self.append_record_return_values,
-                           ())
-        self.patch(submit_subscription, 'append_record',
-                   call_append_record)
-
-        def call_run_full_signup(submit_subscription_handler_instance, customer, request):
-            pass # XXX TODO make this more interesting
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'run_full_signup',
-                   call_run_full_signup)
-
-        # Create mock API key.
-        make_dirs(self.basedirfp.child('secret_config').path)
-        self.basedirfp.child('secret_config').child('stripeapikey').setContent(MOCKAPIKEY)
-        self.basedirfp.child('secret_config').child('smtppassword').setContent(MOCKSMTPPASSWORD)
-        self.mock_smtp_password_path = self.basedirfp.child('secret_config').child('smtppassword').path
-        self.patch(send_email, 'SMTP_PASSWORD_PATH', self.mock_smtp_password_path)
-
 
     def tearDown(self):
         super(TestRenderWithException, self).tearDown()
 
     def test_get_creation_parameters_calls(self):
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-
+        #expect
         self.failUnlessEqual(len(self.get_creation_parameters_return_values), 1)
 
     def test_create_customer_calls(self):
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-
+        #expect
         self.failUnlessEqual(len(self.create_customers_return_values), 1)
+        self.failUnlessEqual(self.create_customers_return_values[0], None)
 
-   
+    def test_env_get_template_calls(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.env_get_template_return_values), 1)
+        self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
+                        self.env_get_template_return_values[0])
+
+    def test_template_render(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.template_render_return_values), 1)
+        self.failUnlessEqual(self.template_render_return_values[0],
+                             "Test template:\nerrorblock: MOCKERROR",
+                             self.template_render_return_values[0])
+
     def test_basefp_child_calls(self):
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.basefp_child_return_values), 0)
 
-        self.failUnlessEqual(len(self.basefp_child_return_values), 1)
-        #self.failUnlessEqual(len(self.env_get_template_return_values), 1)
-   
-
-    def test_get_creation_parameters(self):
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+    def test_append_record_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.append_record_return_values), 0)
 
-        self.failUnlessEqual(self.get_creation_parameters_return_values[0],
-                             (MOCKAPIKEY,
-                              REQUESTARGS['stripeToken'][0],
-                              REQUESTARGS['email'][0]))
-
-   
-    def test_create_customer(self):
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+    def test_run_full_signup_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
+        #expect
+        self.failUnlessEqual(len(self.append_record_return_values), 0)
 
-        self.failUnlessEqual(len(self), 2)
-        self.failUnless(isinstance(self.render_method_local_assignments[1], MockCustomer),
-                        self.render_method_local_assignments[1])
-        self.failUnless(isinstance(self.render_method_local_assignments[1].subscription,
-                                   MockSubscription),
-                        self.render_method_local_assignments[1].subscription)
-        self.failUnlessEqual(self.render_method_local_assignments[1].email,
-                             REQUESTARGS['email'][0],
-                             self.render_method_local_assignments[1].email)
-        self.failUnlessEqual(self.render_method_local_assignments[1].id, 'IDSTUB',
-                             self.render_method_local_assignments[1].id)
-        self.failUnlessEqual(self.render_method_local_assignments[1].init_email,
-                             REQUESTARGS['email'][0],
-                             self.render_method_local_assignments[1].init_email)
-        self.failUnlessEqual(self.render_method_local_assignments[1].init_plan,
-                             's4',
-                             self.render_method_local_assignments[1].init_plan)
-
-    def test_exceptional_get_tmpl_and_tmpl_render(self):
-        # Stripe service returns exception raising error message, AND
-        # Handling of stripe generated exceptions succeeds.
-        def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
-                                 stripe_authorization_token, user_email):
-            raise RenderErrorDetailsForBrowser('Handling of stripe generated exceptions succeeds,'\
-                                                   'without generating "local" exception.')
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
-                   call_create_customer)
-
-        def call_get_template(target_template):
-            return self.record_return_value(MockTemplate("Test template:\nerrorblock: {errorblock}"))
-        self.patch(submit_subscription.env, 'get_template', call_get_template)
-
-        # Call render
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
-
-        self.failUnless(isinstance(self.render_method_local_assignments[1], MockTemplate),
-                        self.render_method_local_assignments)
-        self.failUnlessEqual(len(self.render_method_local_assignments), 2)
-   
-"""
