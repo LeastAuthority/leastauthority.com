@@ -179,13 +179,18 @@ class TestRender(CommonFixture):
 
 
     def test_get_creation_parameters(self):
+        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         self.subscription_handler.render(MockRequest(REQUESTARGS))
+
         self.failUnlessEqual(self.render_method_local_assignments[0], (MOCKAPIKEY,
                                                                        REQUESTARGS['stripeToken'][0],
                                                                        REQUESTARGS['email'][0]),
                              self.render_method_local_assignments[0])
 
     def test_create_customer(self):
+        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+        self.subscription_handler.render(MockRequest(REQUESTARGS))
+
         self.failUnless(isinstance(self.render_method_local_assignments[1], MockCustomer),
                         self.render_method_local_assignments[1])
         self.failUnless(isinstance(self.render_method_local_assignments[1].subscription,
