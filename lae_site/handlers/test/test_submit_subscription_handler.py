@@ -94,9 +94,10 @@ class CommonFixture(TestCase):
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
 
-class TestStripeErrorHandling(CommonFixture):
+#Begin testing the create customer method
+class TestCreateCustomer(CommonFixture):
     def setUp(self):
-        super(TestStripeErrorHandling, self).setUp()
+        super(TestCreateCustomer, self).setUp()
 
     def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
         self.mc = MockCustomer()
@@ -137,6 +138,7 @@ class TestStripeErrorHandling(CommonFixture):
         return self._test_stripe_error(Exception, "Something ", "Stripe unexpected error")
 
 
+# Begin Testing the render method
 class CommonRenderFixture(CommonFixture):
     def setUp(self):
         super(CommonRenderFixture, self).setUp()
@@ -250,7 +252,6 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.template_render_return_values,
                              ["Test template:\nproductfullname: Simple Secure Storage Service\nproductname: S4"])
-
 
 
 class TestRenderWithExceptions(CommonRenderFixture):
