@@ -4,8 +4,9 @@ from twisted.trial.unittest import TestCase
 
 from lae_util.testutil import TestUtilitiesMixin
 from lae_util.fileutil import make_dirs
-from lae_site.handlers import submit_subscription
 from lae_util import send_email
+
+from lae_site.handlers import submit_subscription
 from lae_site.handlers.submit_subscription import stripe
 from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
 from lae_site.handlers.submit_subscription import RenderErrorDetailsForBrowser
@@ -98,8 +99,15 @@ class CommonFixture(TestCase):
 class TestGetStripeAPIKey(CommonFixture):
     def setUp(self):
         super(TestGetStripeAPIKey, self).setUp()
-    # XXX WORK TODO HERE
 
+        self.FilePath_child_return_values = []
+        # Define mocks and patch out called functions
+        def call_FilePath(path_name_string):
+            return _append(MockFilePath(path_name_string), self.FilePath_child_return_values)
+        self.patch(submit_subscription, 'FilePath', call_FilePath)
+
+    def test_correct_file_path_defined(self):
+        self.failUnlessEqual(self.FilePath_child_return_values[0], 'foo')
 
 # Begin test of SubmitSubscriptionHandler.get_creation_parameters
 class TestGetCreationParameters(CommonFixture):
