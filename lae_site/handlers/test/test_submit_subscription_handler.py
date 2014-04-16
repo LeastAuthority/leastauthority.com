@@ -137,10 +137,9 @@ class TestStripeErrorHandling(CommonFixture):
         return self._test_stripe_error(Exception, "Something ", "Stripe unexpected error")
 
 
-class TestRenderWithoutExceptions(CommonFixture):
+class CommonRenderFixture(CommonFixture):
     def setUp(self):
-        super(TestRenderWithoutExceptions, self).setUp()
-
+        super(CommonRenderFixture, self).setUp()
         # In render method assignment list, stores local variables for checking
         self.get_creation_parameters_return_values = []
         self.create_customers_return_values = []
@@ -150,6 +149,12 @@ class TestRenderWithoutExceptions(CommonFixture):
         self.append_record_return_values = []
         self.run_full_signup_return_values = []
 
+        def call_create_customer(): # Abstract
+            pass
+
+        def call_get_template(): # Abstract
+            pass
+
         # Define mocks and patch out called functions
         def call_get_creation_parameters(submit_subscription_handler_instance, request):
             return _append(self.get_creation_parameters_return_values,
@@ -158,16 +163,6 @@ class TestRenderWithoutExceptions(CommonFixture):
                             request.args['email'][0]))
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
-
-        def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
-                                 stripe_authorization_token, user_email):
-            return _append(self.create_customers_return_values,
-                           MockCustomer.create(MockCustomer(),
-                                               stripe_api_key,
-                                               'card', 's4',
-                                               user_email))
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
-                   call_create_customer)
 
         def call_basefp_child(PATH_TO_SUBSCRIPTIONS_FILE):
             return _append(self.basefp_child_return_values,
@@ -187,6 +182,21 @@ class TestRenderWithoutExceptions(CommonFixture):
             return _append(self.run_full_signup_return_values, None)
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'run_full_signup',
                    call_run_full_signup)
+
+
+class TestRenderWithoutExceptions(CommonRenderFixture):
+    def setUp(self):
+        super(TestRenderWithoutExceptions, self).setUp()
+
+        def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
+                                 stripe_authorization_token, user_email):
+            return _append(self.create_customers_return_values,
+                           MockCustomer.create(MockCustomer(),
+                                               stripe_api_key,
+                                               'card', 's4',
+                                               user_email))
+        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
+                   call_create_customer)
 
         def call_get_template(target_template):
             self.mock_template = MockTemplate(self, "Test template:\n"+
@@ -243,7 +253,7 @@ class TestRenderWithoutExceptions(CommonFixture):
 
 
 
-class TestRenderWithExceptions(TestRenderWithoutExceptions):
+class TestRenderWithExceptions(CommonRenderFixture):
     def setUp(self):
         super(TestRenderWithExceptions, self).setUp()
         def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
