@@ -95,7 +95,7 @@ class MockFilePath(object):
         return MockFilePath(temp_name)
 
 
-class CommonFixture(TestCase, TestUtilitiesMixin):
+class CommonFixture(TestCase):
     def setUp(self):
         # Create directory for file I/O.
         self.basedirfp = MockFilePath("MOCKWORKDIR") #self.create_workdirfp()
@@ -322,4 +322,3 @@ class TestRenderWithException(TestRenderWithoutExceptions):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
         #expect
         self.failUnlessEqual(len(self.append_record_return_values), 0)
-
