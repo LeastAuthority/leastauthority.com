@@ -24,15 +24,6 @@ class MockRequest(object):
         self.args = argdict
 
 
-class MockFlappCommand(object):
-    def __init__(self, furlfile):
-        self.should_succeed = True
-    def start(self):
-        return defer.succeed(None)
-    def run(self, content, stdout):
-        return defer.succeed(None)
-
-
 class MockPlan(object):
     def __init__(self):
         self.id = "MOCKS4"
@@ -78,13 +69,6 @@ class MockTemplate(object):
         rendered_string = self.definition_string.format(**kwargs)
         self.fixture.template_render_return_values.append(rendered_string)
         return rendered_string
-
-
-class MockEnv(object):
-    def __init__(self):
-        pass
-    def get_template(self, htmltemplate):
-        return MockTemplate(repr(htmltemplate))
 
 
 class MockFilePath(object):
