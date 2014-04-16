@@ -112,8 +112,7 @@ class TestCreateCustomer(CommonFixture):
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors',
                    call_handle_stripe_create_customer_errors)
 
-        self.subscription_handler.create_customer(MOCKAPIKEY, REQUESTARGS['stripeToken'][0],
-                                                  REQUESTARGS['email'][0])
+        self.subscription_handler.create_customer(MOCKAPIKEY, MOCK_STRIPE_TOKEN, MOCK_EMAIL)
 
         # Check expectations.
         self.failUnlessEqual(len(calls), 1)
