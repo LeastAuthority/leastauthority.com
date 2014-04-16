@@ -45,9 +45,9 @@ class HandlerBase(Resource):
             arg = ""
 
         # Quote the arguments to avoid injection attacks when we interpolate them into HTML
-        # attributes (enclosed in ""), CSV values, or the stdin of the flapp command.
-        # We could use htmlEscape, but that does not escape ',' or newlines so we would need
-        # additional quoting for CSV and flapp.
+        # attributes (enclosed in "") and CSV values. We could use htmlEscape, but that does
+        # not escape ',' or newlines so we would need additional quoting for CSV.
+        # (The JSON passed to the stdin of the flapp command is quoted by the JSON encoding.)
         # URL-encoding with the set of safe-characters below will work for all these cases.
         # Note that the safe set must include characters that are valid in email addresses.
         return quote(arg, safe=' !#$()*+-./:=?@^_`{|}~')
