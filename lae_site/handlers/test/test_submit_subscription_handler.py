@@ -12,7 +12,10 @@ from lae_site.handlers.submit_subscription import RenderErrorDetailsForBrowser
 
 MOCKAPIKEY = "sk_live_"+"A"*24
 MOCKSMTPPASSWORD = "beef"*4
-REQUESTARGS = {'stripeToken':["MOCK_stripe_token"], 'email':["test@test"], 'pgp_pubkey':["testpgppubkey"]}
+MOCK_STRIPE_TOKEN = "MOCK_stripe_token"
+MOCK_EMAIL = "test@test"
+MOCK_PGP_PUBKEY = "testpgppubkey"
+REQUESTARGS = {'stripeToken':[MOCK_STRIPE_TOKEN], 'email':[MOCK_EMAIL], 'pgp_pubkey':[MOCK_PGP_PUBKEY]}
 MOCKFURLFP = "FAKEPATH"
 
 def _append(seq, x):
@@ -196,54 +199,44 @@ class TestRenderWithoutExceptions(CommonFixture):
 
     def test_get_creation_parameters_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        #expect
-        self.failUnlessEqual(len(self.get_creation_parameters_return_values), 1)
+        self.failUnlessEqual(self.get_creation_parameters_return_values,
+                             [(MOCKAPIKEY, MOCK_STRIPE_TOKEN, MOCK_EMAIL)])
 
     def test_create_customer_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        #expect
+
         self.failUnlessEqual(len(self.create_customers_return_values), 1)
         self.failUnless(isinstance(self.create_customers_return_values[0], MockCustomer),
                         self.create_customers_return_values[0])
 
     def test_basefp_child_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        #expect
-        self.failUnlessEqual(len(self.basefp_child_return_values), 1)
         self.failUnlessEqual(self.basefp_child_return_values, ['subscriptions.csv'])
 
     def test_append_record_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        self.failUnlessEqual(len(self.append_record_return_values), 1)
-        self.failUnlessEqual(self.append_record_return_values[0], None)
+        self.failUnlessEqual(self.append_record_return_values, [None])
 
     def test_run_full_signup_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        #expect
-        self.failUnlessEqual(len(self.append_record_return_values), 1)
-        self.failUnlessEqual(self.append_record_return_values[0], None)
+        self.failUnlessEqual(self.append_record_return_values, [None])
 
     def test_env_get_template_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        #expect
         self.failUnlessEqual(len(self.env_get_template_return_values), 1)
         self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
                         self.env_get_template_return_values[0])
 
     def test_env_get_template(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        #expect
         self.failUnlessEqual(len(self.env_get_template_return_values), 1)
         self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
                         self.env_get_template_return_values[0])
 
     def test_template_render(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        #expect
-        self.failUnlessEqual(len(self.template_render_return_values), 1)
-        self.failUnlessEqual(self.template_render_return_values[0],
-                             "Test template:\nproductfullname: Simple Secure Storage Service\nproductname: S4",
-                             self.template_render_return_values[0])
+        self.failUnlessEqual(self.template_render_return_values,
+                             ["Test template:\nproductfullname: Simple Secure Storage Service\nproductname: S4"])
 
 
 
