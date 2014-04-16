@@ -94,7 +94,28 @@ class CommonFixture(TestCase):
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
 
 
-#Begin testing the create customer method
+# Begin test of SubmitSubscriptionHandler.get_stripe_api_key
+class TestGetStripeAPIKey(CommonFixture):
+    def setUp(self):
+        super(TestGetStripeAPIKey, self).setUp()
+    # XXX WORK TODO HERE
+
+
+# Begin test of SubmitSubscriptionHandler.get_creation_parameters
+class TestGetCreationParameters(CommonFixture):
+    def setUp(self):
+        super(TestGetCreationParameters, self).setUp()
+    # XXX WORK TODO HERE
+
+
+# Begin test of SubmitSubscriptionHandler.handle_stripe_create_customer_errors
+class TestHandleStripeCreateCustomerErrors(CommonFixture):
+    def setUp(self):
+        super(TestHandleStripeCreateCustomerErrors, self).setUp()
+    # XXX WORK TODO HERE
+
+
+# Begin test of SubmitSubscriptionHandler.create_customer
 class TestCreateCustomer(CommonFixture):
     def setUp(self):
         super(TestCreateCustomer, self).setUp()
@@ -137,7 +158,14 @@ class TestCreateCustomer(CommonFixture):
         return self._test_stripe_error(Exception, "Something ", "Stripe unexpected error")
 
 
-# Begin Testing the render method
+# Begin test of SubmitSubscriptionHandler.run_full_signup
+class TestRunFullSignup(CommonFixture):
+    def setUp(self):
+        super(TestRunFullSignup, self).setUp()
+    # XXX WORK TODO HERE
+
+
+# Begin test of SubmitSubscriptionHandler.render
 class CommonRenderFixture(CommonFixture):
     def setUp(self):
         super(CommonRenderFixture, self).setUp()
