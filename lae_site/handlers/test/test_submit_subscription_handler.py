@@ -95,6 +95,9 @@ class CommonFixture(TestCase):
 
 
 class TestStripeErrorHandling(CommonFixture):
+    def setUp(self):
+        super(TestStripeErrorHandling, self).setUp()
+
     def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
         self.mc = MockCustomer()
         def call_stripe_Customer_create(api_key, card, plan, email):
