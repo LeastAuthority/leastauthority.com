@@ -1,10 +1,5 @@
 
-from twisted.internet import defer
 from twisted.trial.unittest import TestCase
-
-from lae_util.testutil import TestUtilitiesMixin
-from lae_util.fileutil import make_dirs
-from lae_util import send_email
 
 from lae_site.handlers import submit_subscription
 from lae_site.handlers.submit_subscription import stripe
