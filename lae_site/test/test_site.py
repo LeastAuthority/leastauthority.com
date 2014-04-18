@@ -13,7 +13,7 @@ from lae_site.config import Config
 from lae_site.handlers import make_site
 
 
-SITE_CONFIG_JSON = """{ "products": [] }"""
+SITE_CONFIG_JSON = """{}"""
 
 class Site(TestCase):
     def test_site(self):

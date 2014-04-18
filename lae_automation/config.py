@@ -3,8 +3,6 @@ import simplejson
 
 
 class Config(object):
-    __slots__ = ['products', 'other']
-
     DEFAULT_CONFIG_PATH = '../secret_config/lae_automation_config.json'
 
     def __init__(self, configFile = DEFAULT_CONFIG_PATH):
