@@ -205,10 +205,7 @@ class CommonRenderFixture(CommonFixture):
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
 
-        #def call_basefp_child(PATH_TO_SUBSCRIPTIONS_FILE):
-        #    return _append(self.basefp_child_return_values,
-        #                   PATH_TO_SUBSCRIPTIONS_FILE)
-        #self.patch(self.subscription_handler.basefp, 'child', call_basefp_child)
+        # NOTE: mockery of calls to FilePath and FilePath.child handled by MockFilePath
 
         def call_append_record(mock_log_file_path, customer_subscription_id):
             self.failUnlessEqual(mock_log_file_path.name, 'MOCKWORKDIR/subscriptions.csv')
