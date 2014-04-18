@@ -13,7 +13,7 @@ def make_site(basefp, config):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
     resource.putChild('blog', File('content/blog'))
-    resource.putChild('collect-email', CollectEmailHandler(basefp, config.products))
+    resource.putChild('collect-email', CollectEmailHandler(basefp))
     resource.putChild('signup', Redirect("/"))
     resource.putChild('submit-subscription', SubmitSubscriptionHandler(basefp))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
