@@ -1,8 +1,6 @@
 
 import stripe, traceback, simplejson
 
-from twisted.python.filepath import FilePath
-
 from lae_util.servers import append_record
 from lae_util.send_email import send_plain_email, FROM_ADDRESS
 
@@ -37,7 +35,7 @@ class SubmitSubscriptionHandler(HandlerBase):
 
     # The following helper methods are all called directly or indirectly by render.
     def get_stripe_api_key(self):
-        stripefp = FilePath(self.basefp.path).child('secret_config').child('stripeapikey')
+        stripefp = self.basefp.child('secret_config').child('stripeapikey')
         if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
             raise AssertionError("Secrets are not allowed in the production code repo: %r" % (stripefp.path,))
         return stripefp.getContent().strip()

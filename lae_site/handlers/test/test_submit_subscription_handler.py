@@ -80,6 +80,10 @@ class MockFilePath(object):
         temp_path = "%s/%s" % (self.path, subpath)
         return MockFilePath(self.fixture, temp_path)
 
+    def getContent(self):
+        self.fixture.gotContent.append(MOCKAPIKEY)
+        return MOCKAPIKEY
+
 
 class CommonFixture(TestCase):
     def setUp(self):
@@ -94,16 +98,28 @@ class CommonFixture(TestCase):
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         self.failUnlessEqual(self.subscription_handler.basefp.path, "MOCKWORKDIR")
 
-"""
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
-class TestGetStripeAPIKey(CommonFixture):
+class TestGetStripeAPIKeyWithoutException(CommonFixture):
     def setUp(self):
-        super(TestGetStripeAPIKey, self).setUp()
+        super(TestGetStripeAPIKeyWithoutException, self).setUp()
+        self.gotContent = []
         self.subscription_handler.get_stripe_api_key()
 
     # Fake of FilePath handled by MockFilePath
     def test_correct_file_path_defined(self):
-        self.failUnlessEqual(self.FilePath_return_values[0].name, 'foo')
+        self.failUnlessEqual(self.FilePath_return_values[0].path, 'MOCKWORKDIR')
+        self.failUnlessEqual(self.gotContent, [MOCKAPIKEY])
+
+"""
+# Begin test of SubmitSubscriptionHandler.get_stripe_api_key
+class TestGetStripeAPIKeyWithException(CommonFixture):
+    def setUp(self):
+        super(TestGetStripeAPIKeyWithException, self).setUp()
+        self.subscription_handler.get_stripe_api_key()
+
+    # Fake of FilePath handled by MockFilePath
+    def test_correct_file_path_defined(self):
+        self.failUnlessEqual(self.FilePath_return_values[0].path, 'MOCKWORKDIR')
 """
 
 # Begin test of SubmitSubscriptionHandler.get_creation_parameters
