@@ -76,25 +76,30 @@ class MockTemplate(object):
 
 
 class MockFilePath(object):
-    def __init__(self, name):
-        self.name = [name]
+    def __init__(self, fixture, name):
+        self.fixture = fixture
+        self.fixture.FilePath_return_values.append(self)
+        self.name = name
+
     def child(self, subname):
-        temp_name = self.name.append(subname)
-        return MockFilePath(temp_name)
+        temp_name = "%s/%s" % (self.name, subname)
+        return MockFilePath(self.fixture, temp_name)
 
 
 class CommonFixture(TestCase):
     def setUp(self):
         # Create directory for file I/O.
-        self.basedirfp = MockFilePath("MOCKWORKDIR") #self.create_workdirfp()
+        self.FilePath_return_values = []
+        self.basedirfp = MockFilePath(self, "MOCKWORKDIR")
 
         # There should never be a "real" customer instance
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
 
         # The Subcription Handler Instance
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+        self.failUnlessEqual(self.subscription_handler.basefp.name, "MOCKWORKDIR")
 
-
+"""
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
 class TestGetStripeAPIKey(CommonFixture):
     def setUp(self):
@@ -108,7 +113,7 @@ class TestGetStripeAPIKey(CommonFixture):
 
     def test_correct_file_path_defined(self):
         self.failUnlessEqual(self.FilePath_child_return_values[0], 'foo')
-
+"""
 # Begin test of SubmitSubscriptionHandler.get_creation_parameters
 class TestGetCreationParameters(CommonFixture):
     def setUp(self):
@@ -182,7 +187,6 @@ class CommonRenderFixture(CommonFixture):
         self.create_customers_return_values = []
         self.env_get_template_return_values = []
         self.template_render_return_values = []
-        self.basefp_child_return_values = []
         self.append_record_return_values = []
         self.run_full_signup_return_values = []
 
@@ -201,13 +205,13 @@ class CommonRenderFixture(CommonFixture):
         self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
 
-        def call_basefp_child(PATH_TO_SUBSCRIPTIONS_FILE):
-            return _append(self.basefp_child_return_values,
-                           PATH_TO_SUBSCRIPTIONS_FILE)
-        self.patch(self.subscription_handler.basefp, 'child', call_basefp_child)
+        #def call_basefp_child(PATH_TO_SUBSCRIPTIONS_FILE):
+        #    return _append(self.basefp_child_return_values,
+        #                   PATH_TO_SUBSCRIPTIONS_FILE)
+        #self.patch(self.subscription_handler.basefp, 'child', call_basefp_child)
 
         def call_append_record(mock_log_file_path, customer_subscription_id):
-            self.failUnlessEqual(mock_log_file_path, 'subscriptions.csv')
+            self.failUnlessEqual(mock_log_file_path.name, 'MOCKWORKDIR/subscriptions.csv')
             self.failUnlessEqual(customer_subscription_id, 'sub_AAAAAAAAAAAAAA')
             return _append(self.append_record_return_values, None)
         self.patch(submit_subscription, 'append_record',
@@ -261,7 +265,7 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
 
     def test_basefp_child_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        self.failUnlessEqual(self.basefp_child_return_values, ['subscriptions.csv'])
+        self.failUnlessEqual(self.FilePath_return_values[1].name, 'MOCKWORKDIR/subscriptions.csv')
 
     def test_append_record_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
@@ -330,7 +334,7 @@ class TestRenderWithExceptions(CommonRenderFixture):
 
     def test_basefp_child_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        self.failUnlessEqual(self.basefp_child_return_values, [])
+        self.failUnlessEqual(len(self.FilePath_return_values), 1)
 
     def test_append_record_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
