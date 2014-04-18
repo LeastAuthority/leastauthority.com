@@ -76,14 +76,14 @@ class MockTemplate(object):
 
 
 class MockFilePath(object):
-    def __init__(self, fixture, name):
+    def __init__(self, fixture, path):
         self.fixture = fixture
         self.fixture.FilePath_return_values.append(self)
-        self.name = name
+        self.path = path
 
-    def child(self, subname):
-        temp_name = "%s/%s" % (self.name, subname)
-        return MockFilePath(self.fixture, temp_name)
+    def child(self, subpath):
+        temp_path = "%s/%s" % (self.path, subpath)
+        return MockFilePath(self.fixture, temp_path)
 
 
 class CommonFixture(TestCase):
@@ -97,23 +97,20 @@ class CommonFixture(TestCase):
 
         # The Subcription Handler Instance
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
-        self.failUnlessEqual(self.subscription_handler.basefp.name, "MOCKWORKDIR")
+        self.failUnlessEqual(self.subscription_handler.basefp.path, "MOCKWORKDIR")
 
 """
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
 class TestGetStripeAPIKey(CommonFixture):
     def setUp(self):
         super(TestGetStripeAPIKey, self).setUp()
+        self.subscription_handler.get_stripe_api_key()
 
-        self.FilePath_child_return_values = []
-        # Define mocks and patch out called functions
-        def call_FilePath(path_name_string):
-            return _append(MockFilePath(path_name_string), self.FilePath_child_return_values)
-        self.patch(submit_subscription, 'FilePath', call_FilePath)
-
+    # Fake of FilePath handled by MockFilePath
     def test_correct_file_path_defined(self):
-        self.failUnlessEqual(self.FilePath_child_return_values[0], 'foo')
+        self.failUnlessEqual(self.FilePath_return_values[0].name, 'foo')
 """
+
 # Begin test of SubmitSubscriptionHandler.get_creation_parameters
 class TestGetCreationParameters(CommonFixture):
     def setUp(self):
@@ -208,7 +205,7 @@ class CommonRenderFixture(CommonFixture):
         # NOTE: mockery of calls to FilePath and FilePath.child handled by MockFilePath
 
         def call_append_record(mock_log_file_path, customer_subscription_id):
-            self.failUnlessEqual(mock_log_file_path.name, 'MOCKWORKDIR/subscriptions.csv')
+            self.failUnlessEqual(mock_log_file_path.path, 'MOCKWORKDIR/subscriptions.csv')
             self.failUnlessEqual(customer_subscription_id, 'sub_AAAAAAAAAAAAAA')
             return _append(self.append_record_return_values, None)
         self.patch(submit_subscription, 'append_record',
@@ -262,7 +259,7 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
 
     def test_basefp_child_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
-        self.failUnlessEqual(self.FilePath_return_values[1].name, 'MOCKWORKDIR/subscriptions.csv')
+        self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/subscriptions.csv')
 
     def test_append_record_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
