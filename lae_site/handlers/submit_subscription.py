@@ -37,7 +37,8 @@ class SubmitSubscriptionHandler(HandlerBase):
     def get_stripe_api_key(self):
         stripefp = self.basefp.child('secret_config').child('stripeapikey')
         if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
-            raise AssertionError("Secrets are not allowed in the production code repo: %r" % (stripefp.path,))
+            raise AssertionError("Secrets are not allowed in the production code repo: %r" %
+                                 (stripefp.path,))
         return stripefp.getContent().strip()
 
     def get_creation_parameters(self, request):
