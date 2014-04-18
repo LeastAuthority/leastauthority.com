@@ -85,6 +85,10 @@ class MockFilePath(object):
         return MOCKAPIKEY
 
 
+class MockAssertionError(object):
+    pass
+
+
 class CommonFixture(TestCase):
     def setUp(self):
         # Create directory for file I/O.
@@ -98,6 +102,7 @@ class CommonFixture(TestCase):
         self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
         self.failUnlessEqual(self.subscription_handler.basefp.path, "MOCKWORKDIR")
 
+
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
 class TestGetStripeAPIKeyWithoutException(CommonFixture):
     def setUp(self):
@@ -110,17 +115,23 @@ class TestGetStripeAPIKeyWithoutException(CommonFixture):
         self.failUnlessEqual(self.FilePath_return_values[0].path, 'MOCKWORKDIR')
         self.failUnlessEqual(self.gotContent, [MOCKAPIKEY])
 
-"""
+
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
 class TestGetStripeAPIKeyWithException(CommonFixture):
     def setUp(self):
         super(TestGetStripeAPIKeyWithException, self).setUp()
-        self.subscription_handler.get_stripe_api_key()
-
+        self.subscription_handler.basefp.path = self.subscription_handler.basefp.path.replace(
+            'MOCKWORKDIR','leastauthority.com')
+        self.gotContent = []
+        try:
+            self.subscription_handler.get_stripe_api_key()
+        except AssertionError, e:
+            self.failUnlessEqual(e.message, "Secrets are not allowed in the production code repo:"+
+                                 " 'leastauthority.com/secret_config/stripeapikey'")
     # Fake of FilePath handled by MockFilePath
     def test_correct_file_path_defined(self):
-        self.failUnlessEqual(self.FilePath_return_values[0].path, 'MOCKWORKDIR')
-"""
+        self.failUnlessEqual(self.FilePath_return_values[0].path, 'leastauthority.com')
+        self.failUnlessEqual(self.gotContent, [])
 
 # Begin test of SubmitSubscriptionHandler.get_creation_parameters
 class TestGetCreationParameters(CommonFixture):
