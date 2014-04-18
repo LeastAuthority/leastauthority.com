@@ -24,10 +24,6 @@ class Site(TestCase):
         req.setResponseCode.assert_called_with(OK)
         self.failUnlessIn("Simple, secure", resp)
 
-        #(req, resp) = self._mock_request(site, '/support', 'GET')
-        #req.setResponseCode.assert_called_with(OK)
-        #self.failUnlessIn("<h2>Support</h2>", resp)
-
         (req, resp) = self._mock_request(site, '/noexist', 'GET')
         req.setResponseCode.assert_called_with(NOT_FOUND)
 
