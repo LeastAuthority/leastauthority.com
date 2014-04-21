@@ -103,7 +103,6 @@ class CommonFixture(TestCase):
 
         # The Subcription Handler Instance
         self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
-        self.failUnlessEqual(self.subscription_handler.basefp.path, "MOCKWORKDIR")
 
 
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
@@ -114,7 +113,6 @@ class TestGetStripeAPIKeyWithoutException(CommonFixture):
 
     # Fake of FilePath handled by MockFilePath
     def test_correct_file_path_defined(self):
-        self.failUnlessEqual(self.FilePath_return_values[0].path, 'MOCKWORKDIR')
         self.failUnlessEqual(self.gotContent, [MOCKAPIKEY])
 
 
