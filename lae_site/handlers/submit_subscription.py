@@ -50,8 +50,8 @@ class SubmitSubscriptionHandler(HandlerBase):
         return stripe_api_key, stripe_authorization_token, user_email
 
     def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject):
-        print >>self.out, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
-        print >>self.out, trace_back
+        print >>self._log, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
+        print >>self._log, trace_back
         headers = {
             "From": FROM_ADDRESS,
             "Subject": email_subject,
@@ -120,7 +120,7 @@ class SubmitSubscriptionHandler(HandlerBase):
                                  ensure_ascii=True
                                  )
 
-        d = flappcommand.run(stdin, self.out)
+        d = flappcommand.run(stdin, self._log)
         d.addCallback(when_done)
         d.addErrback(when_failed)
 
