@@ -143,10 +143,19 @@ class TestGetCreationParameters(CommonFixture):
             return _append(self.get_stripe_api_key_return_values, MOCKAPIKEY)
         self.patch(SubmitSubscriptionHandler, 'get_stripe_api_key', call_get_stripe_api_key)
 
+        # Patch get_arg
+        self.get_arg_return_values = []
+        def call_get_arg(subscription_handler, request, argument):
+            return _append(self.get_arg_return_values, request.args[argument])
+        self.patch(SubmitSubscriptionHandler, 'get_arg', call_get_arg)
+
         self.subscription_handler.get_creation_parameters(MockRequest(REQUESTARGS))
 
     def test_get_stripe_api_key_call(self):
         self.failUnlessEqual(self.get_stripe_api_key_return_values, [MOCKAPIKEY])
+
+    def test_get_arg_calls(self):
+        self.failUnlessEqual(self.get_arg_return_values, [['MOCK_stripe_token'], ['test@test']])
 
 # Begin test of SubmitSubscriptionHandler.handle_stripe_create_customer_errors
 class TestHandleStripeCreateCustomerErrors(CommonFixture):
