@@ -91,6 +91,9 @@ class MockAssertionError(object):
 
 class CommonFixture(TestCase):
     def setUp(self):
+        # Currently this is simply the stripe_api_key
+        self.gotContent = []
+
         # Create directory for file I/O.
         self.FilePath_return_values = []
         self.basedirfp = MockFilePath(self, "MOCKWORKDIR")
@@ -99,7 +102,7 @@ class CommonFixture(TestCase):
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
 
         # The Subcription Handler Instance
-        self.subscription_handler = submit_subscription.SubmitSubscriptionHandler(self.basedirfp)
+        self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
         self.failUnlessEqual(self.subscription_handler.basefp.path, "MOCKWORKDIR")
 
 
@@ -107,7 +110,6 @@ class CommonFixture(TestCase):
 class TestGetStripeAPIKeyWithoutException(CommonFixture):
     def setUp(self):
         super(TestGetStripeAPIKeyWithoutException, self).setUp()
-        self.gotContent = []
         self.subscription_handler.get_stripe_api_key()
 
     # Fake of FilePath handled by MockFilePath
@@ -122,7 +124,6 @@ class TestGetStripeAPIKeyWithException(CommonFixture):
         super(TestGetStripeAPIKeyWithException, self).setUp()
         self.subscription_handler.basefp.path = self.subscription_handler.basefp.path.replace(
             'MOCKWORKDIR','leastauthority.com')
-        self.gotContent = []
         try:
             self.subscription_handler.get_stripe_api_key()
         except AssertionError, e:
@@ -137,8 +138,13 @@ class TestGetStripeAPIKeyWithException(CommonFixture):
 class TestGetCreationParameters(CommonFixture):
     def setUp(self):
         super(TestGetCreationParameters, self).setUp()
-    # XXX WORK TODO HERE
 
+        self.get_arg_return_values = []
+
+        def call_get_stripe_api_key():
+            self.gotContent.append(MOCKAPIKEY)
+            return MOCKAPIKEY
+        #self.patch(
 
 # Begin test of SubmitSubscriptionHandler.handle_stripe_create_customer_errors
 class TestHandleStripeCreateCustomerErrors(CommonFixture):
@@ -221,7 +227,7 @@ class CommonRenderFixture(CommonFixture):
                            (MOCKAPIKEY,
                             request.args['stripeToken'][0],
                             request.args['email'][0]))
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'get_creation_parameters',
+        self.patch(SubmitSubscriptionHandler, 'get_creation_parameters',
                    call_get_creation_parameters)
 
         # NOTE: mockery of calls to FilePath and FilePath.child handled by MockFilePath
@@ -237,7 +243,7 @@ class CommonRenderFixture(CommonFixture):
             self.failUnless(isinstance(customer, MockCustomer), customer)
             self.failUnless(isinstance(request, MockRequest), request)
             return _append(self.run_full_signup_return_values, None)
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'run_full_signup',
+        self.patch(SubmitSubscriptionHandler, 'run_full_signup',
                    call_run_full_signup)
 
 
@@ -252,7 +258,7 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
                                                stripe_api_key,
                                                'card', 's4',
                                                user_email))
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
+        self.patch(SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
 
         def call_get_template(target_template):
@@ -316,7 +322,7 @@ class TestRenderWithExceptions(CommonRenderFixture):
                                  stripe_authorization_token, user_email):
             self.create_customers_return_values.append(None)
             raise RenderErrorDetailsForBrowser, 'MOCKERROR'
-        self.patch(submit_subscription.SubmitSubscriptionHandler, 'create_customer',
+        self.patch(SubmitSubscriptionHandler, 'create_customer',
                    call_create_customer)
 
         def call_get_template(target_template):
