@@ -1,5 +1,6 @@
 
 from twisted.trial.unittest import TestCase
+from twisted.internet import defer
 
 from lae_site.handlers import submit_subscription
 from lae_site.handlers.submit_subscription import stripe
@@ -11,7 +12,9 @@ MOCKSMTPPASSWORD = "beef"*4
 MOCK_STRIPE_TOKEN = "MOCK_stripe_token"
 MOCK_EMAIL = "test@test"
 MOCK_PGP_PUBKEY = "testpgppubkey"
-REQUESTARGS = {'stripeToken':[MOCK_STRIPE_TOKEN], 'email':[MOCK_EMAIL], 'pgp_pubkey':[MOCK_PGP_PUBKEY]}
+REQUESTARGS = {'stripeToken':[MOCK_STRIPE_TOKEN],
+               'email':[MOCK_EMAIL],
+               'pgp_pubkey':[MOCK_PGP_PUBKEY]}
 MOCKFURLFP = "FAKEPATH"
 
 def _append(seq, x):
@@ -83,6 +86,14 @@ class MockFilePath(object):
     def getContent(self):
         self.fixture.gotContent.append(MOCKAPIKEY)
         return MOCKAPIKEY
+
+class MockOut(object):
+    def __init__(self, fixture, name):
+        fixture.mockoutput = self
+        self.name = name
+        self.values = []
+    def write(self, value):
+        self.values.append(value)
 
 
 class MockAssertionError(object):
@@ -161,7 +172,48 @@ class TestGetCreationParameters(CommonFixture):
 class TestHandleStripeCreateCustomerErrors(CommonFixture):
     def setUp(self):
         super(TestHandleStripeCreateCustomerErrors, self).setUp()
-    # XXX WORK TODO HERE
+
+        # Patch send_plain_email
+        self.send_plain_email_return_values = []
+        def call_send_plain_email(from_address, to_address, tb, headers):
+            self.failUnlessEqual(from_address, 'info@leastauthority.com')
+            return _append(self.send_plain_email_return_values, defer.Deferred())
+        self.patch(submit_subscription, 'send_plain_email', call_send_plain_email)
+
+        # Patch self.out
+        self.patch(self.subscription_handler, 'out', MockOut(self, 'out'))
+
+    def test_RenderErrorDetails_raise(self):
+        try:
+            self.subscription_handler.handle_stripe_create_customer_errors('test trace_back',
+                                                                           MockCardError('test of handle_stripe_create_customer_errors'),
+                                                                           'test details', 'test subject')
+        except Exception, e:
+            self.failUnless(isinstance(e, RenderErrorDetailsForBrowser))
+            self.failUnlessEqual(e.details, 'test details')
+
+    def test_send_plain_email(self):
+        try:
+            self.subscription_handler.handle_stripe_create_customer_errors('test trace_back',
+                                                                           MockCardError('test of handle_stripe_create_customer_errors'),
+                                                                           'test details', 'test subject')
+        except:
+            pass
+
+    def test_print_outs(self):
+        try:
+            self.subscription_handler.handle_stripe_create_customer_errors(\
+                'test trace_back',
+                MockCardError('test of handle_stripe_create_customer_errors'),
+                'test details', 'test subject')
+        except:
+            pass
+        self.failUnless(isinstance(self.mockoutput, MockOut))
+        self.failUnlessEqual(self.mockoutput.values,
+                             ['Got MockCardError from the stripe.Customer.create call:',
+                              '\n',
+                              'test trace_back',
+                              '\n'])
 
 
 # Begin test of SubmitSubscriptionHandler.create_customer
@@ -201,7 +253,8 @@ class TestCreateCustomer(CommonFixture):
 
     def test_stripe_InvalidRequestError(self):
         self.patch(stripe, 'InvalidRequestError', MockInvalidRequestError)
-        return self._test_stripe_error(MockInvalidRequestError, "Due ", "Stripe Invalid Request error")
+        return self._test_stripe_error(MockInvalidRequestError, "Due ",
+                                       "Stripe Invalid Request error")
 
     def test_stripe_UnexpectedError(self):
         return self._test_stripe_error(Exception, "Something ", "Stripe unexpected error")
