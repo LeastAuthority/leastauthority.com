@@ -185,18 +185,20 @@ class TestHandleStripeCreateCustomerErrors(CommonFixture):
 
     def test_RenderErrorDetails_raise(self):
         try:
-            self.subscription_handler.handle_stripe_create_customer_errors('test trace_back',
-                                                                           MockCardError('test of handle_stripe_create_customer_errors'),
-                                                                           'test details', 'test subject')
+            self.subscription_handler.handle_stripe_create_customer_errors(\
+                'test trace_back',
+                MockCardError('test of handle_stripe_create_customer_errors'),
+                'test details', 'test subject')
         except Exception, e:
             self.failUnless(isinstance(e, RenderErrorDetailsForBrowser))
             self.failUnlessEqual(e.details, 'test details')
 
     def test_send_plain_email(self):
         try:
-            self.subscription_handler.handle_stripe_create_customer_errors('test trace_back',
-                                                                           MockCardError('test of handle_stripe_create_customer_errors'),
-                                                                           'test details', 'test subject')
+            self.subscription_handler.handle_stripe_create_customer_errors(\
+                'test trace_back',
+                MockCardError('test of handle_stripe_create_customer_errors'),
+                'test details', 'test subject')
         except:
             pass
 
@@ -376,7 +378,9 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
     def test_template_render(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.template_render_return_values,
-                             ["Test template:\nproductfullname: Simple Secure Storage Service\nproductname: S4"])
+                             ["Test template:\n"+
+                              "productfullname: Simple Secure Storage Service\n"+
+                              "productname: S4"])
 
 
 class TestRenderWithExceptions(CommonRenderFixture):
