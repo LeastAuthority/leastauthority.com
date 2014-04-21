@@ -137,12 +137,16 @@ class TestGetCreationParameters(CommonFixture):
     def setUp(self):
         super(TestGetCreationParameters, self).setUp()
 
-        self.get_arg_return_values = []
+        # Patch get_stripe_api_key
+        self.get_stripe_api_key_return_values = []
+        def call_get_stripe_api_key(subscription_handler):
+            return _append(self.get_stripe_api_key_return_values, MOCKAPIKEY)
+        self.patch(SubmitSubscriptionHandler, 'get_stripe_api_key', call_get_stripe_api_key)
 
-        def call_get_stripe_api_key():
-            self.gotContent.append(MOCKAPIKEY)
-            return MOCKAPIKEY
-        #self.patch(
+        self.subscription_handler.get_creation_parameters(MockRequest(REQUESTARGS))
+
+    def test_get_stripe_api_key_call(self):
+        self.failUnlessEqual(self.get_stripe_api_key_return_values, [MOCKAPIKEY])
 
 # Begin test of SubmitSubscriptionHandler.handle_stripe_create_customer_errors
 class TestHandleStripeCreateCustomerErrors(CommonFixture):
@@ -163,7 +167,7 @@ class TestCreateCustomer(CommonFixture):
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
 
         calls = []
-        def call_handle_stripe_create_customer_errors(submit_subscription_handler_obj, trace_back,
+        def call_handle_stripe_create_customer_errors(subscription_handler, trace_back,
                                                       error, details, email_subject):
             calls.append((details, email_subject))
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors',
@@ -220,7 +224,7 @@ class CommonRenderFixture(CommonFixture):
             pass
 
         # Define mocks and patch out called functions
-        def call_get_creation_parameters(submit_subscription_handler_instance, request):
+        def call_get_creation_parameters(subscription_handler, request):
             return _append(self.get_creation_parameters_return_values,
                            (MOCKAPIKEY,
                             request.args['stripeToken'][0],
@@ -237,7 +241,7 @@ class CommonRenderFixture(CommonFixture):
         self.patch(submit_subscription, 'append_record',
                    call_append_record)
 
-        def call_run_full_signup(submit_subscription_handler_instance, customer, request):
+        def call_run_full_signup(subscription_handler, customer, request):
             self.failUnless(isinstance(customer, MockCustomer), customer)
             self.failUnless(isinstance(request, MockRequest), request)
             return _append(self.run_full_signup_return_values, None)
@@ -249,7 +253,7 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
     def setUp(self):
         super(TestRenderWithoutExceptions, self).setUp()
 
-        def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
+        def call_create_customer(subscription_handler, stripe_api_key,
                                  stripe_authorization_token, user_email):
             return _append(self.create_customers_return_values,
                            MockCustomer.create(MockCustomer(),
@@ -316,7 +320,7 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
 class TestRenderWithExceptions(CommonRenderFixture):
     def setUp(self):
         super(TestRenderWithExceptions, self).setUp()
-        def call_create_customer(submit_subscription_handler_instance, stripe_api_key,
+        def call_create_customer(subscription_handler, stripe_api_key,
                                  stripe_authorization_token, user_email):
             self.create_customers_return_values.append(None)
             raise RenderErrorDetailsForBrowser, 'MOCKERROR'
