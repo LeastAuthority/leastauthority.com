@@ -96,7 +96,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error
                 # locally.
-                traceback.print_exc(100, self._log)
+                traceback.print_tb(100, self._log)
 
         def when_failed(ign):
             try:
@@ -107,7 +107,7 @@ class SubmitSubscriptionHandler(HandlerBase):
                 send_plain_email('info@leastauthority.com', 'support@leastauthority.com',
                                  "A sign-up failed for <%s>." % (customer.email,), headers)
             except Exception:
-                traceback.print_exc(100, self._log)
+                traceback.print_tb(100, self._log)
 
         customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
         # The foolscap service registered to run when flappcommand.run is called expects a bytestream
