@@ -24,12 +24,16 @@ def _append(seq, x):
 
 
 class MockFlappCommand(object):
-    def __init__(self, fixture):
+    def __init__(self, fixture, fp=None):
         self.fixture = fixture
+        if fp:
+            self.fp = fp
     def run(self, input_json, log_file):
         d = defer.Deferred()
         self.fixture.flappcommand_run_return_values.append(d)
         return d
+    def start(self):
+        self.fixture.flappcommand_start.append(self.fp)
 
 
 class MockCard(object):
@@ -150,6 +154,24 @@ class CommonFixture(TestCase):
         # The Subcription Handler Instance
         self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
 
+
+# Begin test of start
+class TestStart(CommonFixture):
+    def setUp(self):
+        super(CommonFixture, self).setUp()
+        self.FilePath_return_values = []
+        self.flappcommand_start = []
+        self.FlappCommand_return_values = []
+        def call_FlappCommand(furl_path):
+            return _append(self.FlappCommand_return_values, MockFlappCommand(self, furl_path))
+        self.patch(submit_subscription, 'FlappCommand', call_FlappCommand)
+        submit_subscription.start(MockFilePath(self, "MOCKWORKDIR"))
+
+    def test_furl_path(self):
+        self.failUnlessEqual(self.FilePath_return_values[2].path, "MOCKWORKDIR/secret_config/signup.furl")
+
+    def test_FlappCommand_init_with_signup_furl_fp_path(self):
+        self.failUnlessEqual(self.flappcommand_start, ['MOCKWORKDIR/secret_config/signup.furl'])
 
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
 class TestGetStripeAPIKeyWithoutException(CommonFixture):
