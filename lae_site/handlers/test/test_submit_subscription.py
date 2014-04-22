@@ -144,8 +144,6 @@ class CommonFixture(TestCase):
         # Patch append_record
         self.append_record_return_values = []
         def call_append_record(mock_log_file_path, customer_subscription_id):
-            self.failUnlessEqual(mock_log_file_path.path, 'MOCKWORKDIR/subscriptions.csv')
-            self.failUnlessEqual(customer_subscription_id, 'sub_AAAAAAAAAAAAAA')
             return _append(self.append_record_return_values, None)
         self.patch(submit_subscription, 'append_record', call_append_record)
 
@@ -291,7 +289,7 @@ class TestCreateCustomer(CommonFixture):
 class TestRunFullSignup(CommonFixture):
     def setUp(self):
         super(TestRunFullSignup, self).setUp()
-        MC = MockCustomer.create(MockCustomer(),
+        self.MC = MockCustomer.create(MockCustomer(),
                                  MOCKAPIKEY,
                                  MockCard(),
                                  MockPlan(),
@@ -305,7 +303,7 @@ class TestRunFullSignup(CommonFixture):
 
         self.flappcommand_run_return_values = []
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(self))
-        self.subscription_handler.run_full_signup(MC, MockRequest(REQUESTARGS))
+        self.subscription_handler.run_full_signup(self.MC, MockRequest(REQUESTARGS))
 
 
     def test_stdin_values(self):
@@ -316,7 +314,7 @@ class TestRunFullSignup(CommonFixture):
     def test_when_done(self):
         self.flappcommand_run_return_values[0].callback('ignore')
         self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/service_confirmed.csv')
-        #self.failUnlessEqual(self.append_record_return_values, [None])
+        self.failUnlessEqual(self.append_record_return_values, [None])
 
 
 # Begin test of SubmitSubscriptionHandler.render
