@@ -1,5 +1,5 @@
 
-import simplejson
+import simplejson, traceback, logging
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
@@ -301,8 +301,15 @@ class TestRunFullSignup(CommonFixture):
             return _append(self.simplejson_dumps_returns_values, arg_tuple)
         self.patch(simplejson, 'dumps', call_simplejson_dumps)
 
+        # Patch simplejson.dumps
+        self.traceback_print_tb_returns_values = []
+        def call_traceback_print_tb(size, logfile):
+            return _append(self.traceback_print_tb_returns_values, (size, logfile))
+        self.patch(traceback, 'print_tb', call_traceback_print_tb)
+
         self.flappcommand_run_return_values = []
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(self))
+
         self.subscription_handler.run_full_signup(self.MC, MockRequest(REQUESTARGS))
 
 
@@ -311,11 +318,33 @@ class TestRunFullSignup(CommonFixture):
                                                                      'IDSTUB', 'MOCKS4',
                                                                      'sub_AAAAAAAAAAAAAA')])
 
-    def test_when_done(self):
+    def test_when_done_without_exception(self):
         self.flappcommand_run_return_values[0].callback('ignore')
         self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/service_confirmed.csv')
         self.failUnlessEqual(self.append_record_return_values, [None])
 
+    def test_when_done_with_exception(self):
+        # Patch append_record _IN_ exceptional cases.
+        def call_append_record_raise_exception(mock_log_file_path, customer_subscription_id):
+            raise Exception
+        self.patch(submit_subscription, 'append_record', call_append_record_raise_exception)
+        self.flappcommand_run_return_values[0].callback('ignore')
+        self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/service_confirmed.csv')
+        self.failUnlessEqual(self.traceback_print_tb_returns_values[0][0], 100)
+        self.failUnless(isinstance(self.traceback_print_tb_returns_values[0][1], logging.Logger))
+
+    def test_when_failed_without_exception(self):
+        self.flappcommand_run_return_values[0].errback(Exception)
+        self.failUnless(isinstance(self.send_plain_email_return_values[0], defer.Deferred))
+
+    def test_when_failed_with_exception(self):
+        # Patch append_record _IN_ exceptional cases.
+        def call_send_plain_email_raise_exception(from_address, to_address, tb, headers):
+            raise Exception
+        self.patch(submit_subscription, 'send_plain_email', call_send_plain_email_raise_exception)
+        self.flappcommand_run_return_values[0].errback(Exception)
+        self.failUnlessEqual(self.traceback_print_tb_returns_values[0][0], 100)
+        self.failUnless(isinstance(self.traceback_print_tb_returns_values[0][1], logging.Logger))
 
 # Begin test of SubmitSubscriptionHandler.render
 class CommonRenderFixture(CommonFixture):
