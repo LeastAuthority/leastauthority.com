@@ -141,6 +141,8 @@ class CommonFixture(TestCase):
             return _append(self.send_plain_email_return_values, defer.Deferred())
         self.patch(submit_subscription, 'send_plain_email', call_send_plain_email)
 
+        # Patch append_record
+        self.append_record_return_values = []
         def call_append_record(mock_log_file_path, customer_subscription_id):
             self.failUnlessEqual(mock_log_file_path.path, 'MOCKWORKDIR/subscriptions.csv')
             self.failUnlessEqual(customer_subscription_id, 'sub_AAAAAAAAAAAAAA')
@@ -149,7 +151,6 @@ class CommonFixture(TestCase):
 
         # The Subcription Handler Instance
         self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
-
 
 
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
@@ -178,6 +179,7 @@ class TestGetStripeAPIKeyWithException(CommonFixture):
     def test_correct_file_path_defined(self):
         self.failUnlessEqual(self.FilePath_return_values[0].path, 'leastauthority.com')
         self.failUnlessEqual(self.gotContent, [])
+
 
 # Begin test of SubmitSubscriptionHandler.get_creation_parameters
 class TestGetCreationParameters(CommonFixture):
@@ -312,6 +314,8 @@ class TestRunFullSignup(CommonFixture):
 
     def test_when_done(self):
         self.flappcommand_run_return_values[0].callback('ignore')
+        self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/service_confirmed.csv')
+        self.failUnlessEqual(self.append_record_return_values, [None])
 
 # Begin test of SubmitSubscriptionHandler.render
 class CommonRenderFixture(CommonFixture):
@@ -322,7 +326,6 @@ class CommonRenderFixture(CommonFixture):
         self.create_customers_return_values = []
         self.env_get_template_return_values = []
         self.template_render_return_values = []
-        self.append_record_return_values = []
         self.run_full_signup_return_values = []
 
         def call_create_customer(): # Abstract
