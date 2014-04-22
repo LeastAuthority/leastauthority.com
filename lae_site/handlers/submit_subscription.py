@@ -94,7 +94,8 @@ class SubmitSubscriptionHandler(HandlerBase):
             try:
                 append_record(service_confirmed_fp, customer.subscription.id)
             except Exception:
-                # The request really did succeed, we just failed to record that it did. Log the error locally.
+                # The request really did succeed, we just failed to record that it did. Log the error
+                # locally.
                 traceback.print_exc(100, self._log)
 
         def when_failed(ign):
