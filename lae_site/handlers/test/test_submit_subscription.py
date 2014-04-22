@@ -1,4 +1,5 @@
 
+import simplejson
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
@@ -20,6 +21,21 @@ MOCKFURLFP = "FAKEPATH"
 def _append(seq, x):
     seq.append(x)
     return x
+
+
+class MockFlappCommand(object):
+    def __init__(self, fixture):
+        self.fixture = fixture
+    def run(self, input_json, log_file):
+        d = defer.Deferred()
+        self.fixture.flappcommand_run_return_values.append(d)
+        return d
+
+
+class MockCard(object):
+    def __init__(self):
+        self.value = 'MOCKCARD'
+
 
 class MockRequest(object):
     def __init__(self, argdict):
@@ -112,8 +128,28 @@ class CommonFixture(TestCase):
         # There should never be a "real" customer instance
         self.patch(submit_subscription.stripe, 'Customer', MockCustomer())
 
+        # Patch get_arg
+        self.get_arg_return_values = []
+        def call_get_arg(subscription_handler, request, argument):
+            return _append(self.get_arg_return_values, request.args[argument])
+        self.patch(SubmitSubscriptionHandler, 'get_arg', call_get_arg)
+
+        # Patch send_plain_email
+        self.send_plain_email_return_values = []
+        def call_send_plain_email(from_address, to_address, tb, headers):
+            self.failUnlessEqual(from_address, 'info@leastauthority.com')
+            return _append(self.send_plain_email_return_values, defer.Deferred())
+        self.patch(submit_subscription, 'send_plain_email', call_send_plain_email)
+
+        def call_append_record(mock_log_file_path, customer_subscription_id):
+            self.failUnlessEqual(mock_log_file_path.path, 'MOCKWORKDIR/subscriptions.csv')
+            self.failUnlessEqual(customer_subscription_id, 'sub_AAAAAAAAAAAAAA')
+            return _append(self.append_record_return_values, None)
+        self.patch(submit_subscription, 'append_record', call_append_record)
+
         # The Subcription Handler Instance
         self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
+
 
 
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
@@ -154,12 +190,6 @@ class TestGetCreationParameters(CommonFixture):
             return _append(self.get_stripe_api_key_return_values, MOCKAPIKEY)
         self.patch(SubmitSubscriptionHandler, 'get_stripe_api_key', call_get_stripe_api_key)
 
-        # Patch get_arg
-        self.get_arg_return_values = []
-        def call_get_arg(subscription_handler, request, argument):
-            return _append(self.get_arg_return_values, request.args[argument])
-        self.patch(SubmitSubscriptionHandler, 'get_arg', call_get_arg)
-
         self.subscription_handler.get_creation_parameters(MockRequest(REQUESTARGS))
 
     def test_get_stripe_api_key_call(self):
@@ -172,13 +202,6 @@ class TestGetCreationParameters(CommonFixture):
 class TestHandleStripeCreateCustomerErrors(CommonFixture):
     def setUp(self):
         super(TestHandleStripeCreateCustomerErrors, self).setUp()
-
-        # Patch send_plain_email
-        self.send_plain_email_return_values = []
-        def call_send_plain_email(from_address, to_address, tb, headers):
-            self.failUnlessEqual(from_address, 'info@leastauthority.com')
-            return _append(self.send_plain_email_return_values, defer.Deferred())
-        self.patch(submit_subscription, 'send_plain_email', call_send_plain_email)
 
         # Patch self.out
         self.patch(self.subscription_handler, 'out', MockOut(self, 'out'))
@@ -266,8 +289,29 @@ class TestCreateCustomer(CommonFixture):
 class TestRunFullSignup(CommonFixture):
     def setUp(self):
         super(TestRunFullSignup, self).setUp()
-    # XXX WORK TODO HERE
+        MC = MockCustomer.create(MockCustomer(),
+                                 MOCKAPIKEY,
+                                 MockCard(),
+                                 MockPlan(),
+                                 MOCK_EMAIL)
 
+        # Patch simplejson.dumps
+        self.simplejson_dumps_returns_values = []
+        def call_simplejson_dumps(arg_tuple, **ascii_enforce):
+            return _append(self.simplejson_dumps_returns_values, arg_tuple)
+        self.patch(simplejson, 'dumps', call_simplejson_dumps)
+
+        self.flappcommand_run_return_values = []
+        self.patch(submit_subscription, 'flappcommand', MockFlappCommand(self))
+        self.subscription_handler.run_full_signup(MC, MockRequest(REQUESTARGS))
+
+    def test_stdin_values(self):
+        self.failUnlessEqual(self.simplejson_dumps_returns_values, [('test@test', ['testpgppubkey'],
+                                                                     'IDSTUB', 'MOCKS4',
+                                                                     'sub_AAAAAAAAAAAAAA')])
+
+    def test_when_done(self):
+        self.flappcommand_run_return_values[0].callback('ignore')
 
 # Begin test of SubmitSubscriptionHandler.render
 class CommonRenderFixture(CommonFixture):
@@ -297,13 +341,6 @@ class CommonRenderFixture(CommonFixture):
                    call_get_creation_parameters)
 
         # NOTE: mockery of calls to FilePath and FilePath.child handled by MockFilePath
-
-        def call_append_record(mock_log_file_path, customer_subscription_id):
-            self.failUnlessEqual(mock_log_file_path.path, 'MOCKWORKDIR/subscriptions.csv')
-            self.failUnlessEqual(customer_subscription_id, 'sub_AAAAAAAAAAAAAA')
-            return _append(self.append_record_return_values, None)
-        self.patch(submit_subscription, 'append_record',
-                   call_append_record)
 
         def call_run_full_signup(subscription_handler, customer, request):
             self.failUnless(isinstance(customer, MockCustomer), customer)
