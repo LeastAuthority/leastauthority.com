@@ -276,9 +276,239 @@ this post. I'm solely responsible for any errors.</p>
         <article class="hentry highlight">
                 <header> <h3 class="entry-title"><a href="./least_authority_performs_security_audit_for_spideroak.html" rel="bookmark" title="Permalink to Least Authority Performs Security Audit For SpiderOak">Least Authority Performs Security Audit For SpiderOak</a></h3> </header>
                 <footer class="post-info help-text">
-                    <div style="float: right;"><a href="./s4_press_on_linuxbsdos.html#disqus_thread">Comments</a></div>
-                    <div class="published"> Mon 19 August 2013 </div>
-                      <div>By <a class="url fn" href="./author/karen-rustad.html">Karen Rustad</a></div>
+                    <div style="float: right;"><a href="./least_authority_performs_security_audit_for_cryptocat.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Wed 02 April 2014 </div>
+                      <div>By <a class="url fn" href="./author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
+                    <br>
+                </footer><!-- /.post-info -->
+                <!-- <div class="entry-content"> <p class="first last">Least Authority performs security audit for Cryptocat</p>
+ </div>-->
+                <div class="entry-content">
+                    <!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- -->
+<p>This is the second post in our series about security audits of Free and
+Open Source end-to-end encryption software. The first post in the series
+was about our security audit of SpiderOak's <a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html">crypton</a> project.</p>
+<p><a class="reference external" href="https://leastauthority.com/about_us">Our mission</a> at LeastAuthority is to bring verifiable end-to-end
+security to everyone.</p>
+<p>As part of that mission, in addition to operating the <a class="reference external" href="https://leastauthority.com/product_s4">S4</a> simple secure
+storage service, we also perform security consulting. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies sometimes ask us to analyze the
+security of their protocols and software.</p>
+<p>We audited the widely-used <a class="reference external" href="https://crypto.cat/">Cryptocat</a> encrypted chat program. This
+audit was funded by <a class="reference external" href="https://www.opentechfund.org/">Open Technology Fund</a> as part of their <a class="reference external" href="https://www.opentechfund.org/labs#redteam">Red Team</a>
+project to provide multiple professional security audits to Internet
+freedom projects.</p>
+<div class="section" id="what-were-the-results">
+<h2>What were the results?</h2>
+<p>We found several security issues in the version of Cryptocat that we
+examined (Cryptocat v2.1.15). For each one, we reported it to the
+Cryptocat developers, and they have either deployed a fix in a newer
+release of Cryptocat or else disabled the feature that has the
+vulnerability.</p>
+<p>The complete list of the issues we found is at the end of this article,
+along with a link to the report document.</p>
+<p>Unfortunately we didn't have time to examine all parts of Cryptocat that
+we wanted to. We concentrated on the “crypto-related” parts: key
+generation and key management, random number generation, encryption and
+decryption, authentication and integrity, and the new file transfer
+feature. Most of the issues that we found were in those areas.</p>
+<p>Our report explains what parts of it we looked at most closely (this is
+called the &quot;coverage&quot; results of the audit).</p>
+</div>
+<div class="section" id="parting-thoughts">
+<h2>parting thoughts</h2>
+<p>I would like to thank the Cryptocat project, led by Nadim Kobeissi, for
+their commitment to doing development in the open, inviting external
+review, and moving to address the issues we uncovered. This open
+development process is a good complement to Cryptocat's Free and Open
+Source publication of their code and their commitment to providing
+end-to-end security for their users.</p>
+<p>On top of that, I'd like to thank Cryptocat for their unflagging focus on
+<em>usability</em>. Usability is a critical factor if we are going to succeed at
+bringing verifiable end-to-end security to everyone, and it is an area
+where we as a community and as a society need to improve.</p>
+</div>
+<div class="section" id="any-questions">
+<h2>Any questions?</h2>
+<p>If you have any questions about these results or the process, please
+contact us or the Cryptocat developers.</p>
+<p>The next project we are auditing is <a class="reference external" href="https://globaleaks.org/">GlobaLeaks</a>, so stay tuned.</p>
+</div>
+<div class="section" id="further-reading">
+<h2>further reading</h2>
+<p>The full report: <a class="reference external" href="/static/publications/LeastAuthority-Cryptocat-audit-report.pdf">Report of Security Audit of Cryptocat</a></p>
+<p>The <a class="reference external" href="https://blog.crypto.cat/2014/04/recent-audits-and-coming-improvements/">post on the Cryptocat blog</a>.</p>
+<p>Tickets on the Cryptocat github issue tracker to track the status of each issue:</p>
+<ul class="simple">
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/575">Issue A</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/576">Issue B</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/577">Issue C</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/578">Issue D</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/606">Issue E</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/607">Issue F</a></li>
+<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/608">Issue G</a></li>
+</ul>
+</div>
+
+                </div><!-- /.entry-content -->
+                <div>
+                    <div style="float: right;"><a href="./least_authority_performs_security_audit_for_cryptocat.html#disqus_thread">Comments</a></div>
+                    <div class="clearer">&nbsp;</div>
+                </div>
+        </article>
+        <br>
+        <article class="hentry highlight">
+                <header> <h3 class="entry-title"><a href="./BLAKE2-harder-better-faster-stronger-than-MD5.html" rel="bookmark" title="Permalink to BLAKE2: “Harder, Better, Faster, Stronger” Than MD5">BLAKE2: “Harder, Better, Faster, Stronger” Than MD5</a></h3> </header>
+                <footer class="post-info help-text">
+                    <div style="float: right;"><a href="./BLAKE2-harder-better-faster-stronger-than-MD5.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Fri 21 March 2014 </div>
+                      <div>By <a class="url fn" href="./author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
+                    <br>
+                </footer><!-- /.post-info -->
+                <!-- <div class="entry-content"> <p class="first last">BLAKE2: “Harder, Better, Faster, Stronger” Than MD5</p>
+ </div>-->
+                <div class="entry-content">
+                    <!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; -->
+<!-- -*- indent-tabs-mode: nil -*- -->
+<p><em>best read while listening to Daft Punk:</em> <a class="reference external" href="https://youtu.be/gAjR4_CbPpQ">Harder, Better, Faster, Stronger</a></p>
+<hr class="docutils" />
+<p>Why use <a class="reference external" href="https://blake2.net">BLAKE2</a> instead of Skein, Keccak (SHA-3), MD5, or SHA-1 as a secure
+hash function?</p>
+<div class="section" id="blake-was-the-best-rated-hash-function-in-the-sha-3-competition">
+<h2>BLAKE was the best-rated hash function in the SHA-3 competition</h2>
+<p>NIST, in <a class="reference external" href="http://nvlpubs.nist.gov/nistpubs/ir/2012/NIST.IR.7896.pdf">the final report of the SHA-3 competition</a>, said this about the
+finalists (which included BLAKE, Keccak, Skein, and Grøstl):</p>
+<ul class="simple">
+<li>BLAKE had a security margin — the gap between a known-weak reduced version
+and the full version — comparable to Keccak and superior to the other
+finalists. (§4.3: “BLAKE and Keccak have very large security margins.”)</li>
+<li>BLAKE had a depth of analysis — the amount of published research analyzing
+its security — comparable to Grøstl and Skein and superior to the other
+finalists. (§3.1: “Keccak received a significant amount of cryptanalysis,
+although not quite the depth of analysis applied to BLAKE, Grøstl, or
+Skein”)</li>
+<li>BLAKE had performance (in software) comparable to Skein and superior to the
+other finalists. (§5.1.4: “Skein and BLAKE […] have the best overall
+software performance.”)</li>
+</ul>
+</div>
+<div class="section" id="but-blake-was-similar-to-sha-2">
+<h2>but BLAKE was similar to SHA-2</h2>
+<p>So if BLAKE was in the top tier in all three of these measures, why didn't
+NIST choose BLAKE to be the winner of the SHA-3 contest? The main reason is
+given in §3.4 of the final report: because BLAKE's design was similar to
+SHA-2's.</p>
+<p>When the SHA-3 project was announced, being like SHA-2 was explicitly listed
+as an undesirable property. That made sense at the time, but today, being
+like SHA-2 should <em>increase</em> your confidence in a hash function's
+security. Here's why:</p>
+<p>When the SHA-3 project was announced (in 2007), <a class="reference external" href="http://eprint.iacr.org/2004/199.pdf">MD5</a> and (to a lesser
+extent) <a class="reference external" href="http://people.csail.mit.edu/yiqun/SHA1AttackProceedingVersion.pdf">SHA-1</a> had just been shockingly revealed to be weak, by a
+previously-unknown cryptographer from China, Xiaoyun Wang. There was a
+general fear among cryptographers that SHA-2 might be next.  SHA-2's design
+is like that of SHA-1 and MD5. SHA-2 was still relatively new (having been
+published in 2002) and was not yet widely used compared to MD5 or SHA-1. This
+was actually the impetus for launching the SHA-3 competition: to have a new
+hash function ready in case SHA-2 was suddenly shown to be unsafe. At the
+same time, NIST advised everyone to transition from MD5 and SHA-1 to SHA-2
+immediately, instead of waiting for the eventual standardization of SHA-3.</p>
+<p>This explains why it was a design criterion for SHA-3 candidates to be
+<em>different</em> from SHA-2: because the purpose of SHA-3 was to be available as a
+fallback in case SHA-2 failed!</p>
+</div>
+<div class="section" id="but-being-similar-to-sha-2-is-good">
+<h2>but being similar to SHA-2 is good!</h2>
+<p>Now, however, another seven years have gone by, and further efforts by
+cryptographers to analyze SHA-2 have not found any way to defeat it.  This
+means that SHA-2 is now twelve years old, and during most of that time it has
+been the most widely recommended secure hash function in the world. So today,
+the fact that BLAKE has a few design elements in common with SHA-2 doesn't
+seem to reflect badly on BLAKE at all.</p>
+<!-- This would be a perfect place to be able to link to your tables of comparison, thereby giving context to "twelve years".
+I would be happy to help you with that post, too. —Am -->
+<p>BLAKE compares well to the modern hash functions Keccak and Skein.  There is
+good reason to think that it is secure, and it has better performance (in
+software, on Intel or ARM CPUs) than Keccak. However, the other two are also
+good—there is no reason to suspect any of them of any weakness.</p>
+</div>
+<div class="section" id="blake2-is-faster-than-md5">
+<h2>BLAKE2 is faster than MD5</h2>
+<p>Okay, so what is <em>BLAKE2</em> then? Well, after NIST settled on Keccak to be the
+winner of the SHA-3 contest, Jean-Philippe Aumasson, Samuel Neves, Christian
+Winnerlein, and I decided that what the world needed was not just a secure
+hash function that was faster than Keccak, but one that was faster than MD5!
+This is because MD5 (and SHA-1) continue to be very widely used, even in new
+applications, even though MD5 and SHA-1 are unsafe for many uses. We
+hypothesized that offering engineers a hash function that was <em>both</em> faster
+and more secure than their beloved MD5 or SHA-1 might be more effective than
+haranguing them to upgrade to an alternative that is more secure but slower.</p>
+<p>So, we took BLAKE (Jean-Philippe Aumasson had been one of the designers of
+BLAKE), traded-off a little of its generous security margin in return for
+more efficiency, and optimized it to produce <em>BLAKE2</em>, which is faster than
+MD5 (on a modern Intel CPU). On top of that, we added an optional parallel
+mode so that if you have 4 or 8 CPU cores available you can run your BLAKE2
+function almost 4 or 8 times as fast.</p>
+<p>Bottom line:</p>
+<ul class="simple">
+<li>MD5 and SHA-1 are not responsible choices for a secure hash function today
+<a class="footnote-reference" href="#id2" id="id1">[*]</a>.</li>
+<li>Keccak (SHA-3), Skein, and BLAKE2 are all reasonable choices.</li>
+<li>BLAKE2 is not only faster than the other good hash functions, it is even
+faster than MD5 or SHA-1 (on modern Intel CPUs).</li>
+</ul>
+<p>Further reading:</p>
+<p>Here are <a class="reference external" href="https://blake2.net/acns/slides.html">the slides from a presentation that I gave</a> about BLAKE2 at
+“Applied Cryptography and Network Security 2013”.</p>
+<p>Here is <a class="reference external" href="https://plus.google.com/108313527900507320366/posts/4ZPRdvpzBTJ">an essay I posted</a> in April 13, 2012 and updated in October 3,
+2012, which outlines the motivation for what later became BLAKE2.</p>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[*]</a></td><td>Some software, notably <a class="reference external" href="http://www.git-scm.com/">git</a>, is still using SHA-1, and relying on
+the fact that the best publicly-known method of generating SHA-1
+collisions costs 2⁶⁹ computations, which is expensive. I think it is
+unwise to rely on this for two reasons. One is that there could be
+more efficient techniques to compute SHA-1 collisions that we don't
+know about. Another is that the cost of doing 2⁶⁹ computations is
+falling rapidly—at the time of this writing (March 22, 2014), the
+Bitcoin network is performing <a class="reference external" href="http://bitcoin.sipa.be/">enough computation to generate SHA-1
+collisions</a> every 131 minutes!</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="p-s-this-isn-t-about-hashing-passwords">
+<h2>P.S. this isn't about hashing passwords</h2>
+<p>P.S. Secure hash functions are not for hashing passwords! Secure hash
+functions are building blocks in cryptographic protocols and they should be
+as efficient as possible while still being secure.  <em>Password-hashing
+functions</em> are for impeding brute force guessing of passwords, and they
+should be as inefficient as possible while still being usable. See &quot;scrypt&quot;
+and &quot;bcrypt&quot; for current password-hashing functions, and see the <a class="reference external" href="https://en.wikipedia.org/wiki/Password_Hashing_Competition">Password
+Hashing Competition</a> for some candidate next-generation ones.</p>
+<p>By the way, some of the entrants in the Password Hashing Competition use
+BLAKE2 as an internal building block in their algorithm. They presumably
+chose it because it is fast, and then their design forces the computer to
+calculate BLAKE2 many, many times, iteratively, in order to be slow
+again. This actually makes sense. ☺</p>
+<p>Acknowledgments: Thanks to an anonymous reviewer, Jean-Philippe Aumasson,
+Daira Hopwood, and Amber Wilcox-O'Hearn for comments on earlier drafts of
+this post. I'm solely responsible for any errors.</p>
+</div>
+
+                </div><!-- /.entry-content -->
+                <div>
+                    <div style="float: right;"><a href="./BLAKE2-harder-better-faster-stronger-than-MD5.html#disqus_thread">Comments</a></div>
+                    <div class="clearer">&nbsp;</div>
+                </div>
+        </article>
+        <br>
+        <article class="hentry highlight">
+                <header> <h3 class="entry-title"><a href="./least_authority_performs_security_audit_for_spideroak.html" rel="bookmark" title="Permalink to Least Authority Performs Security Audit For SpiderOak">Least Authority Performs Security Audit For SpiderOak</a></h3> </header>
+                <footer class="post-info help-text">
+                    <div style="float: right;"><a href="./least_authority_performs_security_audit_for_spideroak.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Thu 20 February 2014 </div>
+                      <div>By <a class="url fn" href="./author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
                     <br>
                 </footer><!-- /.post-info -->
                 <!-- <div class="entry-content"> <p class="first last">Least Authority performs security audit for SpiderOak</p>
@@ -323,38 +553,31 @@ soon. Stay tuned!</p>
         </article>
         <br>
         <article class="hentry highlight">
-                <header> <h3 class="entry-title"><a href="./open_letter_silent_circle.html" rel="bookmark" title="Permalink to Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service">Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service</a></h3> </header>
+                <header> <h3 class="entry-title"><a href="./lafs_summit_san_francisco_nov_11_13.html" rel="bookmark" title="Permalink to LAFS Summit Next Week in San Francisco: Nov 11-13">LAFS Summit Next Week in San Francisco: Nov 11-13</a></h3> </header>
                 <footer class="post-info help-text">
-                    <div style="float: right;"><a href="./open_letter_silent_circle.html#disqus_thread">Comments</a></div>
-                    <div class="published"> Fri 16 August 2013 </div>
-                      <div>By <a class="url fn" href="./author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
+                    <div style="float: right;"><a href="./lafs_summit_san_francisco_nov_11_13.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Wed 06 November 2013 </div>
+                      <div>By <a class="url fn" href="./author/karen-rustad.html">Karen Rustad</a></div>
                     <br>
                 </footer><!-- /.post-info -->
                 <!-- <div class="entry-content"> <p class="first last">Join us for some chatting and hacking at the next LAFS summit, taking place next week in Mozilla's beautiful San Francisco office.</p>
  </div>-->
                 <div class="entry-content">
-                    <p>This open letter is in response to the <a class="reference external" href="http://boingboing.net/2013/08/08/lavabit-email-service-snowden.html">recent shutdown of Lavabit</a> , the ensuing <a class="reference external" href="http://silentcircle.wordpress.com/2013/08/09/to-our-customers/">shutdown of Silent Circle's “Silent Mail” product</a>, <a class="reference external" href="https://plus.google.com/112961607570158342254/posts/9uySMokvg7k">Jon Callas's posts about the topic on G+</a>, and <a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/08/09/e-mails-big-privacy-problem-qa-with-silent-circle-co-founder-phil-zimmermann/">Phil Zimmermann's interview in Forbes</a>. Also, of course, all of this is unfolding in the context of the <a class="reference external" href="https://en.wikipedia.org/wiki/2013_mass_surveillance_scandal">2013 Mass Surveillance Scandal</a>.</p>
-<p>Dear Phil and Jon: Hello there! It is good to have a chance to chat with you in public.</p>
-<p>Please accept the following in the spirit of constructive criticism in which it is intended.</p>
-<p>For those readers who don't know, I've known you both, personally and professionally for decades. You've each written texts that I've learned from, inspired me to follow your example, we've worked together successfully, and you've mentored me. I have great respect for your technical abilities, your integrity, and your general reasonableness. Thank you for all of that and for holding fast to your principles today, when we need it more than ever.</p>
-<p>Now:</p>
-<p>Your job is not yet done. Your customers are currently vulnerable to having all of their communications secretly monitored.</p>
-<p>I just subscribed to the service at <a class="reference external" href="https://SilentCircle.com">https://SilentCircle.com</a>, and after I paid $120 for one year of service, it directed me to install the Silent Text app from Silent Circle on my android phone, which I did. Now, when I use that Silent Circle app to send text messages to other Silent Circle customers, I have no way of verifying whether it is really encrypting my message on my own phone, and if it is really keeping the encryption key only for me, or if it is leaking the contents of my messages or my encryption keys to you or to others.</p>
-<p>If some attacker, for example the U.S. Federal Government — or to pick a different example the Zetas Mexican drug cartel — were to coerce Silent Circle into cooperating with them, then that attacker would simply require Silent Circle to distribute an update to the app, containing a backdoor.</p>
-<p>There is no way for me to verify that any given version of Silent Text, including the one that I just installed, is correctly generating strong encryption keys and is protecting those keys instead of leaking them.</p>
-<p>Therefore, how are your current products any safer for your users than the canceled Silent Mail product was? The only attacker against whom your canceled Silent Mail product was vulnerable but against whom your current products are safe is an attacker who would require you to backdoor your server software but who wouldn't require you to backdoor your client software.</p>
-<p>Does that constraint apply to the U.S. Federal Government entities who are responsible for PRISM, for the shut-down of Lavabit, and so much else? No, that constraint does not apply to them. This was demonstrated in the Hushmail case in which the U.S. DEA asked Hushmail (a Canadian company) to turn over the plaintext of the email of one of its customers. Hushmail complied, shipping a set of CDs to the DEA containing the customer's messages.</p>
-<p>The President of Hushmail <a class="reference external" href="http://www.wired.com/threatlevel/2007/11/hushmail-to-war/">emphasized</a> in interviews with journalists at the time that Hushmail would be able to comply with such orders regardless of whether the customer used Hushmail's “client-to-server” (SSL) encryption or its “end-to-end” (Java applet) encryption.</p>
-<p>Phil had been Chief Cryptographer of Hushmail years earlier, and was still a member of the Advisory Board of Hushmail at the time of that case. He commented about the case at that time, and he also <a class="reference external" href="http://www.wired.com/threatlevel/2007/11/pgp-creator-def/">stated</a>, correctly, that the Hushmail model of <em>unverified</em> end-to-end encryption was vulnerable to government coercion. That's the same model that Silent Circle uses today.</p>
-<p>You have just taken the courageous act of publicly shutting down the Silent Mail product, and publicly stating your reasons for doing so. This, then, is your opportunity to make your stance consistent by informing your customers of the similar dangers posed by the software distribution practices currently used by Silent Circle (along with most of the rest of the industry).</p>
-<p>I don't know the perfect solution to the problem of the <em>unverifiability</em> of today's software. But being frank about the current approach and the vulnerability that it imposes on users is the first step. People will listen to you about this, now. Let's start talking about it and we can start finding solutions.</p>
-<p>Also, warn your users. Don't tell them the untruth that it is impossible for you to eavesdrop on their communications even if you try (as your company seems to be on the borderline of doing in public statements like these: [ <a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/07/15/corporate-customers-flock-to-anti-snooping-app-silent-circle/">¹</a>, <a class="reference external" href="http://techcrunch.com/2013/08/08/silent-circle-preemptively-shuts-down-encrypted-email-service-to-prevent-nsa-spying/">²</a>]).</p>
-<p>We're trying an approach to this problem, here at <a class="reference external" href="https://LeastAuthority.com">LeastAuthority.com</a>, of “<em>verifiable</em> end-to-end security”. For our data backup and storage service, all of the software is Free and Open Source, and it is distributed through channels which are out of our direct control, such as Debian and Ubuntu. Of course this approach is not perfectly secure — it doesn't guarantee that a state-level actor cannot backdoor our customers. But it does guarantee that <em>we</em> cannot backdoor our customers.</p>
-<p>This currently imposes inconvenience on our customers, and I'm not saying it is the perfect solution, but it shows that there is more than one way to go at this problem.</p>
-<p>Thank you for your attention to these important matter, and your leadership in speaking out about them.</p>
-<p>(By the way, <a class="reference external" href="https://LeastAuthority.com">LeastAuthority.com</a> is not a competitor to Silent Circle. We don't offer voice, text, video, or email services, like Silent Circle does/did. What we offer is simply secure offsite <em>backup</em>, and a secure cloud storage API that people use to build other services.)</p>
-<p>Regards,</p>
-<p>Zooko Wilcox-O'Hearn</p>
+                    <p>The <a class="reference external" href="https://tahoe-lafs.org/pipermail/tahoe-dev/2013-October/008780.html">next LAFS summit</a> starts next Monday, November 11!</p>
+<blockquote>
+<dl class="docutils">
+<dt>When:</dt>
+<dd><ul class="first last simple">
+<li>Monday 11-Nov-2013 (afternoon only)</li>
+<li>Tuesday 12-Nov 2013 (all day)</li>
+<li>Wednesday 13-Nov-2013 (all day)</li>
+</ul>
+</dd>
+</dl>
+<p>Where: <a class="reference external" href="https://maps.google.com/maps?q=Mozilla+San+Francisco&amp;ll=37.789404,-122.389197&amp;spn=0.0097,0.021136&amp;fb=1&amp;gl=us&amp;hq=mozilla&amp;hnear=0x80859a6d00690021:0x4a501367f076adff,San+Francisco,+CA&amp;cid=0,0,10236188160913588323&amp;t=m&amp;z=16&amp;iwloc=A">The Mozilla SF Office, 2 Harrison (at Embarcadero)</a></p>
+<p>Who: at least Brian and Daira, plus everyone else who can make it</p>
+</blockquote>
+<p>We'll have drinks and snacks, wifi, and an online videochat going too. We'll also grab dinner together nearby each night. No RSVP needed; we hope you can join us!</p>
 
                 </div><!-- /.entry-content -->
                 <div>
@@ -364,10 +587,10 @@ soon. Stay tuned!</p>
         </article>
         <br>
         <article class="hentry highlight">
-                <header> <h3 class="entry-title"><a href="./least_authority_press_motherboard_vice_com.html" rel="bookmark" title="Permalink to Least Authority on Motherboard at Vice.com">Least Authority on Motherboard at Vice.com</a></h3> </header>
+                <header> <h3 class="entry-title"><a href="./lafs_featured_eff_tech_blog.html" rel="bookmark" title="Permalink to LAFS Featured on EFF Tech Blog">LAFS Featured on EFF Tech Blog</a></h3> </header>
                 <footer class="post-info help-text">
-                    <div style="float: right;"><a href="./least_authority_press_motherboard_vice_com.html#disqus_thread">Comments</a></div>
-                    <div class="published"> Thu 15 August 2013 </div>
+                    <div style="float: right;"><a href="./lafs_featured_eff_tech_blog.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Wed 06 November 2013 </div>
                       <div>By <a class="url fn" href="./author/karen-rustad.html">Karen Rustad</a></div>
                     <br>
                 </footer><!-- /.post-info -->
@@ -411,6 +634,7 @@ Tahoe's protections against third-party snooping and deletion have the kind of s
                 <li><a href="./category/essay.html">Essay</a></li>
                 <li><a href="./category/events.html">Events</a></li>
                 <li><a href="./category/letters.html">Letters</a></li>
+                <li><a href="./category/news.html">News</a></li>
                 <li><a href="./category/press.html">Press</a></li>
                 <li><a href="./category/press-releases.html">Press Releases</a></li>
             </ul>
@@ -424,11 +648,14 @@ Tahoe's protections against third-party snooping and deletion have the kind of s
                 <li><a href="./tag/eff.html">eff</a> (1)</li>
                 <li><a href="./tag/engineering.html">engineering</a> (1)</li>
                 <li><a href="./tag/interview.html">interview</a> (1)</li>
-                <li><a href="./tag/lafs.html">lafs</a> (2)</li>
+                <li><a href="./tag/lafs.html">lafs</a> (5)</li>
+                <li><a href="./tag/linux.html">linux</a> (1)</li>
+                <li><a href="./tag/patents.html">patents</a> (1)</li>
                 <li><a href="./tag/press-release.html">press release</a> (1)</li>
                 <li><a href="./tag/prism.html">prism</a> (4)</li>
-                <li><a href="./tag/s4.html">s4</a> (2)</li>
+                <li><a href="./tag/s4.html">s4</a> (3)</li>
                 <li><a href="./tag/silent-circle.html">silent circle</a> (1)</li>
+                <li><a href="./tag/spideroak.html">spideroak</a> (1)</li>
             </ul>
 
             <h4>Syndication</h4>
