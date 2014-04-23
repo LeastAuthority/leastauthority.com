@@ -252,15 +252,15 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     run('chmod +x %s' % (live_commit_hook_path,))
 
     print "live_path is %s" % (live_path,)
-    local_git_push = ['/usr/bin/git', 
-                        '--git-dir=%s' % (local_repo_path,), 
+    local_git_push = ['/usr/bin/git',
+                        '--git-dir=%s' % (local_repo_path,),
                         'push',
                         'website@%s:%s' % (hostname, hub_path),
                         '%s:master' % (src_ref,)]
-    subprocess.check_call(local_git_push)    
+    subprocess.check_call(local_git_push)
 
-def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo, 
-                                  la_commit_hash, secretconf_repo, sc_commit_hash, 
+def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
+                                  la_commit_hash, secretconf_repo, sc_commit_hash,
                                   stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
@@ -289,7 +289,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     # From:  https://stripe.com/docs/libraries
     sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
-    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
+    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
     sudo_apt_get('install -y postfix')
     sudo_apt_get('install -y darcs')
 
@@ -654,7 +654,7 @@ def get_mem_used(process_id_int):
         raise NotSupportedException(a)
     virtual_mem_in_page_units = int(a[0])
     resident_set_size_in_page_units = int(a[1])
-    return (resident_set_size_in_page_units * resource.getpagesize(), 
+    return (resident_set_size_in_page_units * resource.getpagesize(),
             virtual_mem_in_page_units * resource.getpagesize())
 
 # copied from nejucomo
