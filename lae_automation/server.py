@@ -241,20 +241,21 @@ def make_unique_tag_name(src_ref_SHA1):
     hash_frag = src_ref_SHA1[:8]
     time_tag_name = str(time.time()).split('.')[0]
     name = time_tag_name+'_'+hash_frag
-    return name, src_ref_SHA1
+    return name
 
 def tag_local_repo(local_repo, src_ref_SHA1):
-    ''' str, str --> 
+    ''' str, str --> boolean
     >>> tag_local_repo('1398276248_92f1175e', 'leastauthority.com/.git')
     True
     '''
     unique_tag_name = make_unique_tag_name(src_ref_SHA1)
-    command_string = '--git-dir=%s tag %s %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
-    result = run_git(command_string)
+    command_string = '/usr/bin/git --git-dir=%s tag %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
+    result = subprocess.check_call(command_string.split())
     return result, unique_tag_name
 
 def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     "FIXME: make this idempotent (?)"
+    unique_tag = tag_local_repo(local_repo_path, src_ref)
     if live_path.endswith('/') or not live_path.startswith('/'):
         raise Exception("live_path must be absolute and not end with /")
     hub_path = "%s.git" % (live_path,)
