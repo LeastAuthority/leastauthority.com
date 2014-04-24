@@ -222,12 +222,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
 GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
 cd %s || exit
 unset GIT_DIR
-git pull hub master
 exec git update-server-info
-"""
-
-GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE = """#!/bin/bash
-git push hub
 """
 
 def run_git(command):
@@ -251,33 +246,24 @@ def tag_local_repo(local_repo, src_ref_SHA1):
     unique_tag_name = make_unique_tag_name(src_ref_SHA1)
     command_string = '/usr/bin/git --git-dir=%s tag %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
     result = subprocess.check_call(command_string.split())
-    return result, unique_tag_name
+    return unique_tag_name
 
 def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     "FIXME: make this idempotent (?)"
-    unique_tag = tag_local_repo(local_repo_path, src_ref)
     if live_path.endswith('/') or not live_path.startswith('/'):
         raise Exception("live_path must be absolute and not end with /")
-    hub_path = "%s.git" % (live_path,)
-    run_git('init --bare %s' % (hub_path,))
+    unique_tag = tag_local_repo(local_repo_path, src_ref)
     run_git('init %s' % (live_path,))
-    if 'hub' in run_git( '--git-dir %s/.git remote' % (live_path,) ):
-        print "removing existing remote"
-        run_git('--git-dir %s/.git remote rm hub' % (live_path,))
-    run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
-    update_hook_path = '%s/hooks/post-update' % (hub_path,)
+    update_hook_path = '%s/hooks/post-update' % (live_path,)
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
     run('chmod +x %s' % (update_hook_path,))
-    live_commit_hook_path = '%s/.git/hooks/post-commit' % (live_path,)
-    write(GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE, live_commit_hook_path)
-    run('chmod +x %s' % (live_commit_hook_path,))
 
     print "live_path is %s" % (live_path,)
     local_git_push = ['/usr/bin/git',
                         '--git-dir=%s' % (local_repo_path,),
                         'push',
-                        'website@%s:%s' % (hostname, hub_path),
-                        '%s:master' % (src_ref,)]
+                        'website@%s:%s' % (hostname, live_path),
+                        '%s:%s' % (unique_tag, unique_tag)]
     subprocess.check_call(local_git_push)
 
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
