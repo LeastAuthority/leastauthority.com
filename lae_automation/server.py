@@ -4,7 +4,7 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-import os, sys, base64, simplejson, subprocess
+import os, sys, base64, simplejson, subprocess, time
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
@@ -219,9 +219,6 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
 
     print >>stdout, "Finished server installation."
 
-def run_git(command):
-    return run('/usr/bin/git %s' % (command,))
-
 GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
 cd %s || exit
 unset GIT_DIR
@@ -232,6 +229,29 @@ exec git update-server-info
 GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE = """#!/bin/bash
 git push hub
 """
+
+def run_git(command):
+    return run('/usr/bin/git %s' % (command,))
+
+def make_unique_tag_name(src_ref_SHA1):
+    ''' str --> str
+    >>> make_unique_tag_name(92f1175e11c51357d5444377791359614734bf5b)
+    1398276248_92f1175e
+    '''
+    hash_frag = src_ref_SHA1[:8]
+    time_tag_name = str(time.time()).split('.')[0]
+    name = time_tag_name+'_'+hash_frag
+    return name, src_ref_SHA1
+
+def tag_local_repo(local_repo, src_ref_SHA1):
+    ''' str, str --> 
+    >>> tag_local_repo('1398276248_92f1175e', 'leastauthority.com/.git')
+    True
+    '''
+    unique_tag_name = make_unique_tag_name(src_ref_SHA1)
+    command_string = '--git-dir=%s tag %s %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
+    result = run_git(command_string)
+    return result, unique_tag_name
 
 def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     "FIXME: make this idempotent (?)"
