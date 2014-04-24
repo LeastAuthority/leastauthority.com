@@ -162,14 +162,14 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)) )
     sudo('mkdir -p /home/%s/.ssh/' % (account_name,) )
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
-    sudo('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
+    sudo('chmod -f u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
     if account_pubkey is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/%s/.ssh/authorized_keys' % (account_name,))
     else:
         write(account_pubkey, '/home/%s/.ssh/authorized_keys' % (account_name,), use_sudo=True)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
-    sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
-    sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
+    sudo('chmod -f 400 /home/%s/.ssh/authorized_keys' % (account_name,))
+    sudo('chmod -f 700 /home/%s/.ssh/' % (account_name,))
 
 
 def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
@@ -254,9 +254,11 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
         raise Exception("live_path must be absolute and not end with /")
     unique_tag = tag_local_repo(local_repo_path, src_ref)
     run_git('init %s' % (live_path,))
-    update_hook_path = '%s/hooks/post-update' % (live_path,)
+    run_git('--git-dir=%s checkout %s' % (live_path, unique_tag))
+    run_git('--git-dir=%s checkout -b %s' % (live_path, unique_tag))
+    update_hook_path = '%s/.git/hooks/post-update' % (live_path,)
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
-    run('chmod +x %s' % (update_hook_path,))
+    run('chmod -f +x %s' % (update_hook_path,))
 
     print "live_path is %s" % (live_path,)
     local_git_push = ['/usr/bin/git',
@@ -315,7 +317,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo_apt_get('install -y authbind')
     sudo('touch /etc/authbind/byport/{443,80}')
     sudo('chown website:root /etc/authbind/byport/{443,80}')
-    sudo('chmod 744 /etc/authbind/byport/{443,80}')
+    sudo('chmod -f 744 /etc/authbind/byport/{443,80}')
 
     run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
@@ -337,7 +339,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
             run('mkdir secrets')
 
     with cd('/home/website/secret_config'):
-        run('chmod 400 *pem')
+        run('chmod -f 400 *pem')
 
     with cd('/home/website/leastauthority.com'):
         # FIXME: make idempotent
@@ -517,7 +519,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     if oldsecrets:
         restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
 
-    run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
+    run('chmod -f u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
     write(s3_secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
     if user_token and product_token:
         write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
@@ -752,12 +754,12 @@ def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_
 
     write(GENERATE_SCRIPT, '/home/monitor/statmover/generatevalues.py')
     with cd('/home/monitor/statmover/'):
-        run('chmod u+x generatevalues.py')
+        run('chmod -f u+x generatevalues.py')
 
     write(EMIT_CONFIG, '/home/monitor/statmover/eventemissions_config.json')
     # Setup cron for user "monitor" to run every minute sending data to emit-client.
     write(CRON_EMISSION_SCRIPT, '/home/monitor/emissionscript.sh')
-    run('chmod u+x /home/monitor/emissionscript.sh')
+    run('chmod -f u+x /home/monitor/emissionscript.sh')
     write('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab')
     run('crontab /home/monitor/ctab')
 
@@ -771,7 +773,7 @@ def restore_secrets(secrets, nodetype, stdout, stderr):
     run('mkdir -p --mode=700 /home/customer/%s/private' % (dirname,))
 
     if node_pem and nodeid:
-        run('chmod u+w /home/customer/%s/private/node.pem || echo No existing node.pem.' % (dirname,))
+        run('chmod -f u+w /home/customer/%s/private/node.pem || echo No existing node.pem.' % (dirname,))
         write(node_pem, '/home/customer/%s/private/node.pem' % (dirname,), mode=0640)
         write(nodeid,   '/home/customer/%s/my_nodeid' % (dirname,))
     else:
