@@ -174,7 +174,8 @@ def create_account(account_name, account_pubkey, stdout, stderr):
 def distupgrade_server(stdout):
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
-    sudo_apt_get('dist-upgrade -y')
+    print >>stdout, "dist-upgrading server..."
+    sudo_apt_get('-y dist-upgrade')
 
     print >>stdout, "Rebooting server (this will take a while)..."
     api.reboot(240)
@@ -182,7 +183,7 @@ def distupgrade_server(stdout):
 def apt_install_dependencies(stdout):
     print >>stdout, "Installing dependencies..."
     for package in ['python-dev', 'python-setuptools', 'exim4-base', 'darcs', 'python-foolscap']:
-        sudo_apt_get('install -y %s' % (package,))
+        sudo_apt_get('-y install %s' % (package,))
 
 def get_txaws():
     run('wget %s' % (INSTALL_TXAWS_URL,))
@@ -223,7 +224,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     distupgrade_server(stdout)
     apt_install_dependencies(stdout)
 
-    sudo_apt_get('remove -y --purge whoopsie')
+    sudo_apt_get('-y remove --purge whoopsie')
     get_txaws()
     create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
                               admin_privkey_path, publichost)
