@@ -179,22 +179,19 @@ def distupgrade_server(stdout):
     print >>stdout, "Rebooting server (this will take a while)..."
     api.reboot(240)
 
-def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
-                   stderr):
-    set_host_and_key(publichost, admin_privkey_path)
-    distupgrade_server(stdout)
-
+def apt_install_dependencies(stdout):
     print >>stdout, "Installing dependencies..."
-    sudo_apt_get('install -y python-dev')
-    sudo_apt_get('install -y python-setuptools')
-    sudo_apt_get('install -y exim4-base')
-    sudo_apt_get('install -y darcs')
-    sudo_apt_get('install -y python-foolscap')
-    sudo_apt_get('remove -y --purge whoopsie')
+    for package in ['python-dev', 'python-setuptools', 'exim4-base', 'darcs', 'python-foolscap']:
+        sudo_apt_get('install -y %s' % (package,))
+
+def get_txaws():
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
+
+def create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
+                              admin_privkey_path, publichost):
     create_account('customer', None, stdout, stderr)
     create_account('monitor', monitor_pubkey, stdout, stderr)
 
@@ -205,6 +202,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     # I don't know if creating one would be useful.XXX
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
+def get_and_install_tahoe(stdout):
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
     run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
@@ -213,10 +211,26 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     with cd('/home/customer/LAFS_source'):
         run('python ./setup.py build')
 
+def create_intro_and_storage_nodes(stdout):
     print >>stdout, "Creating introducer and storage server..."
     run('mkdir -p introducer storageserver')
     run('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
     run('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
+
+def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
+                   stderr):
+    set_host_and_key(publichost, admin_privkey_path)
+    distupgrade_server(stdout)
+    apt_install_dependencies(stdout)
+
+    sudo_apt_get('remove -y --purge whoopsie')
+    get_txaws()
+    create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
+                              admin_privkey_path, publichost)
+
+    get_and_install_tahoe(stdout)
+
+    create_intro_and_storage_nodes(stdout)
 
     print >>stdout, "Finished server installation."
 
