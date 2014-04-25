@@ -69,48 +69,6 @@ class TestServerModule(TestCase):
     def tearDown(self):
         FilePath(self.CONFIGFILEPATH).remove()
 
-    def test_initialize_statmover_source(self):
-        MHOSTNAME = '0.0.0.0'
-        MINSTANCEID = 'i-MOCKEC2INSTANCEID'
-        ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
-        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
-        MPATHTOSTATMOVER = '../secret_config/'+server.INSTALL_STATMOVER_PACKAGE
-
-        import subprocess
-        def call_subprocess_check_output(arglist):
-            self.failUnlessEqual(arglist[0], "scp")
-            self.failUnlessEqual(arglist[1], "-i")
-            self.failUnlessEqual(arglist[2], MONITORPRIVKEYPATH)
-            self.failUnlessEqual(arglist[3], MPATHTOSTATMOVER)
-            self.failUnlessEqual(arglist[4], "monitor@"+MHOSTNAME+":")
-        self.patch(subprocess, "check_output", call_subprocess_check_output)
-
-        self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'ubuntu', 'monitor'])
-        self.RUNARGS_FIFO = fifo([
-            ('whoami', False, {}),
-            ('whoami', False, {}),
-            ('tar -xzvf %s' % (server.INSTALL_STATMOVER_PACKAGE,), False, {}),
-            ('mv /home/monitor/statmover/config /home/monitor/.saturnaliaclient', False, {}),
-            ('whoami', False, {}),
-            ('whoami', False, {}),
-            (server.SETUPMETRIC_TEMPLATE % (60000, 'storageserver/rss', ' '.join([MINSTANCEID, 'SSEC2s'])), False, {}),
-            ("mkdir -p /home/monitor/statmover/emissionlogs", False, {}),
-            ("chmod -f u+x generatevalues.py", False, {}),
-            ("chmod -f u+x /home/monitor/emissionscript.sh", False, {}),
-            ("crontab /home/monitor/ctab", False, {})
-        ])
-        self.SUDOARGS_FIFO = fifo([
-            ('rm -rf statmover* .saturnalia* ctab emissionscript.sh', False, {}),
-            ('python ./setup.py install', False, {})
-        ])
-        self.WRITEARGS_FIFO = fifo([
-            (server.GENERATE_SCRIPT, '/home/monitor/statmover/generatevalues.py', False, None),
-            (server.EMIT_CONFIG_TEMPLATE % (60000, 'storageserver/rss',MINSTANCEID+'//SSEC2s'), '/home/monitor/statmover/eventemissions_config.json', False, None),
-            (server.CRON_EMISSION_SCRIPT, '/home/monitor/emissionscript.sh', False, None),
-            ('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab', False, None)
-        ])
-        server.initialize_statmover_source(MHOSTNAME, MONITORPRIVKEYPATH, ADMINPRIVKEYPATH, "storageserver/rss", [MINSTANCEID, 'SSEC2s'])
-        self._check_all_done()
 
     def test_install_server(self):
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])

@@ -725,48 +725,6 @@ if __name__ == '__main__':
     main()
 """
 
-def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
-                                sinkname_suffix, collection_names):
-    EMIT_CONFIG = EMIT_CONFIG_TEMPLATE % (RESOLUTION_MILLISECONDS, sinkname_suffix, '//'.join(collection_names))
-    # Set the initial state (make this function idempotent)
-    set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
-    with cd('/home/monitor'):
-        sudo('rm -rf statmover* .saturnalia* ctab emissionscript.sh')
-
-    # Setup up directory structure and scp statmover tarball into it
-    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
-    path_to_statmover = '../secret_config/'+INSTALL_STATMOVER_PACKAGE
-    scp_list = ['scp',
-                '-i',
-                monitor_privkey_path,
-                path_to_statmover,
-                'monitor@%s:' % (publichost,)]
-    subprocess.check_output(scp_list)
-    run('tar -xzvf %s' % (INSTALL_STATMOVER_PACKAGE,))
-    run('mv /home/monitor/statmover/config /home/monitor/.saturnaliaclient')
-
-    # Install the statmover client
-    set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
-    with cd('/home/monitor/statmover/saturnaliaclient-%s' % (INSTALL_SMCLIENT_VERSION,)):
-        sudo('python ./setup.py install')
-
-    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
-    # Use the freshly installed setup-metric (part of the client) to provision a sink for this SSEC2
-    provision_rss_sink(sinkname_suffix, collection_names)
-    # Set up to supply (statmover type-)"source" data to the emit-client
-    run('mkdir -p /home/monitor/statmover/emissionlogs')
-
-    write(GENERATE_SCRIPT, '/home/monitor/statmover/generatevalues.py')
-    with cd('/home/monitor/statmover/'):
-        run('chmod -f u+x generatevalues.py')
-
-    write(EMIT_CONFIG, '/home/monitor/statmover/eventemissions_config.json')
-    # Setup cron for user "monitor" to run every minute sending data to emit-client.
-    write(CRON_EMISSION_SCRIPT, '/home/monitor/emissionscript.sh')
-    run('chmod -f u+x /home/monitor/emissionscript.sh')
-    write('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab')
-    run('crontab /home/monitor/ctab')
-
 
 def restore_secrets(secrets, nodetype, stdout, stderr):
     node_pem = secrets.get(nodetype + '_node_pem', '')
