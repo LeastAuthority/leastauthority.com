@@ -112,15 +112,14 @@ def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_im
             CONSOLE_ACCESS_DELAY_TIME = 155
             address = addresses[0][0]
             print >>stdout, "Waiting %d seconds for the server to be ready..." % (CONSOLE_ACCESS_DELAY_TIME,)
-            d2 = task.deferLater(reactor, CONSOLE_ACCESS_DELAY_TIME, verify_and_store_serverssh_pubkey, 
-                                 ec2accesskeyid, ec2secretkey, endpoint_uri, address, 5, 20, 
+            d2 = task.deferLater(reactor, CONSOLE_ACCESS_DELAY_TIME, verify_and_store_serverssh_pubkey,
+                                 ec2accesskeyid, ec2secretkey, endpoint_uri, address, 5, 20,
                                  stdout, stderr, instance.instance_id)
 
             def _pubkey_verified(ignore):
-                install_infrastructure_server(address, admin_privkey_path, website_pubkey, 
-                                              leastauth_repo, la_commit_hash, secretconf_repo, 
+                install_infrastructure_server(address, admin_privkey_path, website_pubkey,
+                                              leastauth_repo, la_commit_hash, secretconf_repo,
                                               sc_commit_hash, stdout, stderr)
-                
 
             d2.addCallback(_pubkey_verified)
 
