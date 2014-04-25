@@ -249,24 +249,25 @@ def tag_local_repo(local_repo, src_ref_SHA1):
     return unique_tag_name
 
 def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
-    "FIXME: make this idempotent (?)"
     if live_path.endswith('/') or not live_path.startswith('/'):
         raise Exception("live_path must be absolute and not end with /")
-    unique_tag = tag_local_repo(local_repo_path, src_ref)
+    run('rm -rf %s' % live_path)
     run_git('init %s' % (live_path,))
-    run_git('--git-dir=%s checkout %s' % (live_path, unique_tag))
-    run_git('--git-dir=%s checkout -b %s' % (live_path, unique_tag))
     update_hook_path = '%s/.git/hooks/post-update' % (live_path,)
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
     run('chmod -f +x %s' % (update_hook_path,))
 
     print "live_path is %s" % (live_path,)
+    unique_tag = tag_local_repo(local_repo_path, src_ref)
     local_git_push = ['/usr/bin/git',
                         '--git-dir=%s' % (local_repo_path,),
                         'push',
                         'website@%s:%s' % (hostname, live_path),
                         '%s:%s' % (unique_tag, unique_tag)]
     subprocess.check_call(local_git_push)
+    with cd(live_path):
+        run_git('--git-dir=%s/.git checkout %s' % (live_path, unique_tag))
+        run_git('--git-dir=%s/.git checkout -b %s' % (live_path, unique_tag))
 
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
                                   la_commit_hash, secretconf_repo, sc_commit_hash,
