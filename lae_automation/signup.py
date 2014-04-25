@@ -47,7 +47,7 @@ def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
 
-def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, subscription_id, 
+def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, subscription_id,
                                 plan_id, stdout, stderr, secretsfile, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
@@ -57,8 +57,8 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
     myclock = clock or reactor
 
     s3_access_key_id = config.other["s3_access_key_id"]
-    s3secretpath = config.other["s3_secret_path"]
-    s3_secretkey = FilePath(s3secretpath).getContent().strip()
+    s3_secret_path = config.other["s3_secret_path"]
+    s3_secretkey = FilePath(s3_secret_path).getContent().strip()
 
     bucketname = get_bucket_name(subscription_id, customer_id)
     location = None  # default S3 location for now

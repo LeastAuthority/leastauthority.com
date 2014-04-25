@@ -275,9 +275,9 @@ class TestSignupModule(TestCase):
             return MOCKSERVERSSHFP
         self.patch(queryapi, 'hostpubkeyextractor', call_hostpubkeyextractor)
 
-        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
-                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
-                                               MSSEC2SECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH, 
+        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID,
+                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr,
+                                               MSSEC2SECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
                                                self.SERVERINFOPATH)
 
         def _check(ign):
