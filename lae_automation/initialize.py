@@ -129,7 +129,7 @@ def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_im
 
     d.addCallback(_deployed)
     return d
-    
+
 
 def dump_instance_information(instance, stderr):
     if not isinstance(instance, Instance):

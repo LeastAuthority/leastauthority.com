@@ -174,7 +174,7 @@ def create_account(account_name, account_pubkey, stdout, stderr):
 def distupgrade_server(stdout):
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
-    print >>stdout, "dist-upgrading server..."
+    print >>stdout, "dist-upgrading server...  (this will take a while)"
     sudo_apt_get('-y dist-upgrade')
 
     print >>stdout, "Rebooting server (this will take a while)..."
