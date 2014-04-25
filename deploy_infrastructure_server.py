@@ -9,7 +9,7 @@
 (e.g. instance name) are parsed from the lae_automation_config.json configuration file.
 """
 
-import sys, os, argparse
+import sys, argparse
 from lae_automation.config import Config
 from twisted.python.filepath import FilePath
 from lae_automation.initialize import deploy_infrastructure_EC2

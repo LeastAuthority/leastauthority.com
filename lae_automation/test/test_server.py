@@ -95,8 +95,8 @@ class TestServerModule(TestCase):
             ('whoami', False, {}),
             (server.SETUPMETRIC_TEMPLATE % (60000, 'storageserver/rss', ' '.join([MINSTANCEID, 'SSEC2s'])), False, {}),
             ("mkdir -p /home/monitor/statmover/emissionlogs", False, {}),
-            ("chmod u+x generatevalues.py", False, {}),
-            ("chmod u+x /home/monitor/emissionscript.sh", False, {}),
+            ("chmod -f u+x generatevalues.py", False, {}),
+            ("chmod -f u+x /home/monitor/emissionscript.sh", False, {}),
             ("crontab /home/monitor/ctab", False, {})
         ])
         self.SUDOARGS_FIFO = fifo([
@@ -140,18 +140,18 @@ class TestServerModule(TestCase):
             ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
             ('mkdir -p /home/customer/.ssh/', False, {}),
             ('chown customer:customer /home/customer/.ssh', False, {}),
-            ('chmod u+w /home/customer/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
+            ('chmod -f u+w /home/customer/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
             ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}),
             ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
-            ('chmod 400 /home/customer/.ssh/authorized_keys', False, {}),
-            ('chmod 700 /home/customer/.ssh/', False, {}),
+            ('chmod -f 400 /home/customer/.ssh/authorized_keys', False, {}),
+            ('chmod -f 700 /home/customer/.ssh/', False, {}),
             ('adduser --disabled-password --gecos "" monitor || echo Assuming that monitor already exists.', False, {}),
             ('mkdir -p /home/monitor/.ssh/', False, {}),
             ('chown monitor:monitor /home/monitor/.ssh', False, {}),
-            ('chmod u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
+            ('chmod -f u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
             ('chown monitor:monitor /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod 400 /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod 700 /home/monitor/.ssh/', False, {})
+            ('chmod -f 400 /home/monitor/.ssh/authorized_keys', False, {}),
+            ('chmod -f 700 /home/monitor/.ssh/', False, {})
         ])
         self.WRITEARGS_FIFO = fifo([('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None)])
 
@@ -179,10 +179,10 @@ class TestServerModule(TestCase):
                 ('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(acct_name,)), False, {}),
                 ('mkdir -p /home/%s/.ssh/' % acct_name, False, {}),
                 ('chown %s:%s /home/%s/.ssh' % (3*(acct_name,)), False, {}),
-                ('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (acct_name,), False, {}),
+                ('chmod -f u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (acct_name,), False, {}),
                 ('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(acct_name,)), False, {}),
-                ('chmod 400 /home/%s/.ssh/authorized_keys' % acct_name, False, {}),
-                ('chmod 700 /home/%s/.ssh/' % acct_name, False, {})]
+                ('chmod -f 400 /home/%s/.ssh/authorized_keys' % acct_name, False, {}),
+                ('chmod -f 700 /home/%s/.ssh/' % acct_name, False, {})]
             if pubkey is None:
                 SUDOARGS.insert(4, ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}))
             self.SUDOARGS_FIFO = fifo(SUDOARGS)
@@ -235,7 +235,7 @@ class TestServerModule(TestCase):
                 ('rm -f /home/customer/introducer/introducer.furl /home/customer/introducer/logport.furl', False, {}),
                 ('LAFS_source/bin/tahoe restart introducer && sleep 5', False, {}),
                 ('cat /home/customer/introducer/introducer.furl', False, {}),
-                ('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.', False, {}),
+                ('chmod -f u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.', False, {}),
                 ('LAFS_source/bin/tahoe restart storageserver && sleep 5', False, {}),
                 ('ps -fC tahoe', False, {}),
                 ('netstat -atW', False, {}),

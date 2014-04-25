@@ -229,8 +229,11 @@ def run_git(command):
     return run('/usr/bin/git %s' % (command,))
 
 def make_unique_tag_name(src_ref_SHA1):
-    ''' str --> str
-    >>> make_unique_tag_name(92f1175e11c51357d5444377791359614734bf5b)
+    ''' (str) --> str
+
+    Return the unique string id of a tag, to be added to repo.
+
+    >>>make_unique_tag_name(92f1175e11c51357d5444377791359614734bf5b)
     1398276248_92f1175e
     '''
     hash_frag = src_ref_SHA1[:8]
@@ -239,13 +242,13 @@ def make_unique_tag_name(src_ref_SHA1):
     return name
 
 def tag_local_repo(local_repo, src_ref_SHA1):
-    ''' str, str --> boolean
-    >>> tag_local_repo('1398276248_92f1175e', 'leastauthority.com/.git')
+    ''' (str, str) --> boolean
+    >>>tag_local_repo('1398276248_92f1175e', 'leastauthority.com/.git')
     True
     '''
     unique_tag_name = make_unique_tag_name(src_ref_SHA1)
     command_string = '/usr/bin/git --git-dir=%s tag %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
-    result = subprocess.check_call(command_string.split())
+    subprocess.check_call(command_string.split())
     return unique_tag_name
 
 def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
