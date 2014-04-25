@@ -171,17 +171,18 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('chmod -f 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod -f 700 /home/%s/.ssh/' % (account_name,))
 
-
-def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
-                   stderr):
-    set_host_and_key(publichost, admin_privkey_path)
-
+def distupgrade_server(stdout):
     print >>stdout, "Updating server..."
     sudo_apt_get('update')
     sudo_apt_get('dist-upgrade -y')
 
     print >>stdout, "Rebooting server (this will take a while)..."
     api.reboot(240)
+
+def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
+                   stderr):
+    set_host_and_key(publichost, admin_privkey_path)
+    distupgrade_server(stdout)
 
     print >>stdout, "Installing dependencies..."
     sudo_apt_get('install -y python-dev')
