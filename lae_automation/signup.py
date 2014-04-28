@@ -168,10 +168,6 @@ def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
                                      s3_secretkey, usertoken, producttoken, bucketname, oldsecrets,
                                      stdout, stderr, secretsfile)
 
-                # Disabled for now.
-                #initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
-                #                            sinkname_suffix, [instance.instance_id, 'SSEC2s'])
-
                 # XXX We probably need to rethink this:
                 append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id,
                               publichost)

@@ -112,10 +112,6 @@ class NotListeningError(Exception):
 INSTALL_TXAWS_VERSION = "0.2.1.post5"
 INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
-INSTALL_STATMOVER_VERSION = "2013-04-20T02_25_53+0000"
-INSTALL_STATMOVER_PACKAGE = "statmover-%s.tar.gz" % (INSTALL_STATMOVER_VERSION,)
-INSTALL_SMCLIENT_VERSION  = "3.2012.07.03.18.15.19-5e73c911653e"
-
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
 # pty=False will cause fabric to echo stdin, but that's fine.
