@@ -176,9 +176,9 @@ def distupgrade_server(stdout):
     print >>stdout, "Rebooting server (this will take a while)..."
     api.reboot(240)
 
-def apt_install_dependencies(stdout):
+def apt_install_dependencies(stdout, package_list):
     print >>stdout, "Installing dependencies..."
-    for package in ['python-dev', 'python-setuptools', 'exim4-base', 'darcs', 'python-foolscap']:
+    for package in package_list:
         sudo_apt_get('-y install %s' % (package,))
 
 def get_txaws():
@@ -218,7 +218,12 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
                    stderr):
     set_host_and_key(publichost, admin_privkey_path)
     distupgrade_server(stdout)
-    apt_install_dependencies(stdout)
+    package_list = ['python-dev',
+                    'python-setuptools',
+                    'exim4-base',
+                    'darcs',
+                    'python-foolscap']
+    apt_install_dependencies(stdout, package_list)
 
     sudo_apt_get('-y remove --purge whoopsie')
     get_txaws()
@@ -259,6 +264,7 @@ def tag_local_repo(local_repo, src_ref_SHA1):
     True
     '''
     unique_tag_name = make_unique_tag_name(src_ref_SHA1)
+    print "name made by make_unique_tag_name is: %s" % (unique_tag_name,)
     command_string = '/usr/bin/git --git-dir=%s tag %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
     subprocess.check_call(command_string.split())
     return unique_tag_name
@@ -279,6 +285,7 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
                         'push',
                         'website@%s:%s' % (hostname, live_path),
                         '%s:%s' % (unique_tag, unique_tag)]
+    print "about to check_call: %s" % (local_git_push,)
     subprocess.check_call(local_git_push)
     with cd(live_path):
         run_git('--git-dir=%s/.git checkout %s' % (live_path, unique_tag))
@@ -294,10 +301,7 @@ def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey
     Known sources of non-idempotence:
         - setup_git_deploy
     """
-    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
-    api.env.reject_unknown_hosts = True
-    api.env.key_filename = admin_privkey_path
-    api.env.abort_on_prompts = True
+    set_host_and_key(publichost, admin_privkey_path)
     print >>stdout, "Updating server..."
     postfixdebconfstring="""# General type of mail configuration:
 # Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
@@ -308,9 +312,22 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Rebooting server..."
     api.reboot(300)
     print >>stdout, "Installing dependencies..."
-    sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 python-nevow '
-                 'python-dateutil fabric python-foolscap python-twisted-mail python-six '
-                 'python-unidecode python-tz python-docutils python-markdown python-pip')
+    package_list = ['python-dev',
+                    'python-setuptools',
+                    'git-core',
+                    'python-jinja2',
+                    'python-nevow',
+                    'python-dateutil',
+                    'fabric',
+                    'python-foolscap',
+                    'python-twisted-mail',
+                    'python-six',
+                    'python-unidecode',
+                    'python-tz',
+                    'python-docutils',
+                    'python-markdown',
+                    'python-pip']
+    apt_install_dependencies(stdout, package_list)
     # From:  https://stripe.com/docs/libraries
     sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
