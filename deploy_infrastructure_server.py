@@ -9,7 +9,7 @@
 (e.g. instance name) are parsed from the lae_automation_config.json configuration file.
 """
 
-import sys, argparse
+import os, sys, argparse
 from lae_automation.config import Config
 from twisted.python.filepath import FilePath
 from lae_automation.initialize import deploy_infrastructure_EC2
@@ -106,7 +106,7 @@ elif new_host:
 
 
 d.addCallbacks(printer, eb)
-#d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
+d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 from twisted.internet import reactor
 
 reactor.run() 

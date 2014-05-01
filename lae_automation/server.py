@@ -245,8 +245,8 @@ exec git update-server-info
 def run_git(command):
     return run('/usr/bin/git %s' % (command,))
 
-def make_unique_tag_name(src_ref_SHA1):
-    ''' (str) --> str
+def make_unique_tag_name(host_IP_address, src_ref_SHA1):
+    ''' (str, str) --> str
 
     Return the unique string id of a tag, to be added to repo.
 
@@ -255,21 +255,21 @@ def make_unique_tag_name(src_ref_SHA1):
     '''
     hash_frag = src_ref_SHA1[:8]
     time_tag_name = str(time.time()).split('.')[0]
-    name = time_tag_name+'_'+hash_frag
+    name = time_tag_name+'_'+host_IP_address+'_'+hash_frag
     return name
 
-def tag_local_repo(local_repo, src_ref_SHA1):
-    ''' (str, str) --> boolean
+def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
+    ''' (str, str, str) --> boolean
     >>>tag_local_repo('1398276248_92f1175e', 'leastauthority.com/.git')
     True
     '''
-    unique_tag_name = make_unique_tag_name(src_ref_SHA1)
+    unique_tag_name = make_unique_tag_name(host_IP_address, src_ref_SHA1)
     print "name made by make_unique_tag_name is: %s" % (unique_tag_name,)
     command_string = '/usr/bin/git --git-dir=%s tag %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
     subprocess.check_call(command_string.split())
     return unique_tag_name
 
-def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
+def setup_git_deploy(host_IP_address, live_path, local_repo_path, src_ref):
     if live_path.endswith('/') or not live_path.startswith('/'):
         raise Exception("live_path must be absolute and not end with /")
     run('rm -rf %s' % live_path)
@@ -279,11 +279,11 @@ def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
     run('chmod -f +x %s' % (update_hook_path,))
 
     print "live_path is %s" % (live_path,)
-    unique_tag = tag_local_repo(local_repo_path, src_ref)
+    unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref)
     local_git_push = ['/usr/bin/git',
                         '--git-dir=%s' % (local_repo_path,),
                         'push',
-                        'website@%s:%s' % (hostname, live_path),
+                        'website@%s:%s' % (host_IP_address, live_path),
                         '%s:%s' % (unique_tag, unique_tag)]
     print "about to check_call: %s" % (local_git_push,)
     subprocess.check_call(local_git_push)
