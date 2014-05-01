@@ -126,6 +126,7 @@ def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_im
             return d2
 
         d1.addCallback(_got_addresses)
+        return d1
 
     d.addCallback(_deployed)
     return d
@@ -237,7 +238,7 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
         object_name = "?LocationConstraint=" + urllib.quote(location)
     else:
         object_name = None
-        
+
     query = client.query_factory(
         action="PUT", creds=client.creds, endpoint=client.endpoint,
         bucket=bucketname, object_name=object_name)

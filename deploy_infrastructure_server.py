@@ -106,7 +106,7 @@ elif new_host:
 
 
 d.addCallbacks(printer, eb)
-#d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
+d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 from twisted.internet import reactor
 
 reactor.run()
