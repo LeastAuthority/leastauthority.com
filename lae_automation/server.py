@@ -379,7 +379,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
         if not files.exists('/home/website/leastauthority.com/flapp'):
             run('flappserver create /home/website/leastauthority.com/flapp')
             run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
-        run('./runsite.sh&')
+        run('./runsite.sh')
 
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
