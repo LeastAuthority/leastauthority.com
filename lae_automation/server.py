@@ -271,7 +271,7 @@ def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
     subprocess.check_call(command_string.split())
     return unique_tag_name
 
-def setup_git_deploy(host_IP_address, live_path, local_repo_path, src_ref):
+def setup_git_deploy(host_IP_address, admin_privkey_path, live_path, local_repo_path, src_ref):
     if live_path.endswith('/') or not os.path.isabs(live_path):
         raise Exception("live_path must be absolute and not end with /")
 
@@ -291,7 +291,11 @@ def setup_git_deploy(host_IP_address, live_path, local_repo_path, src_ref):
                         'website@%s:%s' % (host_IP_address, live_path),
                         '%s:%s' % (unique_tag, unique_tag)]
     print "about to check_call: %r" % (local_git_push,)
-    subprocess.check_call(local_git_push)
+    env = {}
+    env.update(os.environ)
+    env['GIT_SSH'] = os.path.join(os.path.dirname(local_repo_path), 'git_ssh.sh')
+    env['PRIVATE_KEY'] = admin_privkey_path
+    subprocess.check_call(local_git_push, env=env)
 
     q_unique_tag = shell_quote(unique_tag)
     with cd(live_path):
@@ -368,9 +372,8 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
 
     set_host_and_key(publichost, admin_privkey_path, 'website')
-    setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
-    setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
-
+    setup_git_deploy(publichost, admin_privkey_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
+    setup_git_deploy(publichost, admin_privkey_path, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
 
     with cd('/home/website/'):
         if not files.exists('signup_logs'):
