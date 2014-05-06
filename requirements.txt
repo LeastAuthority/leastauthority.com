@@ -1,0 +1,12 @@
+Fabric
+foolscap
+jinja2
+mock
+nevow
+pyasn1
+pycrypto
+pycryptopp
+pyOpenSSL
+python-dateutil
+simplejson
+zfec
