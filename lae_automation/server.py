@@ -272,7 +272,7 @@ def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
     return unique_tag_name
 
 def setup_git_deploy(host_IP_address, live_path, local_repo_path, src_ref):
-    if live_path.endswith('/') or not live_path.startswith('/'):
+    if live_path.endswith('/') or not os.path.isabs(live_path):
         raise Exception("live_path must be absolute and not end with /")
 
     q_live_path = shell_quote(live_path)
