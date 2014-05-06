@@ -5,6 +5,7 @@
 """
 
 import os, sys, base64, simplejson, subprocess, time
+from pipes import quote as shell_quote
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
@@ -264,32 +265,38 @@ def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
     True
     '''
     unique_tag_name = make_unique_tag_name(host_IP_address, src_ref_SHA1)
-    print "name made by make_unique_tag_name is: %s" % (unique_tag_name,)
-    command_string = '/usr/bin/git --git-dir=%s tag %s %s' % (local_repo, unique_tag_name, src_ref_SHA1)
+    print "name made by make_unique_tag_name is: %r" % (unique_tag_name,)
+    command_string = ('/usr/bin/git --git-dir=%s tag %s %s'
+                      % (shell_quote(local_repo), shell_quote(unique_tag_name), shell_quote(src_ref_SHA1)))
     subprocess.check_call(command_string.split())
     return unique_tag_name
 
 def setup_git_deploy(host_IP_address, live_path, local_repo_path, src_ref):
     if live_path.endswith('/') or not live_path.startswith('/'):
         raise Exception("live_path must be absolute and not end with /")
-    run('rm -rf %s' % live_path)
-    run_git('init %s' % (live_path,))
-    update_hook_path = '%s/.git/hooks/post-update' % (live_path,)
-    write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
-    run('chmod -f +x %s' % (update_hook_path,))
 
-    print "live_path is %s" % (live_path,)
+    q_live_path = shell_quote(live_path)
+    q_update_hook_path = shell_quote('%s/.git/hooks/post-update' % (live_path,))
+
+    run('rm -rf %s' % (q_live_path,))
+    run_git('init %s' % (q_live_path,))
+    write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), q_update_hook_path)
+    run('chmod -f +x %s' % (q_update_hook_path,))
+
+    print "live_path is %r" % (live_path,)
     unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref)
     local_git_push = ['/usr/bin/git',
                         '--git-dir=%s' % (local_repo_path,),
                         'push',
                         'website@%s:%s' % (host_IP_address, live_path),
                         '%s:%s' % (unique_tag, unique_tag)]
-    print "about to check_call: %s" % (local_git_push,)
+    print "about to check_call: %r" % (local_git_push,)
     subprocess.check_call(local_git_push)
+
+    q_unique_tag = shell_quote(unique_tag)
     with cd(live_path):
-        run_git('--git-dir=%s/.git checkout %s' % (live_path, unique_tag))
-        run_git('--git-dir=%s/.git checkout -b %s' % (live_path, unique_tag))
+        run_git('checkout %s' % (q_unique_tag,))
+        run_git('checkout -b %s' % (q_unique_tag,))
 
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
                                   la_commit_hash, secretconf_repo, sc_commit_hash,
