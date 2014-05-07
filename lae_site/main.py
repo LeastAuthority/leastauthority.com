@@ -15,6 +15,7 @@ from lae_site.handlers.submit_subscription import start
 
 
 def main(basefp):
+    print sys.argv
     default_port = 443
     port = None
     ssl_enabled = True
