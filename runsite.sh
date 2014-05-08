@@ -13,7 +13,7 @@ if [ "$pids" != "" ]; then
 fi
 sleep .1
 if [ "$1" = "--dev" ]; then
-    cmd2="$cmd --dev"
+    cmd2="$cmd --dev 2>&1"
     echo "$cmd2"
     PYTHONPATH=. sh -c "$cmd2"
 else
