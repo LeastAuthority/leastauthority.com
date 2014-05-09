@@ -372,7 +372,7 @@ def update_tahoe(publichost, admin_privkey_path, stdout, stderr, do_update_txaws
 
 
 def delete_statmover_emissions(publichost, admin_privkey_path, stdout, stderr):
-    set_host_and_key(publichost, admin_privkey_path, username="monitor")
+    set_host_and_key(publichost, admin_privkey_path)
     sudo('rm -rf /home/monitor/statmover/emissions')
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
