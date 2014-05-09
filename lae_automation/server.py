@@ -370,6 +370,16 @@ def update_tahoe(publichost, admin_privkey_path, stdout, stderr, do_update_txaws
     print >>stdout, "Restarting..."
     run('/home/customer/restart.sh')
 
+
+def delete_statmover_emissions(publichost, admin_privkey_path, stdout, stderr):
+    set_host_and_key(publichost, admin_privkey_path)
+    with cd('/home/monitor/statmover'): # just in case
+        sudo('rm -rf /home/monitor/statmover/emissions')
+
+    print >>stdout, "Restarting..."
+    run('/home/customer/restart.sh')
+
+
 def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_type, furl):
     set_host_and_key(publichost, admin_privkey_path, username="customer")
     if gatherer_type == 'incident':
