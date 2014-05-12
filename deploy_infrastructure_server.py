@@ -59,9 +59,7 @@ config = Config(configpath)
 
 #Configuration copied from most recent product
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
-#ami_image_id = str(config.products[-1]['ami_image_id'])
 ami_image_id = 'ami-7fe7fe16'
-#instance_size = str(config.products[-1]['instance_size'])
 instance_size = 'm1.small'
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 keypair_name = str(config.other['admin_keypair_name'])
