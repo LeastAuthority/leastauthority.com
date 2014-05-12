@@ -52,7 +52,7 @@ new_host = args.new_host
 
 # XXX configpath is a function of the secret_config repo specified in the arguments!
 
-configpath='../secret_config/lae_automation_config.json'
+configpath='../secret_config/lae_infrastructure_config.json'
 
 config = simplejson.loads(FilePath(configpath).getContent())
 
