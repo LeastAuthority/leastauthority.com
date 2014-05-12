@@ -9,8 +9,7 @@
 (e.g. instance name) are parsed from the lae_automation_config.json configuration file.
 """
 
-import os, sys, argparse
-from lae_automation.config import Config
+import os, sys, argparse, simplejson
 from twisted.python.filepath import FilePath
 from lae_automation.initialize import deploy_infrastructure_EC2
 from lae_automation.signup import EC2_ENDPOINT
@@ -55,7 +54,7 @@ new_host = args.new_host
 
 configpath='../secret_config/lae_automation_config.json'
 
-config = Config(configpath)
+config = simplejson.loads(FilePath(configpath).getContent())
 
 #Configuration copied from most recent product
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
