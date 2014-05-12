@@ -59,8 +59,10 @@ config = Config(configpath)
 
 #Configuration copied from most recent product
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
-ami_image_id = str(config.products[-1]['ami_image_id'])
-instance_size = str(config.products[-1]['instance_size'])
+#ami_image_id = str(config.products[-1]['ami_image_id'])
+ami_image_id = 'ami-7fe7fe16'
+#instance_size = str(config.products[-1]['instance_size'])
+instance_size = 'm1.small'
 ec2accesskeyid = str(config.other['ec2_access_key_id'])
 keypair_name = str(config.other['admin_keypair_name'])
 admin_privkey_path = str(config.other['admin_privkey_path'])
@@ -71,7 +73,6 @@ website_pubkey = None
 stdout = sys.stdout
 stderr = sys.stderr
 
-print config.other['deployment']
 #Configuration which is specific to the test account
 
 
