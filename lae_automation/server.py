@@ -265,7 +265,6 @@ def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
     True
     '''
     unique_tag_name = make_unique_tag_name(host_IP_address, src_ref_SHA1)
-    print "name made by make_unique_tag_name is: %r" % (unique_tag_name,)
     command_string = ('/usr/bin/git --git-dir=%s tag %s %s'
                       % (shell_quote(local_repo), shell_quote(unique_tag_name), shell_quote(src_ref_SHA1)))
     subprocess.check_call(command_string.split())

@@ -1,3 +1,6 @@
+
+import mock
+
 from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
@@ -31,6 +34,37 @@ CONFIGFILEJSON = """{
 def fifo(xs):
     xs.reverse()
     return xs
+
+class TestLocalGitTagging(TestCase):
+    def setUp(self):
+        self.MOCK_SSE_STRING = '1399917193'
+        self.MOCK_SHA1_STRING = '76c441ed591262bd4462f21ae02a0f58b52e06d9'
+        self.MOCK_IPv4_STRING = '0.0.0.0'
+        self.MOCK_LOCAL_REPO_STRING = './.git'
+
+
+        self.MOCK_COMMAND_LIST = mock.Mock()
+        def call_time():
+            return self.MOCK_SSE_STRING
+        self.patch(server.time, 'time', call_time)
+
+        def call_check_call(command_list):
+            self.MOCK_COMMAND_LIST.call_args = command_list
+        self.patch(server.subprocess, 'check_call', call_check_call)
+
+    def test_make_unique_tag_name(self):
+        unique_tag_name = server.make_unique_tag_name(self.MOCK_IPv4_STRING, self.MOCK_SHA1_STRING)
+        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
+
+    def test_tag_local_repo(self):
+        unique_tag_name = server.tag_local_repo(self.MOCK_IPv4_STRING, self.MOCK_LOCAL_REPO_STRING,
+                                                self.MOCK_SHA1_STRING)
+        self.failUnlessEqual(self.MOCK_COMMAND_LIST.call_args, ['/usr/bin/git',
+                                                      '--git-dir=./.git',
+                                                      'tag',
+                                                      '1399917193_0.0.0.0_76c441ed',
+                                                      '76c441ed591262bd4462f21ae02a0f58b52e06d9'])
+
 
 class TestServerModule(TestCase):
     def setUp(self):
@@ -68,13 +102,6 @@ class TestServerModule(TestCase):
 
     def tearDown(self):
         FilePath(self.CONFIGFILEPATH).remove()
-
-    def test_make_unique_tag_name(self):
-        def call_time():
-            return '1399917193'
-        self.patch(server.time, 'time', call_time)
-        unique_tag_name = server.make_unique_tag_name('0.0.0.0', '76c441ed591262bd4462f21ae02a0f58b52e06d9')
-        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
 
     def test_install_server(self):
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
