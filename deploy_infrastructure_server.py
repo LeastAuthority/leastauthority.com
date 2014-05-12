@@ -60,10 +60,10 @@ config = simplejson.loads(FilePath(configpath).getContent())
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
 ami_image_id = 'ami-7fe7fe16'
 instance_size = 'm1.small'
-ec2accesskeyid = str(config.other['ec2_access_key_id'])
-keypair_name = str(config.other['admin_keypair_name'])
-admin_privkey_path = str(config.other['admin_privkey_path'])
-ec2secretpath = str(config.other['ec2_secret_path'])
+ec2accesskeyid = config['ec2_access_key_id']
+keypair_name = config['admin_keypair_name']
+admin_privkey_path = config['admin_privkey_path']
+ec2secretpath = config['ec2_secret_path']
 endpoint_uri = EC2_ENDPOINT
 bucket_name = 'dummy'
 website_pubkey = None
