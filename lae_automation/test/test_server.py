@@ -74,6 +74,7 @@ class TestLocalGitTagging(TestCase):
     def test_tag_local_repo(self):
         unique_tag_name = server.tag_local_repo(self.MOCK_IPv4_STRING, self.MOCK_LOCAL_REPO_STRING,
                                                 self.MOCK_SHA1_STRING)
+        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
         self.failUnlessEqual(self.MOCK_COMMAND_LIST.call_args, ['/usr/bin/git',
                                                       '--git-dir=./.git',
                                                       'tag',
