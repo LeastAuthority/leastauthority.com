@@ -41,9 +41,11 @@ class TestLocalGitTagging(TestCase):
         self.MOCK_SHA1_STRING = '76c441ed591262bd4462f21ae02a0f58b52e06d9'
         self.MOCK_IPv4_STRING = '0.0.0.0'
         self.MOCK_LOCAL_REPO_STRING = './.git'
+        self.MOCK_RUN_GIT_ARGSTRING = 'MOCKGITCOMMAND'
 
 
         self.MOCK_COMMAND_LIST = mock.Mock()
+        self.MOCK_CALL_RUN = mock.Mock()
         def call_time():
             return self.MOCK_SSE_STRING
         self.patch(server.time, 'time', call_time)
@@ -51,6 +53,19 @@ class TestLocalGitTagging(TestCase):
         def call_check_call(command_list):
             self.MOCK_COMMAND_LIST.call_args = command_list
         self.patch(server.subprocess, 'check_call', call_check_call)
+
+        def call_run(run_string):
+            self.MOCK_CALL_RUN.call_args = run_string
+            self.MOCK_CALL_RUN.succeeded = True
+            self.MOCK_CALL_RUN.failed = False
+            return self.MOCK_CALL_RUN
+
+        self.patch(server, 'run', call_run)
+
+
+    def test_run_git(self):
+        result = server.run_git(self.MOCK_RUN_GIT_ARGSTRING)
+        self.failUnlessEqual(result.call_args, '/usr/bin/git MOCKGITCOMMAND')
 
     def test_make_unique_tag_name(self):
         unique_tag_name = server.make_unique_tag_name(self.MOCK_IPv4_STRING, self.MOCK_SHA1_STRING)
