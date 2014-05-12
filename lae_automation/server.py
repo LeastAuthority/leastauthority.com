@@ -337,7 +337,8 @@ postfix	postfix/main_mailer_type select	No configuration"""
                     'python-tz',
                     'python-docutils',
                     'python-markdown',
-                    'python-pip']
+                    'python-pip',
+                    'python-simplejson']
     apt_install_dependencies(stdout, package_list)
     # From:  https://stripe.com/docs/libraries
     sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
