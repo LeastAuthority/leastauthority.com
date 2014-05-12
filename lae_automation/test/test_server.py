@@ -69,6 +69,12 @@ class TestServerModule(TestCase):
     def tearDown(self):
         FilePath(self.CONFIGFILEPATH).remove()
 
+    def test_make_unique_tag_name(self):
+        def call_time():
+            return '1399917193'
+        self.patch(server.time, 'time', call_time)
+        unique_tag_name = server.make_unique_tag_name('0.0.0.0', '76c441ed591262bd4462f21ae02a0f58b52e06d9')
+        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
 
     def test_install_server(self):
         self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
