@@ -267,6 +267,7 @@ class TestHandleStripeCreateCustomerErrors(CommonFixture):
 class TestCreateCustomer(CommonFixture):
     def setUp(self):
         super(TestCreateCustomer, self).setUp()
+        self.calls = []
 
     def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
         self.mc = MockCustomer()
@@ -274,25 +275,35 @@ class TestCreateCustomer(CommonFixture):
             raise MockErrorClass('THIS SHOULD BE THE VALUE STRIPE SENDS.')
         self.patch(stripe.Customer, 'create', call_stripe_Customer_create)
 
-        calls = []
         def call_handle_stripe_create_customer_errors(subscription_handler, trace_back,
-                                                      error, details, email_subject):
-            calls.append((details, email_subject))
+                                                      error, details, email_subject, notes=''):
+            self.calls.append((details, email_subject, notes))
         self.patch(SubmitSubscriptionHandler, 'handle_stripe_create_customer_errors',
                    call_handle_stripe_create_customer_errors)
 
         self.subscription_handler.create_customer(MOCKAPIKEY, MOCK_STRIPE_TOKEN, MOCK_EMAIL)
 
         # Check expectations.
-        self.failUnlessEqual(len(calls), 1)
-        (details, email_subject) = calls[0]
-        self.failUnless(details.startswith(expected_details_prefix), details)
+        self.failUnlessEqual(len(self.calls), 1)
+        (details, email_subject, notes) = self.calls[0]
         self.failUnlessEquals(email_subject, expected_subject)
 
     # fixture code complete, actual tests follow
     def test_stripe_CardError(self):
         self.patch(stripe, 'CardError', MockCardError)
         return self._test_stripe_error(MockCardError, "Note: ", "Stripe Card error")
+
+    def test_stripe_CardError_Message(self):
+        self.patch(stripe, 'CardError', MockCardError)
+        self._test_stripe_error(MockCardError, "Note: ", "Stripe Card error")
+        (details, email_subject, notes) = self.calls[0]
+        self.failUnless(notes.startswith("Note: "), notes)
+        self.failUnlessEqual(self.calls,
+                             [("THIS SHOULD BE THE VALUE STRIPE SENDS.",
+                               'Stripe Card error',
+                               "Note: This error could be caused by insufficient funds, or other "+
+                               "charge-disabling factors related to the User's payment "+
+                               "credential.\n")])
 
     def test_stripe_APIError(self):
         self.patch(stripe, 'APIError', MockAPIError)
