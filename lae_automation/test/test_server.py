@@ -37,25 +37,25 @@ def fifo(xs):
 
 class TestLocalGitTagging(TestCase):
     def setUp(self):
-        self.MOCK_SSE_STRING = '1399917193'
-        self.MOCK_SHA1_STRING = '76c441ed591262bd4462f21ae02a0f58b52e06d9'
-        self.MOCK_IPv4_STRING = '0.0.0.0'
-        self.MOCK_LOCAL_REPO_STRING = './.git'
-        self.MOCK_RUN_GIT_ARGSTRING = 'MOCKGITCOMMAND'
+        self.TEST_SSE_STRING = '1399917193'
+        self.TEST_SHA1_STRING = '76c441ed591262bd4462f21ae02a0f58b52e06d9'
+        self.TEST_IPv4_STRING = '0.0.0.0'
+        self.TEST_LOCAL_REPO_STRING = './.git'
+        self.TEST_RUN_GIT_ARGSTRING = 'TESTGITCOMMAND'
 
 
         self.MOCK_COMMAND_LIST = mock.Mock()
         self.MOCK_CALL_RUN = mock.Mock()
         def call_time():
-            return self.MOCK_SSE_STRING
+            return self.TEST_SSE_STRING
         self.patch(server.time, 'time', call_time)
 
         def call_check_call(command_list):
-            self.MOCK_COMMAND_LIST.call_args = command_list
+            self.MOCK_COMMAND_LIST(command_list)
         self.patch(server.subprocess, 'check_call', call_check_call)
 
         def call_run(run_string):
-            self.MOCK_CALL_RUN.call_args = run_string
+            self.MOCK_CALL_RUN(run_string)
             self.MOCK_CALL_RUN.succeeded = True
             self.MOCK_CALL_RUN.failed = False
             return self.MOCK_CALL_RUN
@@ -64,18 +64,18 @@ class TestLocalGitTagging(TestCase):
 
 
     def test_run_git(self):
-        result = server.run_git(self.MOCK_RUN_GIT_ARGSTRING)
-        self.failUnlessEqual(result.call_args, '/usr/bin/git MOCKGITCOMMAND')
+        result = server.run_git(self.TEST_RUN_GIT_ARGSTRING)
+        self.failUnlessEqual(result.call_args[0][0], '/usr/bin/git TESTGITCOMMAND')
 
     def test_make_unique_tag_name(self):
-        unique_tag_name = server.make_unique_tag_name(self.MOCK_IPv4_STRING, self.MOCK_SHA1_STRING)
+        unique_tag_name = server.make_unique_tag_name(self.TEST_IPv4_STRING, self.TEST_SHA1_STRING)
         self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
 
     def test_tag_local_repo(self):
-        unique_tag_name = server.tag_local_repo(self.MOCK_IPv4_STRING, self.MOCK_LOCAL_REPO_STRING,
-                                                self.MOCK_SHA1_STRING)
+        unique_tag_name = server.tag_local_repo(self.TEST_IPv4_STRING, self.TEST_LOCAL_REPO_STRING,
+                                                self.TEST_SHA1_STRING)
         self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
-        self.failUnlessEqual(self.MOCK_COMMAND_LIST.call_args, ['/usr/bin/git',
+        self.failUnlessEqual(self.MOCK_COMMAND_LIST.call_args[0][0], ['/usr/bin/git',
                                                       '--git-dir=./.git',
                                                       'tag',
                                                       '1399917193_0.0.0.0_76c441ed',
