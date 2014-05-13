@@ -58,8 +58,8 @@ config = simplejson.loads(FilePath(configpath).getContent())
 
 #Configuration copied from most recent product
 #https://en.wikipedia.org/wiki/Amazon_Machine_Image
-ami_image_id = 'ami-7fe7fe16'
-instance_size = 'm1.small'
+ami_image_id = config['ami_image_id'] # https://cloud-images.ubuntu.com/locator/ec2/ COMMENT TO JSON
+instance_size = config['instance_size']
 ec2accesskeyid = config['ec2_access_key_id']
 keypair_name = config['admin_keypair_name']
 admin_privkey_path = config['admin_privkey_path']
