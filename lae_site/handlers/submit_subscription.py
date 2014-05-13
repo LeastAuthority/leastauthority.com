@@ -49,14 +49,20 @@ class SubmitSubscriptionHandler(HandlerBase):
         user_email = self.get_arg(request, 'email')
         return stripe_api_key, stripe_authorization_token, user_email
 
-    def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject):
+    def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject,
+                                             notes=None):
         print >>self.out, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
         print >>self.out, trace_back
         headers = {
             "From": FROM_ADDRESS,
             "Subject": email_subject,
         }
-        send_plain_email('info@leastauthority.com', 'support@leastauthority.com', trace_back, headers)
+        if notes:
+            combination = "%s\n%s" % (notes, trace_back)
+            body = combination
+        else:
+            body = trace_back
+        send_plain_email('info@leastauthority.com', 'support@leastauthority.com', body, headers)
         raise RenderErrorDetailsForBrowser(details)
 
     def create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
@@ -65,11 +71,12 @@ class SubmitSubscriptionHandler(HandlerBase):
                                           email=user_email)
         except stripe.CardError as e:
             # Errors we expect: https://stripe.com/docs/api#errors
-            full_details = "Note: This error could be caused by insufficient funds, or other charge-disabling "+\
-                           "factors related to the User's payment credential.\n"+e.message
+            note = "Note: This error could be caused by insufficient funds, or other charge-disabling "+\
+                "factors related to the User's payment credential.\n"
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                        details=full_details,
-                                        email_subject="Stripe Card error")
+                                                      details=e.message,
+                                                      email_subject="Stripe Card error",
+                                                      notes=note)
         except stripe.APIError as e:
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
                                         details="Our payment processor is temporarily unavailable,"+
