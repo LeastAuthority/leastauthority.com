@@ -81,6 +81,8 @@ class TestLocalGitTagging(TestCase):
                                                       '1399917193_0.0.0.0_76c441ed',
                                                       '76c441ed591262bd4462f21ae02a0f58b52e06d9'])
 
+    def test_setup_git_deploy(self):
+        
 
 class TestServerModule(TestCase):
     def setUp(self):
