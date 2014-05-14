@@ -2,6 +2,7 @@
 import mock
 
 from cStringIO import StringIO
+from twisted.internet import defer
 from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
 
@@ -35,14 +36,17 @@ def fifo(xs):
     xs.reverse()
     return xs
 
-class TestLocalGitTagging(TestCase):
+class TestGitBase(TestCase):
     def setUp(self):
-        self.TEST_SSE_STRING = '1399917193'
-        self.TEST_SHA1_STRING = '76c441ed591262bd4462f21ae02a0f58b52e06d9'
+        self.TEST_SHA1_STRING = 'deadbeef'*5
         self.TEST_IPv4_STRING = '0.0.0.0'
         self.TEST_LOCAL_REPO_STRING = './.git'
-        self.TEST_RUN_GIT_ARGSTRING = 'TESTGITCOMMAND'
 
+class TestLocalGitOperations(TestGitBase):
+    def setUp(self):
+        super(TestLocalGitOperations, self).setUp()
+        self.TEST_SSE_STRING = '1399917193'
+        self.TEST_RUN_GIT_ARGSTRING = 'TESTGITCOMMAND'
 
         self.MOCK_COMMAND_LIST = mock.Mock()
         self.MOCK_CALL_RUN = mock.Mock()
@@ -69,17 +73,38 @@ class TestLocalGitTagging(TestCase):
 
     def test_make_unique_tag_name(self):
         unique_tag_name = server.make_unique_tag_name(self.TEST_IPv4_STRING, self.TEST_SHA1_STRING)
-        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
+        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_deadbeef')
 
     def test_tag_local_repo(self):
         unique_tag_name = server.tag_local_repo(self.TEST_IPv4_STRING, self.TEST_LOCAL_REPO_STRING,
                                                 self.TEST_SHA1_STRING)
-        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_76c441ed')
+        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_deadbeef')
         self.failUnlessEqual(self.MOCK_COMMAND_LIST.call_args[0][0], ['/usr/bin/git',
                                                       '--git-dir=./.git',
                                                       'tag',
-                                                      '1399917193_0.0.0.0_76c441ed',
-                                                      '76c441ed591262bd4462f21ae02a0f58b52e06d9'])
+                                                      '1399917193_0.0.0.0_deadbeef',
+                                                      'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef'])
+
+from lae_automation.server import PathFormatError
+class TestRemoteGitOperations(TestGitBase):
+    def setUp(self):
+        super(TestRemoteGitOperations,self).setUp()
+        self.TEST_ADMIN_PRIVKEY_PATH_STRING = '../secret_config/PRIVKEYFILE.pem'
+        self.TEST_GIT_SSH_PATH_STRING = 'PATHTOLADIR/leastauthority.com/git_ssh.sh'
+        self.TEST_LIVE_PATH_STRING = '/home/website/SECRET_OR_LA_DIRo/.git'
+
+    def test_setup_git_deploy_relative_path(self):
+        self.TEST_LIVE_PATH_STRING = 'oops/'
+        self.failUnlessRaises(PathFormatError, server.setup_git_deploy,
+                              self.TEST_IPv4_STRING, self.TEST_ADMIN_PRIVKEY_PATH_STRING,
+                              self.TEST_GIT_SSH_PATH_STRING, self.TEST_LIVE_PATH_STRING,
+                              self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
+
+    #def test_setup_git_deploy_notabs_path(self):
+    #    self.TEST_LIVE_PATH_STRING = 'oops'
+    #    server.setup_git_deploy(self.TEST_IPv4_STRING, self.TEST_ADMIN_PRIVKEY_PATH_STRING,
+    #                            self.TEST_GIT_SSH_PATH_STRING, self.TEST_LIVE_PATH_STRING,
+    #                            self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
 
 
 class TestServerModule(TestCase):

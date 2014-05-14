@@ -19,6 +19,9 @@ from lae_util.streams import LoggingStream
 # lae_automation_config.
 from lae_automation.config import Config
 
+class PathFormatError(Exception):
+    pass
+
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
 # This file controls the configuration of the Tahoe node that
@@ -270,9 +273,12 @@ def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
     subprocess.check_call(command_string.split())
     return unique_tag_name
 
-def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_path, local_repo_path, src_ref):
+def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_path, local_repo_path,
+                     src_ref_SHA1):
     if live_path.endswith('/') or not os.path.isabs(live_path):
-        raise Exception("live_path must be absolute and not end with /")
+        bad_path = u"%s" % (live_path,)
+        error_message = u"live_path is: '%s': but the path must be absolute and not end with /" % (bad_path)
+        raise PathFormatError(error_message)
 
     q_live_path = shell_quote(live_path)
     q_update_hook_path = shell_quote('%s/.git/hooks/post-update' % (live_path,))
@@ -283,7 +289,7 @@ def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_pat
     run('chmod -f +x %s' % (q_update_hook_path,))
 
     print "live_path is %r" % (live_path,)
-    unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref)
+    unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1)
     local_git_push = ['/usr/bin/git',
                         '--git-dir=%s' % (local_repo_path,),
                         'push',
