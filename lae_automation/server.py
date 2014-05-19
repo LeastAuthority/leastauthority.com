@@ -4,7 +4,10 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-import os, sys, base64, simplejson, subprocess, time
+import os, sys, base64, simplejson, subprocess
+from datetime import datetime
+utcnow = datetime.utcnow
+
 from pipes import quote as shell_quote
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
@@ -253,20 +256,13 @@ def make_unique_tag_name(host_IP_address, src_ref_SHA1):
     ''' (str, str) --> str
 
     Return the unique string id of a tag, to be added to repo.
-
-    >>>make_unique_tag_name(92f1175e11c51357d5444377791359614734bf5b)
-    1398276248_92f1175e
     '''
     hash_frag = src_ref_SHA1[:8]
-    time_tag_name = str(time.time()).split('.')[0]
+    time_tag_name = utcnow().isoformat().split('.')[0] + 'Z'
     name = time_tag_name+'_'+host_IP_address+'_'+hash_frag
     return name
 
 def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
-    ''' (str, str, str) --> boolean
-    >>>tag_local_repo('1398276248_92f1175e', 'leastauthority.com/.git')
-    True
-    '''
     unique_tag_name = make_unique_tag_name(host_IP_address, src_ref_SHA1)
     command_string = ('/usr/bin/git --git-dir=%s tag %s %s'
                       % (shell_quote(local_repo), shell_quote(unique_tag_name), shell_quote(src_ref_SHA1)))

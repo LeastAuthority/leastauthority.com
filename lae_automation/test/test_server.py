@@ -5,6 +5,8 @@ from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
 
+from datetime import datetime
+
 from lae_automation import server
 from lae_automation.server import api
 
@@ -44,14 +46,15 @@ class TestGitBase(TestCase):
 class TestLocalGitOperations(TestGitBase):
     def setUp(self):
         super(TestLocalGitOperations, self).setUp()
-        self.TEST_SSE_STRING = '1399917193'
+        self.TEST_DATETIME = datetime(2014, 5, 19, 14, 32, 31, 788921)
+        self.TEST_TAG_NAME = '2014-05-19T14:32:31Z_0.0.0.0_deadbeef'
         self.TEST_RUN_GIT_ARGSTRING = 'TESTGITCOMMAND'
 
         self.MOCK_COMMAND_LIST = mock.Mock()
         self.MOCK_CALL_RUN = mock.Mock()
-        def call_time():
-            return self.TEST_SSE_STRING
-        self.patch(server.time, 'time', call_time)
+        def call_utcnow():
+            return self.TEST_DATETIME
+        self.patch(server, 'utcnow', call_utcnow)
 
         def call_check_call(command_list):
             self.MOCK_COMMAND_LIST(command_list)
@@ -72,16 +75,16 @@ class TestLocalGitOperations(TestGitBase):
 
     def test_make_unique_tag_name(self):
         unique_tag_name = server.make_unique_tag_name(self.TEST_IPv4_STRING, self.TEST_SHA1_STRING)
-        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_deadbeef')
+        self.failUnlessEqual(unique_tag_name, self.TEST_TAG_NAME)
 
     def test_tag_local_repo(self):
         unique_tag_name = server.tag_local_repo(self.TEST_IPv4_STRING, self.TEST_LOCAL_REPO_STRING,
                                                 self.TEST_SHA1_STRING)
-        self.failUnlessEqual(unique_tag_name, '1399917193_0.0.0.0_deadbeef')
+        self.failUnlessEqual(unique_tag_name, self.TEST_TAG_NAME)
         self.failUnlessEqual(self.MOCK_COMMAND_LIST.call_args[0][0], ['/usr/bin/git',
                                                       '--git-dir=./.git',
                                                       'tag',
-                                                      '1399917193_0.0.0.0_deadbeef',
+                                                      self.TEST_TAG_NAME,
                                                       'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef'])
 
 from lae_automation.server import PathFormatError
