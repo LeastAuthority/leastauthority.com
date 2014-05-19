@@ -119,6 +119,37 @@ class NotListeningError(Exception):
 INSTALL_TXAWS_VERSION = "0.2.1.post5"
 INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
+TAHOE_LAFS_GIT_REPO_URL = "https://github.com/tahoe-lafs/tahoe-lafs.git"
+TAHOE_LAFS_GIT_BRANCH = "2237-cloud-backend-s4"
+
+TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
+    'python-dev',
+    'python-pip',
+    'git-core',
+    'libffi',
+    'openssl',
+    'libssl1.0.0',
+    'python-nevow',
+    'python-crypto',
+    'python-dateutil',
+    'python-foolscap',
+    'python-six',
+    'python-pycparser',
+    'python-unidecode',
+    'python-zfec',
+    'python-simplejson',
+]
+
+EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
+    'python-jinja2',
+    'fabric',
+    'python-twisted-mail',
+    'python-unidecode',
+    'python-tz',
+    'python-docutils',
+    'python-markdown',
+]
+
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
 # pty=False will cause fabric to echo stdin, but that's fine.
@@ -209,10 +240,11 @@ def create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_pa
 def get_and_install_tahoe(stdout):
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
-    run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
+    run('git clone %s LAFS_source' % (TAHOE_LAFS_GIT_REPO_URL,))
 
-    print >>stdout, "Building Tahoe-LAFS..."
     with cd('/home/customer/LAFS_source'):
+        run('git checkout %s' % (TAHOE_LAFS_GIT_BRANCH,))
+        print >>stdout, "Building Tahoe-LAFS..."
         run('python ./setup.py build')
 
 def create_intro_and_storage_nodes(stdout):
@@ -225,12 +257,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
                    stderr):
     set_host_and_key(publichost, admin_privkey_path)
     distupgrade_server(stdout)
-    package_list = ['python-dev',
-                    'python-setuptools',
-                    'exim4-base',
-                    'darcs',
-                    'python-foolscap']
-    apt_install_dependencies(stdout, package_list)
+    apt_install_dependencies(stdout, TAHOE_PACKAGE_DEPENDENCIES)
 
     sudo_apt_get('-y remove --purge whoopsie')
     get_txaws()
@@ -324,22 +351,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Rebooting server..."
     api.reboot(300)
     print >>stdout, "Installing dependencies..."
-    package_list = ['python-dev',
-                    'python-setuptools',
-                    'git-core',
-                    'python-jinja2',
-                    'python-nevow',
-                    'python-dateutil',
-                    'fabric',
-                    'python-foolscap',
-                    'python-twisted-mail',
-                    'python-six',
-                    'python-unidecode',
-                    'python-tz',
-                    'python-docutils',
-                    'python-markdown',
-                    'python-pip',
-                    'python-simplejson']
+    package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES
     apt_install_dependencies(stdout, package_list)
     # From:  https://stripe.com/docs/libraries
     sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
