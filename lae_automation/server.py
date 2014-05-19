@@ -257,7 +257,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
                    stderr):
     set_host_and_key(publichost, admin_privkey_path)
     distupgrade_server(stdout)
-    apt_install_dependencies(stdout, TAHOE_PACKAGE_DEPENDENCIES)
+    apt_install_dependencies(stdout, TAHOE_LAFS_PACKAGE_DEPENDENCIES)
 
     sudo_apt_get('-y remove --purge whoopsie')
     get_txaws()
