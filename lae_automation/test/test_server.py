@@ -2,7 +2,6 @@
 import mock
 
 from cStringIO import StringIO
-from twisted.internet import defer
 from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
 
