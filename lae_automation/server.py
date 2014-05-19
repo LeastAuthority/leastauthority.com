@@ -311,14 +311,13 @@ def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_pat
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), q_update_hook_path)
     run('chmod -f +x %s' % (q_update_hook_path,))
 
-    print "live_path is %r" % (live_path,)
     unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1)
     local_git_push = ['/usr/bin/git',
                         '--git-dir=%s' % (local_repo_path,),
                         'push',
                         'website@%s:%s' % (host_IP_address, live_path),
                         '%s:%s' % (unique_tag, unique_tag)]
-    print "about to check_call: %r" % (local_git_push,)
+
     env = {}
     env.update(os.environ)
     env['GIT_SSH'] = git_ssh_path
