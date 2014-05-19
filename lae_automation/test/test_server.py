@@ -37,17 +37,22 @@ def fifo(xs):
     xs.reverse()
     return xs
 
+
 class TestGitBase(TestCase):
     def setUp(self):
         self.TEST_SHA1_STRING = 'deadbeef'*5
         self.TEST_IPv4_STRING = '0.0.0.0'
         self.TEST_LOCAL_REPO_STRING = './.git'
+        self.TEST_ADMIN_PRIVKEY_PATH_STRING = '../secret_config/PRIVKEYFILE.pem'
+        self.TEST_GIT_SSH_PATH_STRING = 'PATHTOLADIR/leastauthority.com/git_ssh.sh'
+        self.TEST_LIVE_PATH_STRING = '/home/website/SECRET_OR_LA_DIRo/.git'
+        self.TEST_DATETIME = datetime(2014, 5, 19, 14, 32, 31, 788921)
+        self.TEST_TAG_NAME = '2014-05-19T14:32:31Z_0.0.0.0_deadbeef'
+
 
 class TestLocalGitOperations(TestGitBase):
     def setUp(self):
         super(TestLocalGitOperations, self).setUp()
-        self.TEST_DATETIME = datetime(2014, 5, 19, 14, 32, 31, 788921)
-        self.TEST_TAG_NAME = '2014-05-19T14:32:31Z_0.0.0.0_deadbeef'
         self.TEST_RUN_GIT_ARGSTRING = 'TESTGITCOMMAND'
 
         self.MOCK_COMMAND_LIST = mock.Mock()
@@ -68,7 +73,6 @@ class TestLocalGitOperations(TestGitBase):
 
         self.patch(server, 'run', call_run)
 
-
     def test_run_git(self):
         result = server.run_git(self.TEST_RUN_GIT_ARGSTRING)
         self.failUnlessEqual(result.call_args[0][0], '/usr/bin/git TESTGITCOMMAND')
@@ -87,26 +91,79 @@ class TestLocalGitOperations(TestGitBase):
                                                       self.TEST_TAG_NAME,
                                                       'deadbeefdeadbeefdeadbeefdeadbeefdeadbeef'])
 
+
 from lae_automation.server import PathFormatError
-class TestRemoteGitOperations(TestGitBase):
+class TestSetupGitBadPaths(TestGitBase):
     def setUp(self):
-        super(TestRemoteGitOperations,self).setUp()
-        self.TEST_ADMIN_PRIVKEY_PATH_STRING = '../secret_config/PRIVKEYFILE.pem'
-        self.TEST_GIT_SSH_PATH_STRING = 'PATHTOLADIR/leastauthority.com/git_ssh.sh'
-        self.TEST_LIVE_PATH_STRING = '/home/website/SECRET_OR_LA_DIRo/.git'
+        super(TestSetupGitBadPaths,self).setUp()
 
     def test_setup_git_deploy_relative_path(self):
-        self.TEST_LIVE_PATH_STRING = 'oops/'
+        self.TEST_LIVE_PATH_STRING = 'oops'
         self.failUnlessRaises(PathFormatError, server.setup_git_deploy,
                               self.TEST_IPv4_STRING, self.TEST_ADMIN_PRIVKEY_PATH_STRING,
                               self.TEST_GIT_SSH_PATH_STRING, self.TEST_LIVE_PATH_STRING,
                               self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
 
-    #def test_setup_git_deploy_notabs_path(self):
-    #    self.TEST_LIVE_PATH_STRING = 'oops'
-    #    server.setup_git_deploy(self.TEST_IPv4_STRING, self.TEST_ADMIN_PRIVKEY_PATH_STRING,
-    #                            self.TEST_GIT_SSH_PATH_STRING, self.TEST_LIVE_PATH_STRING,
-    #                            self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
+    def test_setup_git_deploy_terminal_slash_path(self):
+        self.TEST_LIVE_PATH_STRING = 'oops'
+        self.failUnlessRaises(PathFormatError, server.setup_git_deploy,
+                              self.TEST_IPv4_STRING, self.TEST_ADMIN_PRIVKEY_PATH_STRING,
+                              self.TEST_GIT_SSH_PATH_STRING, self.TEST_LIVE_PATH_STRING,
+                              self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
+
+
+class TestSetupGitValidPaths(TestGitBase):
+    def setUp(self):
+        super(TestSetupGitValidPaths,self).setUp()
+
+        self.MOCK_CALL_SHELL_QUOTE = mock.Mock(name='shell_quote')
+        def call_shell_quote(path):
+            # We're not testing shell_quote so we'll use test vectors that don't
+            # need special quote handling.
+            self.MOCK_CALL_SHELL_QUOTE(path)
+            return path
+        self.patch(server, 'shell_quote', call_shell_quote)
+
+        self.MOCK_CALL_RUN = mock.Mock(name='run')
+        def call_run(run_arg_string):
+            return self.MOCK_CALL_RUN(run_arg_string)
+        self.patch(server, 'run', call_run)
+
+        self.MOCK_CALL_RUN_GIT = mock.Mock(name='run_git')
+        def call_run_git(run_git_args):
+            return self.MOCK_CALL_RUN_GIT(run_git_args)
+        self.patch(server, 'run_git', call_run_git)
+
+        self.MOCK_CALL_WRITE = mock.Mock(name='write')
+        def call_write(string_to_write, destination):
+            return self.MOCK_CALL_WRITE(string_to_write, destination)
+        self.patch(server, 'write', call_write)
+
+        self.MOCK_CALL_TAG_LOCAL_REPO = mock.Mock(name='tag_local_repo')
+        def call_tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1):
+            self.MOCK_CALL_TAG_LOCAL_REPO(host_IP_address, local_repo_path, src_ref_SHA1)
+            return self.TEST_TAG_NAME
+        self.patch(server, 'tag_local_repo', call_tag_local_repo)
+
+        import os
+        os.environ = {}
+
+        self.MOCK_CALL_CHECK_CALL = mock.Mock(name='check_call')
+        def call_check_call(command_list, env={}):
+            return self.MOCK_CALL_CHECK_CALL(command_list, env)
+        self.patch(server.subprocess, 'check_call', call_check_call)
+
+    def test_setup_git_deploy_quote_returns(self):
+        self.TEST_LIVE_PATH_STRING = '/legitimate_path'
+        server.setup_git_deploy(self.TEST_IPv4_STRING, self.TEST_ADMIN_PRIVKEY_PATH_STRING,
+                                self.TEST_GIT_SSH_PATH_STRING, self.TEST_LIVE_PATH_STRING,
+                                self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
+        self.failUnlessEquals(self.MOCK_CALL_SHELL_QUOTE.call_args_list,
+                              [[('/legitimate_path',)],
+                               [('/legitimate_path/.git/hooks/post-update',)],
+                               [('2014-05-19T14:32:31Z_0.0.0.0_deadbeef',)]
+                               ])
+
 
 
 class TestServerModule(TestCase):
