@@ -49,8 +49,7 @@ class SubmitSubscriptionHandler(HandlerBase):
         user_email = self.get_arg(request, 'email')
         return stripe_api_key, stripe_authorization_token, user_email
 
-    def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject,
-                                             notes=None):
+    def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject, notes=''):
         print >>self.out, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
         print >>self.out, trace_back
         headers = {
