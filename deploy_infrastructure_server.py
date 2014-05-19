@@ -17,8 +17,13 @@ from lae_automation.server import install_infrastructure_server
 from twisted.internet import defer
 
 
-DEFAULT_AMI_IMAGE_ID = 'ami-7fe7fe16'
-DEFAULT_INSTANCE_SIZE = 'm1.small'
+# https://cloud-images.ubuntu.com/locator/ec2/
+# We need an amd64 EBS instance. Trusty is an LTS release.
+# http://stackoverflow.com/questions/22130214/amazon-ec2-ubuntupv-or-ubuntuhvm recommends PV over HVM.
+DEFAULT_AMI_IMAGE_ID = 'ami-018c9568'
+
+# http://aws.amazon.com/ec2/instance-types/
+DEFAULT_INSTANCE_SIZE = 'm3.medium'
 
 parser = argparse.ArgumentParser(description=
                     "Deploy a new infrastructure server. Each repository-and-reference "
@@ -65,6 +70,7 @@ exc_group.add_argument('--new_host', type=str, help=
 
 args = parser.parse_args()
 print "args: %r" % (args,)
+
 
 ec2_secret_path = args.ec2_secret_path
 ec2_accesskeyid_path = args.ec2_accesskeyid_path
