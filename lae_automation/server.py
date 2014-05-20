@@ -351,7 +351,6 @@ def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey
 # Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
 postfix	postfix/main_mailer_type select	No configuration"""
 
-    api.reboot(300)
     print >>stdout, "Installing dependencies..."
     package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES
     apt_install_dependencies(stdout, package_list)
