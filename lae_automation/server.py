@@ -329,6 +329,11 @@ def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_pat
         run_git('checkout %s' % (q_unique_tag,))
         run_git('checkout -b %s' % (q_unique_tag,))
 
+def run_unattended_upgrade(api, seconds_for_reboot_pause):
+    sudo_apt_get('update')
+    sudo('unattended-upgrade --minimal_upgrade_steps')
+    api.reboot(seconds_for_reboot_pause)
+
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
                                   la_commit_hash, secretconf_repo, sc_commit_hash,
                                   stdout, stderr):
@@ -341,13 +346,11 @@ def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey
     """
     set_host_and_key(publichost, admin_privkey_path)
     print >>stdout, "Updating server..."
+    run_unattended_upgrade(300)
     postfixdebconfstring="""# General type of mail configuration:
 # Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
 postfix	postfix/main_mailer_type select	No configuration"""
-    sudo_apt_get('update')
-    sudo_apt_get('-y dist-upgrade')
-    sudo_apt_get('-y autoremove')
-    print >>stdout, "Rebooting server..."
+
     api.reboot(300)
     print >>stdout, "Installing dependencies..."
     package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES

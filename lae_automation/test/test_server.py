@@ -38,10 +38,11 @@ def fifo(xs):
     return xs
 
 
-class TestGitBase(TestCase):
+class CommonTestFixture(TestCase):
     def setUp(self):
         self.TEST_SHA1_STRING = 'deadbeef'*5
         self.TEST_IPv4_STRING = '0.0.0.0'
+        self.TEST_LOCAL_HOST_STRING = self.TEST_IPv4_STRING
         self.TEST_LOCAL_REPO_STRING = './.git'
         self.TEST_ADMIN_PRIVKEY_PATH_STRING = '../secret_config/PRIVKEYFILE.pem'
         self.TEST_GIT_SSH_PATH_STRING = 'PATHTOLADIR/leastauthority.com/git_ssh.sh'
@@ -50,7 +51,7 @@ class TestGitBase(TestCase):
         self.TEST_TAG_NAME = '2014-05-19T14:32:31Z_0.0.0.0_deadbeef'
 
 
-class TestLocalGitOperations(TestGitBase):
+class TestLocalGitOperations(CommonTestFixture):
     def setUp(self):
         super(TestLocalGitOperations, self).setUp()
         self.TEST_RUN_GIT_ARGSTRING = 'TESTGITCOMMAND'
@@ -93,7 +94,7 @@ class TestLocalGitOperations(TestGitBase):
 
 
 from lae_automation.server import PathFormatError
-class TestSetupGitBadPaths(TestGitBase):
+class TestSetupGitBadPaths(CommonTestFixture):
     def setUp(self):
         super(TestSetupGitBadPaths,self).setUp()
 
@@ -112,7 +113,7 @@ class TestSetupGitBadPaths(TestGitBase):
                               self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
 
 
-class TestSetupGitValidPaths(TestGitBase):
+class TestSetupGitValidPaths(CommonTestFixture):
     def setUp(self):
         super(TestSetupGitValidPaths,self).setUp()
         self.TEST_LIVE_PATH_STRING = '/legitimate_path'
@@ -199,6 +200,54 @@ class TestSetupGitValidPaths(TestGitBase):
                               {'GIT_SSH': 'PATHTOLADIR/leastauthority.com/git_ssh.sh',
                                'PRIVATE_KEY': '../secret_config/PRIVKEYFILE.pem'})
 
+
+class TestUnattendedServerUpgrade(CommonTestFixture):
+    def setUp(self):
+        super(TestUnattendedServerUpgrade, self).setUp()
+        self.TEST_REBOOT_SECONDS = 300
+        self.MOCK_API = mock.Mock()
+
+        self.MOCK_CALL_SUDO = mock.Mock(name='sudo')
+        def call_sudo(command):
+            self.MOCK_CALL_SUDO(command)
+        self.patch(server, 'sudo', call_sudo)
+
+        self.MOCK_CALL_API_REBOOT = mock.Mock(name='reboot')
+        def call_reboot(seconds):
+            self.MOCK_CALL_API_REBOOT(seconds)
+        self.patch(server.api, 'reboot', call_reboot)
+
+        self.MOCK_CALL_SUDO_APT_GET = mock.Mock(name='sudo_apt_get')
+        def call_sudo_apt_get(command):
+            self.MOCK_CALL_SUDO_APT_GET(command)
+        self.patch(server, 'sudo_apt_get', call_sudo_apt_get)
+
+
+        server.run_unattended_upgrade(self.MOCK_API, self.TEST_REBOOT_SECONDS)
+
+    def test_sudo_apt_get_call(self):
+        self.failUnlessEqual(self.MOCK_CALL_SUDO_APT_GET.call_args_list, [[('update',)]])
+
+    def test_sudo_call(self):
+        self.failUnlessEqual(self.MOCK_CALL_SUDO.call_args_list, [[('unattended-upgrade --minimal_upgrade_steps',)]])
+
+    def test_api_reboot_call(self):
+        self.failUnlessEqual(self.MOCK_API.reboot.call_args_list, [[(300,)]])
+
+
+class TestInstallInfrastructureServer(CommonTestFixture):
+    def setUp(self):
+        super(TestInstallInfrastructureServer, self).setUp()
+        self.MOCK_CALL_RUN_UNATTENDED_UPGRADE = mock.Mock(name='run_unattended_upgrade')
+        def call_run_unattended_upgrade():
+            self.MOCK_CALL_RUN_UNATTENDED_UPGRADE()
+        self.patch(server, 'run_unattended_upgrade', call_run_unattended_upgrade)
+        #server.install_infrastructure_server(self.TEST_LOCAL_HOST_STRING,
+        #                                     self.TEST_ADMIN_PRIVKEY_PATH_STRING)
+
+    def test_apt_unattended_upgrade(self):
+        self.failUnlessEqual(self.MOCK_CALL_RUN_UNATTENDED_UPGRADE.call_args_list,
+                             [('unattended-upgrade --minimal_upgrade_steps',)])
 
 
 
