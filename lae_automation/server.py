@@ -126,7 +126,7 @@ TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
     'python-dev',
     'python-pip',
     'git-core',
-    'libffi',
+    'libffi6',
     'openssl',
     'libssl1.0.0',
     'python-nevow',
@@ -285,7 +285,8 @@ def make_unique_tag_name(host_IP_address, src_ref_SHA1):
     Return the unique string id of a tag, to be added to repo.
     '''
     hash_frag = src_ref_SHA1[:8]
-    time_tag_name = utcnow().isoformat().split('.')[0] + 'Z'
+    time_tag_name_with_colons = utcnow().isoformat().split('.')[0] + 'Z'
+    time_tag_name = time_tag_name_with_colons.replace(':', '_')
     name = time_tag_name+'_'+host_IP_address+'_'+hash_frag
     return name
 
@@ -346,7 +347,7 @@ def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey
     """
     set_host_and_key(publichost, admin_privkey_path)
     print >>stdout, "Updating server..."
-    run_unattended_upgrade(300)
+    run_unattended_upgrade(api, 300)
     postfixdebconfstring="""# General type of mail configuration:
 # Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
 postfix	postfix/main_mailer_type select	No configuration"""
