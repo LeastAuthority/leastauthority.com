@@ -155,43 +155,44 @@ class TestSetupGitValidPaths(CommonTestFixture):
             return self.MOCK_CALL_CHECK_CALL(command_list, env)
         self.patch(server.subprocess, 'check_call', call_check_call)
 
+
+    def test_calls(self):
         server.setup_git_deploy(self.TEST_IPv4_STRING, self.TEST_ADMIN_PRIVKEY_PATH_STRING,
                                 self.TEST_GIT_SSH_PATH_STRING, self.TEST_LIVE_PATH_STRING,
                                 self.TEST_LOCAL_REPO_STRING, self.TEST_SHA1_STRING)
 
-    def test_shell_quote_calls(self):
         self.failUnlessEquals(self.MOCK_CALL_SHELL_QUOTE.call_args_list,
                               [[('/legitimate_path',)],
                                [('/legitimate_path/.git/hooks/post-update',)],
                                [('2014-05-19T14-32-31Z_0.0.0.0_deadbeef',)]
                                ])
 
-    def test_run_calls(self):
+        #test_run_calls
         self.failUnlessEquals(self.MOCK_CALL_RUN.call_args_list,
                               [[('rm -rf /legitimate_path',)],
                                [('chmod -f +x /legitimate_path/.git/hooks/post-update',)]
                                ])
 
-    def test_run_git_calls(self):
+        #test_run_git_calls
         self.failUnlessEquals(self.MOCK_CALL_RUN_GIT.call_args_list,
                               [[('init /legitimate_path',)],
                                [('checkout 2014-05-19T14-32-31Z_0.0.0.0_deadbeef',)],
                                [('checkout -b 2014-05-19T14-32-31Z_0.0.0.0_deadbeef',)]
                                ])
 
-    def test_write_call(self):
+        #test_write_call
         self.failUnlessEquals(self.MOCK_CALL_WRITE.call_args_list,
                               [[('#!/bin/bash\ncd /legitimate_path || exit\nunset GIT_DIR\nexec git update-server-info\n',
                                  '/legitimate_path/.git/hooks/post-update',)]
                                ])
 
-    def test_tag_local_repo_call(self):
+        #test_tag_local_repo_call
         self.failUnlessEquals(self.MOCK_CALL_WRITE.call_args_list,
                               [[('#!/bin/bash\ncd /legitimate_path || exit\nunset GIT_DIR\nexec git update-server-info\n',
                                  '/legitimate_path/.git/hooks/post-update',)]
                                ])
 
-    def test_check_call_call(self):
+        #test_check_call_call
         self.failUnlessEquals(self.MOCK_CALL_CHECK_CALL.call_args_list[0][0][0],
                               ['/usr/bin/git', '--git-dir=./.git', 'push',
                                'website@0.0.0.0:/legitimate_path',
