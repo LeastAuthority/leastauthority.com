@@ -46,7 +46,7 @@ class CommonTestFixture(TestCase):
         self.TEST_LOCAL_REPO_STRING = './.git'
         self.TEST_ADMIN_PRIVKEY_PATH_STRING = '../secret_config/PRIVKEYFILE.pem'
         self.TEST_GIT_SSH_PATH_STRING = 'PATHTOLADIR/leastauthority.com/git_ssh.sh'
-        self.TEST_LIVE_PATH_STRING = '/home/website/SECRET_OR_LA_DIRo/.git'
+        self.TEST_LIVE_PATH_STRING = '/home/website/SECRET_OR_LA_DIR/.git'
         self.TEST_DATETIME = datetime(2014, 5, 19, 14, 32, 31, 788921)
         self.TEST_TAG_NAME = '2014-05-19T14-32-31Z_0.0.0.0_deadbeef'
 
