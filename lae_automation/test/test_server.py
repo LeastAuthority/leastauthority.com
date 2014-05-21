@@ -48,7 +48,7 @@ class CommonTestFixture(TestCase):
         self.TEST_GIT_SSH_PATH_STRING = 'PATHTOLADIR/leastauthority.com/git_ssh.sh'
         self.TEST_LIVE_PATH_STRING = '/home/website/SECRET_OR_LA_DIRo/.git'
         self.TEST_DATETIME = datetime(2014, 5, 19, 14, 32, 31, 788921)
-        self.TEST_TAG_NAME = '2014-05-19T14:32:31Z_0.0.0.0_deadbeef'
+        self.TEST_TAG_NAME = '2014-05-19T14-32-31Z_0.0.0.0_deadbeef'
 
 
 class TestLocalGitOperations(CommonTestFixture):
@@ -163,7 +163,7 @@ class TestSetupGitValidPaths(CommonTestFixture):
         self.failUnlessEquals(self.MOCK_CALL_SHELL_QUOTE.call_args_list,
                               [[('/legitimate_path',)],
                                [('/legitimate_path/.git/hooks/post-update',)],
-                               [('2014-05-19T14:32:31Z_0.0.0.0_deadbeef',)]
+                               [('2014-05-19T14-32-31Z_0.0.0.0_deadbeef',)]
                                ])
 
     def test_run_calls(self):
@@ -175,8 +175,8 @@ class TestSetupGitValidPaths(CommonTestFixture):
     def test_run_git_calls(self):
         self.failUnlessEquals(self.MOCK_CALL_RUN_GIT.call_args_list,
                               [[('init /legitimate_path',)],
-                               [('checkout 2014-05-19T14:32:31Z_0.0.0.0_deadbeef',)],
-                               [('checkout -b 2014-05-19T14:32:31Z_0.0.0.0_deadbeef',)]
+                               [('checkout 2014-05-19T14-32-31Z_0.0.0.0_deadbeef',)],
+                               [('checkout -b 2014-05-19T14-32-31Z_0.0.0.0_deadbeef',)]
                                ])
 
     def test_write_call(self):
@@ -195,7 +195,7 @@ class TestSetupGitValidPaths(CommonTestFixture):
         self.failUnlessEquals(self.MOCK_CALL_CHECK_CALL.call_args_list[0][0][0],
                               ['/usr/bin/git', '--git-dir=./.git', 'push',
                                'website@0.0.0.0:/legitimate_path',
-                               '2014-05-19T14:32:31Z_0.0.0.0_deadbeef:2014-05-19T14:32:31Z_0.0.0.0_deadbeef'])
+                               '2014-05-19T14-32-31Z_0.0.0.0_deadbeef:2014-05-19T14-32-31Z_0.0.0.0_deadbeef'])
         self.failUnlessEquals(self.MOCK_CALL_CHECK_CALL.call_args_list[0][0][1],
                               {'GIT_SSH': 'PATHTOLADIR/leastauthority.com/git_ssh.sh',
                                'PRIVATE_KEY': '../secret_config/PRIVKEYFILE.pem'})
@@ -245,9 +245,9 @@ class TestInstallInfrastructureServer(CommonTestFixture):
         #server.install_infrastructure_server(self.TEST_LOCAL_HOST_STRING,
         #                                     self.TEST_ADMIN_PRIVKEY_PATH_STRING)
 
-    def test_apt_unattended_upgrade(self):
-        self.failUnlessEqual(self.MOCK_CALL_RUN_UNATTENDED_UPGRADE.call_args_list,
-                             [('unattended-upgrade --minimal_upgrade_steps',)])
+    #def test_apt_unattended_upgrade(self):
+        #self.failUnlessEqual(self.MOCK_CALL_RUN_UNATTENDED_UPGRADE.call_args_list,
+        #                     [('unattended-upgrade --minimal_upgrade_steps',)])
 
 
 
@@ -310,7 +310,7 @@ class TestServerModule(TestCase):
             ('apt-get -y install python-dev', False, {}),
             ('apt-get -y install python-pip', False, {}),
             ('apt-get -y install git-core', False, {}),
-            ('apt-get -y install libffi', False, {}),
+            ('apt-get -y install libffi6', False, {}),
             ('apt-get -y install openssl', False, {}),
             ('apt-get -y install libssl1.0.0', False, {}),
             ('apt-get -y install python-nevow', False, {}),

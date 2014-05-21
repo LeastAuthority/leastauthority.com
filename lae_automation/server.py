@@ -286,7 +286,7 @@ def make_unique_tag_name(host_IP_address, src_ref_SHA1):
     '''
     hash_frag = src_ref_SHA1[:8]
     time_tag_name_with_colons = utcnow().isoformat().split('.')[0] + 'Z'
-    time_tag_name = time_tag_name_with_colons.replace(':', '_')
+    time_tag_name = time_tag_name_with_colons.replace(':', '-')
     name = time_tag_name+'_'+host_IP_address+'_'+hash_frag
     return name
 
