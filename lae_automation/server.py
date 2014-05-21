@@ -25,6 +25,7 @@ from lae_automation.config import Config
 class PathFormatError(Exception):
     pass
 
+UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
 # This file controls the configuration of the Tahoe node that
@@ -347,7 +348,7 @@ def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey
     """
     set_host_and_key(publichost, admin_privkey_path)
     print >>stdout, "Updating server..."
-    run_unattended_upgrade(api, 300)
+    run_unattended_upgrade(api, UNATTENDED_UPGRADE_REBOOT_SECONDS)
     postfixdebconfstring="""# General type of mail configuration:
 # Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
 postfix	postfix/main_mailer_type select	No configuration"""
