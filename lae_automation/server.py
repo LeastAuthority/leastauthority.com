@@ -218,7 +218,10 @@ def distupgrade_server(stdout):
 def apt_install_dependencies(stdout, package_list):
     print >>stdout, "Installing dependencies..."
     for package in package_list:
+        print >>stdout, "Installing package: %s" % (package,)
         sudo_apt_get('-y install %s' % (package,))
+        print >>stdout, "package: %s installed" % (package,)
+    print >>stdout, "Finished installing dependencies..."
 
 def get_txaws():
     run('wget %s' % (INSTALL_TXAWS_URL,))
