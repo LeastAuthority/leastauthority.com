@@ -184,13 +184,11 @@ def write(value, remote_path, use_sudo=False, mode=None):
     # mode is not None.
     return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
-
 def delete_customer(publichost, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
-
 
 def create_account(account_name, account_pubkey, stdout, stderr):
     print >>stdout, "Setting up %s account..." % (account_name,)
@@ -205,15 +203,6 @@ def create_account(account_name, account_pubkey, stdout, stderr):
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
     sudo('chmod -f 400 /home/%s/.ssh/authorized_keys' % (account_name,))
     sudo('chmod -f 700 /home/%s/.ssh/' % (account_name,))
-
-def distupgrade_server(stdout):
-    print >>stdout, "Updating server..."
-    sudo_apt_get('update')
-    print >>stdout, "dist-upgrading server...  (this will take a while)"
-    sudo_apt_get('-y dist-upgrade')
-
-    print >>stdout, "Rebooting server (this will take a while)..."
-    api.reboot(240)
 
 def apt_install_dependencies(stdout, package_list):
     print >>stdout, "Installing dependencies..."
@@ -260,7 +249,7 @@ def create_intro_and_storage_nodes(stdout):
 def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
                    stderr):
     set_host_and_key(publichost, admin_privkey_path)
-    distupgrade_server(stdout)
+    update_packages(publichost, admin_privkey_path, stdout, stderr)
     apt_install_dependencies(stdout, TAHOE_LAFS_PACKAGE_DEPENDENCIES)
 
     sudo_apt_get('-y remove --purge whoopsie')
@@ -461,7 +450,7 @@ def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_t
 
 def update_packages(publichost, admin_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
-    pass
+    sudo_apt_get('update')
 
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
