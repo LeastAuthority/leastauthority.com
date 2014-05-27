@@ -37,6 +37,7 @@ def main(stdin, flapp_stdout, flapp_stderr):
     signup_logfile = signup_log_fp.open('a+')
     signup_stdout = LoggingStream(signup_logfile, '>')
     signup_stderr = LoggingStream(signup_logfile, '')
+    sys.stdout = signup_stderr
 
     def errhandler(err):
         fh = flapp_stderr.open('a+')
