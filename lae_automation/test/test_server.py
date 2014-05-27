@@ -393,7 +393,7 @@ class TestServerModule(TestCase):
             self.failUnlessEqual(self.RUNARGS_FIFO.pop(), (argstring, pty, kwargs))
             if argstring == 'whoami':
                 return self.WHOAMI_FIFO.pop()
-            if argstring == 'cat /home/customer/introducer/introducer.furl':
+            if argstring == 'cat /home/customer/introducer/private/introducer.furl':
                 return INTERNALINTROFURL
         self.patch(api, 'run', call_api_run)
         MHOSTNAME = '0.0.0.0'
@@ -420,9 +420,11 @@ class TestServerModule(TestCase):
                                                'stats_gatherer_furl': "MOCK_stats_gatherer_furl"}
         self.WHOAMI_FIFO = []
         self.RUNARGS_FIFO = fifo([
-                ('rm -f /home/customer/introducer/introducer.furl /home/customer/introducer/logport.furl', False, {}),
+                ('rm -f /home/customer/introducer/introducer.furl'
+                      ' /home/customer/introducer/private/introducer.furl'
+                      ' /home/customer/introducer/logport.furl', False, {}),
                 ('LAFS_source/bin/tahoe restart introducer && sleep 5', False, {}),
-                ('cat /home/customer/introducer/introducer.furl', False, {}),
+                ('cat /home/customer/introducer/private/introducer.furl', False, {}),
                 ('chmod -f u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.', False, {}),
                 ('LAFS_source/bin/tahoe restart storageserver && sleep 5', False, {}),
                 ('ps -fC tahoe', False, {}),

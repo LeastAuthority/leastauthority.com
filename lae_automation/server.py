@@ -545,7 +545,9 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     print >>stdout, "Starting introducer..."
-    run('rm -f /home/customer/introducer/private/introducer.furl /home/customer/introducer/private/logport.furl')
+    run('rm -f /home/customer/introducer/introducer.furl'
+             ' /home/customer/introducer/private/introducer.furl'
+             ' /home/customer/introducer/logport.furl')
     write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
     write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
 
