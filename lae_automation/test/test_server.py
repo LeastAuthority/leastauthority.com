@@ -290,8 +290,9 @@ class TestServerModule(TestCase):
         FilePath(self.CONFIGFILEPATH).remove()
 
     def test_install_server(self):
-        self.WHOAMI_FIFO = fifo(['ubuntu', 'monitor', 'customer'])
+        self.WHOAMI_FIFO = fifo(['ubuntu', 'ubuntu', 'monitor', 'customer'])
         self.RUNARGS_FIFO = fifo([
+            ('whoami', False, {}),
             ('whoami', False, {}),
             ('wget https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-0.2.1.post5.tar.gz', False, {}),
             ('tar -xzvf txAWS-0.2.1.post5.tar.gz', False, {}),
@@ -307,7 +308,6 @@ class TestServerModule(TestCase):
         ])
         self.SUDOARGS_FIFO = fifo([
             ('apt-get update', False, {}),
-            ('apt-get -y dist-upgrade', False, {}),
             ('apt-get -y install python-dev', False, {}),
             ('apt-get -y install python-pip', False, {}),
             ('apt-get -y install git-core', False, {}),
