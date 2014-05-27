@@ -1,6 +1,8 @@
 import stripe
 
-stripe.api_key = "sk_test_yQ2hhexxAC6ZSLDp3rnoQTYI"
+from twisted.python.filepath import FilePath
+
+stripe.api_key = FilePath.getContent('../secret_config/stripeapikey').strip()
 
 stripe.Plan.create(amount=2500,
                    interval='month',
