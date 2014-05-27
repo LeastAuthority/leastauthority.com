@@ -79,8 +79,6 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
          customer_email, customer_pgpinfo, stdout, stderr,
          secretsfile, config, serverinfopath, myclock))
 
-    # We could deploy and configure the instance in parallel with the above wait and delete it
-    # if necessary, but let's keep it simple and sequential.
     d.addCallback(lambda ign: deploy_server(s3_access_key_id, s3_secretkey, None, None, bucketname,
                                             None, amiimageid, instancesize,
                                             customer_email, customer_pgpinfo, stdout, stderr,
