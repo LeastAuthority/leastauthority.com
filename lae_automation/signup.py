@@ -124,7 +124,6 @@ def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
     admin_privkey_path = str(config.other['admin_privkey_path'])
     monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
     monitor_privkey_path = str(config.other['monitor_privkey_path'])
-    #sinkname_suffix = str(config.other['sinkname_suffix'])
 
     # XXX Here's where we decide whether the new signup goes to a new EC2.
     d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
