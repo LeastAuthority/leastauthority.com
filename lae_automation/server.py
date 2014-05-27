@@ -545,8 +545,8 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     print >>stdout, "Starting introducer..."
-    run('rm -f /home/customer/introducer/introducer.furl /home/customer/introducer/logport.furl')
-    write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
+    run('rm -f /home/customer/introducer/private/introducer.furl /home/customer/introducer/private/logport.furl')
+    write(INTRODUCER_PORT + '\n', '/home/customer/introducer/private/introducer.port')
     write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
 
     if oldsecrets:
@@ -554,7 +554,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
 
     run('LAFS_source/bin/tahoe restart introducer && sleep 5')
 
-    internal_introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
+    internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
 
     config = Config(configpath)
