@@ -111,7 +111,7 @@ def send_notify_failure(f, customer_email, logfilename, stdout, stderr):
     d = send_plain_email(FROM_EMAIL, NOTIFY_FAILURE_EMAIL, content, headers)
 
     def _sent(ign):
-        print >>stdout, "Failure notification sent for the following error:"
+        print >>stdout, "Failure notification email sent to %s." % (NOTIFY_FAILURE_EMAIL,)
     def _error(emailf):
         print >>stdout, "A failure notification could not be sent."
         print >>stderr, str(emailf)
