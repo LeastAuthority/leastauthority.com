@@ -22,7 +22,7 @@ SIGNUP_FURL_FILE         = 'signup.furl'
 
 VALID_EMAIL_RE = re.compile("[^@]+@[^@]+")
 
-ACTIVE_PRODUCTS = set(['s4'])
+ACTIVE_PRODUCTS = set([])
 SIGNUP_BASE_URL = "https://leastauthority.com/signup/"
 
 def html(title, body):
