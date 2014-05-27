@@ -546,7 +546,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
 
     print >>stdout, "Starting introducer..."
     run('rm -f /home/customer/introducer/private/introducer.furl /home/customer/introducer/private/logport.furl')
-    write(INTRODUCER_PORT + '\n', '/home/customer/introducer/private/introducer.port')
+    write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
     write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
 
     if oldsecrets:
