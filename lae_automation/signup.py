@@ -32,10 +32,10 @@ VERIFY_POLL_TIME = 5
 VERIFY_TOTAL_WAIT = 600
 
 
-def lookup_product(config, productcode):
-    ps = [p for p in config.products if p['product_code'] == productcode]
+def lookup_product(config, plan_ID):
+    ps = [p for p in config.products if p['plan_ID'] == plan_ID]
     if len(ps) != 1:
-        raise AssertionError("Product code %r matches %d products." % (productcode, len(ps)))
+        raise AssertionError("Product code %r matches %d products." % (plan_ID, len(ps)))
 
     return ps[0]
 
