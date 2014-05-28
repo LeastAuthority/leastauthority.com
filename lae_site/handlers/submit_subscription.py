@@ -8,6 +8,10 @@ from lae_site.handlers.web import env
 from lae_util.flapp import FlappCommand
 
 from lae_site.handlers.main import HandlerBase
+from lae_automation.config import Config
+
+config = Config()
+stripe_plan = config.products[0]["plan_ID"]
 
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
 SERVICE_CONFIRMED_FILE  = 'service_confirmed.csv'
@@ -66,7 +70,7 @@ class SubmitSubscriptionHandler(HandlerBase):
 
     def create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
         try:
-            return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan='S4',
+            return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan=stripe_plan,
                                           email=user_email)
         except stripe.CardError as e:
             # Errors we expect: https://stripe.com/docs/api#errors
