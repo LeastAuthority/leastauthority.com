@@ -1,16 +1,22 @@
-MOCKJSONCONFIGFILE = """{
+MOCK_VALID_PLAN_ID = """XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX"""
+
+MOCK_VALID_PRODUCTS = """
   "products": [
     { "amount":                  "2500",
       "interval":                "month",
       "currency":                "USD",
       "full_name":               "Secure Simple Storage Service test S4",
-      "plan_ID":                 "XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX",
+      "plan_ID":                 "%s",
       "plan_name":               "S4",
       "plan_trial_period_days":  "30",
       "ami_image_id":            "ami-deadbeef",
       "instance_size":           "t1.micro"
     }
-  ],
+  ]
+""" % (MOCK_VALID_PLAN_ID,)
+
+MOCKJSONCONFIGFILE = """{
+%s,
   "ssec2admin_keypair_name":  "ADMINKEYS",
   "ssec2admin_privkey_path":  "ADMINKEYS.pem",
   "s3_access_key_id":         "TESTS3S3S3S3S3S3S3S3",
@@ -23,4 +29,5 @@ MOCKJSONCONFIGFILE = """{
   "incident_gatherer_furl": "MOCK_incident_gatherer_furl",
   "stats_gatherer_furl":    "MOCK_stats_gatherer_furl",
   "sinkname_suffix":        "unitteststorageserver/rss"
-}"""
+}""" % (MOCK_VALID_PRODUCTS,)
+
