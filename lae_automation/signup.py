@@ -114,14 +114,14 @@ def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
     serverinfopath = serverinfopath or '../serverinfo.csv'
     myclock = clock or reactor
 
-    ec2accesskeyid = config.other["ec2_access_key_id"]
-    ec2secretpath = config.other["ec2_secret_path"]
+    ec2accesskeyid = config.other["ssec2_access_key_id"]
+    ec2secretpath = config.other["ssec2_secret_path"]
     ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
     instancename = customer_email  # need not be unique
 
-    admin_keypair_name = str(config.other['admin_keypair_name'])
-    admin_privkey_path = str(config.other['admin_privkey_path'])
+    admin_keypair_name = str(config.other['ssec2admin_keypair_name'])
+    admin_privkey_path = str(config.other['ssec2admin_privkey_path'])
     monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
     monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
