@@ -66,17 +66,15 @@ MOCKHASHEDPUBKEY = """|1|lrzohCU8y8Obch3wa7+gnvEJuI0=|I1GQU+vw3MgMnyvY+SxnhCyArH
 # Vector data for the config file data:
 CONFIGFILEJSON = """{
   "products": [
-    { "full_name":        "The test vector product.",
-      "product_code":     "ABCDEFGH",
-      "product_token":    "{ProductToken}TESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-      "ami_image_id":     "ami-testfbc2",
-      "instance_size":    "t1.testy"
-    },
-    { "full_name":     "Mock Secure Simple Storage Service test S4",
-      "product_code":  "XX",
-      "product_token": "None",
-      "ami_image_id":  "ami-deadbeef",
-      "instance_size": "t9.sizeo"
+    { "amount":                  "2500",
+      "interval":                "month",
+      "currency":                "USD",
+      "full_name":               "Secure Simple Storage Service test S4",
+      "plan_ID":                 "S4_consumer_iteration_2_beta1_2014-05-27",
+      "plan_name":               "S4",
+      "plan_trial_period_days":  "30",
+      "ami_image_id":            "ami-018c9568",
+      "instance_size":           "t1.micro"
     }
   ],
   "ec2_access_key_id":      "TESTEC2EC2EC2EC2EC2E",
