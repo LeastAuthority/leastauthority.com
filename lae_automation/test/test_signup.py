@@ -63,33 +63,10 @@ getconsoleoutputresponse = """<GetConsoleOutputResponse xmlns="http://ec2.amazon
 
 MOCKSERVERSSHFP = 'b8:83:cf:1d:97:4b:44:8f:a7:05:29:4e:f6:1e:af:dd'
 MOCKHASHEDPUBKEY = """|1|lrzohCU8y8Obch3wa7+gnvEJuI0=|I1GQU+vw3MgMnyvY+SxnhCyArHg= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCgoC89ve61Ui/Ui5pnISvidYW/uUrTSz0F0j0czuzDySPl/RqxKuZvYQAjug6OEn0Ohmnh42j6Dk4Lr09H9GLJTuDv2kTNhQF980RXUPq3NTyozx1sp824X3zG+ePiiYz2OQI/Cf3r2cAUqggJjA8wPaWSXyuyp/Ls2861XvsnS5iISnylpEuN/OXNFRmuJRzs+hck5urMVzz5Adbn9zSK/NJRPYS3qSfvCN6pXByLcEJUENCKIA80VRHKnv/isKscAZvmDJCorRWXRvxB6xLB2VnTbqBUTQa+0zrzfQSJD8C22YbPlgwsFtn079wOkkaQtd/AhhPXfTlAUljAfC/B"""
-# Vector data for the config file data:
-CONFIGFILEJSON = """{
-  "products": [
-    { "amount":                  "2500",
-      "interval":                "month",
-      "currency":                "USD",
-      "full_name":               "Secure Simple Storage Service test S4",
-      "plan_ID":                 "XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX",
-      "plan_name":               "S4",
-      "plan_trial_period_days":  "30",
-      "ami_image_id":            "ami-deadbeef",
-      "instance_size":           "t1.micro"
-    }
-  ],
-  "ssec2admin_keypair_name":  "ADMINKEYS",
-  "ssec2admin_privkey_path":  "ADMINKEYS.pem",
-  "s3_access_key_id":         "TESTS3S3S3S3S3S3S3S3",
-  "s3_secret_path":           "mock_s3_secret",
-  "ssec2_access_key_id":      "TESTEC2EC2EC2EC2EC2E",
-  "ssec2_secret_path":        "mock_ec2_secret",
 
-  "monitor_pubkey_path":    "MONITORKEYS.pub",
-  "monitor_privkey_path":   "MONITORKEYS.pem",
-  "incident_gatherer_furl": "MOCK_incident_gatherer_furl",
-  "stats_gatherer_furl":    "MOCK_stats_gatherer_furl",
-  "sinkname_suffix":        "unitteststorageserver/rss"
-}"""
+# Vector data for the config file data:
+from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
+CONFIGFILEJSON = MOCKJSONCONFIGFILE
 
 ZEROPRODUCT = """{
   "products": [],

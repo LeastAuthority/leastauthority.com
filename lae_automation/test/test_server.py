@@ -15,24 +15,8 @@ INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
 # Vector data for the config file data:
-CONFIGFILEJSON = """{
-  "products": [
-    { "full_name":        "The test vector product.",
-      "product_code":     "ABCDEFGH",
-      "product_token":    "{ProductToken}TESTPRODUCTTOKENAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-      "ami_image_id":     "ami-testfbc2",
-      "instance_size":    "t1.testy"
-    }
-  ],
-  "ec2_access_key_id":    "TESTAAAAAAAAAAAAAAAA",
-  "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem",
-  "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem",
-  "incident_gatherer_furl": "MOCK_incident_gatherer_furl",
-  "stats_gatherer_furl":    "MOCK_stats_gatherer_furl"
-}"""
-
+from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
+CONFIGFILEJSON = MOCKJSONCONFIGFILE
 def fifo(xs):
     xs.reverse()
     return xs
