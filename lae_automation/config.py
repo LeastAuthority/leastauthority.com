@@ -19,7 +19,7 @@ class Config(object):
         assert isinstance(self.products, list)
         for value in self.products:
             assert isinstance(value, dict), value
-            for field in ("full_name", "product_code", "product_token", "ami_image_id", "instance_size"):
+            for field in ("full_name", "plan_ID", "plan_name", "ami_image_id", "instance_size"):
                 assert field in value, value
                 value[field] = str(value[field])
                 assert isinstance(value[field], str), value
