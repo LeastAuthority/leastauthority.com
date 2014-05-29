@@ -19,8 +19,8 @@ class Config(object):
         assert isinstance(self.products, list)
         for value in self.products:
             assert isinstance(value, dict), value
-            for field in ("amount", "interval", "currency", "full_name", "plan_ID", "plan_name",
-                          "plan_trial_period_days", "ami_image_id", "instance_size"):
+            for field in ("amount", "interval", "currency", "plan_name", "plan_ID", "plan_name",
+                          "plan_trial_period_days", "ami_image_id", "instance_size", "statement_description"):
                 assert field in value, value
                 value[field] = str(value[field])
                 assert isinstance(value[field], str), value
