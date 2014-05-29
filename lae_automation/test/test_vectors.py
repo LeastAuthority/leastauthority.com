@@ -5,12 +5,12 @@ MOCK_VALID_PRODUCTS = """
     { "amount":                  "2500",
       "interval":                "month",
       "currency":                "USD",
-      "full_name":               "Secure Simple Storage Service test S4",
+      "plan_name":               "LeastAuthority Secure Simple Storage Service (S4)",
       "plan_ID":                 "%s",
-      "plan_name":               "S4",
       "plan_trial_period_days":  "30",
       "ami_image_id":            "ami-deadbeef",
-      "instance_size":           "t1.micro"
+      "instance_size":           "t1.micro",
+      "statement_description":   "S4"
     }
   ]
 """ % (MOCK_VALID_PLAN_ID,)

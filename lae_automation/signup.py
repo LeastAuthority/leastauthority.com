@@ -65,7 +65,7 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
 
     print >>stderr, "plan_id is %s" % plan_id
     product = lookup_product(config, plan_id)
-    fullname = product['full_name']
+    fullname = product['plan_name']
     amiimageid = product['ami_image_id']
     instancesize = product['instance_size']
 
