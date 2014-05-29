@@ -3,8 +3,6 @@ import simplejson
 
 
 class Config(object):
-    __slots__ = ['products', 'other']
-
     DEFAULT_CONFIG_PATH = '../secret_config/lae_automation_config.json'
 
     def __init__(self, configFile = DEFAULT_CONFIG_PATH):
@@ -21,7 +19,8 @@ class Config(object):
         assert isinstance(self.products, list)
         for value in self.products:
             assert isinstance(value, dict), value
-            for field in ("full_name", "product_code", "product_token", "ami_image_id", "instance_size"):
+            for field in ("amount", "interval", "currency", "full_name", "plan_ID", "plan_name",
+                          "plan_trial_period_days", "ami_image_id", "instance_size"):
                 assert field in value, value
                 value[field] = str(value[field])
                 assert isinstance(value[field], str), value

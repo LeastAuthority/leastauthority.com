@@ -23,7 +23,6 @@ class TestConfirmation(unittest.TestCase):
     SMTP_PASSWORD = 'supersekret'
     SENDER_DOMAIN = send_email.SENDER_DOMAIN
     FROM_EMAIL = send_email.FROM_EMAIL
-    CUSTOMER_NAME = 'Fred Bloggs'
     CUSTOMER_EMAIL = 'fbloggs@example.net'
     PGP_NOTIFICATION_EMAIL = send_email.PGP_NOTIFICATION_EMAIL
     EXTERNAL_INTRODUCER_FURL = 'pb://foo@0.0.0.0/baz'
@@ -56,7 +55,6 @@ class TestConfirmation(unittest.TestCase):
         self.failUnlessIn('To: ', headers)
         # FIXME: test for UTF-8
         self.failUnlessIn('Content-Type: text/plain', headers)
-        self.failUnlessIn(self.CUSTOMER_NAME, body)
         self.failUnlessIn('https://leastauthority.com/howtoconfigure', body)
         self.failUnlessIn(self.EXTERNAL_INTRODUCER_FURL, body)
         self.failUnlessIn('%s' % (self.PUBIP,), body)
@@ -87,7 +85,6 @@ class TestConfirmation(unittest.TestCase):
         self.failUnlessIn('To: ', headers)
         # FIXME: test for UTF-8
         self.failUnlessIn('Content-Type: text/plain', headers)
-        self.failUnlessIn(self.CUSTOMER_NAME, body)
         self.failUnlessIn(self.CUSTOMER_EMAIL, body)
         self.failIfIn(self.EXTERNAL_INTRODUCER_FURL, body)
 
@@ -109,7 +106,7 @@ class TestConfirmation(unittest.TestCase):
 
         stdout = StringIO()
         stderr = StringIO()
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      customer_keyinfo, stdout, stderr)
         def _check(ign):
             self.failUnless('flag' in connected)
@@ -136,7 +133,7 @@ class TestConfirmation(unittest.TestCase):
             raise MarkerException()
         self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
@@ -162,7 +159,7 @@ class TestConfirmation(unittest.TestCase):
             pass
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
@@ -188,7 +185,7 @@ class TestConfirmation(unittest.TestCase):
             raise MarkerException()
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_NAME, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")

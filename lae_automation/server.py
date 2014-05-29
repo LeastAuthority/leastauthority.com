@@ -5,6 +5,10 @@
 """
 
 import os, sys, base64, simplejson, subprocess
+from datetime import datetime
+utcnow = datetime.utcnow
+
+from pipes import quote as shell_quote
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
@@ -12,12 +16,16 @@ from fabric import api
 from fabric.context_managers import cd
 from fabric.contrib import files
 
-from lae_util.streams import LoggingTeeStream
+from lae_util.streams import LoggingStream
 
-#The incident gatherer's furl is a secret, so it is obtained from lae_automation_config.
-#The stats gatherer's furl is a secret, so it is obtained from lae_automation_config.
+# The incident gatherer and stats gatherer furls are secret, so they are obtained from
+# lae_automation_config.
 from lae_automation.config import Config
 
+class PathFormatError(Exception):
+    pass
+
+UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
 TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
 # This file controls the configuration of the Tahoe node that
@@ -44,7 +52,7 @@ stats_gatherer.furl = %(stats_gatherer_furl)s
 # Shall this node provide storage service?
 enabled = true
 backend = s3
-s3.access_key_id = %(access_key_id)s
+s3.access_key_id = %(s3_access_key_id)s
 s3.bucket = %(bucket_name)s
 
 [helper]
@@ -112,9 +120,36 @@ class NotListeningError(Exception):
 INSTALL_TXAWS_VERSION = "0.2.1.post5"
 INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
-INSTALL_STATMOVER_VERSION = "2013-04-20T02_25_53+0000"
-INSTALL_STATMOVER_PACKAGE = "statmover-%s.tar.gz" % (INSTALL_STATMOVER_VERSION,)
-INSTALL_SMCLIENT_VERSION  = "3.2012.07.03.18.15.19-5e73c911653e"
+TAHOE_LAFS_GIT_REPO_URL = "https://github.com/tahoe-lafs/tahoe-lafs.git"
+TAHOE_LAFS_GIT_BRANCH = "2237-cloud-backend-s4"
+
+TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
+    'python-dev',
+    'python-pip',
+    'git-core',
+    'libffi6',
+    'openssl',
+    'libssl1.0.0',
+    'python-nevow',
+    'python-crypto',
+    'python-dateutil',
+    'python-foolscap',
+    'python-six',
+    'python-pycparser',
+    'python-unidecode',
+    'python-zfec',
+    'python-simplejson',
+]
+
+EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
+    'python-jinja2',
+    'fabric',
+    'python-twisted-mail',
+    'python-unidecode',
+    'python-tz',
+    'python-docutils',
+    'python-markdown',
+]
 
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
@@ -149,51 +184,42 @@ def write(value, remote_path, use_sudo=False, mode=None):
     # mode is not None.
     return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
-
 def delete_customer(publichost, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path)
 
     sudo('deluser customer')
     sudo('rm -rf /home/customer*')
 
-
 def create_account(account_name, account_pubkey, stdout, stderr):
     print >>stdout, "Setting up %s account..." % (account_name,)
     sudo('adduser --disabled-password --gecos "" %s || echo Assuming that %s already exists.' % (2*(account_name,)) )
     sudo('mkdir -p /home/%s/.ssh/' % (account_name,) )
     sudo('chown %s:%s /home/%s/.ssh' % (3*(account_name,)) )
-    sudo('chmod u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
+    sudo('chmod -f u+w /home/%s/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.' % (account_name,) )
     if account_pubkey is None:
         sudo('cp /home/ubuntu/.ssh/authorized_keys /home/%s/.ssh/authorized_keys' % (account_name,))
     else:
         write(account_pubkey, '/home/%s/.ssh/authorized_keys' % (account_name,), use_sudo=True)
     sudo('chown %s:%s /home/%s/.ssh/authorized_keys' % (3*(account_name,)))
-    sudo('chmod 400 /home/%s/.ssh/authorized_keys' % (account_name,))
-    sudo('chmod 700 /home/%s/.ssh/' % (account_name,))
+    sudo('chmod -f 400 /home/%s/.ssh/authorized_keys' % (account_name,))
+    sudo('chmod -f 700 /home/%s/.ssh/' % (account_name,))
 
-
-def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
-                   stderr):
-    set_host_and_key(publichost, admin_privkey_path)
-
-    print >>stdout, "Updating server..."
-    sudo_apt_get('update')
-    sudo_apt_get('dist-upgrade -y')
-
-    print >>stdout, "Rebooting server (this will take a while)..."
-    api.reboot(240)
-
+def apt_install_dependencies(stdout, package_list):
     print >>stdout, "Installing dependencies..."
-    sudo_apt_get('install -y python-dev')
-    sudo_apt_get('install -y python-setuptools')
-    sudo_apt_get('install -y exim4-base')
-    sudo_apt_get('install -y darcs')
-    sudo_apt_get('install -y python-foolscap')
-    sudo_apt_get('remove -y --purge whoopsie')
+    for package in package_list:
+        print >>stdout, "Installing package: %s" % (package,)
+        sudo_apt_get('-y install %s' % (package,))
+        print >>stdout, "package: %s installed" % (package,)
+    print >>stdout, "Finished installing dependencies..."
+
+def get_txaws():
     run('wget %s' % (INSTALL_TXAWS_URL,))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
+
+def create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
+                              admin_privkey_path, publichost):
     create_account('customer', None, stdout, stderr)
     create_account('monitor', monitor_pubkey, stdout, stderr)
 
@@ -204,63 +230,105 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     # I don't know if creating one would be useful.XXX
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
+def get_and_install_tahoe(stdout):
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
-    run('darcs get --lazy https://tahoe-lafs.org/source/tahoe/ticket999-S3-backend LAFS_source')
+    run('git clone %s LAFS_source' % (TAHOE_LAFS_GIT_REPO_URL,))
 
-    print >>stdout, "Building Tahoe-LAFS..."
     with cd('/home/customer/LAFS_source'):
+        run('git checkout %s' % (TAHOE_LAFS_GIT_BRANCH,))
+        print >>stdout, "Building Tahoe-LAFS..."
         run('python ./setup.py build')
 
+def create_intro_and_storage_nodes(stdout):
     print >>stdout, "Creating introducer and storage server..."
     run('mkdir -p introducer storageserver')
     run('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
     run('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
 
-    print >>stdout, "Finished server installation."
+def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
+                   stderr):
+    set_host_and_key(publichost, admin_privkey_path)
+    update_packages(publichost, admin_privkey_path, stdout, stderr)
+    apt_install_dependencies(stdout, TAHOE_LAFS_PACKAGE_DEPENDENCIES)
 
-def run_git(command):
-    return run('/usr/bin/git %s' % (command,))
+    sudo_apt_get('-y remove --purge whoopsie')
+    get_txaws()
+    create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
+                              admin_privkey_path, publichost)
+
+    get_and_install_tahoe(stdout)
+
+    create_intro_and_storage_nodes(stdout)
+
+    print >>stdout, "Finished server installation."
 
 GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
 cd %s || exit
 unset GIT_DIR
-git pull hub master
 exec git update-server-info
 """
 
-GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE = """#!/bin/bash
-git push hub
-"""
+def run_git(command):
+    return run('/usr/bin/git %s' % (command,))
 
-def setup_git_deploy(hostname, live_path, local_repo_path, src_ref):
-    "FIXME: make this idempotent (?)"
-    if live_path.endswith('/') or not live_path.startswith('/'):
-        raise Exception("live_path must be absolute and not end with /")
-    hub_path = "%s.git" % (live_path,)
-    run_git('init --bare %s' % (hub_path,))
-    run_git('init %s' % (live_path,))
-    if 'hub' in run_git( '--git-dir %s/.git remote' % (live_path,) ):
-        print "removing existing remote"
-        run_git('--git-dir %s/.git remote rm hub' % (live_path,))
-    run_git('--git-dir %s/.git remote add hub %s' % (live_path, hub_path))
-    update_hook_path = '%s/hooks/post-update' % (hub_path,)
-    write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), update_hook_path)
-    run('chmod +x %s' % (update_hook_path,))
-    live_commit_hook_path = '%s/.git/hooks/post-commit' % (live_path,)
-    write(GIT_DEPLOY_LIVE_POST_COMMIT_HOOK_TEMPLATE, live_commit_hook_path)
-    run('chmod +x %s' % (live_commit_hook_path,))
+def make_unique_tag_name(host_IP_address, src_ref_SHA1):
+    ''' (str, str) --> str
 
-    print "live_path is %s" % (live_path,)
-    local_git_push = ['/usr/bin/git', 
-                        '--git-dir=%s' % (local_repo_path,), 
+    Return the unique string id of a tag, to be added to repo.
+    '''
+    hash_frag = src_ref_SHA1[:8]
+    time_tag_name = utcnow().isoformat().split('.')[0].replace(':', '-') + 'Z'
+    name = time_tag_name+'_'+host_IP_address+'_'+hash_frag
+    return name
+
+def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
+    unique_tag_name = make_unique_tag_name(host_IP_address, src_ref_SHA1)
+    command_string = ('/usr/bin/git --git-dir=%s tag %s %s'
+                      % (shell_quote(local_repo), shell_quote(unique_tag_name), shell_quote(src_ref_SHA1)))
+    subprocess.check_call(command_string.split())
+    return unique_tag_name
+
+def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_path, local_repo_path,
+                     src_ref_SHA1):
+    if live_path.endswith('/') or not os.path.isabs(live_path):
+        bad_path = u"%s" % (live_path,)
+        error_message = u"live_path is: '%s': but the path must be absolute and not end with /" % (bad_path)
+        raise PathFormatError(error_message)
+
+    q_live_path = shell_quote(live_path)
+    q_update_hook_path = shell_quote('%s/.git/hooks/post-update' % (live_path,))
+
+    run('rm -rf %s' % (q_live_path,))
+    run_git('init %s' % (q_live_path,))
+    write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), q_update_hook_path)
+    run('chmod -f +x %s' % (q_update_hook_path,))
+
+    unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1)
+    local_git_push = ['/usr/bin/git',
+                        '--git-dir=%s' % (local_repo_path,),
                         'push',
-                        'website@%s:%s' % (hostname, hub_path),
-                        '%s:master' % (src_ref,)]
-    subprocess.check_call(local_git_push)    
+                        'website@%s:%s' % (host_IP_address, live_path),
+                        '%s:%s' % (unique_tag, unique_tag)]
 
-def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo, 
-                                  la_commit_hash, secretconf_repo, sc_commit_hash, 
+    env = {}
+    env.update(os.environ)
+    env['GIT_SSH'] = git_ssh_path
+    env['PRIVATE_KEY'] = admin_privkey_path
+    subprocess.check_call(local_git_push, env=env)
+
+    q_unique_tag = shell_quote(unique_tag)
+    with cd(live_path):
+        run_git('checkout %s' % (q_unique_tag,))
+        run_git('checkout -b %s' % (q_unique_tag,))
+
+def run_unattended_upgrade(api, seconds_for_reboot_pause):
+    sudo_apt_get('update')
+    sudo('unattended-upgrade --minimal_upgrade_steps')
+    api.reboot(seconds_for_reboot_pause)
+
+def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
+                                  la_commit_hash, secretconf_repo, sc_commit_hash,
                                   stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
@@ -269,25 +337,20 @@ def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey
     Known sources of non-idempotence:
         - setup_git_deploy
     """
-    api.env.host_string = '%s@%s' % ('ubuntu', publichost)
-    api.env.reject_unknown_hosts = True
-    api.env.key_filename = admin_privkey_path
-    api.env.abort_on_prompts = True
+    set_host_and_key(publichost, admin_privkey_path)
     print >>stdout, "Updating server..."
+    run_unattended_upgrade(api, UNATTENDED_UPGRADE_REBOOT_SECONDS)
     postfixdebconfstring="""# General type of mail configuration:
 # Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
 postfix	postfix/main_mailer_type select	No configuration"""
-    sudo_apt_get('update')
-    sudo_apt_get('-y dist-upgrade')
-    sudo_apt_get('-y autoremove')
-    print >>stdout, "Rebooting server..."
-    api.reboot(300)
+
     print >>stdout, "Installing dependencies..."
-    sudo_apt_get('install -y python-dev python-setuptools git-core python-jinja2 python-nevow '
-                 'python-dateutil fabric python-foolscap python-twisted-mail python-six '
-                 'python-unidecode python-tz python-docutils python-markdown')
+    package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES
+    apt_install_dependencies(stdout, package_list)
+    # From:  https://stripe.com/docs/libraries
+    sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
-    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')  
+    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
     sudo_apt_get('install -y postfix')
     sudo_apt_get('install -y darcs')
 
@@ -295,7 +358,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
 #    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
 #    sudo('rm /etc/nginx/sites-enabled/default')
 #    sudo('service nginx restart')
-    
+
     run('wget https://pypi.python.org/packages/source/p/pelican/pelican-3.2.2.tar.gz')
     run('tar zxf pelican-3.2.2.tar.gz')
     with cd('pelican-3.2.2'):
@@ -306,8 +369,8 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo_apt_get('install -y authbind')
     sudo('touch /etc/authbind/byport/{443,80}')
     sudo('chown website:root /etc/authbind/byport/{443,80}')
-    sudo('chmod 744 /etc/authbind/byport/{443,80}')
-    
+    sudo('chmod -f 744 /etc/authbind/byport/{443,80}')
+
     run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
@@ -317,9 +380,9 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
 
     set_host_and_key(publichost, admin_privkey_path, 'website')
-    setup_git_deploy(publichost, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
-    setup_git_deploy(publichost, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
-
+    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
+    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
+    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
 
     with cd('/home/website/'):
         if not files.exists('signup_logs'):
@@ -328,13 +391,13 @@ postfix	postfix/main_mailer_type select	No configuration"""
             run('mkdir secrets')
 
     with cd('/home/website/secret_config'):
-        run('chmod 400 *pem')
+        run('chmod -f 400 *pem')
 
     with cd('/home/website/leastauthority.com'):
-        #FIXME: make idempotent
+        # FIXME: make idempotent
         if not files.exists('/home/website/leastauthority.com/flapp'):
             run('flappserver create /home/website/leastauthority.com/flapp')
-            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin --send-stdout /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.py | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
+            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
 INTRODUCER_PORT = '12345'
@@ -397,7 +460,7 @@ def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_t
 
 def update_packages(publichost, admin_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
-    pass
+    sudo_apt_get('update')
 
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
@@ -405,16 +468,19 @@ def set_up_reboot(stdout, stderr):
     write('@reboot /home/customer/restart.sh\n', '/home/customer/ctab')
     run('crontab /home/customer/ctab')
 
-
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
-
-    secretsfile = basefp.child('secrets').child(logfilename).open('a+')
+    dirfp = basefp.child('secrets').child('active_SSEC2s')
+    try:
+        dirfp.makedirs()
+    except OSError:
+        pass
+    secretsfile = dirfp.child(logfilename).open('a+')
     logfile = basefp.child('signup_logs').child(logfilename).open('a+')
 
-    stdout = LoggingTeeStream(raw_stdout, logfile, '>')
-    stderr = LoggingTeeStream(raw_stderr, logfile, '')
+    stdout = LoggingStream(logfile, '>')
+    stderr = LoggingStream(logfile, '')
 
     # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
     # It does have a way to disable that, but not (easily) to redirect it.
@@ -481,16 +547,17 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
-                              secret_key, user_token, product_token, bucket_name,
-                              oldsecrets, stdout, stderr, secretsfile,
-                              configpath='../secret_config/lae_automation_config.json'):
+def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
+                  user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
+                  configpath='../secret_config/lae_automation_config.json'):
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     print >>stdout, "Starting introducer..."
-    run('rm -f /home/customer/introducer/introducer.furl /home/customer/introducer/logport.furl')
+    run('rm -f /home/customer/introducer/introducer.furl'
+             ' /home/customer/introducer/private/introducer.furl'
+             ' /home/customer/introducer/logport.furl')
     write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
     write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
 
@@ -499,7 +566,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
 
     run('LAFS_source/bin/tahoe restart introducer && sleep 5')
 
-    internal_introducer_furl = run('cat /home/customer/introducer/introducer.furl').strip()
+    internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
 
     config = Config(configpath)
@@ -507,7 +574,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
                                       'publichost': publichost,
                                       'privatehost': privatehost,
                                       'introducer_furl': internal_introducer_furl,
-                                      'access_key_id': access_key_id,
+                                      's3_access_key_id': s3_access_key_id,
                                       'bucket_name': bucket_name,
                                       'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
                                       'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
@@ -516,10 +583,11 @@ def bounce_server(publichost, admin_privkey_path, privatehost, access_key_id,
     if oldsecrets:
         restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
 
-    run('chmod u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
-    write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
-    write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
+    run('chmod -f u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
+    write(s3_secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
+    if user_token and product_token:
+        write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
+        write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
 
     print >>stdout, "Starting storage server..."
     run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
@@ -556,8 +624,8 @@ shares.total = 1
     print >>secretsfile, simplejson.dumps({
         'publichost':               publichost,
         'privatehost':              privatehost,
-        'access_key_id':            access_key_id,
-        'secret_key':               secret_key,
+        'access_key_id':            s3_access_key_id,
+        'secret_key':               s3_secret_key,
         'user_token':               user_token,
         'product_token':            product_token,
         'bucket_name':              bucket_name,
@@ -573,192 +641,6 @@ shares.total = 1
 
     return external_introducer_furl
 
-# The value '60000' is the maximum resolution in the x-dimension that a statmover
-# chart can be zoomed to.  It is in units of milliseconds.  Since our emission
-# source emits once per minute zooming to a higher resolution has no utility, and
-# can be confusing.  Therefore we set this value to match our emission rate.
-# i.e. 60000 milliseconds = 1 minute
-SETUPMETRIC_TEMPLATE = """setup-metric GAUGE Kilobytes %d %s %s"""
-RESOLUTION_MILLISECONDS = 60000
-
-def provision_rss_sink(sink_name_suffix, collection_names):
-    """we use this function to provision a new sink at statmover."""
-    run(SETUPMETRIC_TEMPLATE % (RESOLUTION_MILLISECONDS, sink_name_suffix, ' '.join(collection_names)))
-
-
-EMIT_CONFIG_TEMPLATE = """[
-    {
-      "resolution": %d,
-      "type": "metric",
-      "name": "%s//%s"
-    }
-]
-"""
-
-CRON_EMISSION_SCRIPT = """#!/bin/sh
-PATH=/usr/local/bin:${PATH}
-cd /home/monitor/statmover/
-/home/monitor/statmover/generatevalues.py
-"""
-
-GENERATE_SCRIPT = """#! /usr/bin/env python
-
-import subprocess, time, os
-import simplejson as json
-from twisted.python.filepath import FilePath
-
-STORAGESERVER_PID_PATH = '/home/customer/storageserver/twistd.pid'
-EVENT_EMITS_CONFIG_PATH = './eventemissions_config.json'
-
-# Adapted from lae_automation/config.py (davidsarah)
-def get_emission_list(jsonconfigfile):
-    if type(jsonconfigfile) is str:
-        configFile = open(jsonconfigfile, 'r')
-    try:
-        fpos = configFile.tell()
-        emitlist = json.load(configFile)
-    except json.decoder.JSONDecodeError, e:
-        configFile.seek(fpos)
-        data = configFile.read()
-        e.args = tuple(e.args + (configFile, repr(data),))
-        raise
-    finally:
-        configFile.close()
-
-    assert isinstance(emitlist, list)
-    freshlist = []
-    for eventemit in emitlist:
-        cleandict = {}
-        assert isinstance(eventemit, dict), eventemit
-        for field in ("resolution", "type", "name"):
-            assert field in eventemit, eventemit
-            cleandict[field] = str(eventemit.pop(field))
-            assert isinstance(cleandict[field], str), field
-        assert len(eventemit) == 0, eventemit #Check to see there aren't unexpected fields.
-        freshlist.append(cleandict)
-    return freshlist
-
-# adapted from pyutil/memutil.py (zooko)
-class NotSupportedException(Exception):
-    pass
-
-def get_mem_used(process_id_int):
-    '''
-    This only works on Linux, and only if the /proc/$PID/statm output is the
-    same as that in linux kernel 2.6.
-    @return: tuple of (bytes of rss memory, bytes of virtual memory) used by this process
-    '''
-    try:
-        import resource
-    except ImportError, e:
-        raise NotSupportedException(e)
-    # sample output from cat /proc/$PID/statm:
-    # 14317 3092 832 279 0 2108 0
-    a = os.popen("cat /proc/%s/statm 2>/dev/null" % process_id_int).read().split()
-    if not a:
-        raise NotSupportedException(a)
-    virtual_mem_in_page_units = int(a[0])
-    resident_set_size_in_page_units = int(a[1])
-    return (resident_set_size_in_page_units * resource.getpagesize(), 
-            virtual_mem_in_page_units * resource.getpagesize())
-
-# copied from nejucomo
-def make_emit_string(name, time, interval, typename, value):
-    return json.dumps(make_emit_structure(name, time, interval, typename, value))
-
-# copied from nejucomo
-def make_emit_structure(name, time, interval, typename, value):
-    if typename == 'metric':
-        assert type(value) is int, 'metric emit values must be integers, not %r' % (type(value),)
-        typecode = 1
-        valuestructure = {'value': value}
-    elif typename == 'annotation':
-        assert type(value) is unicode, 'annotation emit values must be unicode, not %r' % (type(value),)
-        typecode = 3
-        valuestructure = {'text': value}
-    else:
-        raise NotSupportedException( 'Unknown typename not supported: %r' % (typename,) )
-
-    return [
-        'EventEmit',
-        {'name': name,
-         'type': typecode,
-         'time': time,
-         'resolution': interval,
-         typename: valuestructure}]
-
-def get_pid(stringpath_to_pidfile):
-    pidstring = FilePath(stringpath_to_pidfile).getContent()
-    assert isinstance(pidstring, str), pidstring
-    pidint = int(pidstring)
-    return pidint
-
-def main():
-    emiteventlist = get_emission_list(EVENT_EMITS_CONFIG_PATH)
-    PID = get_pid(STORAGESERVER_PID_PATH)
-    for event_to_emit in emiteventlist:
-        if 'rss' in event_to_emit['name']:
-            kbofrss = get_mem_used(PID)[0]/1000 #Perhaps change to emitting bytes.
-            emit_time = int(time.time())
-            emitstring = make_emit_string(str( event_to_emit['name'] ),
-                                          int( emit_time*1000 ),
-                                          int( event_to_emit['resolution'] ),
-                                          str( event_to_emit['type'] ),
-                                          int( kbofrss )  )
-            fname = 'emissionlogs/%s' % emit_time
-            fh = open(fname, 'w')
-            fh.write(emitstring)
-            fh.write('\\n')
-            fh.close()
-            retcode = subprocess.check_call('emit-client --tee --format json'.split(), stdin=open(fname,'r'))
-            assert retcode == 0, retcode
-
-if __name__ == '__main__':
-    main()
-"""
-
-def initialize_statmover_source(publichost, monitor_privkey_path, admin_privkey_path,
-                                sinkname_suffix, collection_names):
-    EMIT_CONFIG = EMIT_CONFIG_TEMPLATE % (RESOLUTION_MILLISECONDS, sinkname_suffix, '//'.join(collection_names))
-    # Set the initial state (make this function idempotent)
-    set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
-    with cd('/home/monitor'):
-        sudo('rm -rf statmover* .saturnalia* ctab emissionscript.sh')
-
-    # Setup up directory structure and scp statmover tarball into it
-    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
-    path_to_statmover = '../secret_config/'+INSTALL_STATMOVER_PACKAGE
-    scp_list = ['scp',
-                '-i',
-                monitor_privkey_path,
-                path_to_statmover,
-                'monitor@%s:' % (publichost,)]
-    subprocess.check_output(scp_list)
-    run('tar -xzvf %s' % (INSTALL_STATMOVER_PACKAGE,))
-    run('mv /home/monitor/statmover/config /home/monitor/.saturnaliaclient')
-
-    # Install the statmover client
-    set_host_and_key(publichost, admin_privkey_path, username="ubuntu")
-    with cd('/home/monitor/statmover/saturnaliaclient-%s' % (INSTALL_SMCLIENT_VERSION,)):
-        sudo('python ./setup.py install')
-
-    set_host_and_key(publichost, monitor_privkey_path, username="monitor")
-    # Use the freshly installed setup-metric (part of the client) to provision a sink for this SSEC2
-    provision_rss_sink(sinkname_suffix, collection_names)
-    # Set up to supply (statmover type-)"source" data to the emit-client
-    run('mkdir -p /home/monitor/statmover/emissionlogs')
-
-    write(GENERATE_SCRIPT, '/home/monitor/statmover/generatevalues.py')
-    with cd('/home/monitor/statmover/'):
-        run('chmod u+x generatevalues.py')
-
-    write(EMIT_CONFIG, '/home/monitor/statmover/eventemissions_config.json')
-    # Setup cron for user "monitor" to run every minute sending data to emit-client.
-    write(CRON_EMISSION_SCRIPT, '/home/monitor/emissionscript.sh')
-    run('chmod u+x /home/monitor/emissionscript.sh')
-    write('* * * * * /home/monitor/emissionscript.sh\n', '/home/monitor/ctab')
-    run('crontab /home/monitor/ctab')
-
 
 def restore_secrets(secrets, nodetype, stdout, stderr):
     node_pem = secrets.get(nodetype + '_node_pem', '')
@@ -769,7 +651,7 @@ def restore_secrets(secrets, nodetype, stdout, stderr):
     run('mkdir -p --mode=700 /home/customer/%s/private' % (dirname,))
 
     if node_pem and nodeid:
-        run('chmod u+w /home/customer/%s/private/node.pem || echo No existing node.pem.' % (dirname,))
+        run('chmod -f u+w /home/customer/%s/private/node.pem || echo No existing node.pem.' % (dirname,))
         write(node_pem, '/home/customer/%s/private/node.pem' % (dirname,), mode=0640)
         write(nodeid,   '/home/customer/%s/my_nodeid' % (dirname,))
     else:
@@ -785,9 +667,8 @@ def restore_secrets(secrets, nodetype, stdout, stderr):
 
 
 def setremoteconfigoption(pathtoremote, section, option, value):
-    """This function expects set_host_and_key have already been run!"""
-    #api.get does not appear to actually use StringIO's yet!
-    #So I had to use a temp file.
+    """This function expects set_host_and_key to have already been run!"""
+    # api.get does not appear to actually use StringIO instances yet, so this uses a temp file.
     tempfhandle = open('tempconfigfile','w')
     api.get(pathtoremote, tempfhandle)
     configparser = SafeConfigParser()
