@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import simplejson, sys
+import sys
 
 from twisted.internet import defer, reactor
 from lae_automation.signup import create_log_filepaths
@@ -12,12 +12,9 @@ from twisted.python.filepath import FilePath
 
 def main(stdin, flapp_stdout, flapp_stderr):
     append_record(flapp_stdout, "Automation script started.")
-    (customer_email,
-     customer_pgpinfo,
-     customer_id,
-     plan_id,
-     subscription_id) = simplejson.loads(stdin.read())
+    (customer_email, customer_pgpinfo, customer_id, plan_id, subscription_id) = stdin.read().split('\n')
 
+    print (customer_email, customer_pgpinfo, customer_id, plan_id, subscription_id)
     (abslogdir_fp,
     stripesecrets_log_fp,
     SSEC2secrets_log_fp,
@@ -25,13 +22,9 @@ def main(stdin, flapp_stdout, flapp_stderr):
 
     append_record(flapp_stdout, "Writing logs to %r." % (abslogdir_fp.path,))
 
-    stripesecrets_log_fp.setContent(simplejson.dumps({
-                'customer_email':                customer_email,
-                'customer_pgpinfo':              customer_pgpinfo,
-                'customer_id':                   customer_id,
-                'plan_id':                       plan_id,
-                'subscription_id':               subscription_id
-                } ) )
+    stripesecrets_log_fp.setContent(
+                customer_email+'\n'+customer_pgpinfo+'\n'+customer_id+'\n'+plan_id+'\n'+subscription_id
+                )
 
     SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
     signup_logfile = signup_log_fp.open('a+')
