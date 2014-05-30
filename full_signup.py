@@ -12,11 +12,12 @@ from twisted.python.filepath import FilePath
 
 def main(stdin, flapp_stdout, flapp_stderr):
     append_record(flapp_stdout, "Automation script started.")
+    parameters_json = stdin.read()
     (customer_email,
      customer_pgpinfo,
      customer_id,
      plan_id,
-     subscription_id) = simplejson.loads(stdin.read())
+     subscription_id) = simplejson.loads(parameters_json)
 
     (abslogdir_fp,
     stripesecrets_log_fp,
@@ -25,13 +26,7 @@ def main(stdin, flapp_stdout, flapp_stderr):
 
     append_record(flapp_stdout, "Writing logs to %r." % (abslogdir_fp.path,))
 
-    stripesecrets_log_fp.setContent(simplejson.dumps({
-                'customer_email':                customer_email,
-                'customer_pgpinfo':              customer_pgpinfo,
-                'customer_id':                   customer_id,
-                'plan_id':                       plan_id,
-                'subscription_id':               subscription_id
-                } ) )
+    stripesecrets_log_fp.setContent(parameters_json)
 
     SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
     signup_logfile = signup_log_fp.open('a+')
