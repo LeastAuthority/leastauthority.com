@@ -120,6 +120,10 @@ class MockAssertionError(object):
     pass
 
 
+class MockConfig(object):
+    def __init__(self):
+        self.products = [{"plan_ID": "MOCKID"}]
+
 class CommonFixture(TestCase):
     def setUp(self):
         # Currently this is simply the stripe_api_key
@@ -150,6 +154,10 @@ class CommonFixture(TestCase):
         def call_append_record(mock_log_file_path, customer_subscription_id):
             return _append(self.append_record_return_values, None)
         self.patch(submit_subscription, 'append_record', call_append_record)
+
+        def call_Config():
+            return MockConfig()
+        self.patch(submit_subscription, 'Config', call_Config)
 
         # The Subcription Handler Instance
         self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
