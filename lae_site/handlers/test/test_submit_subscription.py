@@ -155,9 +155,7 @@ class CommonFixture(TestCase):
             return _append(self.append_record_return_values, None)
         self.patch(submit_subscription, 'append_record', call_append_record)
 
-        def call_Config():
-            return MockConfig()
-        self.patch(submit_subscription, 'Config', call_Config)
+        self.patch(submit_subscription, 'Config', MockConfig)
 
         # The Subcription Handler Instance
         self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
