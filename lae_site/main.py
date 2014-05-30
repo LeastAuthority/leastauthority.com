@@ -12,6 +12,7 @@ from twisted.python.filepath import FilePath
 from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import start
+from lae_util.rlimits import increase_rlimits
 
 
 def main(basefp):
@@ -39,6 +40,8 @@ def main(basefp):
 
     if port is None:
         port = default_port
+
+    increase_rlimits()
 
     config = Config()
 
