@@ -8,11 +8,8 @@ from lae_site.handlers.web import env
 from lae_util.flapp import FlappCommand
 
 from lae_site.handlers.main import HandlerBase
-from lae_automation.config import Config
 
-config = Config()
-stripe_plan = config.products[0]["plan_ID"]
-
+PLAN_ID                 = u'S4_consumer_iteration_2_beta1_2014-05-27'
 SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
 SERVICE_CONFIRMED_FILE  = 'service_confirmed.csv'
 SIGNUP_FURL_FILE        = 'signup.furl'
@@ -68,9 +65,9 @@ class SubmitSubscriptionHandler(HandlerBase):
         send_plain_email('info@leastauthority.com', 'support@leastauthority.com', body, headers)
         raise RenderErrorDetailsForBrowser(details)
 
-    def create_customer(self, stripe_api_key, stripe_authorization_token, user_email):
+    def create_customer(self, stripe_api_key, stripe_authorization_token, user_email, plan_id=PLAN_ID):
         try:
-            return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan=stripe_plan,
+            return stripe.Customer.create(api_key=stripe_api_key, card=stripe_authorization_token, plan=plan_id,
                                           email=user_email)
         except stripe.CardError as e:
             # Errors we expect: https://stripe.com/docs/api#errors
