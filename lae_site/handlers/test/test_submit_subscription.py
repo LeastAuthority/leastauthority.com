@@ -345,12 +345,7 @@ class TestRunFullSignup(CommonFixture):
 
         self.subscription_handler.run_full_signup(self.MC, MockRequest(REQUESTARGS))
 
-
-    def test_stdin_values(self):
-        self.failUnlessEqual(self.simplejson_dumps_returns_values, [('test@test', ['testpgppubkey'],
-                                                                     'IDSTUB', 'MOCKS4',
-                                                                     'sub_AAAAAAAAAAAAAA')])
-
+        # XXX TODO test join return values
     def test_when_done_without_exception(self):
         self.flappcommand_run_return_values[0].callback('ignore')
         self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/service_confirmed.csv')

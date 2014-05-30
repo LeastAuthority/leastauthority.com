@@ -1,5 +1,5 @@
 
-import stripe, traceback, simplejson
+import stripe, traceback
 
 from lae_util.servers import append_record
 from lae_util.send_email import send_plain_email, FROM_ADDRESS
@@ -119,17 +119,15 @@ class SubmitSubscriptionHandler(HandlerBase):
             except Exception:
                 traceback.print_tb(100, self._log)
 
-        customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
+        customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')[0]
         # The foolscap service registered to run when flappcommand.run is called expects a bytestream
         # of US-ASCII bytes, because it is reading from its stdin (--accept-stdin flag set).
         # Therefore the content passed to the command must conform to US-ASCII.
-        stdin = simplejson.dumps((customer.email,
-                                  customer_pgpinfo,
-                                  customer.id,
-                                  customer.subscription.plan.id,
-                                  customer.subscription.id),
-                                 ensure_ascii=True
-                                 )
+        stdin = '\n'.join((customer.email,
+                           customer_pgpinfo,
+                           customer.id,
+                           customer.subscription.plan.id,
+                           customer.subscription.id))
 
         d = flappcommand.run(stdin, self.out)
         d.addCallback(when_done)
