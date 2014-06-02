@@ -32,6 +32,10 @@ For User support, visit
 
   https://leastauthority.com/support
 
+The service is priced at $25/month for unlimited storage for personal use.
+It comes with a 30-day free trial, so you can test it out with no obligation.
+You may cancel at any time by sending email to <support@LeastAuthority.com>.
+
 We hope you enjoy using our service and find it useful.
 
 --\x20
