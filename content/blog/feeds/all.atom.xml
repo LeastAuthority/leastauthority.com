@@ -1,5 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-04-02T16:00:00+00:00</updated><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-06-02T18:00:00+00:00</updated><entry><title>Least Authority Performs Security Audit of GlobaLeaks</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_globaleaks.html" rel="alternate"></link><updated>2014-06-02T18:00:00+00:00</updated><author><name>Taylor Hornby</name></author><id>tag:https://leastauthority.com/blog,2014-06-02:least_authority_performs_security_audit_for_globaleaks.html</id><summary type="html">&lt;p&gt;At Least Authority, &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our mission&lt;/a&gt; is to bring verifiable end-to-end security to
+everyone. As a part of this mission, we provide security consulting services to
+free and open-source software projects. We also run a verifiably-secure cloud
+backup system, &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;In the past, we've performed successful security audits of &lt;a class="reference external" href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;SpiderOak's Crypton
+project&lt;/a&gt; and of &lt;a class="reference external" href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html"&gt;Cryptocat&lt;/a&gt;. Continuing this series of security audits, we've
+completed an audit of the &lt;a class="reference external" href="https://globaleaks.org/"&gt;GlobaLeaks whistleblowing framework&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This audit was funded by the Open Technology Fund (OTF). Regular security audits
+are an important part of the development of any software, and free and open
+source internet freedom software is certainly no exception. We applaud OTF for
+funding these highly beneficial audits.&lt;/p&gt;
+&lt;div class="section" id="audit-results"&gt;
+&lt;h2&gt;Audit Results&lt;/h2&gt;
+&lt;p&gt;Protecting whistleblowers is no easy task, especially since they may be up
+against powerful adversaries (governments, corporations, and criminal
+organisations) and the consequences of getting caught may be grave. It's
+unlikely that a single technical solution to this problem exists. To keep
+whistleblowers safe, any technical solution needs to be paired with OPSEC
+education.&lt;/p&gt;
+&lt;p&gt;One of the things we liked about the GlobaLeaks project is that it has OPSEC
+education and checks built right in to the user interface.&lt;/p&gt;
+&lt;p&gt;We identified several security issues in the GlobaLeaks software. You can read
+about each issue in the &lt;a class="reference external" href="/static/publications/LeastAuthority-GlobaLeaks-audit-report.pdf"&gt;audit report&lt;/a&gt;. The issues have been addressed by the
+GlobaLeaks team in the latest stable version.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="further-reading"&gt;
+&lt;h2&gt;Further Reading&lt;/h2&gt;
+&lt;p&gt;The full audit report: &lt;a class="reference external" href="/static/publications/LeastAuthority-GlobaLeaks-audit-report.pdf"&gt;Report of Security Audit of GlobaLeaks&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The GlobaLeaks wiki page: &lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/wiki/LeastAuthority-Report"&gt;LeastAuthority Report&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Tickets in the GlobaLeaks bug tracker for each of the issues we identified.&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/672"&gt;Issue A&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/822"&gt;Issue B&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/823"&gt;Issue C&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/824"&gt;Issue D&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/825"&gt;Issue E&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/826"&gt;Issue F&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/832"&gt;Issue G&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/828"&gt;Issue H&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/829"&gt;Issue I&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/857"&gt;Issue J&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</summary><category term="consultancy"></category><category term="globaleaks"></category></entry><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
 &lt;p&gt;This is the second post in our series about security audits of Free and
 Open Source end-to-end encryption software. The first post in the series
 was about our security audit of SpiderOak's &lt;a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;crypton&lt;/a&gt; project.&lt;/p&gt;
@@ -246,7 +289,7 @@ Tahoe's protections against third-party snooping and deletion have the kind of s
 Looking for a solution to give you an edge in the ongoing struggle between you and the authorities over the privacy of your data?&lt;/blockquote&gt;
 &lt;p&gt;It's important to us to note that S4 and LAFS are not only meant to thwart mass government surveillance. We seek to protect against access by the &lt;em&gt;unauthorized&lt;/em&gt;, not merely &amp;quot;the authorities&amp;quot;. That means individual crackers, criminal organizations, corporate rivals, or non-PRISM-affiliated foreign governments just as much as the NSA! Least Authority is pro-security across the board.&lt;/p&gt;
 &lt;p&gt;There is no way that one could build an effective anti-government security system without excluding those other threats as well. Similarly, if law enforcement is authorized to see the data, then hackers also can see the data.&lt;/p&gt;
-</summary><category term="cloud"></category><category term="prism"></category><category term="lafs"></category></entry><entry><title>Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service</title><link href="https://leastauthority.com/blog/open_letter_silent_circle.html" rel="alternate"></link><updated>2013-08-16T09:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2013-08-16:open_letter_silent_circle.html</id><summary type="html">&lt;p&gt;This open letter is in response to the &lt;a class="reference external" href="http://boingboing.net/2013/08/08/lavabit-email-service-snowden.html"&gt;recent shutdown of Lavabit&lt;/a&gt; , the ensuing &lt;a class="reference external" href="http://silentcircle.wordpress.com/2013/08/09/to-our-customers/"&gt;shutdown of Silent Circle's “Silent Mail” product&lt;/a&gt;, &lt;a class="reference external" href="https://plus.google.com/112961607570158342254/posts/9uySMokvg7k"&gt;Jon Callas's posts about the topic on G+&lt;/a&gt;, and &lt;a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/08/09/e-mails-big-privacy-problem-qa-with-silent-circle-co-founder-phil-zimmermann/"&gt;Phil Zimmermann's interview in Forbes&lt;/a&gt;. Also, of course, all of this is unfolding in the context of the &lt;a class="reference external" href="https://en.wikipedia.org/wiki/2013_mass_surveillance_scandal"&gt;2013 Mass Surveillance Scandal&lt;/a&gt;.&lt;/p&gt;
+</summary><category term="cloud"></category><category term="prism"></category><category term="lafs"></category></entry><entry><title>﻿Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service</title><link href="https://leastauthority.com/blog/open_letter_silent_circle.html" rel="alternate"></link><updated>2013-08-16T09:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2013-08-16:open_letter_silent_circle.html</id><summary type="html">&lt;p&gt;This open letter is in response to the &lt;a class="reference external" href="http://boingboing.net/2013/08/08/lavabit-email-service-snowden.html"&gt;recent shutdown of Lavabit&lt;/a&gt; , the ensuing &lt;a class="reference external" href="http://silentcircle.wordpress.com/2013/08/09/to-our-customers/"&gt;shutdown of Silent Circle's “Silent Mail” product&lt;/a&gt;, &lt;a class="reference external" href="https://plus.google.com/112961607570158342254/posts/9uySMokvg7k"&gt;Jon Callas's posts about the topic on G+&lt;/a&gt;, and &lt;a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/08/09/e-mails-big-privacy-problem-qa-with-silent-circle-co-founder-phil-zimmermann/"&gt;Phil Zimmermann's interview in Forbes&lt;/a&gt;. Also, of course, all of this is unfolding in the context of the &lt;a class="reference external" href="https://en.wikipedia.org/wiki/2013_mass_surveillance_scandal"&gt;2013 Mass Surveillance Scandal&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Dear Phil and Jon: Hello there! It is good to have a chance to chat with you in public.&lt;/p&gt;
 &lt;p&gt;Please accept the following in the spirit of constructive criticism in which it is intended.&lt;/p&gt;
 &lt;p&gt;For those readers who don't know, I've known you both, personally and professionally for decades. You've each written texts that I've learned from, inspired me to follow your example, we've worked together successfully, and you've mentored me. I have great respect for your technical abilities, your integrity, and your general reasonableness. Thank you for all of that and for holding fast to your principles today, when we need it more than ever.&lt;/p&gt;

@@ -1,4 +1,4 @@
-﻿.. -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*-
+.. -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*-
 
 Least Authority Performs Security Audit For Cryptocat
 =====================================================

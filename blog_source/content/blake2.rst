@@ -1,4 +1,4 @@
-﻿.. -*- coding: utf-8-with-signature-unix; fill-column: 73;
+.. -*- coding: utf-8-with-signature-unix; fill-column: 73;
 .. -*- indent-tabs-mode: nil -*-
 
 BLAKE2: “Harder, Better, Faster, Stronger” Than MD5

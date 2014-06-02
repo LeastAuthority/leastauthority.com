@@ -4,8 +4,8 @@ set -e
 cd $(readlink -f $(dirname $0))
 flappserver restart `pwd`/flapp
 sleep 2
-cmd="python -u '`pwd`/lae_site/main.py'"
-pattern="python -u `pwd`/lae_site/main.py"
+cmd="python2.7 -u '`pwd`/lae_site/main.py'"
+pattern="python2.7 -u `pwd`/lae_site/main.py"
 pids=$(pgrep -fl "$pattern" |cut -f1 -d' ')
 if [ "$pids" != "" ]; then
        echo killing $pids
