@@ -38,11 +38,16 @@ class HandlerBase(Resource):
         details['client-ip'] = request.getClientIP()
         self._log.debug('Request details from %r:\n%s', request, pprint.pformat(details))
 
-    def get_arg(self, request, argname):
+    def get_arg_unquoted(self, request, argname):
         try:
             [arg] = request.args[argname]
         except (KeyError, ValueError):
             arg = ""
+
+        return arg
+
+    def get_arg(self, request, argname):
+        arg = self.get_arg_unquoted(request, argname)
 
         # Quote the arguments to avoid injection attacks when we interpolate them into HTML
         # attributes (enclosed in "") and CSV values. We could use htmlEscape, but that does
