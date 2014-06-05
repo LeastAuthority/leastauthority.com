@@ -39,11 +39,14 @@ This video demonstrates its use:
 
 .. raw:: html
 
-Does that look like the product for you? Sign up for S4!
-
    <iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen></iframe>
    <br><br>
-   <a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button">Sign up!</a>
+
+Does that look like the product for you?
+
+.. raw:: html
+
+   <a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button">Sign up for S4!</a>
    <br><br>
 
 Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!
@@ -54,7 +57,7 @@ Not familiar with the command line? Don't worry we have a product in the works f
       <input type="email" name="Email" placeholder="Email address" required="true">
       <input type="hidden" name="ProductName" value="magicfolder">
       <input type="hidden" name="ProductFullName" value="Magic Folder">
-      <button type="submit" class="btn btn-danger btn-large signup-button">Sign up!</button>
+      <button type="submit" class="btn btn-danger btn-large signup-button">I'm interested!</button>
    </form>
 
 .. _This video: https://www.youtube.com/embed/kLrcsyHqrwQ

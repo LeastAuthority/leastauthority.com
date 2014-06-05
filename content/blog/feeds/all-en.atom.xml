@@ -11,26 +11,15 @@ user security in mind, and built from the ground up to provide that security as 
 By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the Free and Open Source crypto system,
 and you're getting a great tool right now for your own use.&lt;/p&gt;
 &lt;p&gt;This video demonstrates its use:&lt;/p&gt;
-&lt;div class="system-message"&gt;
-&lt;p class="system-message-title"&gt;System Message: ERROR/3 (&lt;tt class="docutils"&gt;/home/zooko/LeastAuthority/leastauthority.com/blog_source/content/reset_the_net_release.rst&lt;/tt&gt;, line 40)&lt;/p&gt;
-&lt;p&gt;Content block expected for the &amp;quot;raw&amp;quot; directive; none found.&lt;/p&gt;
-&lt;pre class="literal-block"&gt;
-.. raw:: html
-
-&lt;/pre&gt;
-&lt;/div&gt;
-&lt;p&gt;Does that look like the product for you? Sign up for S4!&lt;/p&gt;
-&lt;blockquote&gt;
-&amp;lt;iframe width=&amp;quot;640&amp;quot; height=&amp;quot;360&amp;quot; src=&amp;quot;//www.youtube.com/embed/kLrcsyHqrwQ&amp;quot; frameborder=&amp;quot;0&amp;quot; allowfullscreen&amp;gt;&amp;lt;/iframe&amp;gt;
-&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;
-&amp;lt;a href=&amp;quot;/s4-subscription-form&amp;quot; class=&amp;quot;btn btn-danger btn-large signup-button&amp;quot;&amp;gt;Sign up!&amp;lt;/a&amp;gt;
-&amp;lt;br&amp;gt;&amp;lt;br&amp;gt;&lt;/blockquote&gt;
-&lt;p&gt;Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!&lt;/p&gt;
+&lt;iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;
+&lt;br&gt;&lt;br&gt;&lt;p&gt;Does that look like the product for you?&lt;/p&gt;
+&lt;a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button"&gt;Sign up for S4!&lt;/a&gt;
+&lt;br&gt;&lt;br&gt;&lt;p&gt;Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!&lt;/p&gt;
 &lt;form action="/collect-email" method="post" enctype="multipart/form-data" class="big-signup-form signup-form form-inline"&gt;
    &lt;input type="email" name="Email" placeholder="Email address" required="true"&gt;
    &lt;input type="hidden" name="ProductName" value="magicfolder"&gt;
    &lt;input type="hidden" name="ProductFullName" value="Magic Folder"&gt;
-   &lt;button type="submit" class="btn btn-danger btn-large signup-button"&gt;Sign up!&lt;/button&gt;
+   &lt;button type="submit" class="btn btn-danger btn-large signup-button"&gt;I'm interested!&lt;/button&gt;
 &lt;/form&gt;</summary><category term="cloud"></category><category term="s4"></category></entry><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
 &lt;p&gt;This is the second post in our series about security audits of Free and
 Open Source end-to-end encryption software. The first post in the series
