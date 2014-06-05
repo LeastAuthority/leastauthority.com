@@ -13,20 +13,22 @@ Reset The Net with Least Authority
 Least Authority is a globally distributed group of software developers dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and open source code. Always.
 
 
-In support of Reset The Net we have upgraded our Secure Simple Storage Service (S4) to include *unlimited* personal data storage in the cloud!
+In support of Reset The Net we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and now include *unlimited* personal data storage in the cloud!
 
 
-S4 uses the Tahoe Least Authority File System, a technology designed with
+S4 uses the Least Authority File System, a technology designed with
 User security in mind, and built from the ground up to provide that security to an unprecedented level.
 
 
 Such tools allow the User to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the User.
 
 
-We are pleased to announce S4 is working as a command-line utility, and we are presently developing applications for a broader User base.
+We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-like synchronization tool named “Magic Folders”.
 
 
 If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the regular price.
+By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the open source crypto system,
+and you're getting a great tool right now for your own use.
 
 
 `This video`_ demonstrates its use.
