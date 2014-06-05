@@ -39,14 +39,14 @@ This video demonstrates its use:
 
 .. raw:: html
 
+Does that look like the product for you? Sign up for S4!
+
    <iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen></iframe>
    <br><br>
    <a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button">Sign up!</a>
    <br><br>
 
-Not familiar with the command line?
-
-Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!
+Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!
 
 .. raw:: html
 
