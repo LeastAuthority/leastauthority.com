@@ -10,8 +10,11 @@ user security in mind, and built from the ground up to provide that security as 
 &lt;p&gt;If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the previous price.
 By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the Free and Open Source crypto system,
 and you're getting a great tool right now for your own use.&lt;/p&gt;
-&lt;p&gt;&lt;a class="reference external" href="https://www.youtube.com/embed/kLrcsyHqrwQ"&gt;This video&lt;/a&gt; demonstrates its use.&lt;/p&gt;
-&lt;a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button"&gt;Sign up!&lt;/a&gt;&lt;p&gt;Not familiar with the command line?&lt;/p&gt;
+&lt;p&gt;This video demonstrates its use:&lt;/p&gt;
+&lt;iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;
+&lt;br&gt;&lt;br&gt;
+&lt;a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button"&gt;Sign up!&lt;/a&gt;
+&lt;br&gt;&lt;br&gt;&lt;p&gt;Not familiar with the command line?&lt;/p&gt;
 &lt;p&gt;Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!&lt;/p&gt;
 &lt;form action="/collect-email" method="post" enctype="multipart/form-data" class="big-signup-form signup-form form-inline"&gt;
    &lt;input type="email" name="Email" placeholder="Email address" required="true"&gt;

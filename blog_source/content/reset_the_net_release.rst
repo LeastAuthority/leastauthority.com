@@ -35,13 +35,14 @@ By using Least Authority's secure cloud storage service, you're becoming a suppo
 and you're getting a great tool right now for your own use.
 
 
-`This video`_ demonstrates its use.
-
+This video demonstrates its use:
 
 .. raw:: html
 
+   <iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen></iframe>
+   <br><br>
    <a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button">Sign up!</a>
-
+   <br><br>
 
 Not familiar with the command line?
 
