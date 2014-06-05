@@ -14,11 +14,13 @@ Reset The Net with Least Authority
 
 "Reset The Net!" is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.
 
-Least Authority is `a globally distributed company of expert security professionals`_ dedicated to providing *freedom-compatible* storage. For us that means end-to-end-encryption and Free and Open Source code. Always.
+Least Authority is `a team of computer security professionals`_ dedicated to providing *freedom-compatible* storage. For us that means end-to-end-encryption and Free and Open Source code. Always.
 
-.. _a globally distributed company: /about_us
+.. _a team of computer security professionals: /about_us
 
 In support of `Reset The Net`_ we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included *unlimited* personal data storage in the cloud.
+
+.. XXX once the "Reset The Net!" logo and hyperlink are installed above, then make this reference to "Reset The Net" here be just a plain unlinked word: '"Reset The Net!"' (with quotes, or else italicized, and with the exclamation point) instead of a hyperlink.
 
 .. _Reset The Net: https://www.resetthenet.org/
 
