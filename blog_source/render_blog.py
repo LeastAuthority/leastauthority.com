@@ -7,7 +7,7 @@ def render_blog():
     subprocess.check_call(['scp', '../lae_site/templates/_navlinks.html', 'themes/lae/templates/_navlinks.html'])
 
     # run pelican
-    subprocess.check_call(['pelican', '-s', 'conf.py'])
+    subprocess.check_call(['pelican', '-v', '-s', 'conf.py'])
 
 
 if __name__ == "__main__":
