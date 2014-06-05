@@ -10,21 +10,22 @@ Reset The Net with Least Authority
 :author: Jessica Augustus and Inkblotest
 :summary: New Backup Service Released As Part of FFTF's "Reset The Net"
 
-Least Authority is a globally distributed group of software developers dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and open source code. Always.
+Least Authority is `a globally distributed company`_ dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and open source code. Always.
 
+.. _a globally distributed company: /about_us
 
 In support of `Reset The Net`_ we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and now include *unlimited* personal data storage in the cloud!
 
 .. _Reset The Net: https://www.resetthenet.org/
 
 S4 uses the Least Authority File System, a technology designed with
-User security in mind, and built from the ground up to provide that security to an unprecedented level.
+User security in mind, and built from the ground up to provide that security as well as we know how.
 
 
 Such tools allow the User to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the User.
 
 
-We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-like synchronization tool named “Magic Folders”.
+We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-esque friendly file-syncing utility named “Magic Folders”.
 
 
 If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the previous price.
@@ -34,8 +35,6 @@ and you're getting a great tool right now for your own use.
 
 `This video`_ demonstrates its use.
 
-
-Still with us?
 
 .. raw:: html
 
