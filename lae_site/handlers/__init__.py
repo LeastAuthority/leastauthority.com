@@ -19,7 +19,7 @@ def make_site(basefp, config):
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
     site = Site(resource, logPath=basefp.child('sitelogs').path)
-    site.displayTracebacks = False
+    #site.displayTracebacks = False
     return site
 
 
@@ -55,5 +55,5 @@ class RedirectToHTTPS(Resource):
 
 def make_redirector_site(port):
     site = Site(RedirectToHTTPS(port))
-    site.displayTracebacks = False
+    #site.displayTracebacks = False
     return site
