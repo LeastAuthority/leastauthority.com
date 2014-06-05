@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/news.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-06-01T12:00:00+00:00</updated><entry><title>Reset The Net with Least Authority</title><link href="https://leastauthority.com/blog/least_authority_releases_s4+_as_part_of_reset_the_net.html" rel="alternate"></link><updated>2014-06-01T12:00:00+00:00</updated><author><name>Jessica Augustus and Inkblotest</name></author><id>tag:https://leastauthority.com/blog,2014-06-01:least_authority_releases_s4+_as_part_of_reset_the_net.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
 &lt;!-- XXX insert "Reset The Net!" logo, name, banner, hyperlink here, before the description of Least Authority --&gt;
-&lt;p&gt;Least Authority is &lt;a class="reference external" href="/about_us"&gt;a globally distributed company&lt;/a&gt; dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and Free and Open Source code. Always.&lt;/p&gt;
-&lt;p&gt;In support of &lt;a class="reference external" href="https://www.resetthenet.org/"&gt;Reset The Net&lt;/a&gt; we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and now include &lt;em&gt;unlimited&lt;/em&gt; personal data storage in the cloud!&lt;/p&gt;
+&lt;p&gt;&amp;quot;Reset The Net!&amp;quot; is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.&lt;/p&gt;
+&lt;p&gt;Least Authority is &lt;a href="#id1"&gt;&lt;span class="problematic" id="id2"&gt;`a globally distributed company of expert security professionals`_&lt;/span&gt;&lt;/a&gt; dedicated to providing &lt;em&gt;freedom-compatible&lt;/em&gt; storage. For us that means end-to-end-encryption and Free and Open Source code. Always.&lt;/p&gt;
+&lt;p&gt;In support of &lt;a class="reference external" href="https://www.resetthenet.org/"&gt;Reset The Net&lt;/a&gt; we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included &lt;em&gt;unlimited&lt;/em&gt; personal data storage in the cloud.&lt;/p&gt;
 &lt;p&gt;S4 uses the Least Authority File System, a technology designed with
 User security in mind, and built from the ground up to provide that security as well as we know how.&lt;/p&gt;
 &lt;p&gt;Such tools allow the User to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the User.&lt;/p&gt;
@@ -18,7 +19,13 @@ and you're getting a great tool right now for your own use.&lt;/p&gt;
    &lt;input type="hidden" name="ProductName" value="magicfolder"&gt;
    &lt;input type="hidden" name="ProductFullName" value="Magic Folder"&gt;
    &lt;button type="submit" class="btn btn-danger btn-large signup-button"&gt;Sign up!&lt;/button&gt;
-&lt;/form&gt;</summary><category term="cloud"></category><category term="s4"></category></entry><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;/form&gt;&lt;div class="system-messages section"&gt;
+&lt;h2&gt;Docutils System Messages&lt;/h2&gt;
+&lt;div class="system-message" id="id1"&gt;
+&lt;p class="system-message-title"&gt;System Message: ERROR/3 (&lt;tt class="docutils"&gt;/home/zooko/LeastAuthority/leastauthority.com/blog_source/content/reset_the_net_release.rst&lt;/tt&gt;, line 17); &lt;em&gt;&lt;a href="#id2"&gt;backlink&lt;/a&gt;&lt;/em&gt;&lt;/p&gt;
+Unknown target name: &amp;quot;a globally distributed company of expert security professionals&amp;quot;.&lt;/div&gt;
+&lt;/div&gt;
+</summary><category term="cloud"></category><category term="s4"></category></entry><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
 &lt;p&gt;This is the second post in our series about security audits of Free and
 Open Source end-to-end encryption software. The first post in the series
 was about our security audit of SpiderOak's &lt;a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;crypton&lt;/a&gt; project.&lt;/p&gt;
