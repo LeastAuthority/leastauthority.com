@@ -52,6 +52,8 @@ The log filename is '%(logfilename)s'.
 I'm sure you'll be able to fix it in no time with your human intellect.
 Good luck!
 
+REMEMBER: the customer is NOT cc:d on this ticket by default.
+
 --\x20
 signup.py
 """
