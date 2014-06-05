@@ -26,18 +26,11 @@ Such tools allow the User to store data on the Internet without any third party 
 We are pleased to announce S4 is working as a command-line utility, and we are presently developing applications for a broader User base.
 
 
-Here's a video of S4 being set up and put into action:
-
-
-[install video]
-
-
 If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the regular price.
 
 
-Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!
-
 `This video`_ demonstrates its use.
+
 
 Still with us?
 
