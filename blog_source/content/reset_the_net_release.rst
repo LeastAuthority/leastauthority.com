@@ -10,6 +10,8 @@ Reset The Net with Least Authority
 :author: Jessica Augustus and Inkblotest
 :summary: New Backup Service Released As Part of FFTF's "Reset The Net"
 
+.. XXX insert "Reset The Net!" logo, name, banner, hyperlink here, before the description of Least Authority
+
 Least Authority is `a globally distributed company`_ dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and Free and Open Source code. Always.
 
 .. _a globally distributed company: /about_us
