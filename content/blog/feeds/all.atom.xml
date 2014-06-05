@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2014-06-01T12:00:00+00:00</updated><entry><title>Reset The Net with Least Authority</title><link href="https://leastauthority.com/blog/least_authority_releases_s4+_as_part_of_reset_the_net.html" rel="alternate"></link><updated>2014-06-01T12:00:00+00:00</updated><author><name>Jessica Augustus and Inkblotest</name></author><id>tag:https://leastauthority.com/blog,2014-06-01:least_authority_releases_s4+_as_part_of_reset_the_net.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
-&lt;p&gt;Least Authority is &lt;a class="reference external" href="/about_us"&gt;a globally distributed company&lt;/a&gt; dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and open source code. Always.&lt;/p&gt;
+&lt;p&gt;Least Authority is &lt;a class="reference external" href="/about_us"&gt;a globally distributed company&lt;/a&gt; dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and Free and Open Source code. Always.&lt;/p&gt;
 &lt;p&gt;In support of &lt;a class="reference external" href="https://www.resetthenet.org/"&gt;Reset The Net&lt;/a&gt; we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and now include &lt;em&gt;unlimited&lt;/em&gt; personal data storage in the cloud!&lt;/p&gt;
 &lt;p&gt;S4 uses the Least Authority File System, a technology designed with
 User security in mind, and built from the ground up to provide that security as well as we know how.&lt;/p&gt;
 &lt;p&gt;Such tools allow the User to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the User.&lt;/p&gt;
 &lt;p&gt;We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-esque friendly file-syncing utility named “Magic Folders”.&lt;/p&gt;
 &lt;p&gt;If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the previous price.
-By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the open source crypto system,
+By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the Free and Open Source crypto system,
 and you're getting a great tool right now for your own use.&lt;/p&gt;
 &lt;p&gt;&lt;a class="reference external" href="https://www.youtube.com/embed/kLrcsyHqrwQ"&gt;This video&lt;/a&gt; demonstrates its use.&lt;/p&gt;
 &lt;a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button"&gt;Sign up!&lt;/a&gt;&lt;p&gt;Not familiar with the command line?&lt;/p&gt;

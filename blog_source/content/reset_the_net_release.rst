@@ -10,7 +10,7 @@ Reset The Net with Least Authority
 :author: Jessica Augustus and Inkblotest
 :summary: New Backup Service Released As Part of FFTF's "Reset The Net"
 
-Least Authority is `a globally distributed company`_ dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and open source code. Always.
+Least Authority is `a globally distributed company`_ dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and Free and Open Source code. Always.
 
 .. _a globally distributed company: /about_us
 
@@ -29,7 +29,7 @@ We are pleased to announce S4 as a command-line utility, and we are presently de
 
 
 If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the previous price.
-By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the open source crypto system,
+By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the Free and Open Source crypto system,
 and you're getting a great tool right now for your own use.
 
 
