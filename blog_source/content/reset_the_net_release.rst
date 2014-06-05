@@ -12,11 +12,13 @@ Reset The Net with Least Authority
 
 .. XXX insert "Reset The Net!" logo, name, banner, hyperlink here, before the description of Least Authority
 
-Least Authority is `a globally distributed company`_ dedicated to providing User controlled, verifiably secure storage. For us that means end-to-end-encryption and Free and Open Source code. Always.
+"Reset The Net!" is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.
+
+Least Authority is `a globally distributed company of expert security professionals`_ dedicated to providing *freedom-compatible* storage. For us that means end-to-end-encryption and Free and Open Source code. Always.
 
 .. _a globally distributed company: /about_us
 
-In support of `Reset The Net`_ we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and now include *unlimited* personal data storage in the cloud!
+In support of `Reset The Net`_ we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included *unlimited* personal data storage in the cloud.
 
 .. _Reset The Net: https://www.resetthenet.org/
 
