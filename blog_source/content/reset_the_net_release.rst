@@ -10,25 +10,21 @@ Reset The Net with Least Authority
 :author: Jessica Augustus and Inkblotest
 :summary: New Backup Service Released As Part of FFTF's "Reset The Net"
 
-.. XXX insert "Reset The Net!" logo, name, banner, hyperlink here, before the description of Least Authority
+`“Reset The Net!”`_ is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.
 
-"Reset The Net!" is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.
+.. _“Reset The Net!”: https://www.resetthenet.org/
 
 Least Authority is `a team of computer security professionals`_ dedicated to providing *freedom-compatible* storage. For us that means end-to-end-encryption and Free and Open Source code. Always.
 
 .. _a team of computer security professionals: /about_us
 
-In support of `Reset The Net`_ we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included *unlimited* personal data storage in the cloud.
-
-.. XXX once the "Reset The Net!" logo and hyperlink are installed above, then make this reference to "Reset The Net" here be just a plain unlinked word: '"Reset The Net!"' (with quotes, or else italicized, and with the exclamation point) instead of a hyperlink.
-
-.. _Reset The Net: https://www.resetthenet.org/
+In support of “Reset The Net!” we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included *unlimited* personal data storage in the cloud.
 
 S4 uses the Least Authority File System, a technology designed with
-User security in mind, and built from the ground up to provide that security as well as we know how.
+user security in mind, and built from the ground up to provide that security as well as we know how.
 
 
-Such tools allow the User to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the User.
+Such tools allow the user to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the user.
 
 
 We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-esque friendly file-syncing utility named “Magic Folders”.
