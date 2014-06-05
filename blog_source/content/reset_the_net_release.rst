@@ -1,14 +1,14 @@
 ﻿.. -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*-
 
-Reset The Net with Least Authority
-==================================
+Reset The Net with the Upgraded Simple Secure Storage Service
+=============================================================
 
-:date: 2014-06-01 12:00
+:date: 2014-06-05 00:00
 :tags: cloud, s4
 :category: News
 :slug: least_authority_releases_s4+_as_part_of_reset_the_net
 :author: Jessica Augustus and Inkblotest
-:summary: New Backup Service Released As Part of FFTF's "Reset The Net"
+:summary: New Backup Service Released As Part of "Reset The Net"
 
 `“Reset The Net!”`_ is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.
 
