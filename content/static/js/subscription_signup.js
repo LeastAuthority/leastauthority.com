@@ -11,7 +11,7 @@ window.creditcardVerifier = (function () {
         },
         register_callbacks: function ($form) {
             // This identifies your website in the createToken call below
-            Stripe.setPublishableKey('pk_test_IBiTH5UtEo2kB10eb1OSsv0w');
+            Stripe.setPublishableKey('pk_live_iJU9nYuC9rMkMedhZFdIPATZ');
             $form.submit(creditcardVerifier.formSubmissionHandler);
             $('#use_pgp').click(creditcardVerifier.use_pgp);
         },
