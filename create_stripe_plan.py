@@ -4,9 +4,9 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.config import Config
 
-config = Config('../../secret_config/lae_automation_config.json')
+config = Config()
 
-stripe.api_key = FilePath('../../secret_config/stripeapikey').getContent().strip()
+stripe.api_key = FilePath('../secret_config/stripeapikey').getContent().strip()
 product = config.products[0]
 
 amount = int(product["amount"])
