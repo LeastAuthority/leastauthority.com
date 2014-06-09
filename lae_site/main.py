@@ -13,8 +13,10 @@ from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import start
 
+import resource
 
 def main(basefp):
+    print resource.getrlimit(resource.RLIMIT_NOFILE)
     print sys.argv
     default_port = 443
     port = None
