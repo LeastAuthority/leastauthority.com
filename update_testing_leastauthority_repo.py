@@ -9,7 +9,7 @@ from twisted.internet import defer
 from twisted.python.filepath import FilePath
 
 from lae_automation.signup import EC2_ENDPOINT
-from lae_automation.server import install_infrastructure_server
+from lae_automation.server import update_leastauthority_repo
 
 branch_check_command = ['/usr/bin/git', '--git-dir', '../secret_config/.git', 'branch', '--list', 'testing']
 current_branch = subprocess.check_output(branch_check_command).strip()

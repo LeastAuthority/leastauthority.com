@@ -401,6 +401,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
         run('./runsite.sh')
 
 def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin_privkey_path):
+    set_host_and_key(publichost, admin_privkey_path, 'website')
     git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
     setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
     with cd('/home/website/leastauthority.com'):
