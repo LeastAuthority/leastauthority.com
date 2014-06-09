@@ -47,7 +47,7 @@ def eb(x):
 
 
 d = defer.succeed(update_leastauthority_repo("107.21.225.70", leastauthority_repo_path,
-                                             leastauthority_commit_ref, admin_privkey_path)
+                                             leastauthority_commit_ref, admin_privkey_path))
 
 d.addCallbacks(printer, eb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
