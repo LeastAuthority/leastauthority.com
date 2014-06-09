@@ -17,3 +17,5 @@ See `TGPPL.PDF`_ for why the TGPPL exists, graphically illustrated on three slid
 .. _COPYING.GPL: https://github.com/tahoe-lafs/tahoe-lafs/blob/master/COPYING.GPL
 .. _COPYING.TGPPL.rst: https://github.com/tahoe-lafs/tahoe-lafs/blob/master/COPYING.TGPPL.rst
 .. _TGPPL.PDF: https://tahoe-lafs.org/~zooko/tgppl.pdf
+
+BTW- a github hook should log into irc and announce repository changes with the nickname "leastbot".
