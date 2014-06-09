@@ -46,12 +46,8 @@ def eb(x):
     print >> sys.stderr, x
 
 
-d = defer.succeed(install_infrastructure_server(
-        "107.21.225.70", admin_privkey_path, website_pubkey,
-        leastauthority_repo_path, leastauthority_commit_ref,
-        secret_config_repo_path, secret_config_commit_ref,
-        stdout, stderr))
-
+d = defer.succeed(update_leastauthority_repo("107.21.225.70", leastauthority_repo_path,
+                                             leastauthority_commit_ref, admin_privkey_path)
 
 d.addCallbacks(printer, eb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))

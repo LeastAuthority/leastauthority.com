@@ -400,6 +400,16 @@ postfix	postfix/main_mailer_type select	No configuration"""
             run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
+def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin_privkey_path):
+    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
+    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
+    with cd('/home/website/leastauthority.com'):
+        # FIXME: make idempotent
+        if not files.exists('/home/website/leastauthority.com/flapp'):
+            run('flappserver create /home/website/leastauthority.com/flapp')
+            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
+        run('./runsite.sh')
+
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
