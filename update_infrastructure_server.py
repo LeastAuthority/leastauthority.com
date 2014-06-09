@@ -12,8 +12,9 @@ from lae_automation.signup import EC2_ENDPOINT
 from lae_automation.server import install_infrastructure_server
 
 
-parser = argparse.ArgumentParser(description=
-                    "Update an infrastructure server.")
+parser = argparse.ArgumentParser(description="Update an infrastructure server.")
+
+parser.add_argument("host_IP_address", help="The IP (v4) address of the web server. ")
 
 parser.add_argument("admin_keypair_name", help=
                     "The name of the keypair (as configured in the AWS account) for the new server. "
@@ -25,6 +26,7 @@ parser.add_argument("admin_privkey_path", help=
 parser.add_argument("leastauthority_repo_path", help=
                     "The absolute path to the git repository containing the leastauthority.com "
                     "code to deploy.")
+
 parser.add_argument("leastauthority_commit_ref", help=
                     "The specific commit within the repository at 'leastauthority_repo_path' that "
                     "will be deployed.")
@@ -35,11 +37,6 @@ parser.add_argument("secret_config_repo_path", help=
 parser.add_argument("secret_config_commit_ref", help=
                     "The specific commit within the repository at 'secret_config_repo_path' that will "
                     "be deployed.")
-
-exc_group = parser.add_mutually_exclusive_group()
-exc_group.add_argument('--existing_host', type=str)
-exc_group.add_argument('--new_host', type=str, help=
-                       "How this instance is referred to e.g. via AWS console.")
 
 args = parser.parse_args()
 print "args: %r" % (args,)
