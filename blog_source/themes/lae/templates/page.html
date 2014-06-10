@@ -1,8 +1,0 @@
-{% extends "base.html" %}
-{% block blog_content %}
-    <h3>{{ page.title }}</h3>
-    {% import 'translations.html' as translations with context %}
-    {{ translations.translations_for(page) }}
-
-    {{ page.content }}
-{% endblock %}
