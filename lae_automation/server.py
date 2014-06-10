@@ -290,7 +290,8 @@ def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
     return unique_tag_name
 
 
-def push_tag_checkout_branch(local_repo_path, host_IP_address, live_path, unique_tag, admin_privkey_path):
+def push_tag_checkout_branch(local_repo_path, host_IP_address, live_path, unique_tag, git_ssh_path,
+                             admin_privkey_path):
     local_git_push = ['/usr/bin/git',
                       '--git-dir=%s' % (local_repo_path,),
                       'push',
@@ -324,7 +325,8 @@ def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_pat
     run('chmod -f +x %s' % (q_update_hook_path,))
 
     unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1)
-    push_tag_checkout_branch(local_repo_path, host_IP_address, live_path, unique_tag, admin_privkey_path)
+    push_tag_checkout_branch(local_repo_path, host_IP_address, live_path, unique_tag, git_ssh_path,
+                             admin_privkey_path)
 
 def run_unattended_upgrade(api, seconds_for_reboot_pause):
     sudo_apt_get('update')
