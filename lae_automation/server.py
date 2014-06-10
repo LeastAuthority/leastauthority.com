@@ -290,8 +290,9 @@ def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
     return unique_tag_name
 
 
-def push_tag_checkout_branch(local_repo_path, host_IP_address, live_path, unique_tag, git_ssh_path,
+def tag_push_checkout(local_repo_path, src_ref_SHA1, host_IP_address, live_path, git_ssh_path,
                              admin_privkey_path):
+    unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1)
     local_git_push = ['/usr/bin/git',
                       '--git-dir=%s' % (local_repo_path,),
                       'push',
@@ -324,9 +325,9 @@ def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_pat
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), q_update_hook_path)
     run('chmod -f +x %s' % (q_update_hook_path,))
 
-    unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1)
-    push_tag_checkout_branch(local_repo_path, host_IP_address, live_path, unique_tag, git_ssh_path,
-                             admin_privkey_path)
+
+    tag_push_checkout(local_repo_path, src_ref_SHA1, host_IP_address, live_path, git_ssh_path,
+                      admin_privkey_path)
 
 def run_unattended_upgrade(api, seconds_for_reboot_pause):
     sudo_apt_get('update')
@@ -408,7 +409,11 @@ postfix	postfix/main_mailer_type select	No configuration"""
 
 def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
+    live_path = '/home/website/leastauthority.com'
     git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
+    tag_push_checkout(leastauth_repo, la_commit_hash, publichost, live_path, git_ssh_path,
+                      admin_privkey_path)
+
     setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
     with cd('/home/website/leastauthority.com'):
         # FIXME: make idempotent
