@@ -419,7 +419,8 @@ def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
     git_ssh_path = os.path.join(os.path.dirname(blog_repo), 'git_ssh.sh')
     tag_push_checkout(blog_repo, blog_commit_hash, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
-    run('python /home/website/blog_source/render_blog.py')
+    with cd('/home/website/blog_source'):
+        run('python /home/website/blog_source/render_blog.py')
 
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
