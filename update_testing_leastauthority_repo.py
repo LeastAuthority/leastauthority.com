@@ -21,12 +21,6 @@ least_repo_HEAD_command = ['/usr/bin/git', '--git-dir', leastauthority_repo_path
 leastauthority_commit_ref = subprocess.check_output(least_repo_HEAD_command).strip()
 print leastauthority_commit_ref
 
-secret_config_repo_path = '../secret_config/.git'
-secret_repo_HEAD_command = ['/usr/bin/git', '--git-dir', secret_config_repo_path, 'rev-parse', 'HEAD']
-secret_config_commit_ref = subprocess.check_output(secret_repo_HEAD_command).strip()
-print secret_config_commit_ref
-
-
 admin_keypair_name = "ec2sshadmin"
 admin_privkey_path = "../secret_config/ec2sshadmin.pem"
 
