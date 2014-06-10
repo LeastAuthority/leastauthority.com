@@ -22,6 +22,4 @@ blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', blog_repo_path, 'rev-pars
 blog_commit_ref = subprocess.check_output(blog_repo_HEAD_command).strip()
 print blog_commit_ref
 
-update_blog("107.21.225.70", blog_repo_path, blog_commit_ref, admin_privkey_path))
-
-
+update_blog("107.21.225.70", blog_repo_path, blog_commit_ref, admin_privkey_path)
