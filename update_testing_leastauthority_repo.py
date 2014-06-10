@@ -3,10 +3,9 @@
 (1) updates a testing infrastructure-server.
 """
 
-import os, sys, argparse, subprocess
+import os, sys, subprocess
 
 from twisted.internet import defer
-from twisted.python.filepath import FilePath
 
 from lae_automation.signup import EC2_ENDPOINT
 from lae_automation.server import update_leastauthority_repo
