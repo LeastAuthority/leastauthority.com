@@ -369,11 +369,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo_apt_get('install -y postfix')
     sudo_apt_get('install -y darcs')
 
-#    sudo_apt_get('install -y nginx')
-#    write(NGINX_CONFIG, '/etc/nginx/sites-enabled/mailman', True)
-#    sudo('rm /etc/nginx/sites-enabled/default')
-#    sudo('service nginx restart')
-
     run('wget https://pypi.python.org/packages/source/p/pelican/pelican-3.2.2.tar.gz')
     run('tar zxf pelican-3.2.2.tar.gz')
     with cd('pelican-3.2.2'):
