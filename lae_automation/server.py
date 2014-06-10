@@ -334,6 +334,14 @@ def run_unattended_upgrade(api, seconds_for_reboot_pause):
     sudo('unattended-upgrade --minimal_upgrade_steps')
     api.reboot(seconds_for_reboot_pause)
 
+def run_flapp_web_servers():
+    with cd('/home/website/leastauthority.com'):
+        # FIXME: make idempotent
+        if not files.exists('/home/website/leastauthority.com/flapp'):
+            run('flappserver create /home/website/leastauthority.com/flapp')
+            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
+        run('./runsite.sh')
+
 def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
                                   la_commit_hash, secretconf_repo, sc_commit_hash,
                                   stdout, stderr):
@@ -400,12 +408,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
     with cd('/home/website/secret_config'):
         run('chmod -f 400 *pem')
 
-    with cd('/home/website/leastauthority.com'):
-        # FIXME: make idempotent
-        if not files.exists('/home/website/leastauthority.com/flapp'):
-            run('flappserver create /home/website/leastauthority.com/flapp')
-            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
-        run('./runsite.sh')
+    run_flapp_web_servers()
 
 def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
@@ -413,14 +416,7 @@ def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin
     git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
     tag_push_checkout(leastauth_repo, la_commit_hash, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
-
-    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
-    with cd('/home/website/leastauthority.com'):
-        # FIXME: make idempotent
-        if not files.exists('/home/website/leastauthority.com/flapp'):
-            run('flappserver create /home/website/leastauthority.com/flapp')
-            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
-        run('./runsite.sh')
+    run_flapp_web_servers()
 
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
