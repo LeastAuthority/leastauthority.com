@@ -413,6 +413,14 @@ def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin
                       admin_privkey_path)
     run_flapp_web_servers()
 
+def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
+    set_host_and_key(publichost, admin_privkey_path, 'website')
+    live_path = '/home/website/blog_source'
+    git_ssh_path = os.path.join(os.path.dirname(blog_repo), 'git_ssh.sh')
+    tag_push_checkout(blog_repo, blog_commit_hash, publichost, live_path, git_ssh_path,
+                      admin_privkey_path)
+    run('python /home/website/blog_source/render_blog.py')
+
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
@@ -430,7 +438,6 @@ def update_txaws(publichost, admin_privkey_path, stdout, stderr):
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
 
-
 def update_tahoe(publichost, admin_privkey_path, stdout, stderr, do_update_txaws=False):
     set_host_and_key(publichost, admin_privkey_path, username="customer")
     print >>stdout, "Updating Tahoe-LAFS..."
@@ -445,7 +452,6 @@ def update_tahoe(publichost, admin_privkey_path, stdout, stderr, do_update_txaws
         run('python setup.py build')
     print >>stdout, "Restarting..."
     run('/home/customer/restart.sh')
-
 
 def delete_statmover_emissions(publichost, admin_privkey_path, stdout, stderr):
     set_host_and_key(publichost, admin_privkey_path)
