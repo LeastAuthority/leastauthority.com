@@ -300,6 +300,7 @@ def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_pat
     q_update_hook_path = shell_quote('%s/.git/hooks/post-update' % (live_path,))
 
     run('rm -rf %s' % (q_live_path,))
+    print q_live_path
     run_git('init %s' % (q_live_path,))
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), q_update_hook_path)
     run('chmod -f +x %s' % (q_update_hook_path,))
