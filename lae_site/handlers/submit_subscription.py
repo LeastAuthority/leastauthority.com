@@ -132,7 +132,10 @@ class SubmitSubscriptionHandler(HandlerBase):
         d.addCallback(when_done)
         d.addErrback(when_failed)
 
-    def render(self, request):
+    def render_GET(self, request):
+        return redirectTo('/reload_error')
+
+    def render_POST(self, request):
         # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
         # render_POST is handled by the HandlerBase parent which calls this this method after logging
         # the request.
@@ -149,8 +152,9 @@ class SubmitSubscriptionHandler(HandlerBase):
         # Log that a new subscription has been created (at stripe).
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
         append_record(subscriptions_fp, customer.subscription.id)
+
         # Initiate the provisioning service
         self.run_full_signup(customer, request)
-        # Return the a page notifying the user that they've been charged and their service is being set up.
-        tmpl = env.get_template('payment_verified.html')
-        return tmpl.render({"productfullname": "Simple Secure Storage Service", "productname":"S4"}).encode('utf-8')
+
+        # Redirect to a page notifying the user that they've been charged and their service is being set up.
+        return redirectTo('/s4_verified')
