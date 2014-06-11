@@ -420,6 +420,7 @@ def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
     tag_push_checkout(blog_repo, blog_commit_hash, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
     with cd('/home/website/blog_source'):
+        run('rm *pyc')
         run('python /home/website/blog_source/render_blog.py')
 
 INTRODUCER_PORT = '12345'
