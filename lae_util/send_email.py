@@ -25,12 +25,7 @@ REQUIRE_AUTH = True
 REQUIRE_TRANSPORT_SECURITY = True
 
 
-def send_plain_email(fromEmail, toEmail, content, headers):
-    if REQUIRE_AUTH:
-        password = FilePath(SMTP_PASSWORD_PATH).getContent().strip()
-    else:
-        password = None
-
+def compose_plain_email(fromEmail, toEmail, content, headers):
     msg = MIMEText(content)
 
     # Setup the mail headers
@@ -55,8 +50,17 @@ def send_plain_email(fromEmail, toEmail, content, headers):
     if "content-type" not in headkeys:
         msg["Content-Type"] = CONTENT_TYPE
 
-    # send message
-    f = StringIO(msg.as_string())
+    return msg.as_string()
+
+
+def send_plain_email(fromEmail, toEmail, content, headers):
+    if REQUIRE_AUTH:
+        password = FilePath(SMTP_PASSWORD_PATH).getContent().strip()
+    else:
+        password = None
+
+    msgstr = compose_plain_email(fromEmail, toEmail, content, headers)
+    f = StringIO(msgstr)
     d = defer.Deferred()
     factory = ESMTPSenderFactory(SMTP_USERNAME, password, fromEmail, toEmail, f, d,
                                  requireAuthentication=REQUIRE_AUTH,
