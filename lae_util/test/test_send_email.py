@@ -9,7 +9,9 @@ class TestEmailComposition(TestCase):
     def test_compose_pgpless_email(self):
         TEST_HEADERS = {"From": FROM_ADDRESS, "Subject": CONFIRMATION_EMAIL_SUBJECT}
         result = compose_plain_email( FROM_EMAIL,
-                                      "test@test",
+                                      'test@test',
                                       'content',
                                       TEST_HEADERS )
-        self.failUnlessEqual(result.count("Content-Type"), 1)
+
+        num_of_content_type_headers = sum([int(line.startswith('Content-Type:')) for line in result.splitlines()])
+        self.failUnlessEqual(num_of_content_type_headers, 1)
