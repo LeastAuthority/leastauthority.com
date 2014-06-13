@@ -13,7 +13,6 @@ FROM_EMAIL = "info@leastauthority.com"
 FROM_ADDRESS = "Least Authority <%s>" % (FROM_EMAIL,)
 SUPPORT_ADDRESS = "Least Authority Support <support@leastauthority.com>"
 USER_AGENT = "Least Authority e-mail sender"
-CONTENT_TYPE = 'text/plain; charset="utf-8"'
 
 PGP_NOTIFICATION_EMAIL = "zancas@leastauthority.com"
 
@@ -32,6 +31,8 @@ def compose_plain_email(fromEmail, toEmail, content, headers):
     for (header, value) in headers.items():
         msg[header] = value
 
+    msg.set_charset('utf-8')
+
     headkeys = [k.lower() for k in headers.keys()]
 
     # Add required headers if not present
@@ -47,8 +48,6 @@ def compose_plain_email(fromEmail, toEmail, content, headers):
         msg["Reply-To"] = SUPPORT_ADDRESS
     if "user-agent" not in headkeys:
         msg["User-Agent"] = USER_AGENT
-    if "content-type" not in headkeys:
-        msg["Content-Type"] = CONTENT_TYPE
 
     return msg.as_string()
 
