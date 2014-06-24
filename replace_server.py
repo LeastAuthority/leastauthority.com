@@ -7,7 +7,7 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.signup import replace_server
 from lae_util.timestamp import format_iso_time
-from lae_util.streams import LoggingTeeStream
+from lae_util.streams import LoggingStream
 
 
 # FIXME: duplicates code in full_signup.py
