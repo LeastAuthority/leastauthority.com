@@ -52,9 +52,7 @@ if __name__ == '__main__':
     def _close(res):
         sys.stdout.flush()
         sys.stderr.flush()
-        signup_log_fp.open().close()
-        stripesecrets_log_fp.open().close()
-        SSEC2secrets_log_fp.open().close()
+        signup_logfile.close()
         return res
     def _err(f):
         print >>sys.stderr, str(f)
