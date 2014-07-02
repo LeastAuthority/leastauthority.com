@@ -3,9 +3,8 @@
 (1) updates a testing blog instance.
 """
 
-import os, sys, subprocess
+import sys, subprocess
 
-from lae_automation.signup import EC2_ENDPOINT
 from lae_automation.server import update_blog
 
 branch_check_command = ['/usr/bin/git', '--git-dir', '../secret_config/.git', 'branch', '--list', 'testing']
