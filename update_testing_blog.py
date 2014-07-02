@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """This script:
 (1) updates a testing blog instance.
 """
