@@ -29,7 +29,7 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
             fields = line.split()
             [uid, pid, parent_pid, c, start_time, tty, proc_time] = fields[:7]
             cmd = fields[7:]
-            if [True for c in cmd if c.startswith('@')]:
+            if [True for cmd_word in cmd if cmd_word.startswith('@')]:
                 # not a node
                 continue
             if not (len(cmd) == 4 and cmd[0].endswith('/python') and cmd[1].endswith('/tahoe') and
