@@ -1,8 +1,11 @@
 
 import time, traceback
+from collections import deque
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
+from twisted.internet import defer
+from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
 
 from lae_automation.server import run, set_host_and_key, NotListeningError
@@ -156,6 +159,37 @@ def write_serverinfo(pathtoserverinfo, remotepropstuplelist):
     serverinfofp.setContent("")
     for rpt in remotepropstuplelist:
         append_record(serverinfofp, rpt[0], rpt[1], pubIPextractor(rpt[2]))
+
+
+def monitoring_check(checker, lasterrorspath, stdout, stderr):
+    error_stream = StringIO()
+
+    lasterrors = None
+    lasterrorsfp = FilePath(lasterrorspath)
+    if lasterrorsfp.exists():
+        lasterrors = lasterrorsfp.getContent()
+
+    d = checker(stdout, error_stream)
+    def cb(x):
+        if isinstance(x, Failure):
+            print >>stderr, str(x)
+            if hasattr(x.value, 'response'):
+                print >>stderr, x.value.response
+
+        errors = error_stream.getvalue()
+        print >>stderr, errors
+        if errors != lasterrors:
+            d2 = send_monitoring_report(errors)
+            def _sent(ign):
+                lasterrorsfp.setContent(errors)
+                raise Exception("Sent failure report.")
+            def _err(f):
+                print >>stderr, str(f)
+                return f
+            d2.addCallbacks(_sent, _err)
+            return d2
+    d.addBoth(cb)
+    return d
 
 
 MONITORING_EMAIL_SUBJECT = "Least Authority Enterprises monitoring report"
