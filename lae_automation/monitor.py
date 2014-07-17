@@ -7,6 +7,9 @@ from ConfigParser import SafeConfigParser
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
+from twisted.web.client import ResponseDone, Agent
+from twisted.web.http_headers import Headers
+from twisted.internet.protocol import Protocol
 
 from lae_automation.server import run, set_host_and_key, NotListeningError
 from lae_automation.aws.queryapi import pubIPextractor
@@ -160,6 +163,58 @@ def write_serverinfo(pathtoserverinfo, remotepropstuplelist):
     for rpt in remotepropstuplelist:
         append_record(serverinfofp, rpt[0], rpt[1], pubIPextractor(rpt[2]))
 
+
+class Discard(Protocol):
+    # see http://twistedmatrix.com/trac/ticket/5488
+    def makeConnection(self, producer):
+        producer.stopProducing()
+
+
+class DataCollector(Protocol):
+    def __init__(self):
+        self._data = deque()
+        self._done = defer.Deferred()
+
+    def dataReceived(self, bytes):
+        self._data.append(bytes)
+
+    def connectionLost(self, reason):
+        if reason.check(ResponseDone):
+            self._done.callback("".join(self._data))
+        else:
+            def _failed(): raise Exception(reason.getErrorMessage())
+            self._done.errback(defer.execute(_failed))
+
+    def when_done(self):
+        """CAUTION: this always returns the same Deferred."""
+        return self._done
+
+
+WEBSITE_URL = "https://leastauthority.com/"
+
+def check_infrastructure(url, stdout, stderr):
+    from twisted.internet import reactor
+    agent = Agent(reactor, connectTimeout=10)
+
+    request_headers = {}
+    d = defer.succeed(None)
+    d.addCallback(lambda ign: agent.request("GET", url, Headers(request_headers), None))
+
+    def _got_response(response):
+       print >>stdout, "Response for %s: %d %s" % (url, response.code, response.phrase)
+       if response.code < 200 or response.code >= 300:
+           collector = DataCollector()
+           response.deliverBody(collector)
+           d2 = collector.when_done()
+           def _print_body(body):
+               print >>stdout, body
+           d2.addCallback(_print_body)
+           return d2
+       else:
+           response.deliverBody(Discard())
+           return None
+    d.addCallback(_got_response)
+    return d
 
 def monitoring_check(checker, lasterrorspath, stdout, stderr):
     error_stream = StringIO()
