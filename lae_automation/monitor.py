@@ -201,13 +201,13 @@ def check_infrastructure(url, stdout, stderr):
     d.addCallback(lambda ign: agent.request("GET", url, Headers(request_headers), None))
 
     def _got_response(response):
-       print >>stdout, "Response for %s: %d %s" % (url, response.code, response.phrase)
+       print >>stderr, "Response for %s: %d %s" % (url, response.code, response.phrase)
        if response.code < 200 or response.code >= 300:
            collector = DataCollector()
            response.deliverBody(collector)
            d2 = collector.when_done()
            def _print_body(body):
-               print >>stdout, body
+               print >>stderr, body
            d2.addCallback(_print_body)
            return d2
        else:
