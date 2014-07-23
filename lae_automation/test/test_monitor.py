@@ -1,6 +1,10 @@
 
 from cStringIO import StringIO
+
 from twisted.trial.unittest import TestCase
+
+from twisted.internet import defer
+from twisted.web.http_headers import Headers
 
 from lae_automation.monitor import check_server, check_servers
 from lae_automation import monitor
@@ -185,3 +189,43 @@ class TestServerMonitoring(TestCase):
         STATE = 'stopped'
         REMOTEPROPTUPLIST = [(STARTTIME, INSTANCEID, DIFFPUBDNSNAME, STATE)]
         monitor.compare_servers_to_local(REMOTEPROPTUPLIST, LOCALSTATEDICT, self.STDOUT, self.STDERR)
+
+
+class MockResponse(object):
+    def __init__(self, code, phrase):
+        self.code = code
+        self.phrase = phrase
+
+    def deliverBody(self, collector):
+        self.collector = collector
+
+class MockAgent(object):
+    agent = None
+    def __init__(self, *args, **kargs):
+        MockAgent.agent = self
+
+    def request(self, method, url, headers, pool):
+        self.method = method
+        self.url = url
+        self.headers = headers
+        self.pool = pool
+        return defer.succeed(MockResponse(200, "OK"))
+
+
+class TestInfrastructureMonitoring(TestCase):
+    MOCKURL = "https://0.0.0.0/"
+
+    def test_check_infrastructure(self):
+        stdout = StringIO()
+        stderr = StringIO()
+        self.patch(monitor, 'Agent', MockAgent)
+
+        monitor.check_infrastructure(self.MOCKURL, stdout, stderr)
+        agent = MockAgent.agent
+        self.failUnlessEqual(agent.method, 'GET')
+        self.failUnlessEqual(agent.url, self.MOCKURL)
+        self.failUnlessIsInstance(agent.headers, Headers)
+        self.failUnlessEqual(agent.pool, None)
+
+    def test_monitoring_check(self):
+        pass
