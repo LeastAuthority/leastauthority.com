@@ -1,5 +1,5 @@
 """This script:
-(1) updates a testing blog instance.
+(1) updates a production blog instance.
 """
 
 import sys, subprocess
