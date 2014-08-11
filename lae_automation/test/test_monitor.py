@@ -199,17 +199,21 @@ class MockResponse(object):
     def deliverBody(self, collector):
         self.collector = collector
 
-class MockAgent(object):
-    agent = None
-    def __init__(self, *args, **kargs):
-        MockAgent.agent = self
 
-    def request(self, method, url, headers, pool):
-        self.method = method
-        self.url = url
-        self.headers = headers
-        self.pool = pool
-        return defer.succeed(MockResponse(200, "OK"))
+def make_mock_agent_class(response):
+    class MockAgent(object):
+        agent = None
+        def __init__(self, *args, **kargs):
+            MockAgent.agent = self
+
+        def request(self, method, url, headers, pool):
+            self.method = method
+            self.url = url
+            self.headers = headers
+            self.pool = pool
+            return defer.succeed(response)
+
+    return MockAgent
 
 
 class TestInfrastructureMonitoring(TestCase):
@@ -218,14 +222,16 @@ class TestInfrastructureMonitoring(TestCase):
     def test_check_infrastructure(self):
         stdout = StringIO()
         stderr = StringIO()
-        self.patch(monitor, 'Agent', MockAgent)
+        mock_agent_class = make_mock_agent_class(MockResponse(200, "OK"))
+        self.patch(monitor, 'Agent', mock_agent_class)
 
         monitor.check_infrastructure(self.MOCKURL, stdout, stderr)
-        agent = MockAgent.agent
+        agent = mock_agent_class.agent
         self.failUnlessEqual(agent.method, 'GET')
         self.failUnlessEqual(agent.url, self.MOCKURL)
         self.failUnlessIsInstance(agent.headers, Headers)
         self.failUnlessEqual(agent.pool, None)
+        self.failUnlessEqual(stderr.getvalue(), "Response for %s: 200 OK\n" % (self.MOCKURL,))
 
     def test_monitoring_check(self):
         pass
