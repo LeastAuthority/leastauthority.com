@@ -4,7 +4,9 @@ from cStringIO import StringIO
 from twisted.trial.unittest import TestCase
 
 from twisted.internet import defer
+from twisted.python.failure import Failure
 from twisted.web.http_headers import Headers
+from twisted.web.client import ResponseDone
 
 from lae_automation.monitor import check_server, check_servers
 from lae_automation import monitor
@@ -192,12 +194,14 @@ class TestServerMonitoring(TestCase):
 
 
 class MockResponse(object):
-    def __init__(self, code, phrase):
+    def __init__(self, code, phrase, body=""):
         self.code = code
         self.phrase = phrase
+        self.body = body
 
     def deliverBody(self, collector):
-        self.collector = collector
+        collector.dataReceived(self.body)
+        collector.connectionLost(Failure(ResponseDone("EOF")))
 
 
 def make_mock_agent_class(response):
@@ -211,7 +215,10 @@ def make_mock_agent_class(response):
             self.url = url
             self.headers = headers
             self.pool = pool
-            return defer.succeed(response)
+            if isinstance(response, Failure):
+                return response
+            else:
+                return defer.succeed(response)
 
     return MockAgent
 
@@ -219,19 +226,34 @@ def make_mock_agent_class(response):
 class TestInfrastructureMonitoring(TestCase):
     MOCKURL = "https://0.0.0.0/"
 
-    def test_check_infrastructure(self):
+    def _test_check_infrastructure(self, response, response_text):
         stdout = StringIO()
         stderr = StringIO()
-        mock_agent_class = make_mock_agent_class(MockResponse(200, "OK"))
+        mock_agent_class = make_mock_agent_class(response)
         self.patch(monitor, 'Agent', mock_agent_class)
 
-        monitor.check_infrastructure(self.MOCKURL, stdout, stderr)
-        agent = mock_agent_class.agent
-        self.failUnlessEqual(agent.method, 'GET')
-        self.failUnlessEqual(agent.url, self.MOCKURL)
-        self.failUnlessIsInstance(agent.headers, Headers)
-        self.failUnlessEqual(agent.pool, None)
-        self.failUnlessEqual(stderr.getvalue(), "Response for %s: 200 OK\n" % (self.MOCKURL,))
+        d = monitor.check_infrastructure(self.MOCKURL, stdout, stderr)
+        def _check(ign):
+            agent = mock_agent_class.agent
+            self.failUnlessEqual(agent.method, 'GET')
+            self.failUnlessEqual(agent.url, self.MOCKURL)
+            self.failUnlessIsInstance(agent.headers, Headers)
+            self.failUnlessEqual(agent.pool, None)
+            self.failUnlessEqual(stderr.getvalue(),
+                                 "Response for %s: %s" % (self.MOCKURL, response_text))
+        d.addCallback(_check)
+        return d
+
+    def test_check_infrastructure_ok(self):
+        return self._test_check_infrastructure(MockResponse(200, "OK"), "200 OK\n")
+
+    def test_check_infrastructure_bad(self):
+        return self._test_check_infrastructure(MockResponse(500, "Arrgh", "Oops"), "500 Arrgh\nOops\n")
+
+    def test_check_infrastructure_fail(self):
+        d = self._test_check_infrastructure(Failure(Exception("failed")), "")
+        d.addCallbacks(lambda ign: self.fail("should not succeed"), lambda f: f.trap(Exception))
+        return d
 
     def test_monitoring_check(self):
         pass
