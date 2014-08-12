@@ -422,6 +422,23 @@ def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
     with cd('/home/website/blog_source'):
         run('python /home/website/blog_source/render_blog.py')
 
+def check_branch_and_update_blog(branch, host, blog_repo_path, secret_config_path, stdout):
+    branch_check_command = ['/usr/bin/git', '--git-dir', os.path.join(secret_config_path, '.git'),
+                            'branch', '--list', branch]
+    current_branch = subprocess.check_output(branch_check_command).strip()
+    if current_branch != "* %s" % (branch,):
+        raise Exception("The %r branch of the secret_config repo must be checked out to run this script." % (branch,))
+
+    admin_privkey_path = os.path.join(secret_config_path, 'ec2sshadmin.pem')
+
+    blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', os.path.join(blog_repo_path, '.git'),
+                              'rev-parse', 'HEAD']
+    blog_commit_ref = subprocess.check_output(blog_repo_HEAD_command).strip()
+    print >>stdout, blog_commit_ref
+
+    update_blog(host, blog_repo_path, blog_commit_ref, admin_privkey_path)
+
+
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
