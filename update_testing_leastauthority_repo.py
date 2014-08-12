@@ -39,7 +39,7 @@ def eb(x):
     print >> sys.stderr, x
 
 
-d = defer.succeed(update_leastauthority_repo("107.21.225.70", leastauthority_repo_path,
+d = defer.succeed(update_leastauthority_repo("testing.leastauthority.com", leastauthority_repo_path,
                                              leastauthority_commit_ref, admin_privkey_path))
 
 d.addCallbacks(printer, eb)
