@@ -229,20 +229,29 @@ class TestInfrastructureMonitoring(TestCase):
         mock_agent_class = make_mock_agent_class(response)
         self.patch(monitor, 'Agent', mock_agent_class)
 
-        monitor.check_infrastructure(self.MOCKURL, stdout, stderr)
-        agent = mock_agent_class.agent
-        self.failUnlessEqual(agent.method, 'GET')
-        self.failUnlessEqual(agent.url, self.MOCKURL)
-        self.failUnlessIsInstance(agent.headers, Headers)
-        self.failUnlessEqual(agent.pool, None)
-        self.failUnlessEqual(stderr.getvalue(),
-                             "Response for %s: %s" % (self.MOCKURL, response_text))
+        d = monitor.check_infrastructure(self.MOCKURL, stdout, stderr)
+        def _check(ign):
+            agent = mock_agent_class.agent
+            self.failUnlessEqual(agent.method, 'GET')
+            self.failUnlessEqual(agent.url, self.MOCKURL)
+            self.failUnlessIsInstance(agent.headers, Headers)
+            self.failUnlessEqual(agent.pool, None)
+            self.failUnlessEqual(stderr.getvalue(),
+                                 "Response for %s: %s" % (self.MOCKURL, response_text))
+        d.addCallback(_check)
+        return d
 
     def test_check_infrastructure_ok(self):
         return self._test_check_infrastructure(MockResponse(200, "OK"), "200 OK\n")
 
     def test_check_infrastructure_bad(self):
         return self._test_check_infrastructure(MockResponse(500, "Arrgh", "Oops"), "500 Arrgh\nOops\n")
+
+    def test_check_infrastructure_fail(self):
+        def _fail(): raise Exception("failed")
+        d = self._test_check_infrastructure(defer.execute(_fail), "")
+        d.addCallback(shouldFail...)
+        return d
 
     def test_monitoring_check(self):
         pass
