@@ -239,13 +239,17 @@ class TestInfrastructureMonitoring(TestCase):
             self.failUnlessEqual(agent.url, self.MOCKURL)
             self.failUnlessIsInstance(agent.headers, Headers)
             self.failUnlessEqual(agent.pool, None)
-            self.failUnlessEqual(stderr.getvalue(),
+            stream = stdout if response.code == 200 else stderr
+            self.failUnlessEqual(stream.getvalue(),
                                  "Response for %s: %s" % (self.MOCKURL, response_text))
         d.addCallback(_check)
         return d
 
     def test_check_infrastructure_ok(self):
         return self._test_check_infrastructure(MockResponse(200, "OK"), "200 OK\n")
+
+    def test_check_infrastructure_unexpected(self):
+        return self._test_check_infrastructure(MockResponse(204, "No content", ""), "204 No content\n\n")
 
     def test_check_infrastructure_bad(self):
         return self._test_check_infrastructure(MockResponse(500, "Arrgh", "Oops"), "500 Arrgh\nOops\n")
