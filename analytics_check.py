@@ -16,6 +16,6 @@ def checker(stdout, stderr):
         d.addCallback(lambda ign, url=url: check_infrastructure(url, stdout, stderr))
     return d
 
-d = monitoring_check(checker, lasterrorspath, sys.stdout, sys.stderr)
+d = monitoring_check(checker, lasterrorspath, "analytics", sys.stdout, sys.stderr)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()

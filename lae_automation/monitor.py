@@ -217,7 +217,7 @@ def check_infrastructure(url, stdout, stderr):
     d.addCallback(_got_response)
     return d
 
-def monitoring_check(checker, lasterrorspath, stdout, stderr):
+def monitoring_check(checker, lasterrorspath, what, stdout, stderr):
     error_stream = StringIO()
 
     lasterrors = None
@@ -235,7 +235,7 @@ def monitoring_check(checker, lasterrorspath, stdout, stderr):
         errors = error_stream.getvalue()
         print >>stderr, errors
         if errors != lasterrors:
-            d2 = send_monitoring_report(errors)
+            d2 = send_monitoring_report(errors, what)
             def _sent(ign):
                 lasterrorsfp.setContent(errors)
                 raise Exception("Sent failure report.")
@@ -248,24 +248,24 @@ def monitoring_check(checker, lasterrorspath, stdout, stderr):
     return d
 
 
-MONITORING_EMAIL_SUBJECT = "Least Authority Enterprises monitoring report"
+MONITORING_EMAIL_SUBJECT = "Least Authority Enterprises monitoring report for %(what)s"
 
-MONITORING_EMAIL_BODY_BROKEN = """Hello, monitoring script here.
+MONITORING_EMAIL_BODY_BROKEN = """Hello, monitoring for %(what)s here.
 
 The following problem(s) may need investigation:
 
-%s
+%(errors)s
 
 --\x20
-multiservercheck.py
+monitoring for %(what)s
 """
 
-MONITORING_EMAIL_BODY_WORKING = """Hello, monitoring script here.
+MONITORING_EMAIL_BODY_WORKING = """Hello, monitoring for %(what)s here.
 
 Everything appears to be working again, as far as I can tell.
 
 --\x20
-multiservercheck.py
+monitoring for %(what)s
 """
 
 FROM_ADDRESS = "Monitoring <%s>" % (FROM_EMAIL,)
@@ -273,14 +273,14 @@ TO_EMAIL = "info@leastauthority.com"
 TO_EMAIL2 = "monitoring@leastauthority.com"
 
 
-def send_monitoring_report(errors):
+def send_monitoring_report(errors, what):
     if errors:
-        content = MONITORING_EMAIL_BODY_BROKEN % (errors,)
+        content = MONITORING_EMAIL_BODY_BROKEN % {"errors": errors, "what": what}
     else:
-        content = MONITORING_EMAIL_BODY_WORKING
+        content = MONITORING_EMAIL_BODY_WORKING % {"what": what}
     headers = {
                "From": FROM_ADDRESS,
-               "Subject": MONITORING_EMAIL_SUBJECT,
+               "Subject": MONITORING_EMAIL_SUBJECT % {"what": what},
               }
 
     d = send_plain_email(FROM_EMAIL, TO_EMAIL, content, headers)
