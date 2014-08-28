@@ -13,7 +13,7 @@ from twisted.internet.protocol import Protocol
 
 from lae_automation.server import run, set_host_and_key, NotListeningError
 from lae_automation.aws.queryapi import pubIPextractor
-from lae_util.send_email import send_plain_email, FROM_EMAIL
+from lae_util.send_email import send_plain_email
 from lae_util.servers import append_record
 from lae_util.timestamp import parse_iso_time
 
@@ -217,7 +217,7 @@ def check_infrastructure(url, stdout, stderr):
     d.addCallback(_got_response)
     return d
 
-def monitoring_check(checker, lasterrorspath, what, stdout, stderr):
+def monitoring_check(checker, lasterrorspath, from_email, what, stdout, stderr):
     error_stream = StringIO()
 
     lasterrors = None
@@ -235,7 +235,7 @@ def monitoring_check(checker, lasterrorspath, what, stdout, stderr):
         errors = error_stream.getvalue()
         print >>stderr, errors
         if errors != lasterrors:
-            d2 = send_monitoring_report(errors, what)
+            d2 = send_monitoring_report(errors, from_email, what)
             def _sent(ign):
                 lasterrorsfp.setContent(errors)
                 raise Exception("Sent failure report.")
@@ -268,21 +268,20 @@ Everything appears to be working again, as far as I can tell.
 monitoring for %(what)s
 """
 
-FROM_ADDRESS = "Monitoring <%s>" % (FROM_EMAIL,)
 TO_EMAIL = "info@leastauthority.com"
 TO_EMAIL2 = "monitoring@leastauthority.com"
 
 
-def send_monitoring_report(errors, what):
+def send_monitoring_report(errors, from_email, what):
     if errors:
         content = MONITORING_EMAIL_BODY_BROKEN % {"errors": errors, "what": what}
     else:
         content = MONITORING_EMAIL_BODY_WORKING % {"what": what}
     headers = {
-               "From": FROM_ADDRESS,
+               "From": "Monitoring <%s>" % (from_email,),
                "Subject": MONITORING_EMAIL_SUBJECT % {"what": what},
               }
 
-    d = send_plain_email(FROM_EMAIL, TO_EMAIL, content, headers)
-    d.addBoth(lambda ign: send_plain_email(FROM_EMAIL, TO_EMAIL2, content, headers))
+    d = send_plain_email(from_email, TO_EMAIL, content, headers)
+    d.addBoth(lambda ign: send_plain_email(from_email, TO_EMAIL2, content, headers))
     return d
