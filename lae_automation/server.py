@@ -125,7 +125,7 @@ INFRASTRUCTURE_CRONTAB = """\
 # This isn't used yet because we don't have automated set-up of analytics servers.
 ANALYTICS_CRONTAB = """\
 @reboot /home/analytics/start.sh
-*/10 * * * * /home/analytics/leastauthority.com/analytics_check.sh &> /home/analytics/wccronrunlog
+*/10 * * * * /home/analytics/leastauthority.com/website_check.sh &> /home/analytics/wccronrunlog
 """
 
 SSEC2_CRONTAB = """\
