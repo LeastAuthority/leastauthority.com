@@ -17,7 +17,7 @@ def checker(stdout, stderr):
     return d
 
 d = monitoring_check(checker=checker, lasterrorspath=lasterrorspath,
-                     from_email="analytics@leastauthority.com",
+                     from_email="info@leastauthority.com",
                      what="website",
                      stdout=sys.stdout, stderr=sys.stderr)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
