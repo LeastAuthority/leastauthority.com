@@ -114,6 +114,26 @@ server {
     }                                                                                                               
 }"""
 
+INFRASTRUCTURE_CRONTAB = """\
+@reboot /home/website/leastauthority.com/start.sh
+@reboot /home/website/cronbackupjob.sh
+*/10 * * * * /home/website/leastauthority.com/multiservercheck.sh &> /home/website/msccronrunlog
+*/10 * * * * /home/website/leastauthority.com/analytics_check.sh &> /home/website/accronrunlog
+26 22 * * * /home/website/cronbackupjob.sh
+"""
+
+# This isn't used yet because we don't have automated set-up of analytics servers.
+ANALYTICS_CRONTAB = """\
+@reboot /home/analytics/start.sh
+*/10 * * * * /home/analytics/leastauthority.com/analytics_check.sh &> /home/analytics/wccronrunlog
+"""
+
+SSEC2_CRONTAB = """\
+@reboot /home/customer/restart.sh
+"""
+
+
+
 class NotListeningError(Exception):
     pass
 
@@ -404,6 +424,7 @@ postfix	postfix/main_mailer_type select	No configuration"""
         run('chmod -f 400 *pem')
 
     run_flapp_web_servers()
+    set_up_crontab(INFRASTRUCTURE_CRONTAB, '/home/website/ctab')
 
 def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
@@ -502,8 +523,11 @@ def update_packages(publichost, admin_privkey_path, stdout, stderr):
 def set_up_reboot(stdout, stderr):
     print >>stdout, "Setting up introducer and storage server to run on reboot..."
     write(RESTART_SCRIPT, '/home/customer/restart.sh', mode=0750)
-    write('@reboot /home/customer/restart.sh\n', '/home/customer/ctab')
-    run('crontab /home/customer/ctab')
+    set_up_crontab(SSEC2_CRONTAB, '/home/customer/ctab')
+
+def set_up_crontab(crontab, tmp_path):
+    write(crontab, tmp_path)
+    run('crontab %s' % (tmp_path,))
 
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
