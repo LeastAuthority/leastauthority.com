@@ -16,7 +16,9 @@ def checker(stdout, stderr):
         d.addCallback(lambda ign, url=url: check_infrastructure(url, stdout, stderr))
     return d
 
-d = monitoring_check(checker, lasterrorspath, "website", "analytics@leastauthority.com",
-                     sys.stdout, sys.stderr)
+d = monitoring_check(checker=checker, lasterrorspath=lasterrorspath,
+                     from_email="analytics@leastauthority.com",
+                     what="website",
+                     stdout=sys.stdout, stderr=sys.stderr)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()
