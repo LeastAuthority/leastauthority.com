@@ -171,6 +171,10 @@ EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
     'python-markdown',
 ]
 
+EXTRA_ANALYTICS_PACKAGE_DEPENDENCIES = [
+    'fabric',
+]
+
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
 # pty=False will cause fabric to echo stdin, but that's fine.
@@ -458,6 +462,45 @@ def check_branch_and_update_blog(branch, host, blog_repo_path, secret_config_pat
     print >>stdout, blog_commit_ref
 
     update_blog(host, blog_repo_path, blog_commit_ref, admin_privkey_path)
+
+
+def install_analytics_server(publichost, admin_privkey_path, analytics_pubkey, leastauth_repo,
+                             la_commit_hash, secretconf_repo, sc_commit_hash,
+                             stdout, stderr):
+    """
+    This is the code that sets up the analytics server.
+    This is intended to be idempotent.
+
+    Known sources of non-idempotence:
+        - setup_git_deploy
+    """
+    set_host_and_key(publichost, admin_privkey_path)
+    print >>stdout, "Updating server..."
+    run_unattended_upgrade(api, UNATTENDED_UPGRADE_REBOOT_SECONDS)
+
+    print >>stdout, "Installing dependencies..."
+    package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_ANALYTICS_PACKAGE_DEPENDENCIES
+    apt_install_dependencies(stdout, package_list)
+
+    create_account('analytics', analytics_pubkey, stdout, stderr)
+
+    run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
+    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
+    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
+        sudo('python ./setup.py install')
+
+    # patch twisted to send intermediate certs, cf. https://github.com/LeastAuthority/leastauthority.com/issues/6
+    sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
+
+    set_host_and_key(publichost, admin_privkey_path, 'analytics')
+    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
+    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
+    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
+
+    # install Piwik
+    # create secret_config and smtppassword
+
+    set_up_crontab(ANALYTICS_CRONTAB, '/home/analytics/ctab')
 
 
 INTRODUCER_PORT = '12345'
