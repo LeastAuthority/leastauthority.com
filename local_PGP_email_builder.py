@@ -1,4 +1,5 @@
-#To be run in mf/confirmation/$TARGET
+#To be run in $(SERVICE_ID)/confirmations/$(SUBSCRIBER_EMAIL_ADDRESS)
+#See Usage messages in main().
 
 import subprocess, os, sys, glob, simplejson
 
@@ -7,13 +8,13 @@ from twisted.python.filepath import FilePath
 
 from lae_automation.confirmation import CONFIRMATION_EMAIL_BODY
 
-def extract_logs_from_tarball(archive_name):
+def extract_logs_from_tarball(archive_name, service_id):
     extraction_arg_list = ['tar', '-xjvf', archive_name]
     subprocess.call(extraction_arg_list)
-    path_pattern = 'home/website/secrets/S4_consumer_iteration_2_beta1_2014-05-27/*/*'
+    path_pattern = 'home/website/secrets/'+service_id+'/*/*'
     for path in glob.glob(path_pattern):
         cp_arg_list = ['cp', str(path), './']
-        cp_sp = subprocess.call(cp_arg_list)
+        subprocess.call(cp_arg_list)
     return True
 
 def extract_PGP_key(work_dir_path):
@@ -48,16 +49,22 @@ def encrypt_sign_confirmation(ID, PGP_contact_email):
     sp = subprocess.Popen(enc_list)
     sp.wait()
 
-if __name__ == '__main__':
-    if len(sys.argv) != 3:
-        print "Usage: python $(leastauthority.com_DIR)/local_PGP_email_builder.py email_of_subscriber email_of_LA_PGP_handler"
+def main():
+    if len(sys.argv) != 4:
+        print "Usage: python $(leastauthority.com_DIR)/local_PGP_email_builder.py service_id email_of_subscriber email_of_LA_PGP_handler"
         sys.exit(-10)
-    signup_email = sys.argv[1]
-    encryption_confirmation_handler_email = sys.argv[2]
-    work_dir_path = '/home/arc/mf/confirmations/%s/' % signup_email
+    service_id = sys.argv[1]
+    signup_email = sys.argv[2]
+    encryption_confirmation_handler_email = sys.argv[3]
+    work_dir_path = os.getcwd()
+    if (os.path.basename(work_dir_path) != signup_email) or not (os.path.dirname(os.getcwd()).endswith('confirmations')):
+        print "This script must be run in the PGP-signup confirmation-email directory for the relevant service, and signup: "
+        print "e.g. S4_EXAMPLE_SERVICE/confirmations/foo@spam.net/"
+        print "instead it was run in: ' "+os.getcwd()+" '"
+        sys.exit(-9)
     os.chdir(work_dir_path)
     archive_name = '%s_signup_PGP_data.tar.bz2' % signup_email
-    if extract_logs_from_tarball(archive_name):
+    if extract_logs_from_tarball(archive_name, service_id):
         if extract_PGP_key(work_dir_path):
             ID = import_PGP_key('PGP_pubkey.asc')
             intro_furl = extract_furl()
@@ -66,3 +73,6 @@ if __name__ == '__main__':
     else:
         print "Failed to extract logs"
         sys.exit(-1)
+
+if __name__ == '__main__':
+    main()
