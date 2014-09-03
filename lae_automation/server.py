@@ -436,7 +436,7 @@ def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin
 
 def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
-    live_path = '/home/website/blog_source'
+    live_path = '/home/website/blog_source/'
     git_ssh_path = os.path.join(os.path.dirname(blog_repo), 'git_ssh.sh')
     tag_push_checkout(blog_repo, blog_commit_hash, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
@@ -444,16 +444,15 @@ def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
         run('python /home/website/blog_source/render_blog.py')
 
 def check_branch_and_update_blog(branch, host, blog_repo_path, secret_config_path, stdout):
-    branch_check_command = ['/usr/bin/git', '--git-dir', os.path.join(secret_config_path, '.git'),
-                            'branch', '--list', branch]
+    branch_check_command = ['/usr/bin/git', '--git-dir', secret_config_path, 'branch', '--list',
+                            branch]
     current_branch = subprocess.check_output(branch_check_command).strip()
     if current_branch != "* %s" % (branch,):
         raise Exception("The %r branch of the secret_config repo must be checked out to run this script." % (branch,))
 
-    admin_privkey_path = os.path.join(secret_config_path, 'ec2sshadmin.pem')
-
-    blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', os.path.join(blog_repo_path, '.git'),
-                              'rev-parse', 'HEAD']
+    secret_config_work_dir = secret_config_path.rpartition('/')[0]
+    admin_privkey_path = os.path.join(secret_config_work_dir, 'ec2sshadmin.pem')
+    blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', blog_repo_path, 'rev-parse', 'HEAD']
     blog_commit_ref = subprocess.check_output(blog_repo_HEAD_command).strip()
     print >>stdout, blog_commit_ref
 
