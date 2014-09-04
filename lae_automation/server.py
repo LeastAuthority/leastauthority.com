@@ -302,19 +302,19 @@ def make_unique_tag_name(host_IP_address, src_ref_SHA1):
     name = time_tag_name+'_'+host_IP_address+'_'+hash_frag
     return name
 
-def tag_local_repo(host_IP_address, local_repo, src_ref_SHA1):
+def tag_local_repo(host_IP_address, local_repo_gitdir, src_ref_SHA1):
     unique_tag_name = make_unique_tag_name(host_IP_address, src_ref_SHA1)
     command_string = ('/usr/bin/git --git-dir=%s tag %s %s'
-                      % (shell_quote(local_repo), shell_quote(unique_tag_name), shell_quote(src_ref_SHA1)))
+                      % (shell_quote(local_repo_gitdir), shell_quote(unique_tag_name), shell_quote(src_ref_SHA1)))
     subprocess.check_call(command_string.split())
     return unique_tag_name
 
 
-def tag_push_checkout(local_repo_path, src_ref_SHA1, host_IP_address, live_path, git_ssh_path,
+def tag_push_checkout(local_repo_gitdir, src_ref_SHA1, host_IP_address, live_path, git_ssh_path,
                              admin_privkey_path):
-    unique_tag = tag_local_repo(host_IP_address, local_repo_path, src_ref_SHA1)
+    unique_tag = tag_local_repo(host_IP_address, local_repo_gitdir, src_ref_SHA1)
     local_git_push = ['/usr/bin/git',
-                      '--git-dir=%s' % (local_repo_path,),
+                      '--git-dir=%s' % (local_repo_gitdir,),
                       'push',
                       'website@%s:%s' % (host_IP_address, live_path),
                       '%s:%s' % (unique_tag, unique_tag)]
@@ -330,7 +330,7 @@ def tag_push_checkout(local_repo_path, src_ref_SHA1, host_IP_address, live_path,
         run_git('checkout %s' % (q_unique_tag,))
         run_git('checkout -b %s' % (q_unique_tag,))
 
-def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_path, local_repo_path,
+def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_path, local_repo_gitdir,
                      src_ref_SHA1):
     if live_path.endswith('/') or not os.path.isabs(live_path):
         bad_path = u"%s" % (live_path,)
@@ -345,8 +345,7 @@ def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_pat
     write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), q_update_hook_path)
     run('chmod -f +x %s' % (q_update_hook_path,))
 
-
-    tag_push_checkout(local_repo_path, src_ref_SHA1, host_IP_address, live_path, git_ssh_path,
+    tag_push_checkout(local_repo_gitdir, src_ref_SHA1, host_IP_address, live_path, git_ssh_path,
                       admin_privkey_path)
 
 def run_unattended_upgrade(api, seconds_for_reboot_pause):
@@ -362,8 +361,9 @@ def run_flapp_web_servers():
             run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
         run('./runsite.sh')
 
-def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey, leastauth_repo,
-                                  la_commit_hash, secretconf_repo, sc_commit_hash,
+def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey,
+                                  leastauth_repo_gitdir, leastauth_commit_hash,
+                                  secret_config_repo_gitdir, secret_config_commit_hash,
                                   stdout, stderr):
     """
     This is the code that sets up the infrastructure server.
@@ -410,9 +410,11 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
 
     set_host_and_key(publichost, admin_privkey_path, 'website')
-    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
-    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com', leastauth_repo, la_commit_hash)
-    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/secret_config', secretconf_repo, sc_commit_hash)
+    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo_gitdir), 'git_ssh.sh')
+    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com',
+                     leastauth_repo_gitdir, leastauth_commit_hash)
+    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/secret_config',
+                     secret_config_repo_gitdir, secret_config_commit_hash)
 
     with cd('/home/website/'):
         if not files.exists('signup_logs'):
@@ -426,38 +428,44 @@ postfix	postfix/main_mailer_type select	No configuration"""
     run_flapp_web_servers()
     set_up_crontab(INFRASTRUCTURE_CRONTAB, '/home/website/ctab')
 
-def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin_privkey_path):
+def update_leastauthority_repo(publichost, leastauth_repo_workdir, leastauth_commit_hash, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
+
+    leastauth_repo_gitdir = os.path.join(leastauth_repo_workdir, '.git')
     live_path = '/home/website/leastauthority.com'
-    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
-    tag_push_checkout(leastauth_repo, la_commit_hash, publichost, live_path, git_ssh_path,
+    git_ssh_path = os.path.join(leastauth_repo_workdir, 'git_ssh.sh')
+
+    tag_push_checkout(leastauth_repo_gitdir, leastauth_commit_hash, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
     run_flapp_web_servers()
 
-def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
+def update_blog(publichost, blog_repo_gitdir, blog_commit_hash, git_ssh_path, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
+
     live_path = '/home/website/blog_source'
-    git_ssh_path = os.path.join(os.path.dirname(blog_repo), 'git_ssh.sh')
-    tag_push_checkout(blog_repo, blog_commit_hash, publichost, live_path, git_ssh_path,
+
+    tag_push_checkout(blog_repo_gitdir, blog_commit_hash, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
-    with cd('/home/website/blog_source'):
+    with cd(live_path):
         run('python /home/website/blog_source/render_blog.py')
 
-def check_branch_and_update_blog(branch, host, blog_repo_path, secret_config_path, stdout):
-    branch_check_command = ['/usr/bin/git', '--git-dir', os.path.join(secret_config_path, '.git'),
-                            'branch', '--list', branch]
+def check_branch_and_update_blog(branch, host, blog_repo_workdir, secret_config_repo_workdir, stdout):
+    blog_repo_gitdir = os.path.join(blog_repo_workdir, '.git')
+    secret_config_repo_gitdir = os.path.join(secret_config_repo_workdir, '.git')
+    git_ssh_path = os.path.join(blog_repo_workdir, 'git_ssh.sh')
+    admin_privkey_path = os.path.join(secret_config_repo_workdir, 'ec2sshadmin.pem')
+
+    branch_check_command = ['/usr/bin/git', '--git-dir', secret_config_repo_gitdir, 'branch', '--list', branch]
+
     current_branch = subprocess.check_output(branch_check_command).strip()
     if current_branch != "* %s" % (branch,):
         raise Exception("The %r branch of the secret_config repo must be checked out to run this script." % (branch,))
 
-    admin_privkey_path = os.path.join(secret_config_path, 'ec2sshadmin.pem')
+    blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', blog_repo_gitdir, 'rev-parse', 'HEAD']
+    blog_commit_hash = subprocess.check_output(blog_repo_HEAD_command).strip()
+    print >>stdout, blog_commit_hash
 
-    blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', os.path.join(blog_repo_path, '.git'),
-                              'rev-parse', 'HEAD']
-    blog_commit_ref = subprocess.check_output(blog_repo_HEAD_command).strip()
-    print >>stdout, blog_commit_ref
-
-    update_blog(host, blog_repo_path, blog_commit_ref, admin_privkey_path)
+    update_blog(host, blog_repo_gitdir, blog_commit_hash, git_ssh_path, admin_privkey_path)
 
 
 INTRODUCER_PORT = '12345'
