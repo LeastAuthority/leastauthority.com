@@ -426,38 +426,44 @@ postfix	postfix/main_mailer_type select	No configuration"""
     run_flapp_web_servers()
     set_up_crontab(INFRASTRUCTURE_CRONTAB, '/home/website/ctab')
 
-def update_leastauthority_repo(publichost, leastauth_repo, la_commit_hash, admin_privkey_path):
+def update_leastauthority_repo(publichost, leastauth_repo_workdir, leastauth_commit_ref, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
+
+    leastauth_repo_gitdir = os.path.join(leastauth_repo_workdir, '.git')
     live_path = '/home/website/leastauthority.com'
-    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo), 'git_ssh.sh')
-    tag_push_checkout(leastauth_repo, la_commit_hash, publichost, live_path, git_ssh_path,
+    git_ssh_path = os.path.join(leastauth_repo_workdir, 'git_ssh.sh')
+
+    tag_push_checkout(leastauth_repo_gitdir, leastauth_commit_ref, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
     run_flapp_web_servers()
 
-def update_blog(publichost, blog_repo, blog_commit_hash, admin_privkey_path):
+def update_blog(publichost, blog_repo_gitdir, blog_commit_hash, git_ssh_path, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
+
     live_path = '/home/website/blog_source'
-    git_ssh_path = os.path.join(os.path.dirname(blog_repo), 'git_ssh.sh')
-    tag_push_checkout(blog_repo, blog_commit_hash, publichost, live_path, git_ssh_path,
+
+    tag_push_checkout(blog_repo_gitdir, blog_commit_hash, publichost, live_path, git_ssh_path,
                       admin_privkey_path)
-    with cd('/home/website/blog_source'):
+    with cd(live_path):
         run('python /home/website/blog_source/render_blog.py')
 
-def check_branch_and_update_blog(branch, host, blog_repo_path, secret_config_path, stdout):
-    branch_check_command = ['/usr/bin/git', '--git-dir', os.path.join(secret_config_path, '.git'),
-                            'branch', '--list', branch]
+def check_branch_and_update_blog(branch, host, blog_repo_workdir, secret_config_repo_workdir, stdout):
+    blog_repo_gitdir = os.path.join(blog_repo_workdir, '.git')
+    secret_config_repo_gitdir = os.path.join(secret_config_repo_workdir, '.git')
+    git_ssh_path = os.path.join(blog_repo_workdir, 'git_ssh.sh')
+    admin_privkey_path = os.path.join(secret_config_repo_workdir, 'ec2sshadmin.pem')
+
+    branch_check_command = ['/usr/bin/git', '--git-dir', secret_config_repo_gitdir, 'branch', '--list', branch]
+
     current_branch = subprocess.check_output(branch_check_command).strip()
     if current_branch != "* %s" % (branch,):
         raise Exception("The %r branch of the secret_config repo must be checked out to run this script." % (branch,))
 
-    admin_privkey_path = os.path.join(secret_config_path, 'ec2sshadmin.pem')
-
-    blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', os.path.join(blog_repo_path, '.git'),
-                              'rev-parse', 'HEAD']
+    blog_repo_HEAD_command = ['/usr/bin/git', '--git-dir', blog_repo_gitdir, 'rev-parse', 'HEAD']
     blog_commit_ref = subprocess.check_output(blog_repo_HEAD_command).strip()
     print >>stdout, blog_commit_ref
 
-    update_blog(host, blog_repo_path, blog_commit_ref, admin_privkey_path)
+    update_blog(host, blog_repo_gitdir, blog_commit_ref, git_ssh_path, admin_privkey_path)
 
 
 INTRODUCER_PORT = '12345'
