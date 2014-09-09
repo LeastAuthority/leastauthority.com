@@ -27,7 +27,8 @@ def extract_PGP_key(work_dir_path):
 def extract_furl():
     signup_log = FilePath('signup_logs').getContent()
     log_lines = signup_log.split('\n')
-    introducer_furl = [(line.strip()).lstrip('introducer.furl = ') for line in log_lines if line.startswith('introducer.furl = pb://')][0]
+    introducer_furl = [(line.strip()).lstrip('introducer.furl = ')
+                       for line in log_lines if line.startswith('introducer.furl = pb://')][0]
     return introducer_furl
 
 def import_PGP_key(PGP_file_path):
