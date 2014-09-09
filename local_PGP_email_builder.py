@@ -1,7 +1,9 @@
 #To be run in $(SERVICE_ID)/confirmations/$(SUBSCRIBER_EMAIL_ADDRESS)
 #See Usage messages in main().
 
-import os, sys
+import sys
+
+from twisted.python.filepath import FilePath
 
 from lae_automation.pgp import extract_logs_from_tarball, extract_PGP_key, import_PGP_key,\
                                extract_furl, create_confirmation_email, encrypt_sign_confirmation
@@ -13,13 +15,13 @@ def main():
     service_id = sys.argv[1]
     signup_email = sys.argv[2]
     encryption_confirmation_handler_email = sys.argv[3]
-    work_dir_path = os.getcwd()
-    if (os.path.basename(work_dir_path) != signup_email) or not (os.path.dirname(os.getcwd()).endswith('confirmations')):
+    work_dir_path = FilePath('.')
+    parent_name = work_dir_path.segmentsFrom(work_dir_path.parent().parent())[0]
+    if (work_dir_path.basename() != signup_email) or not (parent_name == 'confirmations'):
         print "This script must be run in the PGP-signup confirmation-email directory for the relevant service, and signup: "
         print "e.g. S4_EXAMPLE_SERVICE/confirmations/foo@spam.net/"
-        print "instead it was run in: ' "+os.getcwd()+" '"
+        print "instead it was run in: ' "+work_dir_path.path+" '"
         sys.exit(-9)
-    os.chdir(work_dir_path)
     archive_name = '%s_signup_PGP_data.tar.bz2' % signup_email
     if extract_logs_from_tarball(archive_name, service_id):
         if extract_PGP_key(work_dir_path):
