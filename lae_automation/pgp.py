@@ -18,7 +18,7 @@ def extract_logs_from_tarball(archive_name, service_id):
     return True
 
 def extract_PGP_key(work_dir_path):
-    stripe_list = simplejson.load(open(work_dir_path+'/stripe','r'))
+    stripe_list = simplejson.loads(work_dir_path.child('stripe').getContent())
     PGP_pubkey = stripe_list[1]
     PGP_pubkey = unquote(PGP_pubkey)
     FilePath('PGP_pubkey.asc').setContent(PGP_pubkey)
