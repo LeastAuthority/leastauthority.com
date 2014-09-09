@@ -24,6 +24,12 @@ def extract_PGP_key(work_dir_path):
     FilePath('PGP_pubkey.asc').setContent(PGP_pubkey)
     return True
 
+def extract_furl():
+    signup_log = FilePath('signup_logs').getContent()
+    log_lines = signup_log.split('\n')
+    introducer_furl = [(line.strip()).lstrip('introducer.furl = ') for line in log_lines if line.startswith('introducer.furl = pb://')][0]
+    return introducer_furl
+
 def import_PGP_key(PGP_file_path):
     gpg_import_call_list = ['gpg', '--import', 'PGP_pubkey.asc']
     import_errput = open('gpg_import_err.txt', 'w')
@@ -33,18 +39,14 @@ def import_PGP_key(PGP_file_path):
     ID = outstring.lstrip('gpg: key ')[:8]
     return ID
 
-def extract_furl():
-    signup_log = FilePath('signup_logs').getContent()
-    log_lines = signup_log.split('\n')
-    introducer_furl = [(line.strip()).lstrip('introducer.furl = ') for line in log_lines if line.startswith('introducer.furl = pb://')][0]
-    return introducer_furl
-
-def create_confirmation_email(introducer_furl):
-    email_content = CONFIRMATION_EMAIL_BODY % {'external_introducer_furl':introducer_furl}
-    FilePath('confirmation.txt').setContent(email_content)
-
 def encrypt_sign_confirmation(ID, PGP_contact_email):
     print "Attempting to generate ascii armored cyphertext in 'msg.asc'."
     enc_list = ['gpg', '-seaR', str(ID), '-R', PGP_contact_email, '-o', 'msg.asc', 'confirmation.txt']
     sp = subprocess.Popen(enc_list)
     sp.wait()
+
+def create_confirmation_email(introducer_furl):
+    email_content = CONFIRMATION_EMAIL_BODY % {'external_introducer_furl':introducer_furl}
+    FilePath('confirmation.txt').setContent(email_content)
+
+
