@@ -1,7 +1,7 @@
 #To be run in $(SERVICE_ID)/confirmations/$(SUBSCRIBER_EMAIL_ADDRESS)
 #See Usage messages in main().
 
-import subprocess, os, sys, glob, simplejson
+import subprocess, glob, simplejson
 
 from urllib import unquote
 from twisted.python.filepath import FilePath
@@ -27,7 +27,7 @@ def extract_PGP_key(work_dir_path):
 
 def extract_furl():
     secrets_json = FilePath('SSEC2').getContent()
-    secrets = simplejson.loads(secrets_json)
+    secrets = simplejson.loads(secrets_json, encoding='ascii')
     return str(secrets['external_introducer_furl'])
 
 def import_PGP_key(PGP_file_path):
