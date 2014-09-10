@@ -31,3 +31,5 @@ MOCKJSONCONFIGFILE = """{
   "sinkname_suffix":        "unitteststorageserver/rss"
 }""" % (MOCK_VALID_PRODUCTS,)
 
+MOCKCORRECTSSEC2CONFIGFILEJSON = """{"external_introducer_furl": "pb://bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb@54.164.165.217:12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}"""
+MOCKNOTASCIISSEC2CONFIGFILEJSON = """{"external_introducer_furl": "pb://bbbbbbbbbbbbbbbbx\ffbbbbbbbbbbbbbbb@54.164.165.217:12345/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}"""
