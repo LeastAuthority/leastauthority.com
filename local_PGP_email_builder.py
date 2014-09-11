@@ -23,12 +23,16 @@ def main():
         print "instead it was run in: ' "+work_dir_path.path+" '"
         sys.exit(-9)
     archive_name = '%s_signup_PGP_data.tar.bz2' % signup_email
-    if extract_logs_from_tarball(archive_name, service_id):
-        if extract_PGP_key(work_dir_path):
-            ID = import_PGP_key('PGP_pubkey.asc')
-            intro_furl = extract_furl()
-            create_confirmation_email(intro_furl)
-            encrypt_sign_confirmation(ID, encryption_confirmation_handler_email)
+    try:
+        extract_logs_from_tarball(archive_name, service_id)
+    except UnpackTarBallError, e:
+        print e.msg
+
+    if extract_PGP_key(work_dir_path):
+        ID = import_PGP_key('PGP_pubkey.asc')
+        intro_furl = extract_furl()
+        create_confirmation_email(intro_furl)
+        encrypt_sign_confirmation(ID, encryption_confirmation_handler_email)
     else:
         print "Failed to extract logs"
         sys.exit(-1)
