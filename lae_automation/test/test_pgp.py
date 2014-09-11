@@ -13,11 +13,6 @@ class CommonTestFixture(TestCase):
     def setUp(self):
         self.SSEC2CONFIGFILEPATH = 'SSEC2'
 
-class TestExtractLogFromTarball(CommonTestFixture):
-
-    def test_extract_valid_logs_from_tarball(self):
-        pass
-
 class TestExtractPGPKey(CommonTestFixture):
 
     def test_extract_valid_PGP_key(self):
