@@ -158,7 +158,7 @@ class CommonFixture(TestCase):
 # Begin test of start
 class TestStart(CommonFixture):
     def setUp(self):
-        super(CommonFixture, self).setUp()
+        CommonFixture.setUp(self)
         self.FilePath_return_values = []
         self.flappcommand_start = []
         self.FlappCommand_return_values = []
@@ -176,7 +176,7 @@ class TestStart(CommonFixture):
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
 class TestGetStripeAPIKeyWithoutException(CommonFixture):
     def setUp(self):
-        super(TestGetStripeAPIKeyWithoutException, self).setUp()
+        CommonFixture.setUp(self)
         self.subscription_handler.get_stripe_api_key()
 
     # Fake of FilePath handled by MockFilePath
@@ -187,7 +187,7 @@ class TestGetStripeAPIKeyWithoutException(CommonFixture):
 # Begin test of SubmitSubscriptionHandler.get_stripe_api_key
 class TestGetStripeAPIKeyWithException(CommonFixture):
     def setUp(self):
-        super(TestGetStripeAPIKeyWithException, self).setUp()
+        CommonFixture.setUp(self)
         self.subscription_handler.basefp.path = self.subscription_handler.basefp.path.replace(
             'MOCKWORKDIR','leastauthority.com')
         try:
@@ -204,7 +204,7 @@ class TestGetStripeAPIKeyWithException(CommonFixture):
 # Begin test of SubmitSubscriptionHandler.get_creation_parameters
 class TestGetCreationParameters(CommonFixture):
     def setUp(self):
-        super(TestGetCreationParameters, self).setUp()
+        CommonFixture.setUp(self)
 
         # Patch get_stripe_api_key
         self.get_stripe_api_key_return_values = []
@@ -223,7 +223,7 @@ class TestGetCreationParameters(CommonFixture):
 # Begin test of SubmitSubscriptionHandler.handle_stripe_create_customer_errors
 class TestHandleStripeCreateCustomerErrors(CommonFixture):
     def setUp(self):
-        super(TestHandleStripeCreateCustomerErrors, self).setUp()
+        CommonFixture.setUp(self)
 
         # Patch self.out
         self.patch(self.subscription_handler, 'out', MockOut(self, 'out'))
@@ -266,7 +266,7 @@ class TestHandleStripeCreateCustomerErrors(CommonFixture):
 # Begin test of SubmitSubscriptionHandler.create_customer
 class TestCreateCustomer(CommonFixture):
     def setUp(self):
-        super(TestCreateCustomer, self).setUp()
+        CommonFixture.setUp(self)
         self.calls = []
 
     def _test_stripe_error(self, MockErrorClass, expected_details_prefix, expected_subject):
@@ -321,7 +321,7 @@ class TestCreateCustomer(CommonFixture):
 # Begin test of SubmitSubscriptionHandler.run_full_signup
 class TestRunFullSignup(CommonFixture):
     def setUp(self):
-        super(TestRunFullSignup, self).setUp()
+        CommonFixture.setUp(self)
         self.MC = MockCustomer.create(MockCustomer(),
                                  MOCKAPIKEY,
                                  MockCard(),
@@ -382,7 +382,7 @@ class TestRunFullSignup(CommonFixture):
 # Begin test of SubmitSubscriptionHandler.render
 class CommonRenderFixture(CommonFixture):
     def setUp(self):
-        super(CommonRenderFixture, self).setUp()
+        CommonFixture.setUp(self)
         # In render method assignment list, stores local variables for checking
         self.get_creation_parameters_return_values = []
         self.create_customers_return_values = []
@@ -417,7 +417,7 @@ class CommonRenderFixture(CommonFixture):
 
 class TestRenderWithoutExceptions(CommonRenderFixture):
     def setUp(self):
-        super(TestRenderWithoutExceptions, self).setUp()
+        CommonRenderFixture.setUp(self)
 
         def call_create_customer(subscription_handler, stripe_api_key,
                                  stripe_authorization_token, user_email):
@@ -437,9 +437,6 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
         self.patch(submit_subscription.env, 'get_template', call_get_template)
 
         # Note render mockery is handled inside of MockTemplate
-
-    def tearDown(self):
-        super(TestRenderWithoutExceptions, self).tearDown()
 
     def test_get_creation_parameters_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
@@ -487,7 +484,7 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
 
 class TestRenderWithExceptions(CommonRenderFixture):
     def setUp(self):
-        super(TestRenderWithExceptions, self).setUp()
+        CommonRenderFixture.setUp(self)
         def call_create_customer(subscription_handler, stripe_api_key,
                                  stripe_authorization_token, user_email):
             self.create_customers_return_values.append(None)
@@ -500,9 +497,6 @@ class TestRenderWithExceptions(CommonRenderFixture):
                                               "errorblock: {errorblock}")
             return _append(self.env_get_template_return_values, self.mock_template)
         self.patch(submit_subscription.env, 'get_template', call_get_template)
-
-    def tearDown(self):
-        super(TestRenderWithExceptions, self).tearDown()
 
     def test_get_creation_parameters_calls(self):
         self.subscription_handler.render(MockRequest(REQUESTARGS))
