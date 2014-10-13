@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 #To be run in $(SERVICE_ID)/confirmations/$(SUBSCRIBER_EMAIL_ADDRESS)
 #See Usage messages in main().
 
