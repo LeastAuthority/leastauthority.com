@@ -1,9 +1,8 @@
 #To be run in $(SERVICE_ID)/confirmations/$(SUBSCRIBER_EMAIL_ADDRESS)
 #See Usage messages in main().
 
-import subprocess, glob, simplejson
+import subprocess, glob, simplejson, urllib
 
-from urllib import unquote
 from twisted.python.filepath import FilePath
 
 from lae_automation.confirmation import CONFIRMATION_EMAIL_BODY
@@ -21,8 +20,7 @@ def extract_PGP_key(work_dir_path):
     stripe_list_json = work_dir_path.child('stripe').getContent()
     stripe_list = simplejson.loads(stripe_list_json)
     PGP_pubkey = stripe_list[1]
-    PGP_pubkey = unquote(PGP_pubkey)
-    FilePath('PGP_pubkey.asc').setContent(PGP_pubkey)
+    FilePath('PGP_pubkey.asc').setContent(urllib.unquote(PGP_pubkey))
     return True
 
 def extract_furl():
