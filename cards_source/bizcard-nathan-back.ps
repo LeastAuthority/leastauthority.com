@@ -1,0 +1,22 @@
+%% Amber Wilcox-O'Hearn
+
+/adict 15 dict def
+/doBorder %Print card’s border
+{ 
+    0 792 moveto
+    252 792 lineto %Border: 144 pts high
+    252 792 144 sub lineto % & 252 points wide
+    0 792 144 sub lineto
+    closepath
+%    2 setlinewidth %2-point-wide line
+    stroke 
+} def
+
+.95 .95 .95 setrgbcolor
+doBorder
+0 0 0 setrgbcolor
+
+/FreeSans findfont
+8 scalefont setfont
+20 660 moveto
+(AAAC 5675 E3F7 514C 67ED E9C9 3BFE 5263 1116 9993) show

@@ -1,0 +1,223 @@
+%% Amber Wilcox-O'Hearn
+
+/nodedict 3 dict def
+/node
+{ 
+    nodedict begin
+        /radius exch def
+        /y exch def /x exch def
+        newpath 
+        x y radius 0 360 arc 
+    end
+} def
+
+
+/arrowdict 17 dict def
+arrowdict begin
+    /mtrx matrix def
+end
+/arrow
+    { arrowdict begin
+      /tipradius exch def  % How much arrow length to remove from tip
+      /tailradius exch def  % How much arrow length to remove from tail
+      /headlength exch def  
+      /halfheadwidth exch 2 div def
+      /tipy exch def /tipx exch def
+      /taily exch def /tailx exch def
+
+      /dx tipx tailx sub def
+      /dy tipy taily sub def
+      /arrowlength dx dx mul dy dy mul add sqrt tipradius sub def
+      /base arrowlength headlength sub def
+      /angle dy dx atan def
+
+      /savematrix mtrx currentmatrix def  % Save current coordinate system
+
+      tailx taily translate
+      angle rotate
+      newpath
+      tailradius 0 moveto
+      arrowlength 0 lineto
+      base halfheadwidth moveto
+      arrowlength 0 lineto
+      base halfheadwidth neg lineto
+
+      savematrix setmatrix
+
+    end
+    } def
+
+/thickarrowdict 14 dict def %Local storage for the procedure ‘‘thickarrow.’’
+thickarrowdict begin % Allocate a matrix for storing the current matrix below.
+    /mtrx matrix def % Make it local to the procedure ‘‘arrow.’’
+end
+/thickarrow
+{ thickarrowdict begin
+    %‘‘arrow’’ adds an arrow shape to the current path. It
+    %takes seven arguments: the x and y coordinates of the
+    %tail (imagine that a line has been drawn down the center
+    %of the arrow from the tip to the tail, then x and y lie on
+    %this line), the x and y coordinates of the tip of the arrow,
+    %the thickness of the arrow in the tail portion, the
+    %thickness of the arrow at the widest part of the
+    %arrowhead and the length of the arrowhead.
+
+    /headlength exch def
+    /halfheadthickness exch 2 div def
+    /halfthickness exch 2 div def
+    /tipy exch def /tipx exch def
+    /taily exch def /tailx exch def
+
+    %Compute the differences in x and y for the tip and tail.
+    %These will be used to compute the length of the arrow
+    %and to compute the angle of direction that the arrow is
+    %facing with respect to the current user coordinate system
+    %origin.
+
+    /dx tipx tailx sub def
+    /dy tipy taily sub def
+    /arrowlength dx dx mul dy dy mul add sqrt def
+    /angle dy dx atan def
+    /base arrowlength headlength sub def % Compute where the arrowhead joins the tail.
+
+    /savematrix mtrx currentmatrix def % Save the current user coordinate system. 
+
+    tailx taily translate % Translate to the starting point of the tail.
+    angle rotate % Rotate the x-axis to align with the center line of the arrow.
+
+    0 halfthickness neg moveto % Add the arrow shape to the current path.
+    base halfthickness neg lineto
+    base halfheadthickness neg lineto
+    arrowlength 0 lineto
+    base halfheadthickness lineto
+    base halfthickness lineto
+    0 halfthickness lineto
+    closepath
+
+    savematrix setmatrix % Restore the current user coordinate system.
+    end
+    } def
+
+/Ldict 7 dict def
+/drawL 
+    { Ldict begin
+      /noderadius exch def
+      /n1y exch def /n1x exch def
+      /n2x n1x noderadius 5 mul sub def
+      /n2y n1y noderadius 12.5 mul sub def
+      /n3x n1x noderadius 6.25 mul add def
+      /n3y n1y noderadius 12.5 mul sub def
+      .75 .75 .75 setrgbcolor 
+      n1x n1y noderadius node fill
+      n1x n1y noderadius node stroke
+      .75 0 0 setrgbcolor 
+      n2x n2y noderadius node fill
+      .75 .75 .75 setrgbcolor 
+      n2x n2y noderadius node stroke
+      n3x n3y noderadius node fill
+      n3x n3y noderadius node stroke
+      n2x n2y n1x n1y noderadius noderadius noderadius noderadius arrow
+      stroke
+      n2x n2y n3x n3y noderadius noderadius noderadius noderadius arrow
+      stroke
+
+      end
+      } def
+
+/Adict 15 dict def
+/drawA
+    { Adict begin
+      /noderadius exch def
+      /n1y exch def /n1x exch def
+      /n2x n1x noderadius 5 mul sub def
+      /n2y n1y noderadius 12.5 mul sub def
+      /n3x n1x noderadius 5 mul add def
+      /n3y n1y noderadius 12.5 mul sub def
+      .75 0 0 setrgbcolor 
+      n1x n1y noderadius node fill
+      .75 .75 .75 setrgbcolor 
+      n1x n1y noderadius node stroke
+      n2x n2y noderadius node fill
+      n2x n2y noderadius node stroke
+      n3x n3y noderadius node fill
+      n3x n3y noderadius node stroke
+      n1x n1y n2x n2y noderadius noderadius noderadius noderadius arrow
+      stroke
+      n1x n1y n3x n3y noderadius noderadius noderadius noderadius arrow
+      stroke
+
+      /midpointx n1x n2x add 2 div def
+      /midpointy n1y n2y add 2 div def
+      /slope n2y n1y sub n2x n1x sub div def
+      /halflength noderadius 5 mul 12 div def
+      /thickarrtipx midpointx halflength sub def
+      /thickarrtipy midpointy halflength slope mul sub def
+      /thickarrtailx midpointx halflength add def
+      /thickarrtaily midpointy halflength slope mul add def
+
+      % Fat arrow
+%      newpath
+%      thickarrtailx thickarrtaily thickarrtipx thickarrtipy noderadius noderadius 2 mul noderadius thickarrow
+%      fill
+
+      % Arrow from fat arrow
+      midpointx midpointy n3x n3y noderadius noderadius 0 noderadius arrow
+      stroke
+
+      0 0 0 setrgbcolor 
+    end
+    } def
+
+/LAdict 15 dict def
+/drawLA
+    { LAdict begin
+    /scale exch def
+    /topy exch def
+    /topx exch def
+    scale 3 mul setlinewidth
+    topx topy scale 8 mul drawL
+    scale 125 mul topx add topy scale 8 mul drawA
+    end
+    } def
+
+
+/doBorder %Print card’s border
+{ 
+    0 792 moveto
+    252 792 lineto %Border: 144 pts high
+    252 792 144 sub lineto % & 252 points wide
+    0 792 144 sub lineto
+    closepath
+%    2 setlinewidth %2-point-wide line
+    stroke 
+} def
+
+/outDict 15 dict def
+/outlinedPrint
+{
+    /string exch def
+    /y exch def
+    /x exch def
+    1 1 1 setrgbcolor
+    5 setlinewidth
+    x y moveto
+    string true charpath stroke
+    0 0 0 setrgbcolor
+    x y moveto
+    string show
+} def
+
+.95 .95 .95 setrgbcolor
+doBorder
+0 0 0 setrgbcolor
+
+110 752 7 drawL
+140 772 7 drawA
+
+
+/FreeSans findfont
+15 scalefont setfont
+50 720 (Zooko Wilcox-O'Hearn) outlinedPrint
+/FreeSans findfont
+11 scalefont setfont
+60 705 (zooko@LeastAuthority.com) outlinedPrint
