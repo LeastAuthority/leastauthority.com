@@ -63,6 +63,7 @@ def main(basefp):
 
         from twisted.internet.ssl import DefaultOpenSSLContextFactory
         #from OpenSSL.SSL import OP_SINGLE_DH_USE
+        from OpenSSL.SSL import OP_NO_SSLv3
 
         # <http://www.openssl.org/docs/ssl/SSL_CTX_set_options.html#NOTES>
         # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L656>
@@ -100,6 +101,7 @@ def main(basefp):
         #sslcontext.set_options(OP_SINGLE_DH_USE)
         sslcontext.set_options(OP_CIPHER_SERVER_PREFERENCE)
         sslcontext.set_options(OP_NO_COMPRESSION)
+        sslcontext.set_options(OP_NO_SSLv3)
         reactor.listenSSL(port, site, sslfactory)
 
         if redirect_port is not None:
