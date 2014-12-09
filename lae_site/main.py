@@ -71,12 +71,12 @@ def main(basefp):
         # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L645>
         OP_NO_COMPRESSION = 0x00020000L
 
-        CIPHER_LIST = ("ECDH+AES128:ECDH+AES256:ECDH+AESGCM:DES-CBC3-SHA;")
+        #CIPHER_LIST = ("ECDH+AES128:ECDH+AES256:ECDH+AESGCM:DES-CBC3-SHA;")
 
         # http://twistedmatrix.com/documents/current/core/howto/ssl.html
         sslfactory = DefaultOpenSSLContextFactory(KEYFILE, CERTFILE)
         sslcontext = sslfactory.getContext()
-        sslcontext.set_cipher_list(CIPHER_LIST)
+        #sslcontext.set_cipher_list(CIPHER_LIST)
         #sslcontext.set_options(OP_SINGLE_DH_USE)
         sslcontext.set_options(OP_CIPHER_SERVER_PREFERENCE)
         sslcontext.set_options(OP_NO_COMPRESSION)
