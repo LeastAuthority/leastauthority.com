@@ -61,27 +61,17 @@ def main(basefp):
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
-        from twisted.internet.ssl import DefaultOpenSSLContextFactory
-        #from OpenSSL.SSL import OP_SINGLE_DH_USE
+        from twisted.internet import ssl
         from OpenSSL.SSL import OP_NO_SSLv3
 
-        # <http://www.openssl.org/docs/ssl/SSL_CTX_set_options.html#NOTES>
-        # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L656>
-        OP_CIPHER_SERVER_PREFERENCE = 0x00400000L
-        # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L645>
-        OP_NO_COMPRESSION = 0x00020000L
+        with open(KEYFILE) as keyFile:
+            with open(CERTFILE) as certFile:
+                # or should we load ASN1 format intead? this class can do either...
+                cert = ssl.PrivateCertificate.loadPEM(keyFile.read() + certFile.read())
 
-        #CIPHER_LIST = ("ECDH+AES128:ECDH+AES256:ECDH+AESGCM:DES-CBC3-SHA;")
-
-        # http://twistedmatrix.com/documents/current/core/howto/ssl.html
-        sslfactory = DefaultOpenSSLContextFactory(KEYFILE, CERTFILE)
-        sslcontext = sslfactory.getContext()
-        #sslcontext.set_cipher_list(CIPHER_LIST)
-        #sslcontext.set_options(OP_SINGLE_DH_USE)
-        sslcontext.set_options(OP_CIPHER_SERVER_PREFERENCE)
-        sslcontext.set_options(OP_NO_COMPRESSION)
+        sslcontext = cert.getContext()
         sslcontext.set_options(OP_NO_SSLv3)
-        reactor.listenSSL(port, site, sslfactory)
+        reactor.listenSSL(port, site, cert) # XXX should work
 
         if redirect_port is not None:
             root_log.info('http->https redirector listening on port %d...' % (redirect_port,))
