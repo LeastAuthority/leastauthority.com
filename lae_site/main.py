@@ -71,28 +71,7 @@ def main(basefp):
         # <https://github.com/openssl/openssl/blob/6f017a8f9db3a79f3a3406cf8d493ccd346db691/ssl/ssl.h#L645>
         OP_NO_COMPRESSION = 0x00020000L
 
-        CIPHER_LIST = ("ECDHE-RSA-AES128-GCM-SHA256:"
-                       "ECDHE-RSA-AES256-GCM-SHA384:"
-                       "DHE-RSA-AES128-GCM-SHA256:"
-                       "DHE-RSA-AES256-GCM-SHA384:"
-                       "ECDHE-RSA-AES128-SHA256:"
-                       "DHE-RSA-AES128-SHA256:"
-                       "DHE-RSA-AES256-SHA256:"
-                       "ECDHE-RSA-AES128-SHA:"
-                       "ECDHE-RSA-AES256-SHA:"
-                       "DHE-RSA-AES128-SHA;"
-                       "DHE-RSA-AES256-SHA:"
-                       "ECDHE-RSA-DES-CBC3-SHA:"
-                       "AES128-GCM-SHA256:"
-                       "AES256-GCM-SHA384:"
-                       "AES128-SHA256:"
-                       "AES256-SHA256:"
-                       "AES128-SHA:"
-                       "AES256-SHA:"
-                       "DES-CBC3-SHA:"
-                       # RC4 at the bottom, even if forward-secret
-                       "ECDHE-RSA-RC4-SHA;"
-                       "RC4-SHA;")
+        CIPHER_LIST = "ECDHE-RSA-AES128-SHA:DES-CBC3-SHA;"
 
         # http://twistedmatrix.com/documents/current/core/howto/ssl.html
         sslfactory = DefaultOpenSSLContextFactory(KEYFILE, CERTFILE)
