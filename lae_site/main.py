@@ -64,14 +64,12 @@ def main(basefp):
         from twisted.internet import ssl
         from OpenSSL.SSL import OP_NO_SSLv3
 
-        with open(KEYFILE) as keyFile:
-            with open(CERTFILE) as certFile:
-                # or should we load ASN1 format intead? this class can do either...
-                cert = ssl.PrivateCertificate.loadPEM(keyFile.read() + certFile.read())
+        with open(KEYFILE) as keyFile, open(CERTFILE) as certFile:
+            cert = ssl.PrivateCertificate.loadPEM(keyFile.read() + certFile.read())
 
-        sslcontext = cert.getContext()
+        sslcontext = cert.options()
         sslcontext.set_options(OP_NO_SSLv3)
-        reactor.listenSSL(port, site, cert) # XXX should work
+        reactor.listenSSL(port, site, sslcontext)
 
         if redirect_port is not None:
             root_log.info('http->https redirector listening on port %d...' % (redirect_port,))
