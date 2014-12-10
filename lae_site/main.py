@@ -58,19 +58,25 @@ def main(basefp):
         root_log.info('SSL/TLS is enabled (start with --nossl to disable).')
         KEYFILE = '../secret_config/rapidssl/server.key'
         CERTFILE = '../secret_config/rapidssl/server.crt'
+        CERTCHAINFILE = '../secret_config/rapidssl/chain.crt'
+        
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
         from twisted.internet import ssl
 
-        with open(KEYFILE) as keyFile, open(CERTFILE) as certFile:
-            key = keyFile.read()
-            certificate = certFile.read()
+        keyFile = open(KEYFILE)
+        certFile = open(CERTFILE)
+        chainFile = open(CERTCHAINFILE)
+
+        key = keyFile.read()
+        certificate = certFile.read()
+        chain = chainFile.read()
 
         cert = ssl.PrivateCertificate.loadPEM(key + certificate)
         sslcontext = cert.options()
-        sslcontext.extraCertChain = certificate
-
+        sslcontext.extraCertChain = chain
+        
         reactor.listenSSL(port, site, sslcontext)
 
         if redirect_port is not None:
