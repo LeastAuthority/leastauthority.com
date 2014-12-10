@@ -64,9 +64,13 @@ def main(basefp):
         from twisted.internet import ssl
 
         with open(KEYFILE) as keyFile, open(CERTFILE) as certFile:
-            cert = ssl.PrivateCertificate.loadPEM(keyFile.read() + certFile.read())
+            key = keyFile.read()
+            certificate = certFile.read()
 
+        cert = ssl.PrivateCertificate.loadPEM(key + certificate)
         sslcontext = cert.options()
+        sslcontext.extraCertChain = certificate
+
         reactor.listenSSL(port, site, sslcontext)
 
         if redirect_port is not None:
