@@ -62,13 +62,11 @@ def main(basefp):
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
         from twisted.internet import ssl
-        from OpenSSL.SSL import OP_NO_SSLv3
 
         with open(KEYFILE) as keyFile, open(CERTFILE) as certFile:
             cert = ssl.PrivateCertificate.loadPEM(keyFile.read() + certFile.read())
 
         sslcontext = cert.options()
-        sslcontext._options |= OP_NO_SSLv3
         reactor.listenSSL(port, site, sslcontext)
 
         if redirect_port is not None:
