@@ -68,7 +68,7 @@ def main(basefp):
             cert = ssl.PrivateCertificate.loadPEM(keyFile.read() + certFile.read())
 
         sslcontext = cert.options()
-        sslcontext.set_options(OP_NO_SSLv3)
+        sslcontext._options |= OP_NO_SSLv3
         reactor.listenSSL(port, site, sslcontext)
 
         if redirect_port is not None:
