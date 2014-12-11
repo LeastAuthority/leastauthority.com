@@ -59,7 +59,7 @@ def main(basefp):
         KEYFILE = '../secret_config/rapidssl/server.key'
         CERTFILE = '../secret_config/rapidssl/server.crt'
         CERTCHAINFILE = '../secret_config/rapidssl/chain.pem'
-        
+
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
@@ -72,10 +72,8 @@ def main(basefp):
         certs = pem.parse_file(CERTFILE)
         cert = ssl.PrivateCertificate.loadPEM(str(key) + str(certs[0]))
 
-        extraCertChain = []
-        for certData in certs[1:]:
-            chainCert = ssl.Certificate.loadPEM(str(certData))
-            extraCertChain.append(chainCert.original)
+        extraCertChain = [ssl.Certificate.loadPEM(str(certData)).original
+                          for certData in certs[1 :]]
 
         sslcontext = ssl.CertificateOptions(
             privateKey=cert.privateKey.original,
