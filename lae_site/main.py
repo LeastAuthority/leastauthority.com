@@ -67,14 +67,18 @@ def main(basefp):
         import pem
 
         key = pem.parse_file(KEYFILE)
-        certData, chainData = pem.parse_file(CERTFILE)
-        cert = ssl.PrivateCertificate.loadPEM(str(key) + str(certData))
-        chainCert = ssl.Certificate.loadPEM(str(chainData))
+        certs = pem.parse_file(CERTFILE)
+        cert = ssl.PrivateCertificate.loadPEM(str(key) + str(certs[0]))
+
+        extraCertChain = []
+        for certData in certs[1:]:
+            chainCert = ssl.Certificate.loadPEM(str(certData))
+            extraCertChain.append(chainCert.original)
 
         sslcontext = ssl.CertificateOptions(
             privateKey=cert.privateKey.original,
             certificate=cert.original,
-            extraCertChain=[chainCert.original],
+            extraCertChain=extraCertChain,
         )
 
         reactor.listenSSL(port, site, sslcontext)
