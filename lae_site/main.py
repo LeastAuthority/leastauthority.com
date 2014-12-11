@@ -66,7 +66,9 @@ def main(basefp):
         from twisted.internet import ssl
         import pem
 
-        key = pem.parse_file(KEYFILE)
+        with open(KEYFILE) as keyFile:
+            key = keyFile.read()
+
         certs = pem.parse_file(CERTFILE)
         cert = ssl.PrivateCertificate.loadPEM(str(key) + str(certs[0]))
 
