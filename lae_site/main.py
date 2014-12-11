@@ -6,7 +6,7 @@ import logging
 mimetypes.add_type("text/plain", ".rst")
 
 
-from twisted.internet import ssl, reactor
+from twisted.internet import reactor
 from twisted.python.filepath import FilePath
 
 from lae_site.config import Config
@@ -61,9 +61,25 @@ def main(basefp):
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
 
-        # http://twistedmatrix.com/documents/current/core/howto/ssl.html
-        sslfactory = ssl.DefaultOpenSSLContextFactory(KEYFILE, CERTFILE)
-        reactor.listenSSL(port, site, sslfactory)
+        from twisted.internet import ssl
+        import pem
+
+        with open(KEYFILE) as keyFile:
+            key = keyFile.read()
+
+        certs = pem.parse_file(CERTFILE)
+        cert = ssl.PrivateCertificate.loadPEM(str(key) + str(certs[0]))
+
+        extraCertChain = [ssl.Certificate.loadPEM(str(certData)).original
+                          for certData in certs[1 :]]
+
+        cert_options = ssl.CertificateOptions(
+            privateKey=cert.privateKey.original,
+            certificate=cert.original,
+            extraCertChain=extraCertChain,
+        )
+
+        reactor.listenSSL(port, site, cert_options)
 
         if redirect_port is not None:
             root_log.info('http->https redirector listening on port %d...' % (redirect_port,))
