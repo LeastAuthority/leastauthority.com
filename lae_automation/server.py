@@ -168,10 +168,11 @@ INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
     'libffi6',
     'openssl',
     'libssl1.0.0',
+    'python-tz',
 ]
 
 INFRASTRUCTURE_PYTHON_DEPENDENCIES = [
-    'dateutil',
+    'python-dateutil',
     'six',
     'pycparser',
     'zfec >= 1.1.0',
@@ -189,12 +190,11 @@ INFRASTRUCTURE_PYTHON_DEPENDENCIES = [
     'oauth2client == 1.1.0',
     'service-identity',
     'characteristic >= 14.0.0',
-    'jinja2',
-    'fabric',
-    'unidecode',
-    'tz',
+    'Jinja2',
+    'Fabric',
+    'Unidecode',
     'docutils',
-    'markdown',
+    'Markdown',
 ]
 
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
