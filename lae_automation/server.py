@@ -168,22 +168,33 @@ INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
     'libffi6',
     'openssl',
     'libssl1.0.0',
-    'python-nevow',
-    'python-crypto',
-    'python-dateutil',
-    'python-foolscap',
-    'python-six',
-    'python-pycparser',
-    'python-unidecode',
-    'python-zfec',
-    'python-simplejson',
-    'python-jinja2',
+]
+
+INFRASTRUCTURE_PYTHON_DEPENDENCIES = [
+    'dateutil',
+    'six',
+    'pycparser',
+    'zfec >= 1.1.0',
+    'simplejson >= 1.4',
+    'zope.interface >= 3.6.5',
+    'Twisted >= 14.0.2',
+    'foolscap >= 0.6.3',
+    'pyOpenSSL >= 0.14',
+    'Nevow >= 0.11.1',
+    'pycrypto >= 2.4.1',
+    'pyasn1 >= 0.1.4',
+    'pyasn1-modules',
+    'mock >= 0.8.0',
+    'pycryptopp >= 0.6.0',
+    'oauth2client == 1.1.0',
+    'service-identity',
+    'characteristic >= 14.0.0',
+    'jinja2',
     'fabric',
-    'python-twisted-mail',
-    'python-unidecode',
-    'python-tz',
-    'python-docutils',
-    'python-markdown',
+    'unidecode',
+    'tz',
+    'docutils',
+    'markdown',
 ]
 
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
@@ -397,8 +408,12 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Installing dependencies..."
     package_list = INFRASTRUCTURE_PACKAGE_DEPENDENCIES
     apt_install_dependencies(stdout, package_list)
+
     # From:  https://stripe.com/docs/libraries
     sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
+    for dep in INFRASTRUCTURE_PYTHON_DEPENDENCIES:
+        sudo("pip install --upgrade '%s'" % (dep,))
+
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
     sudo_apt_get('install -y postfix')
@@ -420,9 +435,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
-
-    # patch twisted to send intermediate certs, cf. https://github.com/LeastAuthority/leastauthority.com/issues/6
-    sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
 
     set_host_and_key(publichost, admin_privkey_path, 'website')
     git_ssh_path = os.path.join(os.path.dirname(leastauth_repo_gitdir), 'git_ssh.sh')
