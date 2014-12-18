@@ -118,6 +118,9 @@ elif new_host:
                                   leastauthority_repo_path, leastauthority_commit_ref,
                                   secret_config_repo_path, secret_config_commit_ref,
                                   stdout, stderr, clock=None)
+else:
+    print >> sys.stderr, "Either --existing_host or --new_host must be provided."
+    sys.exit(1)
 
 
 d.addCallbacks(printer, eb)
