@@ -165,7 +165,7 @@ INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
     'python-dev',
     'python-pip',
     'git-core',
-    'libffi6',
+    'libffi-dev',
     'openssl',
     'libssl1.0.0',
     'python-tz',
