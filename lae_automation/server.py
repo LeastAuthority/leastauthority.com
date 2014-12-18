@@ -143,7 +143,7 @@ INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-de
 TAHOE_LAFS_GIT_REPO_URL = "https://github.com/tahoe-lafs/tahoe-lafs.git"
 TAHOE_LAFS_GIT_BRANCH = "2237-cloud-backend-s4"
 
-TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
+SSEC2_PACKAGE_DEPENDENCIES = [
     'python-dev',
     'python-pip',
     'git-core',
@@ -161,7 +161,22 @@ TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
     'python-simplejson',
 ]
 
-EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
+INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
+    'python-dev',
+    'python-pip',
+    'git-core',
+    'libffi6',
+    'openssl',
+    'libssl1.0.0',
+    'python-nevow',
+    'python-crypto',
+    'python-dateutil',
+    'python-foolscap',
+    'python-six',
+    'python-pycparser',
+    'python-unidecode',
+    'python-zfec',
+    'python-simplejson',
     'python-jinja2',
     'fabric',
     'python-twisted-mail',
@@ -270,7 +285,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
                    stderr):
     set_host_and_key(publichost, admin_privkey_path)
     update_packages(publichost, admin_privkey_path, stdout, stderr)
-    apt_install_dependencies(stdout, TAHOE_LAFS_PACKAGE_DEPENDENCIES)
+    apt_install_dependencies(stdout, SSEC2_PACKAGE_DEPENDENCIES)
 
     sudo_apt_get('-y remove --purge whoopsie')
     get_txaws()
@@ -380,7 +395,7 @@ def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey
 postfix	postfix/main_mailer_type select	No configuration"""
 
     print >>stdout, "Installing dependencies..."
-    package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES
+    package_list = INFRASTRUCTURE_PACKAGE_DEPENDENCIES
     apt_install_dependencies(stdout, package_list)
     # From:  https://stripe.com/docs/libraries
     sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
@@ -405,9 +420,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
     with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
         sudo('python ./setup.py install')
-
-    # patch twisted to send intermediate certs, cf. https://github.com/LeastAuthority/leastauthority.com/issues/6
-    sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
 
     set_host_and_key(publichost, admin_privkey_path, 'website')
     git_ssh_path = os.path.join(os.path.dirname(leastauth_repo_gitdir), 'git_ssh.sh')
