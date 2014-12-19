@@ -418,7 +418,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
     sudo_apt_get('install -y postfix')
-    sudo_apt_get('install -y darcs')
 
     create_account('website', website_pubkey, stdout, stderr)
 
