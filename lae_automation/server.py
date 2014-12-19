@@ -195,6 +195,7 @@ INFRASTRUCTURE_PYTHON_DEPENDENCIES = [
     'Unidecode',
     'docutils',
     'Markdown',
+    'pelican',
 ]
 
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
@@ -418,11 +419,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
     sudo_apt_get('install -y postfix')
     sudo_apt_get('install -y darcs')
-
-    run('wget https://pypi.python.org/packages/source/p/pelican/pelican-3.2.2.tar.gz')
-    run('tar zxf pelican-3.2.2.tar.gz')
-    with cd('pelican-3.2.2'):
-        sudo('python setup.py install')
 
     create_account('website', website_pubkey, stdout, stderr)
 
