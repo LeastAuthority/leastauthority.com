@@ -6,7 +6,6 @@ window.creditcardVerifier = (function () {
             var $form = $('#payment-form');
             creditcardVerifier.register_callbacks($form);
             $('#loading').hide();
-            creditcardVerifier.use_pgp();
             $form.show();
         },
         register_callbacks: function ($form) {
