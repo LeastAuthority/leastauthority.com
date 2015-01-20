@@ -116,7 +116,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             except Exception:
                 traceback.print_tb(100, self._log)
 
-        customer_pgpinfo = self.get_arg(request, 'pgp_pubkey')
+        customer_pgpinfo = ""  #self.get_arg(request, 'pgp_pubkey')
         # The foolscap service registered to run when flappcommand.run is called expects a bytestream
         # of US-ASCII bytes, because it is reading from its stdin (--accept-stdin flag set).
         # Therefore the content passed to the command must conform to US-ASCII.

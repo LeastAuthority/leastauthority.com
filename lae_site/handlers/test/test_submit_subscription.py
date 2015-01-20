@@ -347,7 +347,7 @@ class TestRunFullSignup(CommonFixture):
 
 
     def test_stdin_values(self):
-        self.failUnlessEqual(self.simplejson_dumps_returns_values, [('test@test', ['testpgppubkey'],
+        self.failUnlessEqual(self.simplejson_dumps_returns_values, [('test@test', '',
                                                                      'IDSTUB', 'MOCKS4',
                                                                      'sub_AAAAAAAAAAAAAA')])
 
