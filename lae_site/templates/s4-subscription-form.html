@@ -45,18 +45,6 @@
       <span> / </span><input type="text" maxlength="4" size="4" placeholder="YYYY" data-stripe="exp-year" required="true" tabindex="5" pattern="^201[4-9]$|^20[2-9]\d$">
     </div>
     <br>
-    <div class="form-inline">
-      <label>
-        <input type="checkbox" name="use_pgp" id="use_pgp" tabindex="6">
-        Please send email PGP-encrypted and signed.
-      </label>
-      <span id="pgp" style="display: none">
-        <p>Tell us your public key &mdash; please paste the ASCII-armored public key block here.
-        <br>You can get it using <code>gpg --export -a YOUR_EMAIL_ADDRESS</code>.</p>
-        <textarea id="pgp_pubkey_textarea" rows="10" cols="68" style="white-space:pre; word-break:break-all; width:40em; height:24ex;" tabindex="7"></textarea>
-      </span>
-    </div>
-    <br>
     <p>
       The service is priced at $25/month for unlimited storage (for personal use). It comes with a 30-day
       free trial, so you can test it out with no obligation. You may cancel at any time by sending
