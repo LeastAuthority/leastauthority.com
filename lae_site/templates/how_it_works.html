@@ -56,6 +56,19 @@ directory can gain read-only access to the child.</p>
 <p>For more technical detail, please see the <a href="https://tahoe-lafs.org/trac/tahoe-lafs/wiki/Doc">LAFS project's docs page</a>.</p>
 </section>
 
+<div class="row highlight">
+<ul>
+    <li><a href="#what-is-verifiable">What is verifiable end-to-end security?</a></li>
+    <li><a href="#what-is-backup-good-for">What is Least-Authority Backup good for?</a></li>
+    <li><a href="#where-stored">Where is my data stored?</a></li>
+    <li><a href="#cost">How much do the services cost?</a></li>
+    <li><a href="#size-limits">Are there limits on how much data I can store?</a></li>
+    <li><a href="#delete-files">Can I delete old files to save space?</a></li>
+    <li><a href="#transparency">What is the relationship between Least Authority Enterprises and the LAFS open source project?</a></li>
+    <li><a href="#start">How do I start?</a></li>
+</ul>
+</div>
+
 <section>
     <a name="what_is_verifiable"></a><h3>What is verifiable end-to-end security?</h3>
 
@@ -67,11 +80,62 @@ directory can gain read-only access to the child.</p>
 </section>
 
 <section>
-<h3>Transparency</h3>
+<a name="what-is-backup-good-for"></a><h3>What is Least-Authority Backup good for?</h3>
+<p>It is good for securely backing up your data off-site. The <em>&quot;tahoe
+backup&quot;</em> command inspects your local filesystem for files that have
+changed since the last time you ran it. It uploads each file that
+has changed and it creates a directory in LAFS to hold the
+current &quot;snapshot&quot;—the current version of each of the files. You can
+browse or access old versions just by browsing the old snapshot
+directories.</p>
+</section>
 
+<section>
+<a name="where-stored"></a><h3>Where is my data stored?</h3>
+<p>Your data, encrypted, is stored on Amazon's Simple Storage Service
+(S3), which is a convenient, reliable, and widely understood
+platform for storage.</p>
+
+<p>Data is replicated according to the following policy decribed in Amazon's
+<a href="https://awsmedia.s3.amazonaws.com/pdf/AWS_Security_Whitepaper.pdf">Overview of Security Processes</a>:
+<blockquote>
+Data stored in Amazon S3, Amazon SimpleDB, or Amazon Elastic Block Store (EBS)
+is redundantly stored in multiple physical locations as part of normal operation
+of those services and at no additional charge. Amazon S3 and Amazon SimpleDB
+provide object durability by storing objects multiple times across multiple
+Availability Zones on the initial write and then actively doing further
+replication in the event of device unavailability or detected bit-rot.
+</blockquote></p>
+</section>
+
+<section>
+<a name="cost"></a><h3>How much do the services cost?</h3>
+<p>S4 costs $25 per month for unlimited storage, for personal use.</p>
+
+<h4><a name="size-limits"></a>Are there limits on how much data I can store?</h4>
+<p>There are no limits on the total data you can store, but there is currently
+a limit on the size of an individual file. Files larger than about 3 GB might
+fail to upload. All upload failures, including failures caused by this, are
+shown in your LAFS client software, so you'll know if this happens to
+you.</p>
+<p>We are working on lifting this limitation and will keep you informed about
+our progress.</p>
+</section>
+
+<section>
+<a name="delete-files"></a><h3>Can I delete old files to save space?</h3>
+<p>For now, it is not possible to remove data from the LAE service. If you
+unlink a file, you lose your ability to access it, but it does not free up
+the space in your S3 bucket, so you still get charged for it.</p>
+<p>We are working on fixing this issue and will keep you informed about our
+progress.</p>
+</section>
+
+<section>
+<a name="transparency"></a><h3>What is the relationship between Least Authority Enterprises and the LAFS open-source project?</h3>
 <p>Zooko Wilcox-O'Hearn, founder and CEO of Least Authority Enterprises, was one
 of the inventors of LAFS. Least Authority Enterprises contributes all
-of the code we write to the free and open source software project. We believe that's the
+of the code we write to the free and open-source software project. We believe that's the
 best thing for our customers.</p>
 
 <p>The Python source code for this website, our automation and monitoring scripts,
@@ -91,4 +155,11 @@ Then use:</p>
   git clone https://github.com/LeastAuthority/txaws.git
 </pre>
 </section>
+
+<section>
+<a name="start"></a><h3>How do I start?</h3>
+<p>Go to our <a href="/s4-subscription-form">S4 subscription page</a> to provide your
+payment details.</p>
+</section>
+
 {% endblock %}
