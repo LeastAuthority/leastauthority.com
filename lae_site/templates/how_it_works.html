@@ -21,17 +21,7 @@ A "gateway" uses the storage servers and provides access to the filesystem over 
 
 <p>Users do not rely on storage servers to provide confidentiality nor integrity for their data -- instead all
 of the data is encrypted and integrity-checked by the gateway, so that the servers can neither read nor modify
-the contents of the files. Users do rely on storage servers for availability.
-On Amazon S3, data is replicated according to the following policy decribed in Amazon's
-<a href="https://awsmedia.s3.amazonaws.com/pdf/AWS_Security_Whitepaper.pdf">Overview of Security Processes</a>:
-<blockquote>
-[...] Objects are redundantly stored on multiple devices across multiple facilities in an Amazon S3 region.
-To help provide durability, Amazon S3 PUT and COPY operations synchronously store customer data across multiple
-facilities before returning SUCCESS. Once stored, Amazon S3 helps maintain the durability of the objects by
-quickly detecting and repairing any lost redundancy. Amazon S3 also regularly verifies the integrity of data
-stored using checksums. If corruption is detected, it is repaired using redundant data. In addition, Amazon S3
-calculates checksums on all network traffic to detect corruption of data packets when storing or retrieving data.
-</blockquote></p>
+the contents of the files. Users do rely on storage servers for availability.</p>
 
 <p>In the typical deployment mode each user runs her own gateway on her own machine. This way she relies on
 her own machine for the confidentiality and integrity of the data.</p>
@@ -40,8 +30,6 @@ her own machine for the confidentiality and integrity of the data.</p>
 HTTPS or SFTP. This means that the operator of the gateway can view and modify the user's data (the user relies
 on the gateway for confidentiality and integrity), but the advantage is that the user can access the filesystem
 with a client that doesn't have the gateway software installed, such as a cell phone.</p>
-
-<p><a href="http://bigasterisk.com/tahoe-playground/">Here is an interactive demonstration of LAFS</a> storing and recovering a file.</p>
 
 <p>LAFS also supports access control. In LAFS, there are two kinds of files: immutable and mutable. When you
 upload a file to the storage grid you can choose which kind of file it will be in the grid. Immutable files
@@ -74,6 +62,7 @@ directory can gain read-only access to the child.</p>
 </ul>
 </div>
 
+<br>
 <section>
 <a name="what_is_verifiable"></a><h3>What is verifiable end-to-end security?</h3>
 
