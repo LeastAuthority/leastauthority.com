@@ -19,7 +19,7 @@ ssec2_accesskeyid_path = '../secret_config/tlos3_accesskeyid'
 
 ssec2_secret = FilePath(ssec2_secret_path).getContent().strip()
 ssec2_accesskeyid = FilePath(ssec2_accesskeyid_path).getContent().strip()
-serverinfo_csv_path = '../serverinfo.csv'
+serverinfo_csv_path = '../tlos3_serverinfo.csv'
 lasterrors_path = '../lasterrors.txt'
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
