@@ -14,35 +14,42 @@ from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParse
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
 config = Config()
 
-ec2secretpath='../secret_config/ec2secret'
-ec2accesskeyid = str(config.other['ec2_access_key_id'])
-ec2secretkey = FilePath(ec2secretpath).getContent().strip()
-serverinfocsvpath = '../serverinfo.csv'
-lasterrorspath = '../lasterrors.txt'
+ssec2_secret_path = '../secret_config/tlos3_secret'
+ssec2_accesskeyid_path = '../secret_config/tlos3_accesskeyid'
+
+ssec2_secret = FilePath(ssec2_secret_path).getContent().strip()
+ssec2_accesskeyid = FilePath(ssec2_accesskeyid_path).getContent().strip()
+serverinfo_csv_path = '../serverinfo.csv'
+lasterrors_path = '../lasterrors.txt'
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
 
-serverinfotuple = read_serverinfo(serverinfocsvpath)
-localstate = {}
-for propertytuple in serverinfotuple:
-    (launch_time, instance_id, publichost, status) = propertytuple
-    localstate[instance_id] = (launch_time, publichost, status)
+serverinfo_tuple = read_serverinfo(serverinfo_csv_path)
+local_state = {}
+for property_tuple in serverinfo_tuple:
+    (launch_time, instance_id, publichost, status) = property_tuple
+    local_state[instance_id] = (launch_time, publichost, status)
 
 POLL_TIME = 10
 ADDRESS_WAIT_TIME = 60
 
+def _print(x):
+    print x
+    return x
+
 def checker(stdout, stderr):
-    d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
+    d = wait_for_EC2_properties(ssec2_accesskeyid, ssec2_secret, endpoint_uri,
                                 ServerInfoParser(('launchTime', 'instanceId'), ('dnsName', 'instanceState.name')),
                                 POLL_TIME, ADDRESS_WAIT_TIME, sys.stdout, stderr)
+    d.addCallback(_print)
 
-    d.addCallback(lambda remoteproperties: compare_servers_to_local(remoteproperties, localstate, stdout, stderr))
+    d.addCallback(lambda remote_properties: compare_servers_to_local(remote_properties, local_state, stdout, stderr))
 
     d.addCallback(lambda host_list: check_servers(host_list, monitor_privkey_path, stdout, stderr))
 
     return d
 
-d = monitoring_check(checker=checker, lasterrorspath=lasterrorspath,
+d = monitoring_check(checker=checker, lasterrors_path=lasterrors_path,
                      from_email="info@leastauthority.com",
                      what="storage servers",
                      stdout=sys.stdout, stderr=sys.stderr)

@@ -217,13 +217,13 @@ def check_infrastructure(url, stdout, stderr):
     d.addCallback(_got_response)
     return d
 
-def monitoring_check(checker, lasterrorspath, from_email, what, stdout, stderr):
+def monitoring_check(checker, lasterrors_path, from_email, what, stdout, stderr):
     error_stream = StringIO()
 
     lasterrors = None
-    lasterrorsfp = FilePath(lasterrorspath)
-    if lasterrorsfp.exists():
-        lasterrors = lasterrorsfp.getContent()
+    lasterrors_fp = FilePath(lasterrors_path)
+    if lasterrors_fp.exists():
+        lasterrors = lasterrors_fp.getContent()
 
     d = checker(stdout, error_stream)
     def cb(x):
@@ -237,7 +237,7 @@ def monitoring_check(checker, lasterrorspath, from_email, what, stdout, stderr):
         if errors != lasterrors:
             d2 = send_monitoring_report(errors, from_email, what)
             def _sent(ign):
-                lasterrorsfp.setContent(errors)
+                lasterrors_fp.setContent(errors)
                 raise Exception("Sent failure report.")
             def _err(f):
                 print >>stderr, str(f)
