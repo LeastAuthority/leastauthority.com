@@ -55,8 +55,10 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
         s3host = config.get('storage', 's3.bucket') + '.s3.amazonaws.com'
         nslookup = run('nslookup ' + s3host)
         if not 'answer:' in nslookup:
-            print >>stderr, "Error: Host %s was not able to resolve %r:\n%r" % (publichost, s3host, nslookup)
-            return False
+            nslookup = run('nslookup ' + s3host)
+            if not 'answer:' in nslookup:
+                print >>stderr, "Error: Host %s was not able to resolve %r:\n%r" % (publichost, s3host, nslookup)
+                return False
 
         return True
     except NotListeningError:
