@@ -59,7 +59,7 @@ def checker(stdout, stderr):
 
 d = monitoring_check(checker=checker, lasterrors_path=lasterrors_path,
                      from_email="info@leastauthority.com",
-                     what="storage servers",
+                     what="%s storage servers" % (service,),
                      stdout=sys.stdout, stderr=sys.stderr)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()
