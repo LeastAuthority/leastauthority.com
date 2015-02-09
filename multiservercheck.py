@@ -11,18 +11,26 @@ from lae_automation.monitor import check_servers, read_serverinfo, compare_serve
 from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParser
 
 
+if len(sys.argv) < 2:
+    print "Usage: python multiservercheck.py SERVICE"
+    print "Happy checking!"
+    sys.exit(1)
+
+service = sys.argv[1]
+
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
 config = Config()
 
-ssec2_secret_path = '../secret_config/tlos3_secret'
-ssec2_accesskeyid_path = '../secret_config/tlos3_accesskeyid'
+service_lower = service.lower()
+ssec2_secret_path = '../secret_config/%s_secret' % (service_lower,)
+ssec2_accesskeyid_path = '../secret_config/%s_accesskeyid' % (service_lower,)
 
 ssec2_secret = FilePath(ssec2_secret_path).getContent().strip()
 ssec2_accesskeyid = FilePath(ssec2_accesskeyid_path).getContent().strip()
-serverinfo_csv_path = '../tlos3_serverinfo.csv'
-lasterrors_path = '../lasterrors.txt'
+serverinfo_csv_path = '../%s_serverinfo.csv' % (service_lower,)
+lasterrors_path = '../%s_lasterrors.txt' % (service_lower,)
 
-monitor_privkey_path = str(config.other['monitor_privkey_path'])
+monitor_privkey_path = '../secret_config/%s_monitorkeys.pem' % (service_lower,)
 
 serverinfo_tuple = read_serverinfo(serverinfo_csv_path)
 local_state = {}
@@ -51,7 +59,7 @@ def checker(stdout, stderr):
 
 d = monitoring_check(checker=checker, lasterrors_path=lasterrors_path,
                      from_email="info@leastauthority.com",
-                     what="storage servers",
+                     what="%s storage servers" % (service,),
                      stdout=sys.stdout, stderr=sys.stderr)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()
