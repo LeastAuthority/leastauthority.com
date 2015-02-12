@@ -55,6 +55,7 @@ directory can gain read-only access to the child.</p>
     <li><a href="#what-is-backup-good-for">What is Least-Authority Backup good for?</a></li>
     <li><a href="#where-stored">Where is my data stored?</a></li>
     <li><a href="#cost">How much do the services cost?</a></li>
+    <li><a href="#card-security">How secure is my credit or debit card information?</a></li>
     <li><a href="#size-limits">Are there limits on how much data I can store?</a></li>
     <li><a href="#delete-files">Can I delete old files to save space?</a></li>
     <li><a href="#transparency">What is the relationship between LeastAuthority.com and the LAFS open source project?</a></li>
@@ -126,6 +127,19 @@ replication in the event of device unavailability or detected bit-rot.
 <section>
 <a name="cost"></a><h3>How much do the services cost?</h3>
 <p>S4 costs $25 per month for unlimited storage, for personal use.</p>
+</section>
+
+<section>
+<a name="card-security"></a><h3>How secure is my credit or debit card information?</h3>
+<p>LeastAuthority.com does not hold any credit or debit card information on our servers.
+When you sign up, a connection is made to our payment processor,
+<a href="https://stripe.com">Stripe</a>, which holds your card information on
+LeastAuthority.com's behalf. Stripe is certified to PCI Service Provider Level 1,
+the most stringent certification level. The connections to both leastauthority.com
+and the Stripe API are made over TLS (with
+<a href="https://www.eff.org/deeplinks/2014/04/why-web-needs-perfect-forward-secrecy">forward secrecy</a>
+in modern browsers), so the security of your card information is at least as good
+as for other e-commerce sites.</p>
 </section>
 
 <section>
