@@ -48,7 +48,7 @@ def get_bucket_name(subscription_id, customer_id):
 
 
 def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, subscription_id,
-                                plan_id, stdout, stderr, secretsfile, logfile,
+                                plan_id, stdout, stderr, secretsfp, logfile,
                                 configpath='../secret_config/lae_automation_config.json',
                                 serverinfopath=None, clock=None):
     print >>stderr, "entering activate_subscribed_service call."
@@ -82,13 +82,13 @@ def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, s
     d.addCallback(lambda ign: deploy_server(s3_access_key_id, s3_secretkey, None, None, bucketname,
                                             None, amiimageid, instancesize,
                                             customer_email, customer_pgpinfo, stdout, stderr,
-                                            secretsfile, config, serverinfopath, clock=myclock))
+                                            secretsfp, config, serverinfopath, clock=myclock))
 
     d.addErrback(lambda f: send_notify_failure(f, customer_email, logfile, stdout, stderr))
     return d
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
-                   secretsfile, logfilename,
+                   secretsfp, logfilename,
                    configpath='../secret_config/lae_automation_config.json',
                    serverinfopath=None, clock=None):
     config = Config(configpath)
@@ -101,7 +101,7 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     d = deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
                       bucketname, oldsecrets, amiimageid, instancesize,
                       customer_email, None, stdout, stderr,
-                      secretsfile, config, serverinfopath, clock)
+                      secretsfp, config, serverinfopath, clock)
     d.addErrback(lambda f: send_notify_failure(f, customer_email, logfilename, stdout,
                                                stderr))
     return d
@@ -110,7 +110,8 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
 def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
                   bucketname, oldsecrets, amiimageid, instancesize,
                   customer_email, customer_pgpinfo, stdout, stderr,
-                  secretsfile, config, serverinfopath=None, clock=None):
+                  secretsfp, config, serverinfopath=None, clock=None):
+    assert isinstance(secretsfp, FilePath)
     serverinfopath = serverinfopath or '../serverinfo.csv'
     myclock = clock or reactor
 
@@ -163,7 +164,7 @@ def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
 
                 furl = bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
                                      s3_secretkey, usertoken, producttoken, bucketname, oldsecrets,
-                                     stdout, stderr, secretsfile)
+                                     stdout, stderr, secretsfp)
 
                 # XXX We probably need to rethink this:
                 append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id,

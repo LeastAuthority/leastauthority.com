@@ -4,6 +4,7 @@ import os, sys
 
 from twisted.internet import reactor
 from twisted.python.failure import Failure
+from twisted.python.filepath import FilePath
 
 from lae_automation.config import Config
 from lae_automation.signup import deploy_server
@@ -30,10 +31,9 @@ configpath = sys.argv[12]
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
 
-secretsfile = open(secretspath, 'a')
+secretsfp = FilePath(secretspath)
 
 def cb(x):
-    secretsfile.close()
     print str(x)
     if isinstance(x, Failure) and hasattr(x.value, 'response'):
         print x.value.response
@@ -42,7 +42,7 @@ config = Config(configpath)
 d = deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
                   bucketname, None, amiimageid, instancesize,
                   customer_name, customer_email, customer_keyinfo, sys.stdout, sys.stderr,
-                  secretsfile, config)
+                  secretsfp, config)
 d.addBoth(cb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()
