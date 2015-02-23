@@ -25,13 +25,10 @@ ec2_privkey_path = '../secret_config/EC2adminkeys2.pem'
 monitor_pubkey = FilePath('../secret_config/EC2monitorkeys2.pub').getContent().strip()
 monitor_privkey_path = '../secret_config/EC2monitorkeys2.pem'
 
-try:
-    secretsfile = open(secretspath, 'a')
+secretsfp = FilePath(secretspath)
 
-    if "--no-install" not in sys.argv:
-        install_server(publicip, ec2_privkey_path, monitor_pubkey, monitor_privkey_path, sys.stdout, sys.stderr)
+if "--no-install" not in sys.argv:
+    install_server(publicip, ec2_privkey_path, monitor_pubkey, monitor_privkey_path, sys.stdout, sys.stderr)
 
-    bounce_server(publicip, ec2_privkey_path, privateip, useraccesskeyid, usersecretkey, usertoken, producttoken, bucketname,
-                  None, sys.stdout, sys.stderr, secretsfile)
-finally:
-    secretsfile.close()
+bounce_server(publicip, ec2_privkey_path, privateip, useraccesskeyid, usersecretkey, usertoken, producttoken, bucketname,
+              None, sys.stdout, sys.stderr, secretsfp)
