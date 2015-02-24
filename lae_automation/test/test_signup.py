@@ -1,4 +1,5 @@
 
+import os
 from base64 import b32encode
 
 from twisted.trial.unittest import TestCase
@@ -95,6 +96,7 @@ class TestSignupModule(TestCase):
         self.EC2SECRETPATH = 'mock_ec2_secret'
         self.S3SECRETPATH = 'mock_s3_secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
+        self.SECRETSPATH = 'test_secrets'
 
         self.MEMAIL = 'MEMAIL'
         self.MKEYINFO = 'MKEYINFO'
@@ -190,7 +192,7 @@ class TestSignupModule(TestCase):
 
         def call_bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
                                s3_secretkey, user_token, product_token, bucket_name, oldsecrets,
-                               stdout, stderr, secretsfile):
+                               stdout, stderr, secretsfp):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
             self.failUnlessEqual(privatehost, '0.0.0.1')
@@ -198,7 +200,7 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(s3_secretkey, 'S3'*20)
             self.failUnlessEqual(bucket_name, "lae-" + self.MENCODED_IDS)
             self.failUnlessEqual(oldsecrets, None)
-            self.failUnless(secretsfile.name.endswith('secrets/XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX/1970-01-01T000000Z-%s/SSEC2' % (self.MENCODED_IDS,)), secretsfile.name)
+            self.failUnless(secretsfp.path.endswith('secrets/XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX/1970-01-01T000000Z-%s/SSEC2' % (self.MENCODED_IDS,)), secretsfp.path)
         self.patch(signup, 'bounce_server', call_bounce_server)
 
         def call_send_signup_confirmation(publichost, customer_email, furl, customer_keyinfo, stdout,
@@ -234,15 +236,15 @@ class TestSignupModule(TestCase):
         logdirname = "%s-%s" % (fpcleantimestamp, self.MENCODED_IDS)
         testconfigdir = self.mockconfigdir.child(test_name).child('secrets').child(self.MPLAN_ID).child(logdirname)
         testconfigdir.makedirs()
-        MLOGFILE_fp = FilePath(testconfigdir.path + '/signup_logs')
-        MSSEC2_secretsfile = FilePath(testconfigdir.path + '/SSEC2').open('a+')
-        signup_logfile = MLOGFILE_fp.open('a+')
+        MLOGFILEFP = FilePath(os.path.join(testconfigdir.path, 'signup_logs'))
+        MSSEC2SECRETSFP = FilePath(os.path.join(testconfigdir.path, 'SSEC2'))
+        signup_logfile = MLOGFILEFP.open('a+')
         signup_stdout = LoggingStream(signup_logfile, '>')
         signup_stderr = LoggingStream(signup_logfile, '')
-        return signup_stdout, signup_stderr, MLOGFILE_fp.path, MSSEC2_secretsfile
+        return signup_stdout, signup_stderr, MLOGFILEFP.path, MSSEC2SECRETSFP
 
     def test_activate_subscribed_service(self):
-        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFILE = self.initialize_testlocal_state('test_activate_subscribed_service')
+        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFP = self.initialize_testlocal_state('test_activate_subscribed_service')
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
@@ -253,7 +255,7 @@ class TestSignupModule(TestCase):
 
         d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID,
                                                self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr,
-                                               MSSEC2SECRETSFILE, MLOGFILENAME, self.CONFIGFILEPATH,
+                                               MSSEC2SECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                                                self.SERVERINFOPATH)
 
         def _check(ign):
@@ -264,25 +266,25 @@ class TestSignupModule(TestCase):
         return d
 
     def test_no_products(self):
-        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFILE = self.initialize_testlocal_state('test_no_products')
+        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFP = self.initialize_testlocal_state('test_no_products')
         FilePath(self.CONFIGFILEPATH).setContent(ZEROPRODUCT)
 
         self.failUnlessRaises(AssertionError, signup.activate_subscribed_service,
-                              self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID, 
-                              self.MPLAN_ID, stdout, stderr, MSSEC2SECRETSFILE, MLOGFILENAME, 
+                              self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, self.MSUBSCRIPTION_ID,
+                              self.MPLAN_ID, stdout, stderr, MSSEC2SECRETSFP, MLOGFILENAME,
                               self.CONFIGFILEPATH, self.SERVERINFOPATH)
 
     def test_timeout_addressreq(self):
-        stdout, stderr, MLOGFILENAME, MSSEC2_secretsfile = self.initialize_testlocal_state('test_timeout_addressreq')
+        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFP = self.initialize_testlocal_state('test_timeout_addressreq')
         from lae_automation.aws import queryapi
         def call_get_EC2_properties(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, parser,
                                     *instance_ids):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
-        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
-                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
-                                               MSSEC2_secretsfile, MLOGFILENAME, self.CONFIGFILEPATH, 
+        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID,
+                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr,
+                                               MSSEC2SECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                                                self.SERVERINFOPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")
@@ -296,7 +298,7 @@ class TestSignupModule(TestCase):
         return d
 
     def test_EC2_not_listening(self):
-        stdout, stderr, MLOGFILENAME, MSSEC2_secretsfile = self.initialize_testlocal_state('test_EC2_not_listening')
+        stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFP = self.initialize_testlocal_state('test_EC2_not_listening')
         self.patch(signup, 'VERIFY_POLL_TIME', .1)
         self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
@@ -305,9 +307,9 @@ class TestSignupModule(TestCase):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_consoleoutput', call_get_EC2_consoleoutput)
 
-        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID, 
-                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr, 
-                                               MSSEC2_secretsfile, MLOGFILENAME, self.CONFIGFILEPATH, 
+        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID,
+                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr,
+                                               MSSEC2SECRETSFP, MLOGFILENAME, self.CONFIGFILEPATH,
                                                self.SERVERINFOPATH)
         def _bad_success(ign):
             self.fail("should have got a failure")

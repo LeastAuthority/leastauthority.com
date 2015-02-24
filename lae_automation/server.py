@@ -12,6 +12,8 @@ from pipes import quote as shell_quote
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
+from twisted.python.filepath import FilePath
+
 from fabric import api
 from fabric.context_managers import cd
 from fabric.contrib import files
@@ -545,7 +547,7 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
         dirfp.makedirs()
     except OSError:
         pass
-    secretsfile = dirfp.child(logfilename).open('a+')
+    secretsfp = dirfp.child(logfilename)
     logfile = basefp.child('signup_logs').child(logfilename).open('a+')
 
     stdout = LoggingStream(logfile, '>')
@@ -584,7 +586,7 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
         privatehost = tub_location.partition(',')[2].partition(':')[0]
 
         print >>stdout, "Writing secrets file..."
-        print >>secretsfile, simplejson.dumps({
+        write_secrets_file(secretsfp, {
             'publichost':               publichost,
             'privatehost':              privatehost,
             'access_key_id':            access_key_id,
@@ -603,8 +605,12 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
     finally:
         stdout.flush()
         stderr.flush()
-        secretsfile.close()
         logfile.close()
+
+
+def write_secrets_file(secretsfp, secrets):
+    secrets_json = simplejson.dumps(secrets, sort_keys=True, indent=2) + "\n"
+    secretsfp.setContent(secrets_json)
 
 
 def make_external_furl(internal_furl, publichost):
@@ -617,8 +623,9 @@ def make_external_furl(internal_furl, publichost):
 
 
 def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
-                  user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
+                  user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfp,
                   configpath='../secret_config/lae_automation_config.json'):
+    assert isinstance(secretsfp, FilePath)
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
@@ -690,7 +697,7 @@ shares.total = 1
 
 """ % (external_introducer_furl,)
 
-    print >>secretsfile, simplejson.dumps({
+    write_secrets_file(secretsfp, {
         'publichost':               publichost,
         'privatehost':              privatehost,
         'access_key_id':            s3_access_key_id,
@@ -706,7 +713,6 @@ shares.total = 1
         'internal_introducer_furl': internal_introducer_furl,
         'external_introducer_furl': external_introducer_furl,
     })
-    secretsfile.flush()
 
     return external_introducer_furl
 

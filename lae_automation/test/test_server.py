@@ -390,7 +390,7 @@ class TestServerModule(TestCase):
         BUCKETNAME = 'foooooo'
         STDOUT = StringIO()
         STDERR = StringIO()
-        MSECRETSFILE = StringIO()
+        MSECRETSFP = FilePath('test_bounce_server_secrets')
         INTERNALINTROFURL = 'pb://TUBID@LOCATION/SWISSNUM'
         from lae_automation.server import TAHOE_CFG_TEMPLATE
         from lae_automation.server import RESTART_SCRIPT
@@ -431,6 +431,8 @@ class TestServerModule(TestCase):
                 ])
         server.bounce_server(MHOSTNAME, ADMINPRIVKEYPATH, MPRIVHOST, ACCESSKEYID, SECRETACCESSKEY, \
                              MUSERTOKEN, MPRODUCTTOKEN, BUCKETNAME, None, \
-                             STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
+                             STDOUT, STDERR, MSECRETSFP, self.CONFIGFILEPATH)
+        self.failUnless(MSECRETSFP.exists())
+        MSECRETSFP.remove()
         self._check_all_done()
 

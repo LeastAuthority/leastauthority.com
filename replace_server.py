@@ -24,15 +24,14 @@ if __name__ == '__main__':
     stripe_subscription_id = stripe_secrets[4]
 
     (abslogdir_fp,
-    stripesecrets_log_fp,
-    SSEC2secrets_log_fp,
-    signup_log_fp) = create_log_filepaths(stripe_plan_id, stripe_customer_id, stripe_subscription_id)
+     stripe_secretsfp,
+     ssec2_secretsfp,
+     signup_logfp) = create_log_filepaths(stripe_plan_id, stripe_customer_id, stripe_subscription_id)
 
     # The stripe secrets are unchanged.
-    stripesecrets_log_fp.setContent(simplejson.dumps(stripe_secrets))
+    stripe_secretsfp.setContent(simplejson.dumps(stripe_secrets))
 
-    SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
-    signup_logfile = signup_log_fp.open('a+')
+    signup_logfile = signup_logfp.open('a+')
     signup_stdout = LoggingStream(signup_logfile, '>')
     signup_stderr = LoggingStream(signup_logfile, '')
     # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
@@ -50,11 +49,9 @@ if __name__ == '__main__':
 
 
     def _close(res):
-        sys.stdout.flush()
-        sys.stderr.flush()
-        signup_log_fp.open().close()
-        stripesecrets_log_fp.open().close()
-        SSEC2secrets_log_fp.open().close()
+        signup_stdout.flush()
+        signup_stderr.flush()
+        signup_logfile.close()
         return res
     def _err(f):
         print >>sys.stderr, str(f)
@@ -65,7 +62,7 @@ if __name__ == '__main__':
 
     d = defer.succeed(None)
     d.addCallback(lambda ign: replace_server(old_ssec2_secrets, amiimageid, instancesize, customer_email, signup_stdout, signup_stderr,
-                                             SSEC2_secretsfile, signup_logfile))
+                                             ssec2_secretsfp, signup_logfile))
     d.addErrback(_err)
     d.addBoth(_close)
     d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
