@@ -2,25 +2,31 @@
 from cStringIO import StringIO
 
 from twisted.trial.unittest import TestCase
+from twisted.python.filepath import FilePath
 
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.web.http_headers import Headers
 from twisted.web.client import ResponseDone
 
-from lae_automation.monitor import check_server, check_servers
-from lae_automation import monitor
-from lae_automation import server
+from lae_automation.monitor import check_server_by_login, check_servers
+from lae_automation import monitor, server, endtoend
 
 
 class TestServerMonitoring(TestCase):
     PUBLICHOST = '0.0.0.0'
     PRIVHOST = '1.1.1.1'
     MONPRVKEYPATH = 'a_fake_path'
+    BUCKETNAME = "bucket"
+    SECRETSPATH = "test_secrets"
     STDOUT = StringIO()
     STDERR = StringIO()
 
-    HOSTLIST = [(PUBLICHOST, PRIVHOST), (PUBLICHOST, PRIVHOST)]
+    HOSTLIST = [PUBLICHOST, PUBLICHOST]
+    SF = endtoend.SecretsFile(filepath=FilePath(SECRETSPATH), secrets={})
+    SECRETS_BY_BUCKET = {BUCKETNAME: SF}
+    SECRETS_BY_HOST = {PUBLICHOST: SF}
+
     def test_checkserver_failonUID(self):
         PSLINES = """FAILID"""
         def call_run(remotecommand):
@@ -39,7 +45,7 @@ class TestServerMonitoring(TestCase):
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
 
-        check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
+        check_server_by_login(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
     def test_checkserver_failonargnum(self):
@@ -60,7 +66,7 @@ class TestServerMonitoring(TestCase):
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
 
-        check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
+        check_server_by_login(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
     def test_checkserver_failonnodes(self):
@@ -81,7 +87,7 @@ class TestServerMonitoring(TestCase):
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
 
-        check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
+        check_server_by_login(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
     def test_checkserver_withps_success(self):
@@ -102,23 +108,32 @@ class TestServerMonitoring(TestCase):
             self.failUnlessEqual(username, 'monitor')
         self.patch(monitor, 'set_host_and_key', call_set_host_and_key)
 
-        check_server(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
+        check_server_by_login(self.PUBLICHOST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
 
 
-    def test_checkserverS_true(self):
-        def call_check_server(publichost, monitor_privkey_path, stdout, stderr):
-            return True
-        self.patch(monitor, 'check_server', call_check_server)
-        result = check_servers(self.HOSTLIST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
-        self.failUnlessEqual(result, True)
+    def _test_checkservers(self, by_login, end_to_end):
+        def call_check_server_by_login(publichost, monitor_privkey_path, stdout, stderr):
+            return (None, by_login)
+        self.patch(monitor, 'check_server_by_login', call_check_server_by_login)
+
+        def call_check_server_end_to_end(secretsfp, secrets, stdout, stderr, recreate_test_file=False, timestamp=None):
+            return defer.succeed(end_to_end)
+        self.patch(endtoend, 'check_server_end_to_end', call_check_server_end_to_end)
+
+        d = check_servers(self.HOSTLIST, self.MONPRVKEYPATH, self.SECRETS_BY_BUCKET, self.SECRETS_BY_HOST,
+                          self.STDOUT, self.STDERR, skip_end_to_end=False, recreate_test_file=False)
+        d.addCallback(lambda result: self.failUnlessEqual(result, by_login and end_to_end))
+        return d
 
 
-    def test_checkserverS_false(self):
-        def call_check_server(publichost, monitor_privkey_path, stdout, stderr):
-            return False
-        self.patch(monitor, 'check_server', call_check_server)
-        result = check_servers(self.HOSTLIST, self.MONPRVKEYPATH, self.STDOUT, self.STDERR)
-        self.failUnlessEqual(result, False)
+    def test_checkservers_true(self):
+        return self._test_checkservers(True, True)
+
+    def test_checkservers_login_false(self):
+        return self._test_checkservers(False, True)
+
+    def test_checkservers_endtoend_false(self):
+        return self._test_checkservers(True, False)
 
 
     def test_compare_servers_to_local_success(self):
