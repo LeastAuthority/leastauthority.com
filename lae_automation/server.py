@@ -139,6 +139,10 @@ SSEC2_CRONTAB = """\
 class NotListeningError(Exception):
     pass
 
+class InvalidSecrets(Exception):
+    pass
+
+
 INSTALL_TXAWS_VERSION = "0.2.1.post5"
 INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
 
@@ -611,6 +615,28 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
 def write_secrets_file(secretsfp, secrets):
     secrets_json = simplejson.dumps(secrets, sort_keys=True, indent=2) + "\n"
     secretsfp.setContent(secrets_json)
+
+
+def read_secrets_file(secretsfp):
+    try:
+        secrets_json = secretsfp.getContent()
+    except Exception, e:
+        raise InvalidSecrets("Error for %r: could not read secrets file: %s" % (secretsfp.path, e))
+
+    try:
+        secrets = simplejson.loads(secrets_json)
+    except Exception, e:
+        # Don't include the message of e since we can't be sure it doesn't contain secrets.
+        # The exception class name should be safe.
+        raise InvalidSecrets("Error for %r: could not parse secrets file: %s" % (secretsfp.path, e.__class__.__name__))
+
+    needed_fields = ('bucket_name', 'external_introducer_furl', 'server_nodeid')
+    for field in needed_fields:
+        if field not in secrets:
+            raise InvalidSecrets("Error for %r: secrets file did not contain some needed fields.\n"
+                                 "Missing fields were %r" % (secretsfp.path, sorted(set(needed_fields) - set(secrets.keys()))))
+
+    return secrets
 
 
 def make_external_furl(internal_furl, publichost):
