@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/news.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2015-05-16T00:00:00+00:00</updated><entry><title>A Bug in libsnark</title><link href="https://leastauthority.com/blog/a_bug_in_libsnark.html" rel="alternate"></link><updated>2015-05-16T00:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn, Alessandro Chiesa, Eli Ben-Sasson, Eran Tromer, Madars Virza</name></author><id>tag:https://leastauthority.com/blog,2015-05-16:a_bug_in_libsnark.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; --&gt;
+&lt;!-- -*- indent-tabs-mode: nil -*- --&gt;
+&lt;div class="section" id="a-statement-from-least-authority"&gt;
+&lt;h2&gt;a statement from Least Authority&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;Zooko Wilcox-O'Hearn writing:&lt;/em&gt;&lt;/p&gt;
+&lt;div class="section" id="about-us"&gt;
+&lt;h3&gt;About us&lt;/h3&gt;
+&lt;p&gt;At Least Authority, &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our mission&lt;/a&gt; is to bring verifiable end-to-end
+security to everyone. As a part of this mission, we have been
+collaborating with with the scientists behind &lt;a class="reference external" href="http://www.scipr-lab.org/"&gt;zk-SNARKS&lt;/a&gt;,
+&lt;a class="reference external" href="https://github.com/scipr-lab/libsnark"&gt;libsnark&lt;/a&gt;, and &lt;a class="reference external" href="http://zca.sh/"&gt;Zerocash&lt;/a&gt;. These are some of the most promising new
+advances in cryptography, and we are exploring whether they can be
+used to provide more safety and freedom to all users of the Internet.&lt;/p&gt;
+&lt;p&gt;We're not ready to post about our specific plans, but we want to
+address the recent news that a bug has been discovered in libsnark.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="id1"&gt;
+&lt;h3&gt;A bug in libsnark&lt;/h3&gt;
+&lt;p&gt;Recently there was &lt;a class="reference external" href="https://eprint.iacr.org/2015/437"&gt;a bug reported&lt;/a&gt; by &lt;a class="reference external" href="http://research.microsoft.com/en-us/people/parno/"&gt;Bryan Parno&lt;/a&gt; from Microsoft
+Research. Because libsnark is used to implement the cryptography in
+&lt;em&gt;Zerocash&lt;/em&gt;, some people have &lt;a class="reference external" href="http://www.reddit.com/r/Bitcoin/comments/35jnax/openpgp_proposal_for_a_separable_ring_signature/cr5c3kb"&gt;worried&lt;/a&gt; that this bug could have led
+to a critical failure in &lt;em&gt;Zerocash&lt;/em&gt;, if &lt;em&gt;Zerocash&lt;/em&gt; had already been
+deployed before the bug was discovered.&lt;/p&gt;
+&lt;p&gt;We asked some of the authors of libsnark to comment about the bug.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="how-we-work"&gt;
+&lt;h3&gt;How we work&lt;/h3&gt;
+&lt;p&gt;Before turning the floor over to the libsnark scientists, I'd like to
+make two points myself:&lt;/p&gt;
+&lt;p&gt;First, in the long run, having independent scientists like Bryan Parno
+study the zk-SNARK literature and the libsnark implementation in
+search of flaws is the right way for a cryptographic innovation like
+this to get vetted and improved. It is encouraging to see this kind of
+scientific scrutiny happening, and we are grateful for the work he and
+other researchers have done.&lt;/p&gt;
+&lt;p&gt;Second, before we at Least Authority deploy new software or
+cryptography for our users to rely on, we perform our own internal
+security audits and solicit external security audits from independent
+experts. We have not yet performed that process for libsnark, and we
+would do so before deploying any libsnark-based systems to our users.&lt;/p&gt;
+&lt;p&gt;If you're interested in our history, here are the reports from &lt;a class="reference external" href="https://leastauthority.com/blog/tag/consultancy.html"&gt;some
+of the security audits&lt;/a&gt; that we've performed on behalf of others, and
+here is &lt;a class="reference external" href="https://tahoe-lafs.org/hacktahoelafs/"&gt;a contest we organized&lt;/a&gt; for others to find security flaws in
+our flagship product.&lt;/p&gt;
+&lt;p&gt;We also notified the authors of another zk-SNARK implementation named
+&lt;a class="reference external" href="https://github.com/jancarlsson/snarklib"&gt;snarklib&lt;/a&gt;, so that they could fix &lt;a class="reference external" href="https://github.com/jancarlsson/snarklib/blob/master/QAP_query.hpp#L45"&gt;the bug as it applies to
+snarklib&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="a-statement-from-the-libsnark-team"&gt;
+&lt;h2&gt;A statement from the libsnark team&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;Alessandro Chiessa, Eli Ben-Sasson, Eran Tromer, and Madars Virza writing:&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Summary:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Bryan Parno &lt;a class="reference external" href="https://eprint.iacr.org/2015/437"&gt;identified&lt;/a&gt; a bug in the R1CS-to-QAP reduction in &lt;a class="reference external" href="https://github.com/scipr-lab/libsnark"&gt;libsnark&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Current libsnark includes a full and general fix, in &lt;a class="reference external" href="https://github.com/scipr-lab/libsnark/commit/af725eeb82bd380a02f8be0d8931c8edf55afd03"&gt;commit f55afd03&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;The fix has negligible performance implications when the number of constraints is much larger than the number of inputs, as is typical in SNARK applications, including Zerocash.&lt;/li&gt;
+&lt;li&gt;Known users of libsnark have been notified, so that they may update their code to the latest release.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;More details about the bug and its fix:&lt;/p&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://github.com/scipr-lab/libsnark/tree/master/src/zk_proof_systems/ppzksnark/r1cs_ppzksnark"&gt;One of the preprocessing SNARKs in libsnark&lt;/a&gt; represents NP statements to be proved as rank-1 constraint systems (R1CS). Internally, a given R1CS is converted into a Quadratic Arithmetic Program (QAP), an algebraic representation of the NP statement. If the R1CS has an input of size &lt;em&gt;n&lt;/em&gt;, the QAP includes polynomials &lt;em&gt;A_0,...,A_n&lt;/em&gt; over a finite field F and, for the soundness of the SNARK to hold, these polynomials must be linearly independent over F. The R1CS-to-QAP reduction, which converts an R1CS into a QAP, should ensure this independence. Until recently, libsnark’s implementation of that reduction had a bug: it did not explicitly ensure this independence.&lt;/p&gt;
+&lt;p&gt;This bug does not always manifest, because a R1CS may naturally induce a QAP in which &lt;em&gt;A_0,...,A_n&lt;/em&gt; are linearly independent. However, the linear independence should be assured generically for all possible R1CS. The straightforward fix to do so is as follows.&lt;/p&gt;
+&lt;p&gt;In the following, consider an R1CS with &lt;em&gt;M&lt;/em&gt; constraints, &lt;em&gt;N&lt;/em&gt; variables, and &lt;em&gt;n&lt;/em&gt; inputs. (The &lt;em&gt;n&lt;/em&gt; inputs correspond to variables that are fixed to known values by the NP statement; the remaining &lt;em&gt;N-n&lt;/em&gt; variables are part of the witness, and can take on any value.)  The fix is to add &lt;em&gt;n+1&lt;/em&gt; dummy constraints (instead of one dummy constraint as in the previous code) that ensure that the constructed QAP always has linearly independent &lt;em&gt;A_0,...,A_n&lt;/em&gt;. This causes the degree of the constructed QAP to increase from &lt;em&gt;M+1&lt;/em&gt; to &lt;em&gt;M+n+1&lt;/em&gt;. (An optimization, not implemented in our code, is to only add as many additional constraints as needed to ensure that the constructed QAP satisfies the desired property; this number is at least 0 and at most &lt;em&gt;n+1&lt;/em&gt;.)&lt;/p&gt;
+&lt;p&gt;The increase has negligible performance implications when &lt;em&gt;M&lt;/em&gt; is much larger than &lt;em&gt;n&lt;/em&gt;. Our experiments show that this is the case for all the applications that we considered. For both &lt;em&gt;SNARKs for TinyRAM&lt;/em&gt; [BCTV14, USENIX Security] and &lt;em&gt;Scalable Zero-Knowledge&lt;/em&gt; [BCTV14, CRYPTO], the increase in the number of constraints is at most 0.007%. For &lt;em&gt;Zerocash&lt;/em&gt; [BCGGMTV14, S&amp;amp;P], the increase is smaller: 0.00022%. More generally, we believe that &lt;em&gt;M&lt;/em&gt; is much larger than &lt;em&gt;n&lt;/em&gt; for most interesting applications, e.g., for constraint systems that verify cryptographic computations.&lt;/p&gt;
+&lt;p&gt;For more details, see Remark 2.5 in the extended version (revised on 9 May 2015) of &lt;a class="reference external" href="https://eprint.iacr.org/2013/879"&gt;Succinct Non-Interactive Zero Knowledge for a von Neumann Architecture&lt;/a&gt;. (Note that the paper is phrased in terms of arithmetic circuits rather than rank-1 constraint systems, so that the paper’s remark and the explanation above differ slightly.)&lt;/p&gt;
+&lt;/div&gt;
+</summary><category term="zerocash"></category><category term="libsnark"></category><category term="cryptography"></category></entry><entry><title>Reset The Net with the Upgraded Simple Secure Storage Service</title><link href="https://leastauthority.com/blog/least_authority_releases_s4+_as_part_of_reset_the_net.html" rel="alternate"></link><updated>2014-06-05T00:00:00+00:00</updated><author><name>Jessica Augustus and Inkblotest</name></author><id>tag:https://leastauthority.com/blog,2014-06-05:least_authority_releases_s4+_as_part_of_reset_the_net.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://www.resetthenet.org/"&gt;“Reset The Net!”&lt;/a&gt; is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.&lt;/p&gt;
+&lt;p&gt;Least Authority is &lt;a class="reference external" href="/about_us"&gt;a team of computer security professionals&lt;/a&gt; dedicated to providing &lt;em&gt;freedom-compatible&lt;/em&gt; storage. For us that means end-to-end-encryption and Free and Open Source code. Always.&lt;/p&gt;
+&lt;p&gt;In support of “Reset The Net!” we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included &lt;em&gt;unlimited&lt;/em&gt; personal data storage in the cloud.&lt;/p&gt;
+&lt;p&gt;S4 uses the Least Authority File System, a technology designed with
+user security in mind, and built from the ground up to provide that security as well as we know how.&lt;/p&gt;
+&lt;p&gt;Such tools allow the user to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the user.&lt;/p&gt;
+&lt;p&gt;We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-esque friendly file-syncing utility named “Magic Folders”.&lt;/p&gt;
+&lt;p&gt;If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the previous price.
+By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the Free and Open Source crypto system,
+and you're getting a great tool right now for your own use.&lt;/p&gt;
+&lt;p&gt;This video demonstrates its use:&lt;/p&gt;
+&lt;iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;
+&lt;br&gt;&lt;br&gt;&lt;p&gt;Does that look like the product for you?&lt;/p&gt;
+&lt;a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button"&gt;Sign up for S4!&lt;/a&gt;
+&lt;br&gt;&lt;br&gt;&lt;p&gt;Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!&lt;/p&gt;
+&lt;form action="/collect-email" method="post" enctype="multipart/form-data" class="big-signup-form signup-form form-inline"&gt;
+   &lt;input type="email" name="Email" placeholder="Email address" required="true"&gt;
+   &lt;input type="hidden" name="ProductName" value="magicfolder"&gt;
+   &lt;input type="hidden" name="ProductFullName" value="Magic Folder"&gt;
+   &lt;button type="submit" class="btn btn-danger btn-large signup-button"&gt;I'm interested!&lt;/button&gt;
+&lt;/form&gt;</summary><category term="cloud"></category><category term="s4"></category></entry><entry><title>Least Authority Performs Security Audit of GlobaLeaks</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_globaleaks.html" rel="alternate"></link><updated>2014-06-02T18:00:00+00:00</updated><author><name>Taylor Hornby</name></author><id>tag:https://leastauthority.com/blog,2014-06-02:least_authority_performs_security_audit_for_globaleaks.html</id><summary type="html">&lt;p&gt;At Least Authority, &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our mission&lt;/a&gt; is to bring verifiable end-to-end security to
+everyone. As a part of this mission, we provide security consulting services to
+free and open-source software projects. We also run a verifiably-secure cloud
+backup system, &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;In the past, we've performed successful security audits of &lt;a class="reference external" href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;SpiderOak's Crypton
+project&lt;/a&gt; and of &lt;a class="reference external" href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html"&gt;Cryptocat&lt;/a&gt;. Continuing this series of security audits, we've
+completed an audit of the &lt;a class="reference external" href="https://globaleaks.org/"&gt;GlobaLeaks whistleblowing framework&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This audit was funded by the Open Technology Fund (OTF). Regular security audits
+are an important part of the development of any software, and free and open
+source internet freedom software is certainly no exception. We applaud OTF for
+funding these highly beneficial audits.&lt;/p&gt;
+&lt;div class="section" id="audit-results"&gt;
+&lt;h2&gt;Audit Results&lt;/h2&gt;
+&lt;p&gt;Protecting whistleblowers is no easy task, especially since they may be up
+against powerful adversaries (governments, corporations, and criminal
+organisations) and the consequences of getting caught may be grave. It's
+unlikely that a single technical solution to this problem exists. To keep
+whistleblowers safe, any technical solution needs to be paired with OPSEC
+education.&lt;/p&gt;
+&lt;p&gt;One of the things we liked about the GlobaLeaks project is that it has OPSEC
+education and checks built right in to the user interface.&lt;/p&gt;
+&lt;p&gt;We identified several security issues in the GlobaLeaks software. You can read
+about each issue in the &lt;a class="reference external" href="/static/publications/LeastAuthority-GlobaLeaks-audit-report.pdf"&gt;audit report&lt;/a&gt;. The issues have been addressed by the
+GlobaLeaks team in the latest stable version.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="further-reading"&gt;
+&lt;h2&gt;Further Reading&lt;/h2&gt;
+&lt;p&gt;The full audit report: &lt;a class="reference external" href="/static/publications/LeastAuthority-GlobaLeaks-audit-report.pdf"&gt;Report of Security Audit of GlobaLeaks&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The GlobaLeaks wiki page: &lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/wiki/LeastAuthority-Report"&gt;LeastAuthority Report&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Tickets in the GlobaLeaks bug tracker for each of the issues we identified.&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/672"&gt;Issue A&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/822"&gt;Issue B&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/823"&gt;Issue C&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/824"&gt;Issue D&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/825"&gt;Issue E&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/826"&gt;Issue F&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/832"&gt;Issue G&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/828"&gt;Issue H&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/829"&gt;Issue I&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/857"&gt;Issue J&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</summary><category term="consultancy"></category><category term="globaleaks"></category></entry><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;This is the second post in our series about security audits of Free and
+Open Source end-to-end encryption software. The first post in the series
+was about our security audit of SpiderOak's &lt;a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;crypton&lt;/a&gt; project.&lt;/p&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;Our mission&lt;/a&gt; at LeastAuthority is to bring verifiable end-to-end
+security to everyone.&lt;/p&gt;
+&lt;p&gt;As part of that mission, in addition to operating the &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt; simple secure
+storage service, we also perform security consulting. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies sometimes ask us to analyze the
+security of their protocols and software.&lt;/p&gt;
+&lt;p&gt;We audited the widely-used &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt; encrypted chat program. This
+audit was funded by &lt;a class="reference external" href="https://www.opentechfund.org/"&gt;Open Technology Fund&lt;/a&gt; as part of their &lt;a class="reference external" href="https://www.opentechfund.org/labs#redteam"&gt;Red Team&lt;/a&gt;
+project to provide multiple professional security audits to Internet
+freedom projects.&lt;/p&gt;
+&lt;div class="section" id="what-were-the-results"&gt;
+&lt;h2&gt;What were the results?&lt;/h2&gt;
+&lt;p&gt;We found several security issues in the version of Cryptocat that we
+examined (Cryptocat v2.1.15). For each one, we reported it to the
+Cryptocat developers, and they have either deployed a fix in a newer
+release of Cryptocat or else disabled the feature that has the
+vulnerability.&lt;/p&gt;
+&lt;p&gt;The complete list of the issues we found is at the end of this article,
+along with a link to the report document.&lt;/p&gt;
+&lt;p&gt;Unfortunately we didn't have time to examine all parts of Cryptocat that
+we wanted to. We concentrated on the “crypto-related” parts: key
+generation and key management, random number generation, encryption and
+decryption, authentication and integrity, and the new file transfer
+feature. Most of the issues that we found were in those areas.&lt;/p&gt;
+&lt;p&gt;Our report explains what parts of it we looked at most closely (this is
+called the &amp;quot;coverage&amp;quot; results of the audit).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="parting-thoughts"&gt;
+&lt;h2&gt;parting thoughts&lt;/h2&gt;
+&lt;p&gt;I would like to thank the Cryptocat project, led by Nadim Kobeissi, for
+their commitment to doing development in the open, inviting external
+review, and moving to address the issues we uncovered. This open
+development process is a good complement to Cryptocat's Free and Open
+Source publication of their code and their commitment to providing
+end-to-end security for their users.&lt;/p&gt;
+&lt;p&gt;On top of that, I'd like to thank Cryptocat for their unflagging focus on
+&lt;em&gt;usability&lt;/em&gt;. Usability is a critical factor if we are going to succeed at
+bringing verifiable end-to-end security to everyone, and it is an area
+where we as a community and as a society need to improve.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="any-questions"&gt;
+&lt;h2&gt;Any questions?&lt;/h2&gt;
+&lt;p&gt;If you have any questions about these results or the process, please
+contact us or the Cryptocat developers.&lt;/p&gt;
+&lt;p&gt;The next project we are auditing is &lt;a class="reference external" href="https://globaleaks.org/"&gt;GlobaLeaks&lt;/a&gt;, so stay tuned.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="further-reading"&gt;
+&lt;h2&gt;further reading&lt;/h2&gt;
+&lt;p&gt;The full report: &lt;a class="reference external" href="/static/publications/LeastAuthority-Cryptocat-audit-report.pdf"&gt;Report of Security Audit of Cryptocat&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The &lt;a class="reference external" href="https://blog.crypto.cat/2014/04/recent-audits-and-coming-improvements/"&gt;post on the Cryptocat blog&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Tickets on the Cryptocat github issue tracker to track the status of each issue:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/575"&gt;Issue A&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/576"&gt;Issue B&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/577"&gt;Issue C&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/578"&gt;Issue D&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/606"&gt;Issue E&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/607"&gt;Issue F&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/608"&gt;Issue G&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</summary><category term="consultancy"></category><category term="cryptocat"></category></entry><entry><title>Least Authority Performs Security Audit For SpiderOak</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_spideroak.html" rel="alternate"></link><updated>2014-02-20T13:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-02-20:least_authority_performs_security_audit_for_spideroak.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;Our mission&lt;/a&gt; at LeastAuthority is to bring verifiable end-to-end
+security to everyone.&lt;/p&gt;
+&lt;p&gt;As part of that mission, in addition to operating the &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt; simple secure
+storage service, we also run a security consulting business. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies pay us to analyze the security of their
+protocols and software.&lt;/p&gt;
+&lt;p&gt;Almost all of our consulting clients are making Free and Open Source
+software which protects user freedoms and works against censorship. It is
+wonderful that in this day and age we can get paid to work on software in
+the public interest.&lt;/p&gt;
+&lt;p&gt;One of our clients is &lt;a class="reference external" href="https://spideroak.com/"&gt;SpiderOak&lt;/a&gt;, a company who, like LeastAuthority,
+sells cloud storage with end-to-end encryption. They didn't hire us to
+evaluate the security of their current storage product (that would be a
+big job!), but instead to do a limited, two-week long, security audit of
+their new &lt;a class="reference external" href="https://crypton.io/"&gt;Crypton.io&lt;/a&gt; framework.&lt;/p&gt;
+&lt;p&gt;It was a fun project because we got to learn some of the details of the
+&lt;cite&gt;Crypton.io&lt;/cite&gt; design and implementation. We came away with a favorable
+impression of the professionalism and good engineering practices of the
+SpiderOak team. &lt;cite&gt;Crypton.io&lt;/cite&gt; is all Free and Open Source software, and it
+is designed for real, end-to-end security, which is part of why we wanted
+to take the job.&lt;/p&gt;
+&lt;p&gt;Today SpiderOak &lt;a class="reference external" href="https://spideroak.com/blog/20140220090004-responsibly-bringing-new-cryptography-product-market"&gt;has published the security auditing report&lt;/a&gt;. We'd like
+to thank them for producing &lt;cite&gt;Crypton.io&lt;/cite&gt;, subjecting it to this kind of
+independent review, and publishing the complete results. That's the right
+way to do things!&lt;/p&gt;
+&lt;p&gt;The next security audit that we performed, was for the &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt;
+secure chat app. We expect the report from that to also be published
+soon. Stay tuned!&lt;/p&gt;
+</summary><category term="cloud"></category><category term="lafs"></category><category term="s4"></category><category term="consultancy"></category><category term="spideroak"></category><category term="crypton"></category><category term="cryptocat"></category></entry></feed>

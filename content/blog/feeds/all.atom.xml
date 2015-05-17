@@ -1,0 +1,422 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/all.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2015-05-16T00:00:00+00:00</updated><entry><title>A Bug in libsnark</title><link href="https://leastauthority.com/blog/a_bug_in_libsnark.html" rel="alternate"></link><updated>2015-05-16T00:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn, Alessandro Chiesa, Eli Ben-Sasson, Eran Tromer, Madars Virza</name></author><id>tag:https://leastauthority.com/blog,2015-05-16:a_bug_in_libsnark.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; --&gt;
+&lt;!-- -*- indent-tabs-mode: nil -*- --&gt;
+&lt;div class="section" id="a-statement-from-least-authority"&gt;
+&lt;h2&gt;a statement from Least Authority&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;Zooko Wilcox-O'Hearn writing:&lt;/em&gt;&lt;/p&gt;
+&lt;div class="section" id="about-us"&gt;
+&lt;h3&gt;About us&lt;/h3&gt;
+&lt;p&gt;At Least Authority, &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our mission&lt;/a&gt; is to bring verifiable end-to-end
+security to everyone. As a part of this mission, we have been
+collaborating with with the scientists behind &lt;a class="reference external" href="http://www.scipr-lab.org/"&gt;zk-SNARKS&lt;/a&gt;,
+&lt;a class="reference external" href="https://github.com/scipr-lab/libsnark"&gt;libsnark&lt;/a&gt;, and &lt;a class="reference external" href="http://zca.sh/"&gt;Zerocash&lt;/a&gt;. These are some of the most promising new
+advances in cryptography, and we are exploring whether they can be
+used to provide more safety and freedom to all users of the Internet.&lt;/p&gt;
+&lt;p&gt;We're not ready to post about our specific plans, but we want to
+address the recent news that a bug has been discovered in libsnark.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="id1"&gt;
+&lt;h3&gt;A bug in libsnark&lt;/h3&gt;
+&lt;p&gt;Recently there was &lt;a class="reference external" href="https://eprint.iacr.org/2015/437"&gt;a bug reported&lt;/a&gt; by &lt;a class="reference external" href="http://research.microsoft.com/en-us/people/parno/"&gt;Bryan Parno&lt;/a&gt; from Microsoft
+Research. Because libsnark is used to implement the cryptography in
+&lt;em&gt;Zerocash&lt;/em&gt;, some people have &lt;a class="reference external" href="http://www.reddit.com/r/Bitcoin/comments/35jnax/openpgp_proposal_for_a_separable_ring_signature/cr5c3kb"&gt;worried&lt;/a&gt; that this bug could have led
+to a critical failure in &lt;em&gt;Zerocash&lt;/em&gt;, if &lt;em&gt;Zerocash&lt;/em&gt; had already been
+deployed before the bug was discovered.&lt;/p&gt;
+&lt;p&gt;We asked some of the authors of libsnark to comment about the bug.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="how-we-work"&gt;
+&lt;h3&gt;How we work&lt;/h3&gt;
+&lt;p&gt;Before turning the floor over to the libsnark scientists, I'd like to
+make two points myself:&lt;/p&gt;
+&lt;p&gt;First, in the long run, having independent scientists like Bryan Parno
+study the zk-SNARK literature and the libsnark implementation in
+search of flaws is the right way for a cryptographic innovation like
+this to get vetted and improved. It is encouraging to see this kind of
+scientific scrutiny happening, and we are grateful for the work he and
+other researchers have done.&lt;/p&gt;
+&lt;p&gt;Second, before we at Least Authority deploy new software or
+cryptography for our users to rely on, we perform our own internal
+security audits and solicit external security audits from independent
+experts. We have not yet performed that process for libsnark, and we
+would do so before deploying any libsnark-based systems to our users.&lt;/p&gt;
+&lt;p&gt;If you're interested in our history, here are the reports from &lt;a class="reference external" href="https://leastauthority.com/blog/tag/consultancy.html"&gt;some
+of the security audits&lt;/a&gt; that we've performed on behalf of others, and
+here is &lt;a class="reference external" href="https://tahoe-lafs.org/hacktahoelafs/"&gt;a contest we organized&lt;/a&gt; for others to find security flaws in
+our flagship product.&lt;/p&gt;
+&lt;p&gt;We also notified the authors of another zk-SNARK implementation named
+&lt;a class="reference external" href="https://github.com/jancarlsson/snarklib"&gt;snarklib&lt;/a&gt;, so that they could fix &lt;a class="reference external" href="https://github.com/jancarlsson/snarklib/blob/master/QAP_query.hpp#L45"&gt;the bug as it applies to
+snarklib&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="a-statement-from-the-libsnark-team"&gt;
+&lt;h2&gt;A statement from the libsnark team&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;Alessandro Chiessa, Eli Ben-Sasson, Eran Tromer, and Madars Virza writing:&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Summary:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Bryan Parno &lt;a class="reference external" href="https://eprint.iacr.org/2015/437"&gt;identified&lt;/a&gt; a bug in the R1CS-to-QAP reduction in &lt;a class="reference external" href="https://github.com/scipr-lab/libsnark"&gt;libsnark&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Current libsnark includes a full and general fix, in &lt;a class="reference external" href="https://github.com/scipr-lab/libsnark/commit/af725eeb82bd380a02f8be0d8931c8edf55afd03"&gt;commit f55afd03&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;The fix has negligible performance implications when the number of constraints is much larger than the number of inputs, as is typical in SNARK applications, including Zerocash.&lt;/li&gt;
+&lt;li&gt;Known users of libsnark have been notified, so that they may update their code to the latest release.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;More details about the bug and its fix:&lt;/p&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://github.com/scipr-lab/libsnark/tree/master/src/zk_proof_systems/ppzksnark/r1cs_ppzksnark"&gt;One of the preprocessing SNARKs in libsnark&lt;/a&gt; represents NP statements to be proved as rank-1 constraint systems (R1CS). Internally, a given R1CS is converted into a Quadratic Arithmetic Program (QAP), an algebraic representation of the NP statement. If the R1CS has an input of size &lt;em&gt;n&lt;/em&gt;, the QAP includes polynomials &lt;em&gt;A_0,...,A_n&lt;/em&gt; over a finite field F and, for the soundness of the SNARK to hold, these polynomials must be linearly independent over F. The R1CS-to-QAP reduction, which converts an R1CS into a QAP, should ensure this independence. Until recently, libsnark’s implementation of that reduction had a bug: it did not explicitly ensure this independence.&lt;/p&gt;
+&lt;p&gt;This bug does not always manifest, because a R1CS may naturally induce a QAP in which &lt;em&gt;A_0,...,A_n&lt;/em&gt; are linearly independent. However, the linear independence should be assured generically for all possible R1CS. The straightforward fix to do so is as follows.&lt;/p&gt;
+&lt;p&gt;In the following, consider an R1CS with &lt;em&gt;M&lt;/em&gt; constraints, &lt;em&gt;N&lt;/em&gt; variables, and &lt;em&gt;n&lt;/em&gt; inputs. (The &lt;em&gt;n&lt;/em&gt; inputs correspond to variables that are fixed to known values by the NP statement; the remaining &lt;em&gt;N-n&lt;/em&gt; variables are part of the witness, and can take on any value.)  The fix is to add &lt;em&gt;n+1&lt;/em&gt; dummy constraints (instead of one dummy constraint as in the previous code) that ensure that the constructed QAP always has linearly independent &lt;em&gt;A_0,...,A_n&lt;/em&gt;. This causes the degree of the constructed QAP to increase from &lt;em&gt;M+1&lt;/em&gt; to &lt;em&gt;M+n+1&lt;/em&gt;. (An optimization, not implemented in our code, is to only add as many additional constraints as needed to ensure that the constructed QAP satisfies the desired property; this number is at least 0 and at most &lt;em&gt;n+1&lt;/em&gt;.)&lt;/p&gt;
+&lt;p&gt;The increase has negligible performance implications when &lt;em&gt;M&lt;/em&gt; is much larger than &lt;em&gt;n&lt;/em&gt;. Our experiments show that this is the case for all the applications that we considered. For both &lt;em&gt;SNARKs for TinyRAM&lt;/em&gt; [BCTV14, USENIX Security] and &lt;em&gt;Scalable Zero-Knowledge&lt;/em&gt; [BCTV14, CRYPTO], the increase in the number of constraints is at most 0.007%. For &lt;em&gt;Zerocash&lt;/em&gt; [BCGGMTV14, S&amp;amp;P], the increase is smaller: 0.00022%. More generally, we believe that &lt;em&gt;M&lt;/em&gt; is much larger than &lt;em&gt;n&lt;/em&gt; for most interesting applications, e.g., for constraint systems that verify cryptographic computations.&lt;/p&gt;
+&lt;p&gt;For more details, see Remark 2.5 in the extended version (revised on 9 May 2015) of &lt;a class="reference external" href="https://eprint.iacr.org/2013/879"&gt;Succinct Non-Interactive Zero Knowledge for a von Neumann Architecture&lt;/a&gt;. (Note that the paper is phrased in terms of arithmetic circuits rather than rank-1 constraint systems, so that the paper’s remark and the explanation above differ slightly.)&lt;/p&gt;
+&lt;/div&gt;
+</summary><category term="zerocash"></category><category term="libsnark"></category><category term="cryptography"></category></entry><entry><title>Reset The Net with the Upgraded Simple Secure Storage Service</title><link href="https://leastauthority.com/blog/least_authority_releases_s4+_as_part_of_reset_the_net.html" rel="alternate"></link><updated>2014-06-05T00:00:00+00:00</updated><author><name>Jessica Augustus and Inkblotest</name></author><id>tag:https://leastauthority.com/blog,2014-06-05:least_authority_releases_s4+_as_part_of_reset_the_net.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://www.resetthenet.org/"&gt;“Reset The Net!”&lt;/a&gt; is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.&lt;/p&gt;
+&lt;p&gt;Least Authority is &lt;a class="reference external" href="/about_us"&gt;a team of computer security professionals&lt;/a&gt; dedicated to providing &lt;em&gt;freedom-compatible&lt;/em&gt; storage. For us that means end-to-end-encryption and Free and Open Source code. Always.&lt;/p&gt;
+&lt;p&gt;In support of “Reset The Net!” we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included &lt;em&gt;unlimited&lt;/em&gt; personal data storage in the cloud.&lt;/p&gt;
+&lt;p&gt;S4 uses the Least Authority File System, a technology designed with
+user security in mind, and built from the ground up to provide that security as well as we know how.&lt;/p&gt;
+&lt;p&gt;Such tools allow the user to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the user.&lt;/p&gt;
+&lt;p&gt;We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-esque friendly file-syncing utility named “Magic Folders”.&lt;/p&gt;
+&lt;p&gt;If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the previous price.
+By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the Free and Open Source crypto system,
+and you're getting a great tool right now for your own use.&lt;/p&gt;
+&lt;p&gt;This video demonstrates its use:&lt;/p&gt;
+&lt;iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;
+&lt;br&gt;&lt;br&gt;&lt;p&gt;Does that look like the product for you?&lt;/p&gt;
+&lt;a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button"&gt;Sign up for S4!&lt;/a&gt;
+&lt;br&gt;&lt;br&gt;&lt;p&gt;Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!&lt;/p&gt;
+&lt;form action="/collect-email" method="post" enctype="multipart/form-data" class="big-signup-form signup-form form-inline"&gt;
+   &lt;input type="email" name="Email" placeholder="Email address" required="true"&gt;
+   &lt;input type="hidden" name="ProductName" value="magicfolder"&gt;
+   &lt;input type="hidden" name="ProductFullName" value="Magic Folder"&gt;
+   &lt;button type="submit" class="btn btn-danger btn-large signup-button"&gt;I'm interested!&lt;/button&gt;
+&lt;/form&gt;</summary><category term="cloud"></category><category term="s4"></category></entry><entry><title>Least Authority Performs Security Audit of GlobaLeaks</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_globaleaks.html" rel="alternate"></link><updated>2014-06-02T18:00:00+00:00</updated><author><name>Taylor Hornby</name></author><id>tag:https://leastauthority.com/blog,2014-06-02:least_authority_performs_security_audit_for_globaleaks.html</id><summary type="html">&lt;p&gt;At Least Authority, &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our mission&lt;/a&gt; is to bring verifiable end-to-end security to
+everyone. As a part of this mission, we provide security consulting services to
+free and open-source software projects. We also run a verifiably-secure cloud
+backup system, &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;In the past, we've performed successful security audits of &lt;a class="reference external" href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;SpiderOak's Crypton
+project&lt;/a&gt; and of &lt;a class="reference external" href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html"&gt;Cryptocat&lt;/a&gt;. Continuing this series of security audits, we've
+completed an audit of the &lt;a class="reference external" href="https://globaleaks.org/"&gt;GlobaLeaks whistleblowing framework&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This audit was funded by the Open Technology Fund (OTF). Regular security audits
+are an important part of the development of any software, and free and open
+source internet freedom software is certainly no exception. We applaud OTF for
+funding these highly beneficial audits.&lt;/p&gt;
+&lt;div class="section" id="audit-results"&gt;
+&lt;h2&gt;Audit Results&lt;/h2&gt;
+&lt;p&gt;Protecting whistleblowers is no easy task, especially since they may be up
+against powerful adversaries (governments, corporations, and criminal
+organisations) and the consequences of getting caught may be grave. It's
+unlikely that a single technical solution to this problem exists. To keep
+whistleblowers safe, any technical solution needs to be paired with OPSEC
+education.&lt;/p&gt;
+&lt;p&gt;One of the things we liked about the GlobaLeaks project is that it has OPSEC
+education and checks built right in to the user interface.&lt;/p&gt;
+&lt;p&gt;We identified several security issues in the GlobaLeaks software. You can read
+about each issue in the &lt;a class="reference external" href="/static/publications/LeastAuthority-GlobaLeaks-audit-report.pdf"&gt;audit report&lt;/a&gt;. The issues have been addressed by the
+GlobaLeaks team in the latest stable version.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="further-reading"&gt;
+&lt;h2&gt;Further Reading&lt;/h2&gt;
+&lt;p&gt;The full audit report: &lt;a class="reference external" href="/static/publications/LeastAuthority-GlobaLeaks-audit-report.pdf"&gt;Report of Security Audit of GlobaLeaks&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The GlobaLeaks wiki page: &lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/wiki/LeastAuthority-Report"&gt;LeastAuthority Report&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Tickets in the GlobaLeaks bug tracker for each of the issues we identified.&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/672"&gt;Issue A&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/822"&gt;Issue B&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/823"&gt;Issue C&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/824"&gt;Issue D&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/825"&gt;Issue E&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/826"&gt;Issue F&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/832"&gt;Issue G&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/828"&gt;Issue H&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/829"&gt;Issue I&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/globaleaks/GlobaLeaks/issues/857"&gt;Issue J&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</summary><category term="consultancy"></category><category term="globaleaks"></category></entry><entry><title>Least Authority Performs Security Audit For Cryptocat</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_cryptocat.html" rel="alternate"></link><updated>2014-04-02T16:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-04-02:least_authority_performs_security_audit_for_cryptocat.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;This is the second post in our series about security audits of Free and
+Open Source end-to-end encryption software. The first post in the series
+was about our security audit of SpiderOak's &lt;a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html"&gt;crypton&lt;/a&gt; project.&lt;/p&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;Our mission&lt;/a&gt; at LeastAuthority is to bring verifiable end-to-end
+security to everyone.&lt;/p&gt;
+&lt;p&gt;As part of that mission, in addition to operating the &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt; simple secure
+storage service, we also perform security consulting. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies sometimes ask us to analyze the
+security of their protocols and software.&lt;/p&gt;
+&lt;p&gt;We audited the widely-used &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt; encrypted chat program. This
+audit was funded by &lt;a class="reference external" href="https://www.opentechfund.org/"&gt;Open Technology Fund&lt;/a&gt; as part of their &lt;a class="reference external" href="https://www.opentechfund.org/labs#redteam"&gt;Red Team&lt;/a&gt;
+project to provide multiple professional security audits to Internet
+freedom projects.&lt;/p&gt;
+&lt;div class="section" id="what-were-the-results"&gt;
+&lt;h2&gt;What were the results?&lt;/h2&gt;
+&lt;p&gt;We found several security issues in the version of Cryptocat that we
+examined (Cryptocat v2.1.15). For each one, we reported it to the
+Cryptocat developers, and they have either deployed a fix in a newer
+release of Cryptocat or else disabled the feature that has the
+vulnerability.&lt;/p&gt;
+&lt;p&gt;The complete list of the issues we found is at the end of this article,
+along with a link to the report document.&lt;/p&gt;
+&lt;p&gt;Unfortunately we didn't have time to examine all parts of Cryptocat that
+we wanted to. We concentrated on the “crypto-related” parts: key
+generation and key management, random number generation, encryption and
+decryption, authentication and integrity, and the new file transfer
+feature. Most of the issues that we found were in those areas.&lt;/p&gt;
+&lt;p&gt;Our report explains what parts of it we looked at most closely (this is
+called the &amp;quot;coverage&amp;quot; results of the audit).&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="parting-thoughts"&gt;
+&lt;h2&gt;parting thoughts&lt;/h2&gt;
+&lt;p&gt;I would like to thank the Cryptocat project, led by Nadim Kobeissi, for
+their commitment to doing development in the open, inviting external
+review, and moving to address the issues we uncovered. This open
+development process is a good complement to Cryptocat's Free and Open
+Source publication of their code and their commitment to providing
+end-to-end security for their users.&lt;/p&gt;
+&lt;p&gt;On top of that, I'd like to thank Cryptocat for their unflagging focus on
+&lt;em&gt;usability&lt;/em&gt;. Usability is a critical factor if we are going to succeed at
+bringing verifiable end-to-end security to everyone, and it is an area
+where we as a community and as a society need to improve.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="any-questions"&gt;
+&lt;h2&gt;Any questions?&lt;/h2&gt;
+&lt;p&gt;If you have any questions about these results or the process, please
+contact us or the Cryptocat developers.&lt;/p&gt;
+&lt;p&gt;The next project we are auditing is &lt;a class="reference external" href="https://globaleaks.org/"&gt;GlobaLeaks&lt;/a&gt;, so stay tuned.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="further-reading"&gt;
+&lt;h2&gt;further reading&lt;/h2&gt;
+&lt;p&gt;The full report: &lt;a class="reference external" href="/static/publications/LeastAuthority-Cryptocat-audit-report.pdf"&gt;Report of Security Audit of Cryptocat&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;The &lt;a class="reference external" href="https://blog.crypto.cat/2014/04/recent-audits-and-coming-improvements/"&gt;post on the Cryptocat blog&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Tickets on the Cryptocat github issue tracker to track the status of each issue:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/575"&gt;Issue A&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/576"&gt;Issue B&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/577"&gt;Issue C&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/578"&gt;Issue D&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/606"&gt;Issue E&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/607"&gt;Issue F&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/608"&gt;Issue G&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+</summary><category term="consultancy"></category><category term="cryptocat"></category></entry><entry><title>BLAKE2: “Harder, Better, Faster, Stronger” Than MD5</title><link href="https://leastauthority.com/blog/BLAKE2-harder-better-faster-stronger-than-MD5.html" rel="alternate"></link><updated>2014-03-21T22:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-03-21:BLAKE2-harder-better-faster-stronger-than-MD5.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; --&gt;
+&lt;!-- -*- indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;&lt;em&gt;best read while listening to Daft Punk:&lt;/em&gt; &lt;a class="reference external" href="https://youtu.be/gAjR4_CbPpQ"&gt;Harder, Better, Faster, Stronger&lt;/a&gt;&lt;/p&gt;
+&lt;hr class="docutils" /&gt;
+&lt;p&gt;Why use &lt;a class="reference external" href="https://blake2.net"&gt;BLAKE2&lt;/a&gt; instead of Skein, Keccak (SHA-3), MD5, or SHA-1 as a secure
+hash function?&lt;/p&gt;
+&lt;div class="section" id="blake-was-the-best-rated-hash-function-in-the-sha-3-competition"&gt;
+&lt;h2&gt;BLAKE was the best-rated hash function in the SHA-3 competition&lt;/h2&gt;
+&lt;p&gt;NIST, in &lt;a class="reference external" href="http://nvlpubs.nist.gov/nistpubs/ir/2012/NIST.IR.7896.pdf"&gt;the final report of the SHA-3 competition&lt;/a&gt;, said this about the
+finalists (which included BLAKE, Keccak, Skein, and Grøstl):&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;BLAKE had a security margin — the gap between a known-weak reduced version
+and the full version — comparable to Keccak and superior to the other
+finalists. (§4.3: “BLAKE and Keccak have very large security margins.”)&lt;/li&gt;
+&lt;li&gt;BLAKE had a depth of analysis — the amount of published research analyzing
+its security — comparable to Grøstl and Skein and superior to the other
+finalists. (§3.1: “Keccak received a significant amount of cryptanalysis,
+although not quite the depth of analysis applied to BLAKE, Grøstl, or
+Skein”)&lt;/li&gt;
+&lt;li&gt;BLAKE had performance (in software) comparable to Skein and superior to the
+other finalists. (§5.1.4: “Skein and BLAKE […] have the best overall
+software performance.”)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;div class="section" id="but-blake-was-similar-to-sha-2"&gt;
+&lt;h2&gt;but BLAKE was similar to SHA-2&lt;/h2&gt;
+&lt;p&gt;So if BLAKE was in the top tier in all three of these measures, why didn't
+NIST choose BLAKE to be the winner of the SHA-3 contest? The main reason is
+given in §3.4 of the final report: because BLAKE's design was similar to
+SHA-2's.&lt;/p&gt;
+&lt;p&gt;When the SHA-3 project was announced, being like SHA-2 was explicitly listed
+as an undesirable property. That made sense at the time, but today, being
+like SHA-2 should &lt;em&gt;increase&lt;/em&gt; your confidence in a hash function's
+security. Here's why:&lt;/p&gt;
+&lt;p&gt;When the SHA-3 project was announced (in 2007), &lt;a class="reference external" href="http://eprint.iacr.org/2004/199.pdf"&gt;MD5&lt;/a&gt; and (to a lesser
+extent) &lt;a class="reference external" href="http://people.csail.mit.edu/yiqun/SHA1AttackProceedingVersion.pdf"&gt;SHA-1&lt;/a&gt; had just been shockingly revealed to be weak, by a
+previously-unknown cryptographer from China, Xiaoyun Wang. There was a
+general fear among cryptographers that SHA-2 might be next.  SHA-2's design
+is like that of SHA-1 and MD5. SHA-2 was still relatively new (having been
+published in 2002) and was not yet widely used compared to MD5 or SHA-1. This
+was actually the impetus for launching the SHA-3 competition: to have a new
+hash function ready in case SHA-2 was suddenly shown to be unsafe. At the
+same time, NIST advised everyone to transition from MD5 and SHA-1 to SHA-2
+immediately, instead of waiting for the eventual standardization of SHA-3.&lt;/p&gt;
+&lt;p&gt;This explains why it was a design criterion for SHA-3 candidates to be
+&lt;em&gt;different&lt;/em&gt; from SHA-2: because the purpose of SHA-3 was to be available as a
+fallback in case SHA-2 failed!&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="but-being-similar-to-sha-2-is-good"&gt;
+&lt;h2&gt;but being similar to SHA-2 is good!&lt;/h2&gt;
+&lt;p&gt;Now, however, another seven years have gone by, and further efforts by
+cryptographers to analyze SHA-2 have not found any way to defeat it.  This
+means that SHA-2 is now twelve years old, and during most of that time it has
+been the most widely recommended secure hash function in the world. So today,
+the fact that BLAKE has a few design elements in common with SHA-2 doesn't
+seem to reflect badly on BLAKE at all.&lt;/p&gt;
+&lt;!-- This would be a perfect place to be able to link to your tables of comparison, thereby giving context to "twelve years".
+I would be happy to help you with that post, too. —Am --&gt;
+&lt;p&gt;BLAKE compares well to the modern hash functions Keccak and Skein.  There is
+good reason to think that it is secure, and it has better performance (in
+software, on Intel or ARM CPUs) than Keccak. However, the other two are also
+good—there is no reason to suspect any of them of any weakness.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="blake2-is-faster-than-md5"&gt;
+&lt;h2&gt;BLAKE2 is faster than MD5&lt;/h2&gt;
+&lt;p&gt;Okay, so what is &lt;em&gt;BLAKE2&lt;/em&gt; then? Well, after NIST settled on Keccak to be the
+winner of the SHA-3 contest, Jean-Philippe Aumasson, Samuel Neves, Christian
+Winnerlein, and I decided that what the world needed was not just a secure
+hash function that was faster than Keccak, but one that was faster than MD5!
+This is because MD5 (and SHA-1) continue to be very widely used, even in new
+applications, even though MD5 and SHA-1 are unsafe for many uses. We
+hypothesized that offering engineers a hash function that was &lt;em&gt;both&lt;/em&gt; faster
+and more secure than their beloved MD5 or SHA-1 might be more effective than
+haranguing them to upgrade to an alternative that is more secure but slower.&lt;/p&gt;
+&lt;p&gt;So, we took BLAKE (Jean-Philippe Aumasson had been one of the designers of
+BLAKE), traded-off a little of its generous security margin in return for
+more efficiency, and optimized it to produce &lt;em&gt;BLAKE2&lt;/em&gt;, which is faster than
+MD5 (on a modern Intel CPU). On top of that, we added an optional parallel
+mode so that if you have 4 or 8 CPU cores available you can run your BLAKE2
+function almost 4 or 8 times as fast.&lt;/p&gt;
+&lt;p&gt;Bottom line:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;MD5 and SHA-1 are not responsible choices for a secure hash function today
+&lt;a class="footnote-reference" href="#id2" id="id1"&gt;[*]&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Keccak (SHA-3), Skein, and BLAKE2 are all reasonable choices.&lt;/li&gt;
+&lt;li&gt;BLAKE2 is not only faster than the other good hash functions, it is even
+faster than MD5 or SHA-1 (on modern Intel CPUs).&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Further reading:&lt;/p&gt;
+&lt;p&gt;Here are &lt;a class="reference external" href="https://blake2.net/acns/slides.html"&gt;the slides from a presentation that I gave&lt;/a&gt; about BLAKE2 at
+“Applied Cryptography and Network Security 2013”.&lt;/p&gt;
+&lt;p&gt;Here is &lt;a class="reference external" href="https://plus.google.com/108313527900507320366/posts/4ZPRdvpzBTJ"&gt;an essay I posted&lt;/a&gt; in April 13, 2012 and updated in October 3,
+2012, which outlines the motivation for what later became BLAKE2.&lt;/p&gt;
+&lt;table class="docutils footnote" frame="void" id="id2" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id1"&gt;[*]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;Some software, notably &lt;a class="reference external" href="http://www.git-scm.com/"&gt;git&lt;/a&gt;, is still using SHA-1, and relying on
+the fact that the best publicly-known method of generating SHA-1
+collisions costs 2⁶⁹ computations, which is expensive. I think it is
+unwise to rely on this for two reasons. One is that there could be
+more efficient techniques to compute SHA-1 collisions that we don't
+know about. Another is that the cost of doing 2⁶⁹ computations is
+falling rapidly—at the time of this writing (March 22, 2014), the
+Bitcoin network is performing &lt;a class="reference external" href="http://bitcoin.sipa.be/"&gt;enough computation to generate SHA-1
+collisions&lt;/a&gt; every 131 minutes!&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class="section" id="p-s-this-isn-t-about-hashing-passwords"&gt;
+&lt;h2&gt;P.S. this isn't about hashing passwords&lt;/h2&gt;
+&lt;p&gt;P.S. Secure hash functions are not for hashing passwords! Secure hash
+functions are building blocks in cryptographic protocols and they should be
+as efficient as possible while still being secure.  &lt;em&gt;Password-hashing
+functions&lt;/em&gt; are for impeding brute force guessing of passwords, and they
+should be as inefficient as possible while still being usable. See &amp;quot;scrypt&amp;quot;
+and &amp;quot;bcrypt&amp;quot; for current password-hashing functions, and see the &lt;a class="reference external" href="https://en.wikipedia.org/wiki/Password_Hashing_Competition"&gt;Password
+Hashing Competition&lt;/a&gt; for some candidate next-generation ones.&lt;/p&gt;
+&lt;p&gt;By the way, some of the entrants in the Password Hashing Competition use
+BLAKE2 as an internal building block in their algorithm. They presumably
+chose it because it is fast, and then their design forces the computer to
+calculate BLAKE2 many, many times, iteratively, in order to be slow
+again. This actually makes sense. ☺&lt;/p&gt;
+&lt;p&gt;Acknowledgments: Thanks to an anonymous reviewer, Jean-Philippe Aumasson,
+Daira Hopwood, and Amber Wilcox-O'Hearn for comments on earlier drafts of
+this post. I'm solely responsible for any errors.&lt;/p&gt;
+&lt;/div&gt;
+</summary><category term="cryptography"></category><category term="engineering"></category></entry><entry><title>Least Authority Performs Security Audit For SpiderOak</title><link href="https://leastauthority.com/blog/least_authority_performs_security_audit_for_spideroak.html" rel="alternate"></link><updated>2014-02-20T13:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2014-02-20:least_authority_performs_security_audit_for_spideroak.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;Our mission&lt;/a&gt; at LeastAuthority is to bring verifiable end-to-end
+security to everyone.&lt;/p&gt;
+&lt;p&gt;As part of that mission, in addition to operating the &lt;a class="reference external" href="https://leastauthority.com/product_s4"&gt;S4&lt;/a&gt; simple secure
+storage service, we also run a security consulting business. We
+LeastAuthoritarians have extensive experience in security and
+cryptography, and other companies pay us to analyze the security of their
+protocols and software.&lt;/p&gt;
+&lt;p&gt;Almost all of our consulting clients are making Free and Open Source
+software which protects user freedoms and works against censorship. It is
+wonderful that in this day and age we can get paid to work on software in
+the public interest.&lt;/p&gt;
+&lt;p&gt;One of our clients is &lt;a class="reference external" href="https://spideroak.com/"&gt;SpiderOak&lt;/a&gt;, a company who, like LeastAuthority,
+sells cloud storage with end-to-end encryption. They didn't hire us to
+evaluate the security of their current storage product (that would be a
+big job!), but instead to do a limited, two-week long, security audit of
+their new &lt;a class="reference external" href="https://crypton.io/"&gt;Crypton.io&lt;/a&gt; framework.&lt;/p&gt;
+&lt;p&gt;It was a fun project because we got to learn some of the details of the
+&lt;cite&gt;Crypton.io&lt;/cite&gt; design and implementation. We came away with a favorable
+impression of the professionalism and good engineering practices of the
+SpiderOak team. &lt;cite&gt;Crypton.io&lt;/cite&gt; is all Free and Open Source software, and it
+is designed for real, end-to-end security, which is part of why we wanted
+to take the job.&lt;/p&gt;
+&lt;p&gt;Today SpiderOak &lt;a class="reference external" href="https://spideroak.com/blog/20140220090004-responsibly-bringing-new-cryptography-product-market"&gt;has published the security auditing report&lt;/a&gt;. We'd like
+to thank them for producing &lt;cite&gt;Crypton.io&lt;/cite&gt;, subjecting it to this kind of
+independent review, and publishing the complete results. That's the right
+way to do things!&lt;/p&gt;
+&lt;p&gt;The next security audit that we performed, was for the &lt;a class="reference external" href="https://crypto.cat/"&gt;Cryptocat&lt;/a&gt;
+secure chat app. We expect the report from that to also be published
+soon. Stay tuned!&lt;/p&gt;
+</summary><category term="cloud"></category><category term="lafs"></category><category term="s4"></category><category term="consultancy"></category><category term="spideroak"></category><category term="crypton"></category><category term="cryptocat"></category></entry><entry><title>LAFS Summit Next Week in San Francisco: Nov 11-13</title><link href="https://leastauthority.com/blog/lafs_summit_san_francisco_nov_11_13.html" rel="alternate"></link><updated>2013-11-06T20:00:00+00:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-11-06:lafs_summit_san_francisco_nov_11_13.html</id><summary type="html">&lt;p&gt;The &lt;a class="reference external" href="https://tahoe-lafs.org/pipermail/tahoe-dev/2013-October/008780.html"&gt;next LAFS summit&lt;/a&gt; starts next Monday, November 11!&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;dl class="docutils"&gt;
+&lt;dt&gt;When:&lt;/dt&gt;
+&lt;dd&gt;&lt;ul class="first last simple"&gt;
+&lt;li&gt;Monday 11-Nov-2013 (afternoon only)&lt;/li&gt;
+&lt;li&gt;Tuesday 12-Nov 2013 (all day)&lt;/li&gt;
+&lt;li&gt;Wednesday 13-Nov-2013 (all day)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/dd&gt;
+&lt;/dl&gt;
+&lt;p&gt;Where: &lt;a class="reference external" href="https://maps.google.com/maps?q=Mozilla+San+Francisco&amp;amp;ll=37.789404,-122.389197&amp;amp;spn=0.0097,0.021136&amp;amp;fb=1&amp;amp;gl=us&amp;amp;hq=mozilla&amp;amp;hnear=0x80859a6d00690021:0x4a501367f076adff,San+Francisco,+CA&amp;amp;cid=0,0,10236188160913588323&amp;amp;t=m&amp;amp;z=16&amp;amp;iwloc=A"&gt;The Mozilla SF Office, 2 Harrison (at Embarcadero)&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Who: at least Brian and Daira, plus everyone else who can make it&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;We'll have drinks and snacks, wifi, and an online videochat going too. We'll also grab dinner together nearby each night. No RSVP needed; we hope you can join us!&lt;/p&gt;
+</summary><category term="lafs"></category></entry><entry><title>LAFS Featured on EFF Tech Blog</title><link href="https://leastauthority.com/blog/lafs_featured_eff_tech_blog.html" rel="alternate"></link><updated>2013-11-06T18:57:00+00:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-11-06:lafs_featured_eff_tech_blog.html</id><summary type="html">&lt;p&gt;The Electronic Frontier Foundation's tech blog has some lovely things to say about LAFS at S4. Snippet:&lt;/p&gt;
+&lt;blockquote&gt;
+Tahoe's protections against third-party snooping and deletion have the kind of strong mathematical guarantees that reassure security experts that Tahoe-LAFS is well-defended against certain kinds of attack. That also means its privacy and resilience are not dependent on the good behaviour or policies of its operators&lt;/blockquote&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://www.eff.org/deeplinks/2013/08/tahoe-and-tor-building-privacy-strong-foundations"&gt;Read the full blog post for more details&lt;/a&gt;.&lt;/p&gt;
+</summary><category term="lafs"></category><category term="eff"></category></entry><entry><title>Least Authority Joins Open Invention Network</title><link href="https://leastauthority.com/blog/least_authority_joins_open_invention_network.html" rel="alternate"></link><updated>2013-11-06T18:19:00+00:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-11-06:least_authority_joins_open_invention_network.html</id><summary type="html">&lt;p&gt;Least Authority Enterprises has joined the ranks of the &lt;a class="reference external" href="http://www.openinventionnetwork.com/licensees.php"&gt;licensees&lt;/a&gt; of the Open Invention Network! &lt;a class="reference external" href="http://www.openinventionnetwork.com/"&gt;Open Invention Network&lt;/a&gt; maintains a royalty-free patent pool that anyone who agrees to never assert patent claims against the Linux kernel can use. This both gives Linux a retaliatory weapon against future patent trolls and forestalls intellectual property related fear and uncertainty among potential corporate users of Linux.&lt;/p&gt;
+</summary><category term="patents"></category><category term="linux"></category></entry><entry><title>S4 on LinuxBSDos.com</title><link href="https://leastauthority.com/blog/s4_press_on_linuxbsdos.html" rel="alternate"></link><updated>2013-08-19T12:10:00+00:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-08-19:s4_press_on_linuxbsdos.html</id><summary type="html">&lt;p&gt;Yesterday LinuxBSDos.com featured S4 and LAFS in an &lt;a class="reference external" href="http://www.linuxbsdos.com/2013/08/17/tahoe-least-authority-file-system-for-secure-distributed-data-storage/"&gt;article on secure, distributed cloud storage&lt;/a&gt;. We had a bit of a quibble with the article's first line, though:&lt;/p&gt;
+&lt;blockquote&gt;
+Looking for a solution to give you an edge in the ongoing struggle between you and the authorities over the privacy of your data?&lt;/blockquote&gt;
+&lt;p&gt;It's important to us to note that S4 and LAFS are not only meant to thwart mass government surveillance. We seek to protect against access by the &lt;em&gt;unauthorized&lt;/em&gt;, not merely &amp;quot;the authorities&amp;quot;. That means individual crackers, criminal organizations, corporate rivals, or non-PRISM-affiliated foreign governments just as much as the NSA! Least Authority is pro-security across the board.&lt;/p&gt;
+&lt;p&gt;There is no way that one could build an effective anti-government security system without excluding those other threats as well. Similarly, if law enforcement is authorized to see the data, then hackers also can see the data.&lt;/p&gt;
+</summary><category term="cloud"></category><category term="prism"></category><category term="lafs"></category></entry><entry><title>Open Letter to Phil Zimmermann and Jon Callas of Silent Circle, On The Closure of the “Silent Mail” Service</title><link href="https://leastauthority.com/blog/open_letter_silent_circle.html" rel="alternate"></link><updated>2013-08-16T09:00:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2013-08-16:open_letter_silent_circle.html</id><summary type="html">&lt;p&gt;This open letter is in response to the &lt;a class="reference external" href="http://boingboing.net/2013/08/08/lavabit-email-service-snowden.html"&gt;recent shutdown of Lavabit&lt;/a&gt; , the ensuing &lt;a class="reference external" href="http://silentcircle.wordpress.com/2013/08/09/to-our-customers/"&gt;shutdown of Silent Circle's “Silent Mail” product&lt;/a&gt;, &lt;a class="reference external" href="https://plus.google.com/112961607570158342254/posts/9uySMokvg7k"&gt;Jon Callas's posts about the topic on G+&lt;/a&gt;, and &lt;a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/08/09/e-mails-big-privacy-problem-qa-with-silent-circle-co-founder-phil-zimmermann/"&gt;Phil Zimmermann's interview in Forbes&lt;/a&gt;. Also, of course, all of this is unfolding in the context of the &lt;a class="reference external" href="https://en.wikipedia.org/wiki/2013_mass_surveillance_scandal"&gt;2013 Mass Surveillance Scandal&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Dear Phil and Jon: Hello there! It is good to have a chance to chat with you in public.&lt;/p&gt;
+&lt;p&gt;Please accept the following in the spirit of constructive criticism in which it is intended.&lt;/p&gt;
+&lt;p&gt;For those readers who don't know, I've known you both, personally and professionally for decades. You've each written texts that I've learned from, inspired me to follow your example, we've worked together successfully, and you've mentored me. I have great respect for your technical abilities, your integrity, and your general reasonableness. Thank you for all of that and for holding fast to your principles today, when we need it more than ever.&lt;/p&gt;
+&lt;p&gt;Now:&lt;/p&gt;
+&lt;p&gt;Your job is not yet done. Your customers are currently vulnerable to having all of their communications secretly monitored.&lt;/p&gt;
+&lt;p&gt;I just subscribed to the service at &lt;a class="reference external" href="https://SilentCircle.com"&gt;https://SilentCircle.com&lt;/a&gt;, and after I paid $120 for one year of service, it directed me to install the Silent Text app from Silent Circle on my android phone, which I did. Now, when I use that Silent Circle app to send text messages to other Silent Circle customers, I have no way of verifying whether it is really encrypting my message on my own phone, and if it is really keeping the encryption key only for me, or if it is leaking the contents of my messages or my encryption keys to you or to others.&lt;/p&gt;
+&lt;p&gt;If some attacker, for example the U.S. Federal Government — or to pick a different example the Zetas Mexican drug cartel — were to coerce Silent Circle into cooperating with them, then that attacker would simply require Silent Circle to distribute an update to the app, containing a backdoor.&lt;/p&gt;
+&lt;p&gt;There is no way for me to verify that any given version of Silent Text, including the one that I just installed, is correctly generating strong encryption keys and is protecting those keys instead of leaking them.&lt;/p&gt;
+&lt;p&gt;Therefore, how are your current products any safer for your users that the canceled Silent Mail product was? The only attacker against whom your canceled Silent Mail product was vulnerable but against whom your current products are safe is an attacker who would require you to backdoor your server software but who wouldn't require you to backdoor your client software.&lt;/p&gt;
+&lt;p&gt;Does that constraint apply to the U.S. Federal Government entities who are responsible for PRISM, for the shut-down of Lavabit, and so much else? No, that constraint does not apply to them. This was demonstrated in the Hushmail case in which the U.S. DEA asked Hushmail (a Canadian company) to turn over the plaintext of the email of one of its customers. Hushmail complied, shipping a set of CDs to the DEA containing the customer's messages.&lt;/p&gt;
+&lt;p&gt;The President of Hushmail &lt;a class="reference external" href="http://www.wired.com/threatlevel/2007/11/hushmail-to-war/"&gt;emphasized&lt;/a&gt; in interviews with journalists at the time that Hushmail would be able to comply with such orders regardless of whether the customer used Hushmail's “client-to-server” (SSL) encryption or its “end-to-end” (Java applet) encryption.&lt;/p&gt;
+&lt;p&gt;Phil had been Chief Cryptographer of Hushmail years earlier, and was still a member of the Advisory Board of Hushmail at the time of that case. He commented about the case at that time, and he also &lt;a class="reference external" href="http://www.wired.com/threatlevel/2007/11/pgp-creator-def/"&gt;stated&lt;/a&gt;, correctly, that the Hushmail model of &lt;em&gt;unverified&lt;/em&gt; end-to-end encryption was vulnerable to government coercion. That's the same model that Silent Circle uses today.&lt;/p&gt;
+&lt;p&gt;You have just taken the courageous act of publicly shutting down the Silent Mail product, and publicly stating your reasons for doing so. This, then, is your opportunity to make your stance consistent by informing your customers of the similar dangers posed by the software distribution practices currently used by Silent Circle (along with most of the rest of the industry).&lt;/p&gt;
+&lt;p&gt;I don't know the perfect solution to the problem of the &lt;em&gt;unverifiability&lt;/em&gt; of today's software. But being frank about the current approach and the vulnerability that it imposes on users is the first step. People will listen to you about this, now. Let's start talking about it and we can start finding solutions.&lt;/p&gt;
+&lt;p&gt;Also, warn your users. Don't tell them the untruth that it is impossible for you to eavesdrop on their communications even if you try (as your company seems to be on the borderline of doing in public statements like these: [ &lt;a class="reference external" href="http://www.forbes.com/sites/parmyolson/2013/07/15/corporate-customers-flock-to-anti-snooping-app-silent-circle/"&gt;¹&lt;/a&gt;, &lt;a class="reference external" href="http://techcrunch.com/2013/08/08/silent-circle-preemptively-shuts-down-encrypted-email-service-to-prevent-nsa-spying/"&gt;²&lt;/a&gt;]).&lt;/p&gt;
+&lt;p&gt;We're trying an approach to this problem, here at &lt;a class="reference external" href="https://LeastAuthority.com"&gt;LeastAuthority.com&lt;/a&gt;, of “&lt;em&gt;verifiable&lt;/em&gt; end-to-end security”. For our data backup and storage service, all of the software is Free and Open Source, and it is distributed through channels which are out of our direct control, such as Debian and Ubuntu. Of course this approach is not perfectly secure — it doesn't guarantee that a state-level actor cannot backdoor our customers. But it does guarantee that &lt;em&gt;we&lt;/em&gt; cannot backdoor our customers.&lt;/p&gt;
+&lt;p&gt;This currently imposes inconvenience on our customers, and I'm not saying it is the perfect solution, but it shows that there is more than one way to go at this problem.&lt;/p&gt;
+&lt;p&gt;Thank you for your attention to these important matter, and your leadership in speaking out about them.&lt;/p&gt;
+&lt;p&gt;(By the way, &lt;a class="reference external" href="https://LeastAuthority.com"&gt;LeastAuthority.com&lt;/a&gt; is not a competitor to Silent Circle. We don't offer voice, text, video, or email services, like Silent Circle does/did. What we offer is simply secure offsite &lt;em&gt;backup&lt;/em&gt;, and a secure cloud storage API that people use to build other services.)&lt;/p&gt;
+&lt;p&gt;Regards,&lt;/p&gt;
+&lt;p&gt;Zooko Wilcox-O'Hearn&lt;/p&gt;
+</summary><category term="silent circle"></category><category term="prism"></category></entry><entry><title>Least Authority on Motherboard at Vice.com</title><link href="https://leastauthority.com/blog/least_authority_press_motherboard_vice_com.html" rel="alternate"></link><updated>2013-08-15T15:00:00+00:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-08-15:least_authority_press_motherboard_vice_com.html</id><summary type="html">&lt;p&gt;Vice.com's Motherboard blog interviewed Least Authority founder Zooko Wilcox-O'Hearn about S4, PRISM, and surveillance culture. &lt;a class="reference external" href="http://motherboard.vice.com/blog/least-authoritys-zooko-wilcox-ohearn-talks-about-his-prism-proof-storage-device"&gt;Check it out!&lt;/a&gt;&lt;/p&gt;
+</summary><category term="interview"></category><category term="s4"></category></entry><entry><title>LAFS mentioned on Computerworld</title><link href="https://leastauthority.com/blog/lafs_press_computerworld.html" rel="alternate"></link><updated>2013-08-13T14:36:00+00:00</updated><author><name>Karen Rustad</name></author><id>tag:https://leastauthority.com/blog,2013-08-13:lafs_press_computerworld.html</id><summary type="html">&lt;p&gt;Australian IT publication Computerworld's &lt;a class="reference external" href="https://www.computerworld.com.au/article/523601/no_your_data_isn_t_secure_cloud/"&gt;article about security and surveillance in the cloud&lt;/a&gt; mentions LAFS as a way to use the cloud while still keeping your data private.&lt;/p&gt;
+</summary><category term="cloud"></category><category term="prism"></category><category term="lafs"></category></entry><entry><title>LeastAuthority.com Announces A PRISM-Proof Storage Service</title><link href="https://leastauthority.com/blog/least-authority-announces-prism-proof-storage-service.html" rel="alternate"></link><updated>2013-07-30T10:20:00+00:00</updated><author><name>Zooko Wilcox-O'Hearn</name></author><id>tag:https://leastauthority.com/blog,2013-07-30:least-authority-announces-prism-proof-storage-service.html</id><summary type="html">&lt;p&gt;&lt;a class="reference external" href="https://LeastAuthority.com"&gt;LeastAuthority.com&lt;/a&gt; today announced &lt;a class="reference external" href="https://LeastAuthority.com/product_s4/"&gt;Simple Secure Storage Service (S4)&lt;/a&gt;, a backup service that encrypts your files to protect them from the prying eyes of spies and criminals.&lt;/p&gt;
+&lt;p&gt;“People deserve privacy and security in the digital data that make up our daily lives.” said the company's founder and CEO, Zooko Wilcox-O'Hearn. “As an individual or a business, you shouldn't have to give up control over your data in order to get the benefits of cloud storage.”&lt;/p&gt;
+&lt;div class="section" id="verifiable-end-to-end-security"&gt;
+&lt;h2&gt;Verifiable end-to-end security&lt;/h2&gt;
+&lt;p&gt;The Simple Secure Storage Service offers &lt;em&gt;verifiable&lt;/em&gt; end-to-end security.&lt;/p&gt;
+&lt;p&gt;It offers “end-to-end security” because all of the customer's data is encrypted locally — on the customer's own personal computer — before it is uploaded to the cloud. During its stay in the cloud, it cannot be decrypted by LeastAuthority.com, nor by anyone else, without the decryption key which is held only by the customer.&lt;/p&gt;
+&lt;p&gt;S4 offers “&lt;em&gt;verifiable&lt;/em&gt; end-to-end security” because all of the source code that makes up the Simple Secure Storage Service is published for everyone to see. Not only is the source code publicly visible, but it also comes with Free (Libre) and Open Source rights granted to the public allowing anyone to inspect the source code, experiment on it, alter it, and even to distribute their own version of it and to sell commercial services.&lt;/p&gt;
+&lt;p&gt;Wilcox-O'Hearn says “If you rely on closed-source, proprietary software, then you're just taking the vendor's word for it that it actually provides the end-to-end security that they claim. As the PRISM scandal shows, that claim is sometimes a lie.”&lt;/p&gt;
+&lt;p&gt;The web site of LeastAuthority.com proudly states “We can never see your data, and you can always see our code.”.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="trusted-by-experts"&gt;
+&lt;h2&gt;Trusted by experts&lt;/h2&gt;
+&lt;p&gt;The Simple Secure Storage Service is built on a technology named “Least-Authority File System (LAFS)”. LAFS has been studied and used by computer scientists, hackers, Free and Open Source software developers, activists, the U.S. Defense Advanced Research Projects Agency, and the U.S. National Security Agency.&lt;/p&gt;
+&lt;p&gt;The design has been published in a peer-reviewed scientific workshop: &lt;em&gt;Wilcox-O'Hearn, Zooko, and Brian Warner. “Tahoe: the least-authority filesystem.” Proceedings of the 4th ACM international workshop on Storage security and survivability. ACM, 2008.&lt;/em&gt; &lt;a class="reference external" href="http://eprint.iacr.org/2012/524.pdf"&gt;http://eprint.iacr.org/2012/524.pdf&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;It has been cited in more than 50 scientific research papers, and has received plaudits from the U.S. Comprehensive National Cybersecurity Initiative, which stated: “Systems like Least-Authority File System are making these methods immediately usable for securely and availably storing files at rest; we propose that the methods be further reviewed, written up, and strongly evangelized as best practices in both government and industry.”&lt;/p&gt;
+&lt;p&gt;Dr. Richard Stallman, President of the &lt;a class="reference external" href="https://fsf.org/"&gt;Free Software Foundation&lt;/a&gt; said “Free/Libre software is software that the users control. If you use only free/libre software, you control your local computing — but using the Internet raises other issues of freedom and privacy, which many network services don't respect. The Simple Secure Storage Service is an example of a network service that does respect your freedom and privacy.”&lt;/p&gt;
+&lt;p&gt;Jacob Appelbaum, &lt;a class="reference external" href="https://www.torproject.org/"&gt;Tor project&lt;/a&gt; developer and &lt;a class="reference external" href="https://wikileaks.org/"&gt;WikiLeaks&lt;/a&gt; volunteer, said “LAFS's design acknowledges the importance of verifiable end-to-end security through cryptography, Free/Libre release of software and transparent, peer-reviewed system design.”&lt;/p&gt;
+&lt;p&gt;The LAFS software is already packaged in several widely-used operating systems such as Debian GNU/Linux and Ubuntu.&lt;/p&gt;
+&lt;/div&gt;
+</summary><category term="press release"></category><category term="s4"></category><category term="prism"></category></entry></feed>

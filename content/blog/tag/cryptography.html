@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Least Authority</title>
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <link href="/static/css/bootstrap-responsive.min.css" rel="stylesheet" media="screen">
+    <link rel="stylesheet" type="text/css" title="Default style" href="/static/css/style.css">
+    <link href="/static/img/icon.png" rel="shortcut icon">
+    <link rel="canonical" href="http://leastauthority.com/">
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="description" content="Least Authority Enterprises">
+        <link href="https://leastauthority.com/blog/feeds/all.atom.xml" type="application/atom+xml" rel="alternate" title="Least Authority Blog Full Atom Feed" />
+</head>
+<body>
+    <div class="nav">
+        <div class="container">
+            <br/>
+            <div class="row-fluid">
+                <div class="span3">
+                    <a class="brand" href="/">
+                        <img src="/static/img/la-logo.png" id="logo" alt="Least Authority Enterprises logo">
+                    </a>
+                </div>
+                <div class="span9">
+<ul class="navlinks">
+    <li><a href="/products">Products</a></li>
+    <li><a href="/how_it_works">How It Works</a></li>
+    <!--<li><a href="/faq/">FAQ</a></li>-->
+    <li><a href="https://leastauthority.zendesk.com">Support</a></li>
+    <li><a href="/blog">Blog</a></li>
+    <li><a href="/about_us">About Us</a></li>
+    <li><a href="/careers">Careers</a></li>
+</ul>                </div>
+            </div>
+      </div>
+    </div>
+    <div class="container site-container">
+        <div class="container">
+            <div id="main_wrap" class="row-fluid">
+                <div id="main_content" class="span12">
+    <section>
+    <div class="row-fluid">
+        <div class="span8">
+<h2>Articles tagged "cryptography"</h2>
+
+<section id="content">
+    <div id="post-list">
+        <article class="hentry highlight">
+                <header> <h3 class="entry-title"><a href="../a_bug_in_libsnark.html" rel="bookmark" title="Permalink to A Bug in libsnark">A Bug in libsnark</a></h3> </header>
+                <footer class="post-info help-text">
+                    <div style="float: right;"><a href="../a_bug_in_libsnark.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Sat 16 May 2015 </div>
+                      <div>By <a class="url fn" href="../author/zooko-wilcox-ohearn-alessandro-chiesa-eli-ben-sasson-eran-tromer-madars-virza.html">Zooko Wilcox-O'Hearn, Alessandro Chiesa, Eli Ben-Sasson, Eran Tromer, Madars Virza</a></div>
+                    <br>
+                </footer><!-- /.post-info -->
+                <!-- <div class="entry-content"> <p class="first last">A Bug in libsnark</p>
+ </div>-->
+                <div class="entry-content">
+                    <!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; -->
+<!-- -*- indent-tabs-mode: nil -*- -->
+<div class="section" id="a-statement-from-least-authority">
+<h2>a statement from Least Authority</h2>
+<p><em>Zooko Wilcox-O'Hearn writing:</em></p>
+<div class="section" id="about-us">
+<h3>About us</h3>
+<p>At Least Authority, <a class="reference external" href="https://leastauthority.com/about_us">our mission</a> is to bring verifiable end-to-end
+security to everyone. As a part of this mission, we have been
+collaborating with with the scientists behind <a class="reference external" href="http://www.scipr-lab.org/">zk-SNARKS</a>,
+<a class="reference external" href="https://github.com/scipr-lab/libsnark">libsnark</a>, and <a class="reference external" href="http://zca.sh/">Zerocash</a>. These are some of the most promising new
+advances in cryptography, and we are exploring whether they can be
+used to provide more safety and freedom to all users of the Internet.</p>
+<p>We're not ready to post about our specific plans, but we want to
+address the recent news that a bug has been discovered in libsnark.</p>
+</div>
+<div class="section" id="id1">
+<h3>A bug in libsnark</h3>
+<p>Recently there was <a class="reference external" href="https://eprint.iacr.org/2015/437">a bug reported</a> by <a class="reference external" href="http://research.microsoft.com/en-us/people/parno/">Bryan Parno</a> from Microsoft
+Research. Because libsnark is used to implement the cryptography in
+<em>Zerocash</em>, some people have <a class="reference external" href="http://www.reddit.com/r/Bitcoin/comments/35jnax/openpgp_proposal_for_a_separable_ring_signature/cr5c3kb">worried</a> that this bug could have led
+to a critical failure in <em>Zerocash</em>, if <em>Zerocash</em> had already been
+deployed before the bug was discovered.</p>
+<p>We asked some of the authors of libsnark to comment about the bug.</p>
+</div>
+<div class="section" id="how-we-work">
+<h3>How we work</h3>
+<p>Before turning the floor over to the libsnark scientists, I'd like to
+make two points myself:</p>
+<p>First, in the long run, having independent scientists like Bryan Parno
+study the zk-SNARK literature and the libsnark implementation in
+search of flaws is the right way for a cryptographic innovation like
+this to get vetted and improved. It is encouraging to see this kind of
+scientific scrutiny happening, and we are grateful for the work he and
+other researchers have done.</p>
+<p>Second, before we at Least Authority deploy new software or
+cryptography for our users to rely on, we perform our own internal
+security audits and solicit external security audits from independent
+experts. We have not yet performed that process for libsnark, and we
+would do so before deploying any libsnark-based systems to our users.</p>
+<p>If you're interested in our history, here are the reports from <a class="reference external" href="https://leastauthority.com/blog/tag/consultancy.html">some
+of the security audits</a> that we've performed on behalf of others, and
+here is <a class="reference external" href="https://tahoe-lafs.org/hacktahoelafs/">a contest we organized</a> for others to find security flaws in
+our flagship product.</p>
+<p>We also notified the authors of another zk-SNARK implementation named
+<a class="reference external" href="https://github.com/jancarlsson/snarklib">snarklib</a>, so that they could fix <a class="reference external" href="https://github.com/jancarlsson/snarklib/blob/master/QAP_query.hpp#L45">the bug as it applies to
+snarklib</a>.</p>
+</div>
+</div>
+<div class="section" id="a-statement-from-the-libsnark-team">
+<h2>A statement from the libsnark team</h2>
+<p><em>Alessandro Chiessa, Eli Ben-Sasson, Eran Tromer, and Madars Virza writing:</em></p>
+<p>Summary:</p>
+<ul class="simple">
+<li>Bryan Parno <a class="reference external" href="https://eprint.iacr.org/2015/437">identified</a> a bug in the R1CS-to-QAP reduction in <a class="reference external" href="https://github.com/scipr-lab/libsnark">libsnark</a>.</li>
+<li>Current libsnark includes a full and general fix, in <a class="reference external" href="https://github.com/scipr-lab/libsnark/commit/af725eeb82bd380a02f8be0d8931c8edf55afd03">commit f55afd03</a>.</li>
+<li>The fix has negligible performance implications when the number of constraints is much larger than the number of inputs, as is typical in SNARK applications, including Zerocash.</li>
+<li>Known users of libsnark have been notified, so that they may update their code to the latest release.</li>
+</ul>
+<p>More details about the bug and its fix:</p>
+<p><a class="reference external" href="https://github.com/scipr-lab/libsnark/tree/master/src/zk_proof_systems/ppzksnark/r1cs_ppzksnark">One of the preprocessing SNARKs in libsnark</a> represents NP statements to be proved as rank-1 constraint systems (R1CS). Internally, a given R1CS is converted into a Quadratic Arithmetic Program (QAP), an algebraic representation of the NP statement. If the R1CS has an input of size <em>n</em>, the QAP includes polynomials <em>A_0,...,A_n</em> over a finite field F and, for the soundness of the SNARK to hold, these polynomials must be linearly independent over F. The R1CS-to-QAP reduction, which converts an R1CS into a QAP, should ensure this independence. Until recently, libsnark’s implementation of that reduction had a bug: it did not explicitly ensure this independence.</p>
+<p>This bug does not always manifest, because a R1CS may naturally induce a QAP in which <em>A_0,...,A_n</em> are linearly independent. However, the linear independence should be assured generically for all possible R1CS. The straightforward fix to do so is as follows.</p>
+<p>In the following, consider an R1CS with <em>M</em> constraints, <em>N</em> variables, and <em>n</em> inputs. (The <em>n</em> inputs correspond to variables that are fixed to known values by the NP statement; the remaining <em>N-n</em> variables are part of the witness, and can take on any value.)  The fix is to add <em>n+1</em> dummy constraints (instead of one dummy constraint as in the previous code) that ensure that the constructed QAP always has linearly independent <em>A_0,...,A_n</em>. This causes the degree of the constructed QAP to increase from <em>M+1</em> to <em>M+n+1</em>. (An optimization, not implemented in our code, is to only add as many additional constraints as needed to ensure that the constructed QAP satisfies the desired property; this number is at least 0 and at most <em>n+1</em>.)</p>
+<p>The increase has negligible performance implications when <em>M</em> is much larger than <em>n</em>. Our experiments show that this is the case for all the applications that we considered. For both <em>SNARKs for TinyRAM</em> [BCTV14, USENIX Security] and <em>Scalable Zero-Knowledge</em> [BCTV14, CRYPTO], the increase in the number of constraints is at most 0.007%. For <em>Zerocash</em> [BCGGMTV14, S&amp;P], the increase is smaller: 0.00022%. More generally, we believe that <em>M</em> is much larger than <em>n</em> for most interesting applications, e.g., for constraint systems that verify cryptographic computations.</p>
+<p>For more details, see Remark 2.5 in the extended version (revised on 9 May 2015) of <a class="reference external" href="https://eprint.iacr.org/2013/879">Succinct Non-Interactive Zero Knowledge for a von Neumann Architecture</a>. (Note that the paper is phrased in terms of arithmetic circuits rather than rank-1 constraint systems, so that the paper’s remark and the explanation above differ slightly.)</p>
+</div>
+
+                </div><!-- /.entry-content -->
+                <div>
+                    <div style="float: right;"><a href="../a_bug_in_libsnark.html#disqus_thread">Comments</a></div>
+                    <div class="clearer">&nbsp;</div>
+                </div>
+        </article>
+        <br>
+        <article class="hentry highlight">
+                <header> <h3 class="entry-title"><a href="../BLAKE2-harder-better-faster-stronger-than-MD5.html" rel="bookmark" title="Permalink to BLAKE2: “Harder, Better, Faster, Stronger” Than MD5">BLAKE2: “Harder, Better, Faster, Stronger” Than MD5</a></h3> </header>
+                <footer class="post-info help-text">
+                    <div style="float: right;"><a href="../BLAKE2-harder-better-faster-stronger-than-MD5.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Fri 21 March 2014 </div>
+                      <div>By <a class="url fn" href="../author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
+                    <br>
+                </footer><!-- /.post-info -->
+                <!-- <div class="entry-content"> <p class="first last">BLAKE2: “Harder, Better, Faster, Stronger” Than MD5</p>
+ </div>-->
+                <div class="entry-content">
+                    <!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; -->
+<!-- -*- indent-tabs-mode: nil -*- -->
+<p><em>best read while listening to Daft Punk:</em> <a class="reference external" href="https://youtu.be/gAjR4_CbPpQ">Harder, Better, Faster, Stronger</a></p>
+<hr class="docutils" />
+<p>Why use <a class="reference external" href="https://blake2.net">BLAKE2</a> instead of Skein, Keccak (SHA-3), MD5, or SHA-1 as a secure
+hash function?</p>
+<div class="section" id="blake-was-the-best-rated-hash-function-in-the-sha-3-competition">
+<h2>BLAKE was the best-rated hash function in the SHA-3 competition</h2>
+<p>NIST, in <a class="reference external" href="http://nvlpubs.nist.gov/nistpubs/ir/2012/NIST.IR.7896.pdf">the final report of the SHA-3 competition</a>, said this about the
+finalists (which included BLAKE, Keccak, Skein, and Grøstl):</p>
+<ul class="simple">
+<li>BLAKE had a security margin — the gap between a known-weak reduced version
+and the full version — comparable to Keccak and superior to the other
+finalists. (§4.3: “BLAKE and Keccak have very large security margins.”)</li>
+<li>BLAKE had a depth of analysis — the amount of published research analyzing
+its security — comparable to Grøstl and Skein and superior to the other
+finalists. (§3.1: “Keccak received a significant amount of cryptanalysis,
+although not quite the depth of analysis applied to BLAKE, Grøstl, or
+Skein”)</li>
+<li>BLAKE had performance (in software) comparable to Skein and superior to the
+other finalists. (§5.1.4: “Skein and BLAKE […] have the best overall
+software performance.”)</li>
+</ul>
+</div>
+<div class="section" id="but-blake-was-similar-to-sha-2">
+<h2>but BLAKE was similar to SHA-2</h2>
+<p>So if BLAKE was in the top tier in all three of these measures, why didn't
+NIST choose BLAKE to be the winner of the SHA-3 contest? The main reason is
+given in §3.4 of the final report: because BLAKE's design was similar to
+SHA-2's.</p>
+<p>When the SHA-3 project was announced, being like SHA-2 was explicitly listed
+as an undesirable property. That made sense at the time, but today, being
+like SHA-2 should <em>increase</em> your confidence in a hash function's
+security. Here's why:</p>
+<p>When the SHA-3 project was announced (in 2007), <a class="reference external" href="http://eprint.iacr.org/2004/199.pdf">MD5</a> and (to a lesser
+extent) <a class="reference external" href="http://people.csail.mit.edu/yiqun/SHA1AttackProceedingVersion.pdf">SHA-1</a> had just been shockingly revealed to be weak, by a
+previously-unknown cryptographer from China, Xiaoyun Wang. There was a
+general fear among cryptographers that SHA-2 might be next.  SHA-2's design
+is like that of SHA-1 and MD5. SHA-2 was still relatively new (having been
+published in 2002) and was not yet widely used compared to MD5 or SHA-1. This
+was actually the impetus for launching the SHA-3 competition: to have a new
+hash function ready in case SHA-2 was suddenly shown to be unsafe. At the
+same time, NIST advised everyone to transition from MD5 and SHA-1 to SHA-2
+immediately, instead of waiting for the eventual standardization of SHA-3.</p>
+<p>This explains why it was a design criterion for SHA-3 candidates to be
+<em>different</em> from SHA-2: because the purpose of SHA-3 was to be available as a
+fallback in case SHA-2 failed!</p>
+</div>
+<div class="section" id="but-being-similar-to-sha-2-is-good">
+<h2>but being similar to SHA-2 is good!</h2>
+<p>Now, however, another seven years have gone by, and further efforts by
+cryptographers to analyze SHA-2 have not found any way to defeat it.  This
+means that SHA-2 is now twelve years old, and during most of that time it has
+been the most widely recommended secure hash function in the world. So today,
+the fact that BLAKE has a few design elements in common with SHA-2 doesn't
+seem to reflect badly on BLAKE at all.</p>
+<!-- This would be a perfect place to be able to link to your tables of comparison, thereby giving context to "twelve years".
+I would be happy to help you with that post, too. —Am -->
+<p>BLAKE compares well to the modern hash functions Keccak and Skein.  There is
+good reason to think that it is secure, and it has better performance (in
+software, on Intel or ARM CPUs) than Keccak. However, the other two are also
+good—there is no reason to suspect any of them of any weakness.</p>
+</div>
+<div class="section" id="blake2-is-faster-than-md5">
+<h2>BLAKE2 is faster than MD5</h2>
+<p>Okay, so what is <em>BLAKE2</em> then? Well, after NIST settled on Keccak to be the
+winner of the SHA-3 contest, Jean-Philippe Aumasson, Samuel Neves, Christian
+Winnerlein, and I decided that what the world needed was not just a secure
+hash function that was faster than Keccak, but one that was faster than MD5!
+This is because MD5 (and SHA-1) continue to be very widely used, even in new
+applications, even though MD5 and SHA-1 are unsafe for many uses. We
+hypothesized that offering engineers a hash function that was <em>both</em> faster
+and more secure than their beloved MD5 or SHA-1 might be more effective than
+haranguing them to upgrade to an alternative that is more secure but slower.</p>
+<p>So, we took BLAKE (Jean-Philippe Aumasson had been one of the designers of
+BLAKE), traded-off a little of its generous security margin in return for
+more efficiency, and optimized it to produce <em>BLAKE2</em>, which is faster than
+MD5 (on a modern Intel CPU). On top of that, we added an optional parallel
+mode so that if you have 4 or 8 CPU cores available you can run your BLAKE2
+function almost 4 or 8 times as fast.</p>
+<p>Bottom line:</p>
+<ul class="simple">
+<li>MD5 and SHA-1 are not responsible choices for a secure hash function today
+<a class="footnote-reference" href="#id2" id="id1">[*]</a>.</li>
+<li>Keccak (SHA-3), Skein, and BLAKE2 are all reasonable choices.</li>
+<li>BLAKE2 is not only faster than the other good hash functions, it is even
+faster than MD5 or SHA-1 (on modern Intel CPUs).</li>
+</ul>
+<p>Further reading:</p>
+<p>Here are <a class="reference external" href="https://blake2.net/acns/slides.html">the slides from a presentation that I gave</a> about BLAKE2 at
+“Applied Cryptography and Network Security 2013”.</p>
+<p>Here is <a class="reference external" href="https://plus.google.com/108313527900507320366/posts/4ZPRdvpzBTJ">an essay I posted</a> in April 13, 2012 and updated in October 3,
+2012, which outlines the motivation for what later became BLAKE2.</p>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[*]</a></td><td>Some software, notably <a class="reference external" href="http://www.git-scm.com/">git</a>, is still using SHA-1, and relying on
+the fact that the best publicly-known method of generating SHA-1
+collisions costs 2⁶⁹ computations, which is expensive. I think it is
+unwise to rely on this for two reasons. One is that there could be
+more efficient techniques to compute SHA-1 collisions that we don't
+know about. Another is that the cost of doing 2⁶⁹ computations is
+falling rapidly—at the time of this writing (March 22, 2014), the
+Bitcoin network is performing <a class="reference external" href="http://bitcoin.sipa.be/">enough computation to generate SHA-1
+collisions</a> every 131 minutes!</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="p-s-this-isn-t-about-hashing-passwords">
+<h2>P.S. this isn't about hashing passwords</h2>
+<p>P.S. Secure hash functions are not for hashing passwords! Secure hash
+functions are building blocks in cryptographic protocols and they should be
+as efficient as possible while still being secure.  <em>Password-hashing
+functions</em> are for impeding brute force guessing of passwords, and they
+should be as inefficient as possible while still being usable. See &quot;scrypt&quot;
+and &quot;bcrypt&quot; for current password-hashing functions, and see the <a class="reference external" href="https://en.wikipedia.org/wiki/Password_Hashing_Competition">Password
+Hashing Competition</a> for some candidate next-generation ones.</p>
+<p>By the way, some of the entrants in the Password Hashing Competition use
+BLAKE2 as an internal building block in their algorithm. They presumably
+chose it because it is fast, and then their design forces the computer to
+calculate BLAKE2 many, many times, iteratively, in order to be slow
+again. This actually makes sense. ☺</p>
+<p>Acknowledgments: Thanks to an anonymous reviewer, Jean-Philippe Aumasson,
+Daira Hopwood, and Amber Wilcox-O'Hearn for comments on earlier drafts of
+this post. I'm solely responsible for any errors.</p>
+</div>
+
+                </div><!-- /.entry-content -->
+                <div>
+                    <div style="float: right;"><a href="../BLAKE2-harder-better-faster-stronger-than-MD5.html#disqus_thread">Comments</a></div>
+                    <div class="clearer">&nbsp;</div>
+                </div>
+        </article>
+        <br>
+    </div><!-- /#posts-list -->
+<p class="paginator">
+    Page 1 / 1
+</p>
+</section><!-- /#content -->
+ <script type="text/javascript">
+    /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+    var disqus_shortname = 'leastauthority'; // required: replace example with your forum shortname
+
+    /* * * DON'T EDIT BELOW THIS LINE * * */
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+        </div>
+        <div class="span3 offset1 blog-sidebar">
+            <h4>Categories</h4>
+            <ul>
+                <li><a href="../category/essay.html">Essay</a></li>
+                <li><a href="../category/events.html">Events</a></li>
+                <li><a href="../category/letters.html">Letters</a></li>
+                <li><a href="../category/news.html">News</a></li>
+                <li><a href="../category/press.html">Press</a></li>
+                <li><a href="../category/press-releases.html">Press Releases</a></li>
+            </ul>
+
+            <h4>Tags</h4>
+            <ul>                <li><a href="../tag/cloud.html">cloud</a> (4)</li>
+                <li><a href="../tag/consultancy.html">consultancy</a> (3)</li>
+                <li><a href="../tag/cryptocat.html">cryptocat</a> (2)</li>
+                <li><a href="../tag/cryptography.html">cryptography</a> (2)</li>
+                <li><a href="../tag/crypton.html">crypton</a> (1)</li>
+                <li><a href="../tag/eff.html">eff</a> (1)</li>
+                <li><a href="../tag/engineering.html">engineering</a> (1)</li>
+                <li><a href="../tag/globaleaks.html">globaleaks</a> (1)</li>
+                <li><a href="../tag/interview.html">interview</a> (1)</li>
+                <li><a href="../tag/lafs.html">lafs</a> (5)</li>
+                <li><a href="../tag/libsnark.html">libsnark</a> (1)</li>
+                <li><a href="../tag/linux.html">linux</a> (1)</li>
+                <li><a href="../tag/patents.html">patents</a> (1)</li>
+                <li><a href="../tag/press-release.html">press release</a> (1)</li>
+                <li><a href="../tag/prism.html">prism</a> (4)</li>
+                <li><a href="../tag/s4.html">s4</a> (4)</li>
+                <li><a href="../tag/silent-circle.html">silent circle</a> (1)</li>
+                <li><a href="../tag/spideroak.html">spideroak</a> (1)</li>
+                <li><a href="../tag/zerocash.html">zerocash</a> (1)</li>
+            </ul>
+
+            <h4>Syndication</h4>
+            <ul>
+            <li><a href="https://leastauthority.com/blog/">Atom Feed</a></li>
+            <li><a href="https://leastauthority.com/blog/">RSS Feed</a></li>
+            </ul>
+        </div>
+    </div>
+    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div id="footer_wrap">
+        <div id="footer" class="container">
+            <div class="row-fluid">
+                <div class="span12">
+                    <div id="copy">
+                    <span>&copy; 2011-2013 Least Authority Enterprises</span>
+                    </div>
+<ul class="navlinks">
+    <li><a href="/products">Products</a></li>
+    <li><a href="/how_it_works">How It Works</a></li>
+    <!--<li><a href="/faq/">FAQ</a></li>-->
+    <li><a href="https://leastauthority.zendesk.com">Support</a></li>
+    <li><a href="/blog">Blog</a></li>
+    <li><a href="/about_us">About Us</a></li>
+    <li><a href="/careers">Careers</a></li>
+</ul>                </div>
+            </div>
+        </div>
+    </div>
+<!-- Piwik -->
+<script type="text/javascript">
+  if (document.domain == "leastauthority.com") {
+    var _paq = _paq || [];
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+      var u="https://analytics.leastauthority.com/piwik/";
+      _paq.push(['setTrackerUrl', u+'piwik.php']);
+      _paq.push(['setSiteId', 1]);
+      var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0]; g.type='text/javascript';
+      g.defer=true; g.async=true; g.src=u+'piwik.js'; s.parentNode.insertBefore(g,s);
+    })();
+  }
+</script>
+<noscript><p><img src="https://analytics.leastauthority.com/piwik/piwik.php?idsite=1" style="border:0" alt="" /></p></noscript>
+<!-- End Piwik Code -->
+</body>
+</html>
