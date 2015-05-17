@@ -1,8 +1,6 @@
 /flapp
-*.html
 *.pyc
 *.pyo
 *~
 env/*
 _trial_temp/
-/content/blog/
