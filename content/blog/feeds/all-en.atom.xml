@@ -138,7 +138,8 @@ and Amounts&lt;/td&gt;
 &lt;td&gt;None Implemented&lt;/td&gt;
 &lt;/tr&gt;
 &lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#cryptographic-basis"&gt;Cryptographic Basis&lt;/a&gt;&lt;/td&gt;
-&lt;td&gt;&lt;a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography"&gt;ECDLP&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;&lt;a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography"&gt;ECDLP&lt;/a&gt;, Random
+Oracles&lt;/td&gt;
 &lt;td&gt;Knowledge of
 Exponent, &lt;cite&gt;KEA&lt;/cite&gt;&lt;/td&gt;
 &lt;/tr&gt;
@@ -327,17 +328,18 @@ information about the transaction graph and constrain what kinds of
 sender/receiver graph confidentiality is possible.&lt;/p&gt;
 &lt;p id="cryptographic-basis"&gt;&lt;strong&gt;Cryptographic Basis.&lt;/strong&gt; CT and ZC rely on different cryptographic
 primitives with different levels of maturity and acceptance.&lt;/p&gt;
-&lt;p&gt;Both rely on elliptic curve cryptography, &lt;cite&gt;ECC&lt;/cite&gt;; CT relies on a ubiquitous
-assumption -- &lt;a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography"&gt;ECDLP&lt;/a&gt;, whereas ZC relies on newer ECC assumptions such
-as Knowledge Of Exponent Assumption, &lt;cite&gt;KEA&lt;/cite&gt;.&lt;/p&gt;
-&lt;p&gt;Notably, CT relies on the &lt;em&gt;same assumptions&lt;/em&gt; as Bitcoin's signature
-scheme, and does not introduce new fundamental assumptions, although
-it does involve a novel ring signature generalization and various
-optimizations which deserve scrutiny.&lt;/p&gt;
-&lt;p&gt;By contrast, Zerocash relies on zkSNARKs, which are also based on the
-&lt;cite&gt;KEA&lt;/cite&gt; security assumption. These are relatively new in research, and
-Zerocash is one of the first known practical applications of this new
-technique.&lt;/p&gt;
+&lt;p&gt;Both rely on elliptic curve cryptography, &lt;cite&gt;ECC&lt;/cite&gt; and both, in addition to
+&lt;cite&gt;ECDLP&lt;/cite&gt; assumption used in Bitcoin, require strong additional
+assumptions.&lt;/p&gt;
+&lt;p&gt;ZC relies on newer ECC assumptions such as Knowledge Of Exponent
+Assumption, &lt;cite&gt;KEA&lt;/cite&gt;. More precisely, Zerocash relies on zkSNARKs, which are
+based on the &lt;cite&gt;KEA&lt;/cite&gt; security assumption. These are relatively new in
+research, and Zerocash is one of the first known practical applications
+of this new technique.&lt;/p&gt;
+&lt;p&gt;CT requires introducing the Random Oracle assumption, which is a very
+strong assumption, albeit quite widely assumed. CT also involves a novel
+ring signature generalization and various optimizations which deserve
+scrutiny.&lt;/p&gt;
 &lt;p id="peer-review"&gt;&lt;strong&gt;Peer Review.&lt;/strong&gt; CT is a new application of well-understood cryptographic
 primitives, and has been reviewed informally by industry experts.&lt;/p&gt;
 &lt;p&gt;The Zerocash protocol has been published in a peer reviewed academic

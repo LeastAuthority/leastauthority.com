@@ -194,7 +194,8 @@ and Amounts</td>
 <td>None Implemented</td>
 </tr>
 <tr><td><a class="reference internal" href="#cryptographic-basis">Cryptographic Basis</a></td>
-<td><a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography">ECDLP</a></td>
+<td><a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography">ECDLP</a>, Random
+Oracles</td>
 <td>Knowledge of
 Exponent, <cite>KEA</cite></td>
 </tr>
@@ -383,17 +384,18 @@ information about the transaction graph and constrain what kinds of
 sender/receiver graph confidentiality is possible.</p>
 <p id="cryptographic-basis"><strong>Cryptographic Basis.</strong> CT and ZC rely on different cryptographic
 primitives with different levels of maturity and acceptance.</p>
-<p>Both rely on elliptic curve cryptography, <cite>ECC</cite>; CT relies on a ubiquitous
-assumption -- <a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography">ECDLP</a>, whereas ZC relies on newer ECC assumptions such
-as Knowledge Of Exponent Assumption, <cite>KEA</cite>.</p>
-<p>Notably, CT relies on the <em>same assumptions</em> as Bitcoin's signature
-scheme, and does not introduce new fundamental assumptions, although
-it does involve a novel ring signature generalization and various
-optimizations which deserve scrutiny.</p>
-<p>By contrast, Zerocash relies on zkSNARKs, which are also based on the
-<cite>KEA</cite> security assumption. These are relatively new in research, and
-Zerocash is one of the first known practical applications of this new
-technique.</p>
+<p>Both rely on elliptic curve cryptography, <cite>ECC</cite> and both, in addition to
+<cite>ECDLP</cite> assumption used in Bitcoin, require strong additional
+assumptions.</p>
+<p>ZC relies on newer ECC assumptions such as Knowledge Of Exponent
+Assumption, <cite>KEA</cite>. More precisely, Zerocash relies on zkSNARKs, which are
+based on the <cite>KEA</cite> security assumption. These are relatively new in
+research, and Zerocash is one of the first known practical applications
+of this new technique.</p>
+<p>CT requires introducing the Random Oracle assumption, which is a very
+strong assumption, albeit quite widely assumed. CT also involves a novel
+ring signature generalization and various optimizations which deserve
+scrutiny.</p>
 <p id="peer-review"><strong>Peer Review.</strong> CT is a new application of well-understood cryptographic
 primitives, and has been reviewed informally by industry experts.</p>
 <p>The Zerocash protocol has been published in a peer reviewed academic
