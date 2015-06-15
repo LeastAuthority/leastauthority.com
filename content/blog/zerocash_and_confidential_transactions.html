@@ -91,7 +91,7 @@ system, whether that’s in Bitcoin sidechains, centralized ledgers,
 or even Bitcoin itself. Zerocash was introduced as a proposed extension
 to Bitcoin, or a Bitcoin-like system, and Confidential Transactions
 was introduced as a potential Bitcoin sidechain feature as part of
-BlockStream Elements.</p>
+Blockstream Elements.</p>
 <p>At a high level, the goal of Confidential Transactions is to hide the
 value of transactions, but it does <em>not</em> hide the participants of a
 transaction. The metadata of who-has-paid-whom is often more sensitive
@@ -200,7 +200,7 @@ and Amounts</td>
 <tr><td><a class="reference internal" href="#cryptographic-basis">Cryptographic Basis</a></td>
 <td><a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography">ECDLP</a></td>
 <td>Knowledge of
-Exponent, <cite>KOE</cite></td>
+Exponent, <cite>KEA</cite></td>
 </tr>
 <tr><td><a class="reference internal" href="#peer-review">Peer Review</a></td>
 <td>Community Review</td>
@@ -257,10 +257,39 @@ whereas Zerocash hides all transaction information (except for timing).</p>
 <p>Both Zerocash and Confidential Transactions hide the amount of money
 transferred in transactions. However, CT does not hide the address of the
 sender and the receiver. So “Transaction Graph Analysis” techniques like
-[<a class="reference external" href="Ron,Dorit,andAdiShamir.Quantitativeanalysisofthefullbitcointransactiongraph.FinancialCryptographyandDataSecurity.2013.http://eprint.iacr.org/2012/584">a</a>,b_,c_,d_,e_] may still potentially be used to connect and
-trace them to endpoints like exchanges.</p>
-<p>XXX The references above don't work in my browser. My issue only or not?</p>
-<p>Transaction graph analysis can be potentially be thwarted by mixing, for
+<a class="citation-reference" href="#a" id="id13">[a]</a>, <a class="citation-reference" href="#b" id="id14">[b]</a>, <a class="citation-reference" href="#c" id="id15">[c]</a>, <a class="citation-reference" href="#d" id="id16">[d]</a>, and <a class="citation-reference" href="#e" id="id17">[e]</a> may still potentially be used to connect
+and trace them to endpoints like exchanges.</p>
+<table class="docutils citation" frame="void" id="a" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id13">[a]</a></td><td>Ron, Dorit, and Adi Shamir. Quantitative analysis of the full bitcoin transaction graph. Financial Cryptography and Data Security. 2013. <a class="reference external" href="http://eprint.iacr.org/2012/584">http://eprint.iacr.org/2012/584</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="b" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id14">[b]</a></td><td>Reid, Fergal, and Martin Harrigan. An analysis of anonymity in the bitcoin system. Security and Privacy in Social Networks. 2013. <a class="reference external" href="http://arxiv.org/abs/1107.4524">http://arxiv.org/abs/1107.4524</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="c" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id15">[c]</a></td><td>Spagnuolo, Michele, Federico Maggi, and Stefano Zanero. Bitiodine: Extracting intelligence from the bitcoin network. Financial Cryptography and Data Security. 2014. <a class="reference external" href="http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf">http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="d" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id16">[d]</a></td><td>Ron, Dorit, and Adi Shamir. How Did Dread Pirate Roberts Acquire and Protect His Bitcoin Wealth?. Financial Cryptography and Data Security. 2014. <a class="reference external" href="https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf">https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="e" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id17">[e]</a></td><td>Koshy, Philip, Diana Koshy, and Patrick McDaniel. An analysis of anonymity in bitcoin using p2p network traffic. Financial Cryptography and Data Security. 2014. <a class="reference external" href="https://fc14.ifca.ai/papers/fc14_submission_71.pdf">https://fc14.ifca.ai/papers/fc14_submission_71.pdf</a></td></tr>
+</tbody>
+</table>
+<p>Transaction graph analysis can potentially be thwarted by mixing, for
 example by using CoinJoin. But mixing comes with a variety of other
 implementation challenges, security hazards, and costs; in particular, mixing
 adds to blockchain bloat, and mixing is not implemented in Elements.</p>
@@ -274,8 +303,8 @@ is only about the level of security that the system provides against
 snooping by <em>unauthorized</em> parties. Zerocash is designed to provide
 nothing but maximal security against snooping by <em>unauthorized</em> parties.)</p>
 <p>By contrast, Confidential Transactions allows per-transaction security
-tuning, such as by trading off <em>some</em> amount confidentiality for smaller
-overhead <a class="footnote-reference" href="#id14" id="id13">[6]</a>.</p>
+tuning, such as by trading off <em>some</em> amount of confidentiality for
+smaller overhead <a class="footnote-reference" href="#id19" id="id18">[6]</a>.</p>
 <p>This is a fundamental difference that affects usability, systemic
 behavior, and many implementation issues. A usability difference might be
 that in a CT system, a recipient may need to distinguish “how much
@@ -292,10 +321,10 @@ have usability impact because if a user wants to split a value into many
 new values, for example, their software must use multiple Zerocash
 transactions, whereas CT software may choose to use either a single
 transaction or more depending on other privacy or performance goals.</p>
-<table class="docutils footnote" frame="void" id="id14" rules="none">
+<table class="docutils footnote" frame="void" id="id19" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id13">[6]</a></td><td>Note: Even when a protocol is flexible, it's possible to enforce
+<tr><td class="label"><a class="fn-backref" href="#id18">[6]</a></td><td>Note: Even when a protocol is flexible, it's possible to enforce
 a stricter use of a protocol with the ledger consensus rules, so long
 as that stricter check relies only on ledger-public information.</td></tr>
 </tbody>
@@ -303,10 +332,17 @@ as that stricter check relies only on ledger-public information.</td></tr>
 <p id="transaction-size"><strong>Transaction Size.</strong> Both systems use transactions which contain some
 metadata along with one or more <em>proofs</em> related to the inputs or outputs.</p>
 <p>Zerocash has only one transaction shape with 2 inputs and 2 outputs,
-which is the minimum for splitting and joining values. Note also that most
-<em>payments</em> require 2 outputs to account for change back to the sender.</p>
-<p>(In the future, we may extend Zerocash to allow more inputs and more
-outputs, but this discussion is about the current version of Zerocash.)</p>
+which is the minimum for splitting and joining values <a class="footnote-reference" href="#id21" id="id20">[7]</a>. Note also
+that most <em>payments</em> require 2 outputs to account for change back to
+the sender.</p>
+<table class="docutils footnote" frame="void" id="id21" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id20">[7]</a></td><td>The Zerocash protocol could be extended to allow more inputs and
+more outputs. This article only considers the current published
+protocol.</td></tr>
+</tbody>
+</table>
 <p>For this standard transaction shape, the on-chain cost (blockchain bloat)
 of a typical CT transaction is higher than that of Zerocash.</p>
 <p>However, for other transactions, especially “sweep” transactions with
@@ -353,14 +389,15 @@ sender/receiver graph confidentiality is possible.</p>
 primitives with different levels of maturity and acceptance.</p>
 <p>Both rely on elliptic curve cryptography, <cite>ECC</cite>; CT relies on a ubiquitous
 assumption -- <a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography">ECDLP</a>, whereas ZC relies on newer ECC assumptions such
-as Knowledge Of Exponent, <cite>KOE</cite>.</p>
+as Knowledge Of Exponent Assumption, <cite>KEA</cite>.</p>
 <p>Notably, CT relies on the <em>same assumptions</em> as Bitcoin's signature
 scheme, and does not introduce new fundamental assumptions, although
 it does involve a novel ring signature generalization and various
 optimizations which deserve scrutiny.</p>
 <p>By contrast, Zerocash relies on zkSNARKs, which are also based on the
-<cite>KOE</cite> security assumption. These are relatively new in research, and
-Zerocash is the first known practical application of this new technique.</p>
+<cite>KEA</cite> security assumption. These are relatively new in research, and
+Zerocash is one of the first known practical applications of this new
+technique.</p>
 <p id="peer-review"><strong>Peer Review.</strong> CT is a new application of well-understood cryptographic
 primitives, and has been reviewed informally by industry experts.</p>
 <p>The Zerocash protocol has been published in a peer reviewed academic
@@ -377,14 +414,15 @@ at <cite>IEEE Security and Privacy (Oakland) 2015</cite></li>
 </ul>
 <p>zkSNARKs have been covered by many <a class="reference external" href="http://www.scipr-lab.org/publications.html">peer-reviewed publications</a>.</p>
 <p id="code-auditability"><strong>Code Auditability.</strong> CT is open source. The ZC code is not yet
-public.</p>
+public, although a fundamental component, <a class="reference external" href="https://github.com/scipr-lab/libsnark">libsnark</a> is currently
+open source.</p>
 <p>The community behind these projects highly value open source software. It
 is crucial that security-related software, especially for critical
 infrastructure such as global transaction systems, is auditable by
 the public.</p>
 <p>The ZC authors intend to release an open source prototype.</p>
 <p id="parameter-setup"><strong>Parameter Setup.</strong> CT has very simple one-time initial parameter
-selection which are amenable to common “nothing up my sleeve” selection
+selection which is amenable to common “nothing up my sleeve” selection
 techniques. Zerocash has complex one-time initial parameter setup which
 is vulnerable to compromise.</p>
 <p>The Zerocash authors have presented new research on a secure multi-party
@@ -418,7 +456,7 @@ techniques, amount of blockchain bloat, proving and verifying costs,
 and burdens on senders or recipients.</p>
 <p>The authors agree that both Zerocash and Confidential Transactions should
 be pursued – as well as other future innovations! –  to have the
-best chance of providing strong financial privacy.</p>
+best chance of providing strong financial privacy and fungibility.</p>
 <p>— Alessandro Chiesa (Zerocash), Andrew Miller (LeastAuthority), Christina Garman (Zerocash), Eli Ben-Sasson (Zerocash), Eran Tromer (Zerocash), Greg Maxwell (Blockstream), Ian Miers (Zerocash), Matthew D. Green (Zerocash), Nathan Wilcox (LeastAuthority), Zooko Wilcox-O'Hearn (LeastAuthority)</p>
 <p>Thanks to Gordon Mohr for review and comments.</p>
 </div>
