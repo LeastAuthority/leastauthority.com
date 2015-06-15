@@ -106,7 +106,7 @@ snarklib</a>.</p>
 </div>
 <div class="section" id="a-statement-from-the-libsnark-team">
 <h2>A statement from the libsnark team</h2>
-<p><em>Alessandro Chiessa, Eli Ben-Sasson, Eran Tromer, and Madars Virza writing:</em></p>
+<p><em>Alessandro Chiesa, Eli Ben-Sasson, Eran Tromer, and Madars Virza writing:</em></p>
 <p>Summary:</p>
 <ul class="simple">
 <li>Bryan Parno <a class="reference external" href="https://eprint.iacr.org/2015/437">identified</a> a bug in the R1CS-to-QAP reduction in <a class="reference external" href="https://github.com/scipr-lab/libsnark">libsnark</a>.</li>
@@ -117,7 +117,7 @@ snarklib</a>.</p>
 <p>More details about the bug and its fix:</p>
 <p><a class="reference external" href="https://github.com/scipr-lab/libsnark/tree/master/src/zk_proof_systems/ppzksnark/r1cs_ppzksnark">One of the preprocessing SNARKs in libsnark</a> represents NP statements to be proved as rank-1 constraint systems (R1CS). Internally, a given R1CS is converted into a Quadratic Arithmetic Program (QAP), an algebraic representation of the NP statement. If the R1CS has an input of size <em>n</em>, the QAP includes polynomials <em>A_0,...,A_n</em> over a finite field F and, for the soundness of the SNARK to hold, these polynomials must be linearly independent over F. The R1CS-to-QAP reduction, which converts an R1CS into a QAP, should ensure this independence. Until recently, libsnark’s implementation of that reduction had a bug: it did not explicitly ensure this independence.</p>
 <p>This bug does not always manifest, because a R1CS may naturally induce a QAP in which <em>A_0,...,A_n</em> are linearly independent. However, the linear independence should be assured generically for all possible R1CS. The straightforward fix to do so is as follows.</p>
-<p>In the following, consider an R1CS with <em>M</em> constraints, <em>N</em> variables, and <em>n</em> inputs. (The <em>n</em> inputs correspond to variables that are fixed to known values by the NP statement; the remaining <em>N-n</em> variables are part of the witness, and can take on any value.)  The fix is to add <em>n+1</em> dummy constraints (instead of one dummy constraint as in the previous code) that ensure that the constructed QAP always has linearly independent <em>A_0,...,A_n</em>. This causes the degree of the constructed QAP to increase from <em>M+1</em> to <em>M+n+1</em>. (An optimization, not implemented in our code, is to only add as many additional constraints as needed to ensure that the constructed QAP satisfies the desired property; this number is at least 0 and at most <em>n+1</em>.)</p>
+<p>In the following, consider an R1CS with <em>M</em> constraints, <em>N</em> variables, and <em>n</em> inputs. (The <em>n</em> inputs correspond to variables that are fixed to known values by the NP statement; the remaining <em>N-n</em> variables are part of the witness, and can take on any value.)  The fix is to add <em>n+1</em> dummy constraints that ensure that the constructed QAP always has linearly independent <em>A_0,...,A_n</em>. This causes the degree of the constructed QAP to increase from <em>M</em> to <em>M+n+1</em>. (An optimization, not implemented in our code, is to only add as many additional constraints as needed to ensure that the constructed QAP satisfies the desired property; this number is at least 0 and at most <em>n+1</em>.)</p>
 <p>The increase has negligible performance implications when <em>M</em> is much larger than <em>n</em>. Our experiments show that this is the case for all the applications that we considered. For both <em>SNARKs for TinyRAM</em> [BCTV14, USENIX Security] and <em>Scalable Zero-Knowledge</em> [BCTV14, CRYPTO], the increase in the number of constraints is at most 0.007%. For <em>Zerocash</em> [BCGGMTV14, S&amp;P], the increase is smaller: 0.00022%. More generally, we believe that <em>M</em> is much larger than <em>n</em> for most interesting applications, e.g., for constraint systems that verify cryptographic computations.</p>
 <p>For more details, see Remark 2.5 in the extended version (revised on 9 May 2015) of <a class="reference external" href="https://eprint.iacr.org/2013/879">Succinct Non-Interactive Zero Knowledge for a von Neumann Architecture</a>. (Note that the paper is phrased in terms of arithmetic circuits rather than rank-1 constraint systems, so that the paper’s remark and the explanation above differ slightly.)</p>
 </div>
@@ -159,10 +159,12 @@ snarklib</a>.</p>
             </ul>
 
             <h4>Tags</h4>
-            <ul>                <li><a href="../tag/cloud.html">cloud</a> (4)</li>
+            <ul>                <li><a href="../tag/bitcoin.html">bitcoin</a> (1)</li>
+                <li><a href="../tag/cloud.html">cloud</a> (4)</li>
                 <li><a href="../tag/consultancy.html">consultancy</a> (3)</li>
                 <li><a href="../tag/cryptocat.html">cryptocat</a> (2)</li>
-                <li><a href="../tag/cryptography.html">cryptography</a> (2)</li>
+                <li><a href="../tag/cryptocurrency.html">cryptocurrency</a> (1)</li>
+                <li><a href="../tag/cryptography.html">cryptography</a> (3)</li>
                 <li><a href="../tag/crypton.html">crypton</a> (1)</li>
                 <li><a href="../tag/eff.html">eff</a> (1)</li>
                 <li><a href="../tag/engineering.html">engineering</a> (1)</li>
@@ -177,7 +179,7 @@ snarklib</a>.</p>
                 <li><a href="../tag/s4.html">s4</a> (4)</li>
                 <li><a href="../tag/silent-circle.html">silent circle</a> (1)</li>
                 <li><a href="../tag/spideroak.html">spideroak</a> (1)</li>
-                <li><a href="../tag/zerocash.html">zerocash</a> (1)</li>
+                <li><a href="../tag/zerocash.html">zerocash</a> (2)</li>
             </ul>
 
             <h4>Syndication</h4>
