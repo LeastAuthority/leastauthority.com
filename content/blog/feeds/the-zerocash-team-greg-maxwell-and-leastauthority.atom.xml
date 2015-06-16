@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/the-zerocash-team-greg-maxwell-and-leastauthority.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2015-06-15T16:00:00+00:00</updated><entry><title>Privacy Technologies for Bitcoin</title><link href="https://leastauthority.com/blog/zerocash_and_confidential_transactions.html" rel="alternate"></link><updated>2015-06-15T16:00:00+00:00</updated><author><name>The Zerocash Team, Greg Maxwell, and LeastAuthority</name></author><id>tag:leastauthority.com,2015-06-15:blog/zerocash_and_confidential_transactions.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- --&gt;
+&lt;div class="section" id="introduction"&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;div class="section" id="the-world-still-needs-zerocash-even-though-we-now-have-confidential-transactions"&gt;
+&lt;h3&gt;The world still needs &lt;em&gt;Zerocash&lt;/em&gt; even though we now have &lt;em&gt;Confidential Transactions&lt;/em&gt;.&lt;/h3&gt;
+&lt;p&gt;&lt;em&gt;A message from Zooko Wilcox-O'Hearn:&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;At Least Authority, &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our mission&lt;/a&gt; is to bring verifiable end-to-end
+security to every user of the Internet. As a part of this mission, we are
+working on something that we can't announce yet, but it involves the
+&lt;a class="reference external" href="http://zca.sh/"&gt;Zerocash&lt;/a&gt; protocol for private Bitcoin transactions.&lt;/p&gt;
+&lt;p&gt;Recently Blockstream announced &lt;a class="reference external" href="http://elementsproject.org/"&gt;Sidechains Elements&lt;/a&gt;, which includes a
+privacy protocol named &lt;a class="reference external" href="https://people.xiph.org/~greg/confidential_values.txt"&gt;Confidential Transactions&lt;/a&gt;. We invited the lead
+author of Confidential Transactions — Greg Maxwell — and the authors of
+the Zerocash Protocol to help us explain how Confidential Transactions
+compares to Zerocash.&lt;/p&gt;
+&lt;p&gt;In short, Zerocash offers privacy properties that Confidential
+Transactions does not. Most notably, Confidential Transactions only
+protects transaction values, whereas Zerocash also protects sender and
+receiver addresses – but at the cost of extra cryptographic novelty. In
+addition, there are other engineering and cryptography tradeoffs between
+the two.&lt;/p&gt;
+&lt;p&gt;—Zooko Wilcox-O'Hearn, Founder and CEO of LeastAuthority&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="overview"&gt;
+&lt;h2&gt;Overview&lt;/h2&gt;
+&lt;p&gt;Zerocash (ZC) and Confidential Transactions (CT) are both ledger
+protocols: they can be used to improve the privacy of any given ledger
+system, whether that’s in Bitcoin sidechains, centralized ledgers,
+or even Bitcoin itself. Zerocash was introduced as a proposed extension
+to Bitcoin, or a Bitcoin-like system, and Confidential Transactions
+was introduced as a potential Bitcoin sidechain feature as part of
+Blockstream Elements.&lt;/p&gt;
+&lt;p&gt;At a high level, the goal of Confidential Transactions is to hide the
+value of transactions, but it does &lt;em&gt;not&lt;/em&gt; hide the participants of a
+transaction. The metadata of who-has-paid-whom is often more sensitive
+than the balances. It is possible to combine CT with other techniques
+(such as CoinJoin mixing) to improve participant confidentiality,
+although care must be taken to ensure the two schemes interact securely,
+and the degree of privacy depends on how many mixing transactions occur.&lt;/p&gt;
+&lt;p&gt;By contrast, in Zerocash provides full privacy for both transaction
+value and participants.&lt;/p&gt;
+&lt;p&gt;Finally, an important high-level distinction between the two protocols is
+that Confidential Transactions have flexible security parameters per
+transaction, whereas Zerocash has uniform security across the whole
+system. This may lead to important systemic impacts.&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="44%" /&gt;
+&lt;col width="28%" /&gt;
+&lt;col width="28%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head" colspan="3"&gt;&lt;p class="first last" id="table-1"&gt;Table 1. Comparing Ledger Privacy Protocol Characteristics&lt;/p&gt;
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;th class="head" rowspan="2"&gt;Example Protocols&lt;/th&gt;
+&lt;th class="head" colspan="2"&gt;What's Confidential&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;th class="head"&gt;Sender/Receiver&lt;/th&gt;
+&lt;th class="head"&gt;Amount&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;Zerocash&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;✔&lt;/strong&gt;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;✔&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;Confidential Transactions&lt;/td&gt;
+&lt;td&gt;&amp;nbsp;&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;✔&lt;/strong&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;CoinJoin, Cryptonote,
+Bitcoin Mixers&lt;/td&gt;
+&lt;td&gt;&lt;strong&gt;✔?&lt;/strong&gt; &lt;a class="footnote-reference" href="#id2" id="id1"&gt;[1]&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;&amp;nbsp;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id2" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id1"&gt;[1]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;We list several schemes which strive for sender/receiver
+confidentiality, but do not make claims about their security.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+&lt;div class="section" id="comparison"&gt;
+&lt;h2&gt;Comparison&lt;/h2&gt;
+&lt;p&gt;Here we briefly compare the two approaches, showing their relative
+strengths and weaknesses, first in a summary &lt;a class="reference internal" href="#table-2"&gt;Table 2&lt;/a&gt;, followed by
+more explanation.&lt;/p&gt;
+&lt;table border="1" class="docutils"&gt;
+&lt;colgroup&gt;
+&lt;col width="45%" /&gt;
+&lt;col width="28%" /&gt;
+&lt;col width="28%" /&gt;
+&lt;/colgroup&gt;
+&lt;thead valign="bottom"&gt;
+&lt;tr&gt;&lt;th class="head" colspan="3"&gt;&lt;p class="first last" id="table-2"&gt;Table 2. Zerocash and Confidential Transactions At A Glance&lt;/p&gt;
+&lt;/th&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;th class="head"&gt;&amp;nbsp;&lt;/th&gt;
+&lt;th class="head"&gt;Confidential
+Transactions&lt;/th&gt;
+&lt;th class="head"&gt;Zerocash&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#confidentiality"&gt;Confidentiality&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;Only Amounts&lt;/td&gt;
+&lt;td&gt;Participants
+and Amounts&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#user-flexibility"&gt;User Flexibility&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;Fine-Grained&lt;/td&gt;
+&lt;td&gt;All-or-nothing&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#transaction-size"&gt;Transaction Size&lt;/a&gt; &lt;a class="footnote-reference" href="#id9" id="id3"&gt;[2]&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;~5000 bytes&lt;/td&gt;
+&lt;td&gt;~1000 bytes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#proof-size"&gt;Proof Size&lt;/a&gt; &lt;a class="footnote-reference" href="#id9" id="id4"&gt;[2]&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;~2500 bytes&lt;/td&gt;
+&lt;td&gt;288 bytes&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#proving-cost"&gt;Proving Cost&lt;/a&gt; &lt;a class="footnote-reference" href="#id10" id="id5"&gt;[3]&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;~100's/sec&lt;/td&gt;
+&lt;td&gt;~one per minute&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#verification-cost"&gt;Verification Cost&lt;/a&gt; &lt;a class="footnote-reference" href="#id10" id="id6"&gt;[3]&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;~100's/sec&lt;/td&gt;
+&lt;td&gt;~100's/sec&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#pruning-support"&gt;Pruning Support&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;Inherent Support&lt;/td&gt;
+&lt;td&gt;None Implemented&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#cryptographic-basis"&gt;Cryptographic Basis&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;&lt;a class="reference external" href="https://en.wikipedia.org/wiki/Elliptic_curve_cryptography"&gt;ECDLP&lt;/a&gt;, Random
+Oracles&lt;/td&gt;
+&lt;td&gt;Knowledge of
+Exponent, &lt;cite&gt;KEA&lt;/cite&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#peer-review"&gt;Peer Review&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;Community Review&lt;/td&gt;
+&lt;td&gt;Published
+peer-reviewed
+conference
+proceedings &lt;a class="footnote-reference" href="#id11" id="id7"&gt;[4]&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#code-auditability"&gt;Code Auditability&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;Open Source&lt;/td&gt;
+&lt;td&gt;Not Yet Public&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;&lt;td&gt;&lt;a class="reference internal" href="#parameter-setup"&gt;Parameter Setup&lt;/a&gt;&lt;/td&gt;
+&lt;td&gt;Not Vulnerable&lt;/td&gt;
+&lt;td&gt;Complex,
+Potential for
+Compromise &lt;a class="footnote-reference" href="#id12" id="id8"&gt;[5]&lt;/a&gt;&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id9" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[2]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id3"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id4"&gt;2&lt;/a&gt;)&lt;/em&gt; For these sizes we consider a “standard” transaction shape with
+two inputs and two outputs. There are important caveats, see
+&lt;a class="reference internal" href="#transaction-size"&gt;Transaction Size&lt;/a&gt; and &lt;a class="reference internal" href="#proof-size"&gt;Proof Size&lt;/a&gt; explanations below.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id10" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;[3]&lt;/td&gt;&lt;td&gt;&lt;em&gt;(&lt;a class="fn-backref" href="#id5"&gt;1&lt;/a&gt;, &lt;a class="fn-backref" href="#id6"&gt;2&lt;/a&gt;)&lt;/em&gt; These are rough approximations of a single core on a relatively
+recent machine; the important take-away is the large relative cost of
+Zerocash proofs. See &lt;a class="reference internal" href="#proving-cost"&gt;Proving Cost&lt;/a&gt; below.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id11" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id7"&gt;[4]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;See &lt;a class="reference internal" href="#peer-review"&gt;Peer Review&lt;/a&gt; below for references.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils footnote" frame="void" id="id12" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id8"&gt;[5]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;New research substantially improves this security, see
+&lt;a class="reference internal" href="#parameter-setup"&gt;Parameter Setup&lt;/a&gt; below.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;div class="section" id="explanation"&gt;
+&lt;h3&gt;Explanation&lt;/h3&gt;
+&lt;p id="confidentiality"&gt;&lt;strong&gt;Confidentiality.&lt;/strong&gt; Confidential Transactions hide transaction &lt;em&gt;values&lt;/em&gt;
+whereas Zerocash hides all transaction information (except for timing).&lt;/p&gt;
+&lt;p&gt;Both Zerocash and Confidential Transactions hide the amount of money
+transferred in transactions. However, CT does not hide the address of the
+sender and the receiver. So “Transaction Graph Analysis” techniques like
+&lt;a class="citation-reference" href="#a" id="id13"&gt;[a]&lt;/a&gt;, &lt;a class="citation-reference" href="#b" id="id14"&gt;[b]&lt;/a&gt;, &lt;a class="citation-reference" href="#c" id="id15"&gt;[c]&lt;/a&gt;, &lt;a class="citation-reference" href="#d" id="id16"&gt;[d]&lt;/a&gt;, and &lt;a class="citation-reference" href="#e" id="id17"&gt;[e]&lt;/a&gt; may still potentially be used to connect
+and trace them to endpoints like exchanges.&lt;/p&gt;
+&lt;p&gt;Transaction graph analysis can potentially be thwarted by mixing, for
+example by using CoinJoin. But mixing comes with a variety of other
+implementation challenges, security hazards, and costs; in particular, mixing
+adds to blockchain bloat, and mixing is not implemented in Elements.&lt;/p&gt;
+&lt;p id="user-flexibility"&gt;&lt;strong&gt;User Flexibility.&lt;/strong&gt; Zerocash is an “all-or-nothing” protocol. There is
+only one level of security, and that provides confidentiality against
+unauthorized parties for both amounts and sender/receiver
+addresses. Users cannot alter this.&lt;/p&gt;
+&lt;p&gt;(Note: users of Zerocash &lt;em&gt;can&lt;/em&gt; make their transaction records transparent
+to chosen authorized parties. The discussion about security levels here
+is only about the level of security that the system provides against
+snooping by &lt;em&gt;unauthorized&lt;/em&gt; parties. Zerocash is designed to provide
+nothing but maximal security against snooping by &lt;em&gt;unauthorized&lt;/em&gt; parties.)&lt;/p&gt;
+&lt;p&gt;By contrast, Confidential Transactions allows per-transaction security
+tuning, such as by trading off &lt;em&gt;some&lt;/em&gt; amount of confidentiality for
+smaller overhead &lt;a class="footnote-reference" href="#id19" id="id18"&gt;[6]&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;This is a fundamental difference that affects usability, systemic
+behavior, and many implementation issues. A usability difference might be
+that in a CT system, a recipient may need to distinguish “how much
+privacy” comes with the sender's amount, whereas in Zerocash there is a
+known “standard amount of privacy”.&lt;/p&gt;
+&lt;p&gt;There may be systemic impacts: if many users opt to turn down their
+privacy settings, then the few users who leave them high may draw
+unwanted attention.&lt;/p&gt;
+&lt;p&gt;Finally, there are many implementation details this difference
+affects. For example, all Zerocash transactions have the same &lt;em&gt;shape&lt;/em&gt;
+(number of inputs and outputs) and size to aide in indistinguishability,
+whereas each CT transaction may have a different shape. This also may
+have usability impact because if a user wants to split a value into many
+new values, for example, their software must use multiple Zerocash
+transactions, whereas CT software may choose to use either a single
+transaction or more depending on other privacy or performance goals.&lt;/p&gt;
+&lt;table class="docutils footnote" frame="void" id="id19" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id18"&gt;[6]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;Note: Even when a protocol is flexible, it's possible to enforce
+a stricter use of a protocol with the ledger consensus rules, so long
+as that stricter check relies only on ledger-public information.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p id="transaction-size"&gt;&lt;strong&gt;Transaction Size.&lt;/strong&gt; Both systems use transactions which contain some
+metadata along with one or more &lt;em&gt;proofs&lt;/em&gt; related to the inputs or outputs.&lt;/p&gt;
+&lt;p&gt;Zerocash has only one transaction shape with 2 inputs and 2 outputs,
+which is the minimum for splitting and joining values &lt;a class="footnote-reference" href="#id21" id="id20"&gt;[7]&lt;/a&gt;. Note also
+that most &lt;em&gt;payments&lt;/em&gt; require 2 outputs to account for change back to
+the sender.&lt;/p&gt;
+&lt;p&gt;For this standard transaction shape, the on-chain cost (blockchain bloat)
+of a typical CT transaction is higher than that of Zerocash.&lt;/p&gt;
+&lt;p&gt;However, for other transactions, especially “sweep” transactions with
+1 output and N inputs, a CT transaction is much smaller because range
+proofs are unneeded.&lt;/p&gt;
+&lt;p&gt;Additionally, CT supports transactions with any number of inputs or
+outputs, whereas ZC has a fixed shape.&lt;/p&gt;
+&lt;table class="docutils footnote" frame="void" id="id21" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id20"&gt;[7]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;The Zerocash protocol could be extended to allow more inputs and
+more outputs. This article only considers the current published
+protocol.&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;p id="proof-size"&gt;&lt;strong&gt;Proof Size.&lt;/strong&gt; The size of a full CT proof is, by default, 2.5Kb, compared
+to 288 bytes for Zerocash. However, when a transaction has only a single
+output, range proofs can be omitted from a transaction, and the remaining
+proof structure requires only a single 33 byte Pedersen commitment.&lt;/p&gt;
+&lt;p&gt;The proof size for CT can also be run in ‘reduced size’ modes,
+although this comes with a privacy tradeoff since it reveals more
+information about balances. The Zerocash proof size reflects “full
+privacy” mode, and there is no way to decrease the level of protection.&lt;/p&gt;
+&lt;p&gt;Finally, some of the CT proof can be recycled for a dual use, since it
+can contain an encrypted message from the sender to recipient.&lt;/p&gt;
+&lt;p id="proving-cost"&gt;&lt;strong&gt;Proving Cost.&lt;/strong&gt; The time it takes to create a transaction is much
+larger in Zerocash than in CT, although both take longer than ordinary
+Bitcoin transactions. We believe both are tolerable. Given these two
+state-of-the-art approaches, there remains a tradeoff between cost and
+privacy.&lt;/p&gt;
+&lt;p id="verification-cost"&gt;&lt;strong&gt;Verification Cost.&lt;/strong&gt; The transaction verification costs for both ZC and
+CT transactions are higher than for Bitcoin, but both are likely
+tolerable. On a desktop benchmark, a single thread can validate 175 ZC
+pour transactions per second.&lt;/p&gt;
+&lt;p id="pruning-support"&gt;&lt;strong&gt;Pruning Support.&lt;/strong&gt; CT provides pruning &lt;em&gt;inherently&lt;/em&gt;, whereas ZC does
+not have pruning currently.&lt;/p&gt;
+&lt;p&gt;Pruning allows a “full node” (i.e. a node that independently validates
+every new transaction block) to reduce its storage costs by forgetting
+about previously-spent transactions. In CT, a transaction output is
+publicly known to be either spent or unspent, just as in Bitcoin, and
+therefore Bitcoin-style pruning works “out of the box”.&lt;/p&gt;
+&lt;p&gt;By contrast Zerocash requires verifiers to remember a unique identifier
+for every spent value, and in the current design this set grows
+indefinitely. The paper presents potential optimizations which can
+mitigate these storage requirements by making various tradeoffs (Sections
+8.3.1 and 8.3.2 of the &lt;cite&gt;Zerocash&lt;/cite&gt; paper in &lt;a class="reference internal" href="#peer-review"&gt;Peer Review&lt;/a&gt;).&lt;/p&gt;
+&lt;p&gt;Choices around pruning involve other nuanced trade-offs. For
+example, systems which allow pruning spent outputs necessarily expose
+information about the transaction graph and constrain what kinds of
+sender/receiver graph confidentiality is possible.&lt;/p&gt;
+&lt;p id="cryptographic-basis"&gt;&lt;strong&gt;Cryptographic Basis.&lt;/strong&gt; The underlying cryptographic basis of CT is the
+same as Bitcoin and many other deployed systems, while ZC is one of the
+first practical applications which relies on a particular assumption.&lt;/p&gt;
+&lt;p&gt;Specifically, CT relies on a variant of Schnorr signatures, whose security
+can be based on either the elliptic-curve DL problem (&lt;cite&gt;ECDLP&lt;/cite&gt;) and the
+Random-Oracle (&lt;cite&gt;RO&lt;/cite&gt;) assumption. On the other hand, ZC relies
+on zkSNARKs whose security is based on variants of the Knowledge Of
+Exponent (&lt;cite&gt;KoE&lt;/cite&gt;) assumption for bilinear groups (instantiated via certain
+pairing-friendly elliptic curves). Both the &lt;cite&gt;RO&lt;/cite&gt; and &lt;cite&gt;KoE&lt;/cite&gt; assumptions
+have been studied by cryptographers for over two decades, but only the
+former has seen widespread deployment in practice.&lt;/p&gt;
+&lt;p id="peer-review"&gt;&lt;strong&gt;Peer Review.&lt;/strong&gt; CT is a new application of well-understood cryptographic
+primitives, and has been reviewed informally by industry experts.&lt;/p&gt;
+&lt;p&gt;The Zerocash protocol has been published in a peer reviewed academic
+conference, as well as building on prior published work. Additionally
+published work on &lt;a class="reference internal" href="#parameter-setup"&gt;Parameter Setup&lt;/a&gt; was presented at a conference this
+year:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Primary work: &lt;a class="reference external" href="http://zerocash-project.org/media/pdf/zerocash-extended-20140518.pdf"&gt;Zerocash: Decentralized Anonymous Payments from Bitcoin&lt;/a&gt;
+at &lt;a class="reference external" href="http://www.ieee-security.org/TC/SP2014/program-notabs.html#28"&gt;IEEE Security and Privacy (Oakland) 2014&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Prior work: &lt;a class="reference external" href="http://zerocoin.org/media/pdf/ZerocoinOakland.pdf"&gt;Zerocoin: Anonymous Distributed E-Cash from Bitcoin&lt;/a&gt;
+at &lt;a class="reference external" href="http://www.ieee-security.org/TC/SP2013/program.html"&gt;IEEE Security and Privacy (Oakland) 2013&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a class="reference external" href="http://isi.jhu.edu/~mgreen/"&gt;More secure setup&lt;/a&gt;: &lt;cite&gt;Secure Sampling of Public Parameters for Succinct Zero Knowledge Proofs&lt;/cite&gt;
+at &lt;cite&gt;IEEE Security and Privacy (Oakland) 2015&lt;/cite&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;zkSNARKs have been covered by many &lt;a class="reference external" href="http://www.scipr-lab.org/publications.html"&gt;peer-reviewed publications&lt;/a&gt;.&lt;/p&gt;
+&lt;p id="code-auditability"&gt;&lt;strong&gt;Code Auditability.&lt;/strong&gt; CT is open source. The ZC code is not yet
+public, although a fundamental component, &lt;a class="reference external" href="https://github.com/scipr-lab/libsnark"&gt;libsnark&lt;/a&gt; is currently
+open source.&lt;/p&gt;
+&lt;p&gt;The community behind these projects highly value open source software. It
+is crucial that security-related software, especially for critical
+infrastructure such as global transaction systems, is auditable by
+the public.&lt;/p&gt;
+&lt;p&gt;The ZC authors intend to release an open source prototype.&lt;/p&gt;
+&lt;p id="parameter-setup"&gt;&lt;strong&gt;Parameter Setup.&lt;/strong&gt; CT has very simple one-time initial parameter
+selection which is amenable to common “nothing up my sleeve” selection
+techniques. Zerocash has complex one-time initial parameter setup which
+is vulnerable to compromise.&lt;/p&gt;
+&lt;p&gt;The Zerocash authors have presented new research on a secure multi-party
+computation to improve the parameter setup security. This new setup
+distributed protocol provides the guarantee that if even one party
+involved in the setup follows the protocol correctly, then the setup is
+secure. (Conversely all participants must be compromised for parameter
+compromise.)&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="conclusion"&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Confidential Transactions and Zerocash are two protocols for augmenting
+ledgers with better privacy. Confidential Transactions only protects
+transaction values, whereas Zerocash also protects sender/receiver
+addresses.&lt;/p&gt;
+&lt;p&gt;In Zerocash, all coins are equal, and values are truly fungible. Users
+are presented with an all-or-nothing security choice and only a single
+security level to understand. In Confidential Transactions, users have
+more flexibility and can tune privacy knobs for their individual needs,
+and as a result transactions are distinct and have history, and users (or
+their software) needs to manage fine-grained security levels.&lt;/p&gt;
+&lt;p&gt;From a system-wide perspective, Zerocash's all-or-nothing security
+level means all users have strong privacy, even when it's not critical
+for them. In Confidential Transactions it may be that only users with
+strong privacy needs have strong privacy, and if this set of users is
+small enough it may endanger their privacy.&lt;/p&gt;
+&lt;p&gt;Each has costs and tradeoffs on top of the underlying ledger,
+related to fundamental security assumptions, maturity of cryptographic
+techniques, amount of blockchain bloat, proving and verifying costs,
+and burdens on senders or recipients.&lt;/p&gt;
+&lt;p&gt;The authors agree that both Zerocash and Confidential Transactions should
+be pursued – as well as other future innovations! –  to have the
+best chance of providing strong financial privacy and fungibility.&lt;/p&gt;
+&lt;p&gt;— Alessandro Chiesa (Zerocash), Andrew Miller (LeastAuthority), Christina Garman (Zerocash), Eli Ben-Sasson (Zerocash), Eran Tromer (Zerocash), Greg Maxwell (Blockstream), Ian Miers (Zerocash), Madars Virza (Zerocash), Matthew D. Green (Zerocash), Nathan Wilcox (LeastAuthority), Zooko Wilcox-O'Hearn (LeastAuthority)&lt;/p&gt;
+&lt;p&gt;Thanks to Gordon Mohr for review and comments.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="references"&gt;
+&lt;h2&gt;References&lt;/h2&gt;
+&lt;table class="docutils citation" frame="void" id="a" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id13"&gt;[a]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;Ron, Dorit, and Adi Shamir. Quantitative analysis of the full bitcoin transaction graph. Financial Cryptography and Data Security. 2013. &lt;a class="reference external" href="http://eprint.iacr.org/2012/584"&gt;http://eprint.iacr.org/2012/584&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils citation" frame="void" id="b" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id14"&gt;[b]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;Reid, Fergal, and Martin Harrigan. An analysis of anonymity in the bitcoin system. Security and Privacy in Social Networks. 2013. &lt;a class="reference external" href="http://arxiv.org/abs/1107.4524"&gt;http://arxiv.org/abs/1107.4524&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils citation" frame="void" id="c" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id15"&gt;[c]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;Spagnuolo, Michele, Federico Maggi, and Stefano Zanero. Bitiodine: Extracting intelligence from the bitcoin network. Financial Cryptography and Data Security. 2014. &lt;a class="reference external" href="http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf"&gt;http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils citation" frame="void" id="d" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id16"&gt;[d]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;Ron, Dorit, and Adi Shamir. How Did Dread Pirate Roberts Acquire and Protect His Bitcoin Wealth?. Financial Cryptography and Data Security. 2014. &lt;a class="reference external" href="https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf"&gt;https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;table class="docutils citation" frame="void" id="e" rules="none"&gt;
+&lt;colgroup&gt;&lt;col class="label" /&gt;&lt;col /&gt;&lt;/colgroup&gt;
+&lt;tbody valign="top"&gt;
+&lt;tr&gt;&lt;td class="label"&gt;&lt;a class="fn-backref" href="#id17"&gt;[e]&lt;/a&gt;&lt;/td&gt;&lt;td&gt;Koshy, Philip, Diana Koshy, and Patrick McDaniel. An analysis of anonymity in bitcoin using p2p network traffic. Financial Cryptography and Data Security. 2014. &lt;a class="reference external" href="https://fc14.ifca.ai/papers/fc14_submission_71.pdf"&gt;https://fc14.ifca.ai/papers/fc14_submission_71.pdf&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;
+&lt;/div&gt;
+</summary><category term="bitcoin"></category><category term="zerocash"></category><category term="cryptocurrency"></category><category term="cryptography"></category></entry></feed>
