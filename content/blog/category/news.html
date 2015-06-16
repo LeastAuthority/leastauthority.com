@@ -195,7 +195,7 @@ and Amounts</td>
 <td>None Implemented</td>
 </tr>
 <tr><td><a class="reference internal" href="#cryptographic-basis">Cryptographic Basis</a></td>
-<td><a class="reference external" href="http://en.wikipedia.org/wiki/Elliptic_curve_cryptography">ECDLP</a>, Random
+<td><a class="reference external" href="https://en.wikipedia.org/wiki/Elliptic_curve_cryptography">ECDLP</a>, Random
 Oracles</td>
 <td>Knowledge of
 Exponent, <cite>KEA</cite></td>
@@ -257,36 +257,6 @@ transferred in transactions. However, CT does not hide the address of the
 sender and the receiver. So “Transaction Graph Analysis” techniques like
 <a class="citation-reference" href="#a" id="id13">[a]</a>, <a class="citation-reference" href="#b" id="id14">[b]</a>, <a class="citation-reference" href="#c" id="id15">[c]</a>, <a class="citation-reference" href="#d" id="id16">[d]</a>, and <a class="citation-reference" href="#e" id="id17">[e]</a> may still potentially be used to connect
 and trace them to endpoints like exchanges.</p>
-<table class="docutils citation" frame="void" id="a" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id13">[a]</a></td><td>Ron, Dorit, and Adi Shamir. Quantitative analysis of the full bitcoin transaction graph. Financial Cryptography and Data Security. 2013. <a class="reference external" href="http://eprint.iacr.org/2012/584">http://eprint.iacr.org/2012/584</a></td></tr>
-</tbody>
-</table>
-<table class="docutils citation" frame="void" id="b" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id14">[b]</a></td><td>Reid, Fergal, and Martin Harrigan. An analysis of anonymity in the bitcoin system. Security and Privacy in Social Networks. 2013. <a class="reference external" href="http://arxiv.org/abs/1107.4524">http://arxiv.org/abs/1107.4524</a></td></tr>
-</tbody>
-</table>
-<table class="docutils citation" frame="void" id="c" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id15">[c]</a></td><td>Spagnuolo, Michele, Federico Maggi, and Stefano Zanero. Bitiodine: Extracting intelligence from the bitcoin network. Financial Cryptography and Data Security. 2014. <a class="reference external" href="http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf">http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf</a></td></tr>
-</tbody>
-</table>
-<table class="docutils citation" frame="void" id="d" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id16">[d]</a></td><td>Ron, Dorit, and Adi Shamir. How Did Dread Pirate Roberts Acquire and Protect His Bitcoin Wealth?. Financial Cryptography and Data Security. 2014. <a class="reference external" href="https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf">https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf</a></td></tr>
-</tbody>
-</table>
-<table class="docutils citation" frame="void" id="e" rules="none">
-<colgroup><col class="label" /><col /></colgroup>
-<tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id17">[e]</a></td><td>Koshy, Philip, Diana Koshy, and Patrick McDaniel. An analysis of anonymity in bitcoin using p2p network traffic. Financial Cryptography and Data Security. 2014. <a class="reference external" href="https://fc14.ifca.ai/papers/fc14_submission_71.pdf">https://fc14.ifca.ai/papers/fc14_submission_71.pdf</a></td></tr>
-</tbody>
-</table>
 <p>Transaction graph analysis can potentially be thwarted by mixing, for
 example by using CoinJoin. But mixing comes with a variety of other
 implementation challenges, security hazards, and costs; in particular, mixing
@@ -333,6 +303,13 @@ metadata along with one or more <em>proofs</em> related to the inputs or outputs
 which is the minimum for splitting and joining values <a class="footnote-reference" href="#id21" id="id20">[7]</a>. Note also
 that most <em>payments</em> require 2 outputs to account for change back to
 the sender.</p>
+<p>For this standard transaction shape, the on-chain cost (blockchain bloat)
+of a typical CT transaction is higher than that of Zerocash.</p>
+<p>However, for other transactions, especially “sweep” transactions with
+1 output and N inputs, a CT transaction is much smaller because range
+proofs are unneeded.</p>
+<p>Additionally, CT supports transactions with any number of inputs or
+outputs, whereas ZC has a fixed shape.</p>
 <table class="docutils footnote" frame="void" id="id21" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
@@ -341,13 +318,6 @@ more outputs. This article only considers the current published
 protocol.</td></tr>
 </tbody>
 </table>
-<p>For this standard transaction shape, the on-chain cost (blockchain bloat)
-of a typical CT transaction is higher than that of Zerocash.</p>
-<p>However, for other transactions, especially “sweep” transactions with
-1 output and N inputs, a CT transaction is much smaller because range
-proofs are unneeded.</p>
-<p>Additionally, CT supports transactions with any number of inputs or
-outputs, whereas ZC has a fixed shape.</p>
 <p id="proof-size"><strong>Proof Size.</strong> The size of a full CT proof is, by default, 2.5Kb, compared
 to 288 bytes for Zerocash. However, when a transaction has only a single
 output, range proofs can be omitted from a transaction, and the remaining
@@ -383,20 +353,17 @@ mitigate these storage requirements by making various tradeoffs (Sections
 example, systems which allow pruning spent outputs necessarily expose
 information about the transaction graph and constrain what kinds of
 sender/receiver graph confidentiality is possible.</p>
-<p id="cryptographic-basis"><strong>Cryptographic Basis.</strong> CT and ZC rely on different cryptographic
-primitives with different levels of maturity and acceptance.</p>
-<p>Both rely on elliptic curve cryptography, <cite>ECC</cite> and both, in addition to
-<cite>ECDLP</cite> assumption used in Bitcoin, require strong additional
-assumptions.</p>
-<p>ZC relies on newer ECC assumptions such as Knowledge Of Exponent
-Assumption, <cite>KEA</cite>. More precisely, Zerocash relies on zkSNARKs, which are
-based on the <cite>KEA</cite> security assumption. These are relatively new in
-research, and Zerocash is one of the first known practical applications
-of this new technique.</p>
-<p>CT requires introducing the Random Oracle assumption, which is a very
-strong assumption, albeit quite widely assumed. CT also involves a novel
-ring signature generalization and various optimizations which deserve
-scrutiny.</p>
+<p id="cryptographic-basis"><strong>Cryptographic Basis.</strong> The underlying cryptographic basis of CT is the
+same as Bitcoin and many other deployed systems, while ZC is one of the
+first practical applications which relies on a particular assumption.</p>
+<p>Specifically, CT relies on a variant of Schnorr signatures, whose security
+can be based on either the elliptic-curve DL problem (<cite>ECDLP</cite>) and the
+Random-Oracle (<cite>RO</cite>) assumption. On the other hand, ZC relies
+on zkSNARKs whose security is based on variants of the Knowledge Of
+Exponent (<cite>KoE</cite>) assumption for bilinear groups (instantiated via certain
+pairing-friendly elliptic curves). Both the <cite>RO</cite> and <cite>KoE</cite> assumptions
+have been studied by cryptographers for over two decades, but only the
+former has seen widespread deployment in practice.</p>
 <p id="peer-review"><strong>Peer Review.</strong> CT is a new application of well-understood cryptographic
 primitives, and has been reviewed informally by industry experts.</p>
 <p>The Zerocash protocol has been published in a peer reviewed academic
@@ -458,6 +425,39 @@ be pursued – as well as other future innovations! –  to have the
 best chance of providing strong financial privacy and fungibility.</p>
 <p>— Alessandro Chiesa (Zerocash), Andrew Miller (LeastAuthority), Christina Garman (Zerocash), Eli Ben-Sasson (Zerocash), Eran Tromer (Zerocash), Greg Maxwell (Blockstream), Ian Miers (Zerocash), Madars Virza (Zerocash), Matthew D. Green (Zerocash), Nathan Wilcox (LeastAuthority), Zooko Wilcox-O'Hearn (LeastAuthority)</p>
 <p>Thanks to Gordon Mohr for review and comments.</p>
+</div>
+<div class="section" id="references">
+<h2>References</h2>
+<table class="docutils citation" frame="void" id="a" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id13">[a]</a></td><td>Ron, Dorit, and Adi Shamir. Quantitative analysis of the full bitcoin transaction graph. Financial Cryptography and Data Security. 2013. <a class="reference external" href="http://eprint.iacr.org/2012/584">http://eprint.iacr.org/2012/584</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="b" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id14">[b]</a></td><td>Reid, Fergal, and Martin Harrigan. An analysis of anonymity in the bitcoin system. Security and Privacy in Social Networks. 2013. <a class="reference external" href="http://arxiv.org/abs/1107.4524">http://arxiv.org/abs/1107.4524</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="c" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id15">[c]</a></td><td>Spagnuolo, Michele, Federico Maggi, and Stefano Zanero. Bitiodine: Extracting intelligence from the bitcoin network. Financial Cryptography and Data Security. 2014. <a class="reference external" href="http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf">http://www.ifca.ai/fc14/papers/fc14_submission_11.pdf</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="d" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id16">[d]</a></td><td>Ron, Dorit, and Adi Shamir. How Did Dread Pirate Roberts Acquire and Protect His Bitcoin Wealth?. Financial Cryptography and Data Security. 2014. <a class="reference external" href="https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf">https://www.ifca.ai/fc14/bitcoin/papers/bitcoin14_submission_2.pdf</a></td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="e" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id17">[e]</a></td><td>Koshy, Philip, Diana Koshy, and Patrick McDaniel. An analysis of anonymity in bitcoin using p2p network traffic. Financial Cryptography and Data Security. 2014. <a class="reference external" href="https://fc14.ifca.ai/papers/fc14_submission_71.pdf">https://fc14.ifca.ai/papers/fc14_submission_71.pdf</a></td></tr>
+</tbody>
+</table>
 </div>
 
                 </div><!-- /.entry-content -->
