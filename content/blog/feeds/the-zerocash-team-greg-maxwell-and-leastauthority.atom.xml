@@ -296,10 +296,8 @@ mitigate these storage requirements by making various tradeoffs (Sections
 example, systems which allow pruning spent outputs necessarily expose
 information about the transaction graph and constrain what kinds of
 sender/receiver graph confidentiality is possible.&lt;/p&gt;
-&lt;p id="cryptographic-basis"&gt;&lt;strong&gt;Cryptographic Basis.&lt;/strong&gt; The underlying cryptographic basis of CT is the
-same as Bitcoin and many other deployed systems, while ZC is one of the
-first practical applications which relies on a particular assumption.&lt;/p&gt;
-&lt;p&gt;Specifically, CT relies on a variant of Schnorr signatures, whose security
+&lt;p id="cryptographic-basis"&gt;&lt;strong&gt;Cryptographic Basis.&lt;/strong&gt; CT and ZC rely on different cryptography. On the
+one hand, CT relies on a variant of Schnorr signatures, whose security
 can be based on either the elliptic-curve DL problem (&lt;cite&gt;ECDLP&lt;/cite&gt;) and the
 Random-Oracle (&lt;cite&gt;RO&lt;/cite&gt;) assumption. On the other hand, ZC relies
 on zkSNARKs whose security is based on variants of the Knowledge Of
