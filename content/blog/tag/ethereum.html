@@ -40,46 +40,37 @@
     <section>
     <div class="row-fluid">
         <div class="span8">
-<h2>Articles by Jessica Augustus and Inkblotest</h2>
+<h2>Articles tagged "ethereum"</h2>
 
 <section id="content">
     <div id="post-list">
         <article class="hentry highlight">
-                <header> <h3 class="entry-title"><a href="../least_authority_releases_s4+_as_part_of_reset_the_net.html" rel="bookmark" title="Permalink to Reset The Net with the Upgraded Simple Secure Storage Service">Reset The Net with the Upgraded Simple Secure Storage Service</a></h3> </header>
+                <header> <h3 class="entry-title"><a href="../least_authority_performs_incentive_analysis_for_ethereum.html" rel="bookmark" title="Permalink to Least Authority Performs Incentive Analysis For Ethereum">Least Authority Performs Incentive Analysis For Ethereum</a></h3> </header>
                 <footer class="post-info help-text">
-                    <div style="float: right;"><a href="../least_authority_releases_s4+_as_part_of_reset_the_net.html#disqus_thread">Comments</a></div>
-                    <div class="published"> Thu 05 June 2014 </div>
-                      <div>By <a class="url fn" href="../author/jessica-augustus-and-inkblotest.html">Jessica Augustus and Inkblotest</a></div>
+                    <div style="float: right;"><a href="../least_authority_performs_incentive_analysis_for_ethereum.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Tue 23 June 2015 </div>
+                      <div>By <a class="url fn" href="../author/andrew-miller-brian-warner-nathan-wilcox-zooko-wilcox-ohearn.html">Andrew Miller, Brian Warner, Nathan Wilcox, Zooko Wilcox-O'Hearn</a></div>
                     <br>
                 </footer><!-- /.post-info -->
-                <!-- <div class="entry-content"> <p class="first last">New Backup Service Released As Part of &quot;Reset The Net&quot;</p>
+                <!-- <div class="entry-content"> <p class="first last">Least Authority performs incentive analysis for Ethereum</p>
  </div>-->
                 <div class="entry-content">
                     <!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- -->
-<p><a class="reference external" href="https://www.resetthenet.org/">“Reset The Net!”</a> is a broad coalition of many businesses, organizations, and individuals. We're empowering people to protect themselves on the Internet by using end-to-end encryption.</p>
-<p>Least Authority is <a class="reference external" href="/about_us">a team of computer security professionals</a> dedicated to providing <em>freedom-compatible</em> storage. For us that means end-to-end-encryption and Free and Open Source code. Always.</p>
-<p>In support of “Reset The Net!” we have upgraded our Secure Simple Storage Service (S4), reduced the price by 50%, and included <em>unlimited</em> personal data storage in the cloud.</p>
-<p>S4 uses the Least Authority File System, a technology designed with
-user security in mind, and built from the ground up to provide that security as well as we know how.</p>
-<p>Such tools allow the user to store data on the Internet without any third party (even us!) breaching the confidentiality or integrity of the data. This keeps the power where it belongs, in the hands of the user.</p>
-<p>We are pleased to announce S4 as a command-line utility, and we are presently developing a Dropbox-esque friendly file-syncing utility named “Magic Folders”.</p>
-<p>If you're comfortable with the command line, you can take part now with a free 30-day trial and continued service at half the previous price.
-By using Least Authority's secure cloud storage service, you're becoming a supporter of the further development of the Free and Open Source crypto system,
-and you're getting a great tool right now for your own use.</p>
-<p>This video demonstrates its use:</p>
-<iframe width="640" height="360" src="//www.youtube.com/embed/kLrcsyHqrwQ" frameborder="0" allowfullscreen></iframe>
-<br><br><p>Does that look like the product for you?</p>
-<a href="/s4-subscription-form" class="btn btn-danger btn-large signup-button">Sign up for S4!</a>
-<br><br><p>Not familiar with the command line? Don't worry we have a product in the works for you! Give us your email and we'll let you know when Magic Folders is ready!</p>
-<form action="/collect-email" method="post" enctype="multipart/form-data" class="big-signup-form signup-form form-inline">
-   <input type="email" name="Email" placeholder="Email address" required="true">
-   <input type="hidden" name="ProductName" value="magicfolder">
-   <input type="hidden" name="ProductFullName" value="Magic Folder">
-   <button type="submit" class="btn btn-danger btn-large signup-button">I'm interested!</button>
-</form>
+<p><a class="reference external" href="/about_us">Our mission</a> at LeastAuthority is to bring verifiable end-to-end security to everyone.</p>
+<p>As part of that mission, in addition to operating the <a class="reference external" href="/product_s4">S4</a> secure storage service, we also run a security consulting business. We LeastAuthoritarians have extensive experience in security and cryptography, and other companies sometimes hire us to <a class="reference external" href="./blog/tag/consultancy.html">analyze the security of their protocols and software</a>.</p>
+<p>Our most recent consulting client is <a class="reference external" href="https://ethereum.org/">Ethereum</a>.</p>
+<p>Ethereum is innovating in many ways, both in the technical design of the cryptocurrency itself, and in their engineering <a class="reference external" href="https://blog.ethereum.org/2015/03/03/ethereum-launch-process/">process</a>. As part of the testing phase building up to Ethereum's release, they are performing a <a class="reference external" href="https://blog.ethereum.org/tag/security-audit/">large scale security audit</a>, involving contributions from many independent investigators, including Least Authority.</p>
+<p>Our contribution is not a “security audit” per se, although we did find and report some implementation-specific bugs.</p>
+<p>Instead, we took an in-depth critical look into two fundamental and innovative aspects of Ethereum's design: the new proof-of-work puzzle, <a class="reference external" href="https://github.com/ethereum/wiki/wiki/Ethash">Ethash</a>, and the <a class="reference external" href="https://github.com/ethereum/wiki/wiki/Ethereum-Development-Tutorial#gas">gas</a> mechanism. Both of these features are inherently incentive-oriented. The proof-of-work puzzle is designed to encourage a large number of independent users to participate, yet to discourage &quot;mining centralization&quot; which is currently rampant in Bitcoin. For example, it would be considered a severe failure of the incentive mechanism if, in a year following Ethereum's release, there turns out only to be a single large Ethereum miner, crowding out other potential miners!  Similarly, the gas mechanism is about encouraging users to make efficient use of common resources (e.g., storage in the blockchain and compute cycles available to validate transactions). For both of these, we're interested in answering similar questions: are the incentives of users well aligned? Can a greedy attacker profit by deviating from the protocol?</p>
+<p>This has been fun for us because we've gotten to study in very close detail several aspects of how Ethereum works, and gotten to see their engineering process in action. We're impressed with many aspects of their engineering process, such as how all the work is done &quot;in the public&quot;, so we could follow along as they release in-development code. Also they have several different implementations in different languages, by different teams. Lots of bugs are caught that way.</p>
+<p>Today we're releasing our <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/README.md">final report</a>, which summarizes our findings and explains the steps Ethereum has taken in response. In general, we found the Ethereum virtual machine and gas mechanism to be well designed, and most of the hazards in contract composition are readily fixed. Based on our cost analysis of hardware configurations, the Ethash puzzle is likely to be GPU-friendly with minimal potential for improvement using customized hardware designs. As supplemental materials we also include tools for visualizing the storage <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/examples/trie_debug.py">trie</a> structure and demonstrations of <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/examples/trie_bust_example.py">attacks</a> using <a class="reference external" href="https://github.com/ethereum/pyethereum/">pyethereum</a> as a simulator.</p>
+<ul class="simple">
+<li>View our <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/README.md">final report</a> here.</li>
+</ul>
+
                 </div><!-- /.entry-content -->
                 <div>
-                    <div style="float: right;"><a href="../least_authority_releases_s4+_as_part_of_reset_the_net.html#disqus_thread">Comments</a></div>
+                    <div style="float: right;"><a href="../least_authority_performs_incentive_analysis_for_ethereum.html#disqus_thread">Comments</a></div>
                     <div class="clearer">&nbsp;</div>
                 </div>
         </article>

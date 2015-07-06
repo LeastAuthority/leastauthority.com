@@ -46,6 +46,37 @@
 <section id="content">
     <div id="post-list">
         <article class="hentry highlight">
+                <header> <h3 class="entry-title"><a href="../least_authority_performs_incentive_analysis_for_ethereum.html" rel="bookmark" title="Permalink to Least Authority Performs Incentive Analysis For Ethereum">Least Authority Performs Incentive Analysis For Ethereum</a></h3> </header>
+                <footer class="post-info help-text">
+                    <div style="float: right;"><a href="../least_authority_performs_incentive_analysis_for_ethereum.html#disqus_thread">Comments</a></div>
+                    <div class="published"> Tue 23 June 2015 </div>
+                      <div>By <a class="url fn" href="../author/andrew-miller-brian-warner-nathan-wilcox-zooko-wilcox-ohearn.html">Andrew Miller, Brian Warner, Nathan Wilcox, Zooko Wilcox-O'Hearn</a></div>
+                    <br>
+                </footer><!-- /.post-info -->
+                <!-- <div class="entry-content"> <p class="first last">Least Authority performs incentive analysis for Ethereum</p>
+ </div>-->
+                <div class="entry-content">
+                    <!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- -->
+<p><a class="reference external" href="/about_us">Our mission</a> at LeastAuthority is to bring verifiable end-to-end security to everyone.</p>
+<p>As part of that mission, in addition to operating the <a class="reference external" href="/product_s4">S4</a> secure storage service, we also run a security consulting business. We LeastAuthoritarians have extensive experience in security and cryptography, and other companies sometimes hire us to <a class="reference external" href="./blog/tag/consultancy.html">analyze the security of their protocols and software</a>.</p>
+<p>Our most recent consulting client is <a class="reference external" href="https://ethereum.org/">Ethereum</a>.</p>
+<p>Ethereum is innovating in many ways, both in the technical design of the cryptocurrency itself, and in their engineering <a class="reference external" href="https://blog.ethereum.org/2015/03/03/ethereum-launch-process/">process</a>. As part of the testing phase building up to Ethereum's release, they are performing a <a class="reference external" href="https://blog.ethereum.org/tag/security-audit/">large scale security audit</a>, involving contributions from many independent investigators, including Least Authority.</p>
+<p>Our contribution is not a “security audit” per se, although we did find and report some implementation-specific bugs.</p>
+<p>Instead, we took an in-depth critical look into two fundamental and innovative aspects of Ethereum's design: the new proof-of-work puzzle, <a class="reference external" href="https://github.com/ethereum/wiki/wiki/Ethash">Ethash</a>, and the <a class="reference external" href="https://github.com/ethereum/wiki/wiki/Ethereum-Development-Tutorial#gas">gas</a> mechanism. Both of these features are inherently incentive-oriented. The proof-of-work puzzle is designed to encourage a large number of independent users to participate, yet to discourage &quot;mining centralization&quot; which is currently rampant in Bitcoin. For example, it would be considered a severe failure of the incentive mechanism if, in a year following Ethereum's release, there turns out only to be a single large Ethereum miner, crowding out other potential miners!  Similarly, the gas mechanism is about encouraging users to make efficient use of common resources (e.g., storage in the blockchain and compute cycles available to validate transactions). For both of these, we're interested in answering similar questions: are the incentives of users well aligned? Can a greedy attacker profit by deviating from the protocol?</p>
+<p>This has been fun for us because we've gotten to study in very close detail several aspects of how Ethereum works, and gotten to see their engineering process in action. We're impressed with many aspects of their engineering process, such as how all the work is done &quot;in the public&quot;, so we could follow along as they release in-development code. Also they have several different implementations in different languages, by different teams. Lots of bugs are caught that way.</p>
+<p>Today we're releasing our <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/README.md">final report</a>, which summarizes our findings and explains the steps Ethereum has taken in response. In general, we found the Ethereum virtual machine and gas mechanism to be well designed, and most of the hazards in contract composition are readily fixed. Based on our cost analysis of hardware configurations, the Ethash puzzle is likely to be GPU-friendly with minimal potential for improvement using customized hardware designs. As supplemental materials we also include tools for visualizing the storage <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/examples/trie_debug.py">trie</a> structure and demonstrations of <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/examples/trie_bust_example.py">attacks</a> using <a class="reference external" href="https://github.com/ethereum/pyethereum/">pyethereum</a> as a simulator.</p>
+<ul class="simple">
+<li>View our <a class="reference external" href="https://github.com/LeastAuthority/ethereum-analyses/blob/master/README.md">final report</a> here.</li>
+</ul>
+
+                </div><!-- /.entry-content -->
+                <div>
+                    <div style="float: right;"><a href="../least_authority_performs_incentive_analysis_for_ethereum.html#disqus_thread">Comments</a></div>
+                    <div class="clearer">&nbsp;</div>
+                </div>
+        </article>
+        <br>
+        <article class="hentry highlight">
                 <header> <h3 class="entry-title"><a href="../zerocash_and_confidential_transactions.html" rel="bookmark" title="Permalink to Privacy Technologies for Bitcoin">Privacy Technologies for Bitcoin</a></h3> </header>
                 <footer class="post-info help-text">
                     <div style="float: right;"><a href="../zerocash_and_confidential_transactions.html#disqus_thread">Comments</a></div>
@@ -353,10 +384,8 @@ mitigate these storage requirements by making various tradeoffs (Sections
 example, systems which allow pruning spent outputs necessarily expose
 information about the transaction graph and constrain what kinds of
 sender/receiver graph confidentiality is possible.</p>
-<p id="cryptographic-basis"><strong>Cryptographic Basis.</strong> The underlying cryptographic basis of CT is the
-same as Bitcoin and many other deployed systems, while ZC is one of the
-first practical applications which relies on a particular assumption.</p>
-<p>Specifically, CT relies on a variant of Schnorr signatures, whose security
+<p id="cryptographic-basis"><strong>Cryptographic Basis.</strong> CT and ZC rely on different cryptography. On the
+one hand, CT relies on a variant of Schnorr signatures, whose security
 can be based on either the elliptic-curve DL problem (<cite>ECDLP</cite>) and the
 Random-Oracle (<cite>RO</cite>) assumption. On the other hand, ZC relies
 on zkSNARKs whose security is based on variants of the Knowledge Of
@@ -654,91 +683,6 @@ GlobaLeaks team in the latest stable version.</p>
                 </div>
         </article>
         <br>
-        <article class="hentry highlight">
-                <header> <h3 class="entry-title"><a href="../least_authority_performs_security_audit_for_cryptocat.html" rel="bookmark" title="Permalink to Least Authority Performs Security Audit For Cryptocat">Least Authority Performs Security Audit For Cryptocat</a></h3> </header>
-                <footer class="post-info help-text">
-                    <div style="float: right;"><a href="../least_authority_performs_security_audit_for_cryptocat.html#disqus_thread">Comments</a></div>
-                    <div class="published"> Wed 02 April 2014 </div>
-                      <div>By <a class="url fn" href="../author/zooko-wilcox-ohearn.html">Zooko Wilcox-O'Hearn</a></div>
-                    <br>
-                </footer><!-- /.post-info -->
-                <!-- <div class="entry-content"> <p class="first last">Least Authority performs security audit for Cryptocat</p>
- </div>-->
-                <div class="entry-content">
-                    <!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; indent-tabs-mode: nil -*- -->
-<p>This is the second post in our series about security audits of Free and
-Open Source end-to-end encryption software. The first post in the series
-was about our security audit of SpiderOak's <a class="reference external" href="/blog/least_authority_performs_security_audit_for_spideroak.html">crypton</a> project.</p>
-<p><a class="reference external" href="https://leastauthority.com/about_us">Our mission</a> at LeastAuthority is to bring verifiable end-to-end
-security to everyone.</p>
-<p>As part of that mission, in addition to operating the <a class="reference external" href="https://leastauthority.com/product_s4">S4</a> simple secure
-storage service, we also perform security consulting. We
-LeastAuthoritarians have extensive experience in security and
-cryptography, and other companies sometimes ask us to analyze the
-security of their protocols and software.</p>
-<p>We audited the widely-used <a class="reference external" href="https://crypto.cat/">Cryptocat</a> encrypted chat program. This
-audit was funded by <a class="reference external" href="https://www.opentechfund.org/">Open Technology Fund</a> as part of their <a class="reference external" href="https://www.opentechfund.org/labs#redteam">Red Team</a>
-project to provide multiple professional security audits to Internet
-freedom projects.</p>
-<div class="section" id="what-were-the-results">
-<h2>What were the results?</h2>
-<p>We found several security issues in the version of Cryptocat that we
-examined (Cryptocat v2.1.15). For each one, we reported it to the
-Cryptocat developers, and they have either deployed a fix in a newer
-release of Cryptocat or else disabled the feature that has the
-vulnerability.</p>
-<p>The complete list of the issues we found is at the end of this article,
-along with a link to the report document.</p>
-<p>Unfortunately we didn't have time to examine all parts of Cryptocat that
-we wanted to. We concentrated on the “crypto-related” parts: key
-generation and key management, random number generation, encryption and
-decryption, authentication and integrity, and the new file transfer
-feature. Most of the issues that we found were in those areas.</p>
-<p>Our report explains what parts of it we looked at most closely (this is
-called the &quot;coverage&quot; results of the audit).</p>
-</div>
-<div class="section" id="parting-thoughts">
-<h2>parting thoughts</h2>
-<p>I would like to thank the Cryptocat project, led by Nadim Kobeissi, for
-their commitment to doing development in the open, inviting external
-review, and moving to address the issues we uncovered. This open
-development process is a good complement to Cryptocat's Free and Open
-Source publication of their code and their commitment to providing
-end-to-end security for their users.</p>
-<p>On top of that, I'd like to thank Cryptocat for their unflagging focus on
-<em>usability</em>. Usability is a critical factor if we are going to succeed at
-bringing verifiable end-to-end security to everyone, and it is an area
-where we as a community and as a society need to improve.</p>
-</div>
-<div class="section" id="any-questions">
-<h2>Any questions?</h2>
-<p>If you have any questions about these results or the process, please
-contact us or the Cryptocat developers.</p>
-<p>The next project we are auditing is <a class="reference external" href="https://globaleaks.org/">GlobaLeaks</a>, so stay tuned.</p>
-</div>
-<div class="section" id="further-reading">
-<h2>further reading</h2>
-<p>The full report: <a class="reference external" href="/static/publications/LeastAuthority-Cryptocat-audit-report.pdf">Report of Security Audit of Cryptocat</a></p>
-<p>The <a class="reference external" href="https://blog.crypto.cat/2014/04/recent-audits-and-coming-improvements/">post on the Cryptocat blog</a>.</p>
-<p>Tickets on the Cryptocat github issue tracker to track the status of each issue:</p>
-<ul class="simple">
-<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/575">Issue A</a></li>
-<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/576">Issue B</a></li>
-<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/577">Issue C</a></li>
-<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/578">Issue D</a></li>
-<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/606">Issue E</a></li>
-<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/607">Issue F</a></li>
-<li><a class="reference external" href="https://github.com/cryptocat/cryptocat/issues/608">Issue G</a></li>
-</ul>
-</div>
-
-                </div><!-- /.entry-content -->
-                <div>
-                    <div style="float: right;"><a href="../least_authority_performs_security_audit_for_cryptocat.html#disqus_thread">Comments</a></div>
-                    <div class="clearer">&nbsp;</div>
-                </div>
-        </article>
-        <br>
     </div><!-- /#posts-list -->
 <p class="paginator">
     Page 1 / 2
@@ -774,11 +718,12 @@ contact us or the Cryptocat developers.</p>
                 <li><a href="../tag/cloud.html">cloud</a> (4)</li>
                 <li><a href="../tag/consultancy.html">consultancy</a> (3)</li>
                 <li><a href="../tag/cryptocat.html">cryptocat</a> (2)</li>
-                <li><a href="../tag/cryptocurrency.html">cryptocurrency</a> (1)</li>
+                <li><a href="../tag/cryptocurrency.html">cryptocurrency</a> (2)</li>
                 <li><a href="../tag/cryptography.html">cryptography</a> (3)</li>
                 <li><a href="../tag/crypton.html">crypton</a> (1)</li>
                 <li><a href="../tag/eff.html">eff</a> (1)</li>
                 <li><a href="../tag/engineering.html">engineering</a> (1)</li>
+                <li><a href="../tag/ethereum.html">ethereum</a> (1)</li>
                 <li><a href="../tag/globaleaks.html">globaleaks</a> (1)</li>
                 <li><a href="../tag/interview.html">interview</a> (1)</li>
                 <li><a href="../tag/lafs.html">lafs</a> (5)</li>
