@@ -19,6 +19,7 @@ def main(stdin, flapp_stdout, flapp_stderr):
      plan_id,
      subscription_id) = simplejson.loads(parameters_json)
 
+    print >>flapp_stderr, "plan_id is %s in main" % (plan_id,)
     (abslogdir_fp,
     stripesecrets_log_fp,
     SSEC2secrets_log_fp,
