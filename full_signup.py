@@ -20,16 +20,15 @@ def main(stdin, flapp_stdout, flapp_stderr):
      subscription_id) = simplejson.loads(parameters_json)
 
     (abslogdir_fp,
-    stripesecrets_log_fp,
-    SSEC2secrets_log_fp,
-    signup_log_fp) = create_log_filepaths(plan_id, customer_id, subscription_id)
+     stripe_secretsfp,
+     ssec2_secretsfp,
+     signup_logfp) = create_log_filepaths(plan_id, customer_id, subscription_id)
 
     append_record(flapp_stdout, "Writing logs to %r." % (abslogdir_fp.path,))
 
-    stripesecrets_log_fp.setContent(parameters_json)
+    stripe_secretsfp.setContent(parameters_json)
 
-    SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
-    signup_logfile = signup_log_fp.open('a+')
+    signup_logfile = signup_logfp.open('a+')
     signup_stdout = LoggingStream(signup_logfile, '>')
     signup_stderr = LoggingStream(signup_logfile, '')
     sys.stdout = signup_stderr
@@ -45,7 +44,7 @@ def main(stdin, flapp_stdout, flapp_stderr):
                                                           customer_id, subscription_id,
                                                           plan_id,
                                                           signup_stdout, signup_stderr,
-                                                          SSEC2_secretsfile, signup_log_fp.path)
+                                                          ssec2_secretsfp, signup_logfp.path)
                   )
     d.addErrback(errhandler)
     d.addBoth(lambda ign: signup_logfile.close())
