@@ -477,37 +477,6 @@ LAFS_source/bin/tahoe restart storageserver
 """
 
 
-def update_txaws(publichost, admin_privkey_path, stdout, stderr):
-    set_host_and_key(publichost, admin_privkey_path)
-    run('wget %s' % (INSTALL_TXAWS_URL,))
-    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
-    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
-        sudo('python ./setup.py install')
-
-def update_tahoe(publichost, admin_privkey_path, stdout, stderr, do_update_txaws=False):
-    set_host_and_key(publichost, admin_privkey_path, username="customer")
-    print >>stdout, "Updating Tahoe-LAFS..."
-    with cd('/home/customer/LAFS_source'):
-        run('bin/tahoe stop ../introducer || echo Assuming introducer is stopped.')
-        run('bin/tahoe stop ../storageserver || echo Assuming storage server is stopped.')
-        run('darcs pull --all')
-    if do_update_txaws:
-        update_txaws(publichost, admin_privkey_path, stdout, stderr)
-        set_host_and_key(publichost, admin_privkey_path, username="customer")
-    with cd('/home/customer/LAFS_source'):
-        run('python setup.py build')
-    print >>stdout, "Restarting..."
-    run('/home/customer/restart.sh')
-
-def delete_statmover_emissions(publichost, admin_privkey_path, stdout, stderr):
-    set_host_and_key(publichost, admin_privkey_path)
-    sudo('rm -rf /home/monitor/statmover/emissionlogs')
-
-    set_host_and_key(publichost, admin_privkey_path, username="customer")
-    print >>stdout, "Restarting..."
-    run('/home/customer/restart.sh')
-
-
 def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_type, furl):
     set_host_and_key(publichost, admin_privkey_path, username="customer")
     if gatherer_type == 'incident':
