@@ -249,7 +249,7 @@ def get_and_install_tahoe(stdout):
         print >>stdout, "Creating virtualenv..."
         run('virtualenv venv')
         print >>stdout, "Building Tahoe-LAFS..."
-        run('venv/bin/pip install -e .[test]')
+        run('venv/bin/pip install --find-links=https://tahoe-lafs.org/deps -e .[test]')
 
 def create_intro_and_storage_nodes(stdout):
     print >>stdout, "Creating introducer and storage server..."
