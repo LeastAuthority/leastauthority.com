@@ -142,7 +142,6 @@ TAHOE_LAFS_GIT_BRANCH = "2237-cloud-backend-s4"
 TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
     'python-dev',
     'python-pip',
-    'python-virtualenv',
     'git-core',
     'libffi6',
     'openssl',
@@ -265,6 +264,7 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     apt_install_dependencies(stdout, TAHOE_LAFS_PACKAGE_DEPENDENCIES)
 
     sudo_apt_get('-y remove --purge whoopsie')
+    sudo('pip install virtualenv')
     create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
                               admin_privkey_path, publichost)
 
