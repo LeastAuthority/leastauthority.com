@@ -136,9 +136,6 @@ SSEC2_CRONTAB = """\
 class NotListeningError(Exception):
     pass
 
-INSTALL_TXAWS_VERSION = "0.2.1.post5"
-INSTALL_TXAWS_URL = "https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-%s.tar.gz" % (INSTALL_TXAWS_VERSION,)
-
 TAHOE_LAFS_GIT_REPO_URL = "https://github.com/tahoe-lafs/tahoe-lafs.git"
 TAHOE_LAFS_GIT_BRANCH = "2237-cloud-backend-s4"
 
@@ -231,12 +228,6 @@ def apt_install_dependencies(stdout, package_list):
         print >>stdout, "package: %s installed" % (package,)
     print >>stdout, "Finished installing dependencies..."
 
-def get_txaws():
-    run('wget %s' % (INSTALL_TXAWS_URL,))
-    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
-    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
-        sudo('python ./setup.py install')
-
 def create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
                               admin_privkey_path, publichost):
     create_account('customer', None, stdout, stderr)
@@ -252,18 +243,19 @@ def create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_pa
 def get_and_install_tahoe(stdout):
     print >>stdout, "Getting Tahoe-LAFS..."
     run('rm -rf /home/customer/LAFS_source')
-    run('git clone %s LAFS_source' % (TAHOE_LAFS_GIT_REPO_URL,))
+    run('git clone -b %s %s LAFS_source' % (TAHOE_LAFS_GIT_BRANCH, TAHOE_LAFS_GIT_REPO_URL))
 
     with cd('/home/customer/LAFS_source'):
-        run('git checkout %s' % (TAHOE_LAFS_GIT_BRANCH,))
+        print >>stdout, "Creating virtualenv..."
+        run('virtualenv venv')
         print >>stdout, "Building Tahoe-LAFS..."
-        run('python ./setup.py build')
+        run('venv/bin/pip install -e .[test]')
 
 def create_intro_and_storage_nodes(stdout):
     print >>stdout, "Creating introducer and storage server..."
     run('mkdir -p introducer storageserver')
-    run('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
-    run('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
+    run('venv/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
+    run('venv/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
 
 def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
                    stderr):
@@ -472,8 +464,8 @@ SERVER_PORT = '12346'
 
 RESTART_SCRIPT = """#!/bin/sh
 cd /home/customer
-LAFS_source/bin/tahoe restart introducer
-LAFS_source/bin/tahoe restart storageserver
+venv/bin/tahoe restart introducer
+venv/bin/tahoe restart storageserver
 """
 
 
@@ -601,7 +593,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     if oldsecrets:
         restore_secrets(oldsecrets, 'introducer', stdout, stderr)
 
-    run('LAFS_source/bin/tahoe restart introducer && sleep 5')
+    run('venv/bin/tahoe restart introducer && sleep 5')
 
     internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
     assert '\n' not in internal_introducer_furl, internal_introducer_furl
@@ -627,7 +619,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
         write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
 
     print >>stdout, "Starting storage server..."
-    run('LAFS_source/bin/tahoe restart storageserver && sleep 5')
+    run('venv/bin/tahoe restart storageserver && sleep 5')
     run('ps -fC tahoe')
     run('netstat -atW')
 
