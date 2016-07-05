@@ -264,7 +264,6 @@ def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privk
     apt_install_dependencies(stdout, TAHOE_LAFS_PACKAGE_DEPENDENCIES)
 
     sudo_apt_get('-y remove --purge whoopsie')
-    get_txaws()
     create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
                               admin_privkey_path, publichost)
 
@@ -391,11 +390,6 @@ postfix	postfix/main_mailer_type select	No configuration"""
     sudo('touch /etc/authbind/byport/{443,80}')
     sudo('chown website:root /etc/authbind/byport/{443,80}')
     sudo('chmod -f 744 /etc/authbind/byport/{443,80}')
-
-    run('wget -O txAWS-%s.tar.gz %s' % (INSTALL_TXAWS_VERSION, INSTALL_TXAWS_URL))
-    run('tar -xzvf txAWS-%s.tar.gz' % (INSTALL_TXAWS_VERSION,))
-    with cd('/home/ubuntu/txAWS-%s' % (INSTALL_TXAWS_VERSION,)):
-        sudo('python ./setup.py install')
 
     # patch twisted to send intermediate certs, cf. https://github.com/LeastAuthority/leastauthority.com/issues/6
     sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
