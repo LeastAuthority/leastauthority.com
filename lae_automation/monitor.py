@@ -33,7 +33,7 @@ def check_server(publichost, monitor_privkey_path, stdout, stderr):
         nodes = []
         for line in pslines[1:]:
             fields = line.split()
-            [uid, pid, parent_pid, c, start_time, tty, proc_time] = fields[:7]
+            [uid, pid, parent_pid, cc, start_time, tty, proc_time] = fields[:7]
             cmd = fields[7:]
             if [True for c in cmd if c.startswith('@')]:
                 # not a node
