@@ -142,6 +142,7 @@ TAHOE_LAFS_GIT_BRANCH = "2237-cloud-backend-s4"
 TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
     'python-dev',
     'python-pip',
+    'python-virtualenv',
     'git-core',
     'libffi6',
     'openssl',

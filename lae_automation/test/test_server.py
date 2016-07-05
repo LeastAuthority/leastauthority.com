@@ -292,6 +292,7 @@ class TestServerModule(TestCase):
             ('apt-get update', False, {}),
             ('apt-get -y install python-dev', False, {}),
             ('apt-get -y install python-pip', False, {}),
+            ('apt-get -y install python-virtualenv', False, {}),
             ('apt-get -y install git-core', False, {}),
             ('apt-get -y install libffi6', False, {}),
             ('apt-get -y install openssl', False, {}),
