@@ -278,17 +278,15 @@ class TestServerModule(TestCase):
         self.RUNARGS_FIFO = fifo([
             ('whoami', False, {}),
             ('whoami', False, {}),
-            ('wget https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-lafs-dep-sdists/txAWS-0.2.1.post5.tar.gz', False, {}),
-            ('tar -xzvf txAWS-0.2.1.post5.tar.gz', False, {}),
             ('whoami', False, {}),
             ('whoami', False, {}),
             ('rm -rf /home/customer/LAFS_source', False, {}),
-            ('git clone https://github.com/tahoe-lafs/tahoe-lafs.git LAFS_source', False, {}),
-            ('git checkout 2237-cloud-backend-s4', False, {}),
-            ('python ./setup.py build', False, {}),
+            ('git clone -b 2237-cloud-backend-s4 https://github.com/tahoe-lafs/tahoe-lafs.git LAFS_source', False, {}),
+            ('virtualenv venv', False, {}),
+            ('venv/bin/pip install -e .[test]', False, {}),
             ('mkdir -p introducer storageserver', False, {}),
-            ('LAFS_source/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
-            ('LAFS_source/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})
+            ('venv/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
+            ('venv/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})
         ])
         self.SUDOARGS_FIFO = fifo([
             ('apt-get update', False, {}),
@@ -308,7 +306,6 @@ class TestServerModule(TestCase):
             ('apt-get -y install python-zfec', False, {}),
             ('apt-get -y install python-simplejson', False, {}),
             ('apt-get -y remove --purge whoopsie', False, {}),
-            ('python ./setup.py install', False, {}),
             ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
             ('mkdir -p /home/customer/.ssh/', False, {}),
             ('chown customer:customer /home/customer/.ssh', False, {}),
@@ -407,10 +404,10 @@ class TestServerModule(TestCase):
                 ('rm -f /home/customer/introducer/introducer.furl'
                       ' /home/customer/introducer/private/introducer.furl'
                       ' /home/customer/introducer/logport.furl', False, {}),
-                ('LAFS_source/bin/tahoe restart introducer && sleep 5', False, {}),
+                ('venv/bin/tahoe restart introducer && sleep 5', False, {}),
                 ('cat /home/customer/introducer/private/introducer.furl', False, {}),
                 ('chmod -f u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.', False, {}),
-                ('LAFS_source/bin/tahoe restart storageserver && sleep 5', False, {}),
+                ('venv/bin/tahoe restart storageserver && sleep 5', False, {}),
                 ('ps -fC tahoe', False, {}),
                 ('netstat -atW', False, {}),
                 ('crontab /home/customer/ctab', False, {}),
