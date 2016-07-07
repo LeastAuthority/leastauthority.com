@@ -283,7 +283,7 @@ class TestServerModule(TestCase):
             ('rm -rf /home/customer/LAFS_source', False, {}),
             ('git clone -b 2237-cloud-backend-s4 https://github.com/tahoe-lafs/tahoe-lafs.git LAFS_source', False, {}),
             ('virtualenv venv', False, {}),
-            ('venv/bin/pip install --find-links=https://tahoe-lafs.org/deps -e .[test]', False, {}),
+            ('venv/bin/pip install --find-links=https://tahoe-lafs.org/deps -e LAFS_source[test]', False, {}),
             ('mkdir -p introducer storageserver', False, {}),
             ('venv/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.', False, {}),
             ('venv/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.', False, {})
