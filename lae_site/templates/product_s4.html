@@ -27,14 +27,14 @@
         <p>You can do step two before or during this step.</p>
     </div>
     <div class="row-fluid">
-        <h4><span class="number">2</span><a href="https://tahoe-lafs.org/trac/tahoe-lafs/wiki/Installation">Install the free LAFS client</a> on your trusted machine.</h4>
-        <p>Try running <tt>bin/tahoe --help</tt> to check that the LAFS client is working. If you have any problems up to this point, <a href="https://tahoe-lafs.org/cgi-bin/mailman/listinfo/tahoe-dev">the tahoe-dev mailing list</a> or the <tt>#tahoe-lafs</tt> IRC channel on irc.freenode.net are the best places to seek help.</p>
+        <h4><span class="number">2</span><a href="https://github.com/tahoe-lafs/tahoe-lafs/blob/master/docs/INSTALL.rst">Install the free LAFS client</a> on your trusted machine.</h4>
+        <p>Try running <tt>tahoe --help</tt> to check that the LAFS client is working. If you have any problems up to this point, <a href="https://tahoe-lafs.org/cgi-bin/mailman/listinfo/tahoe-dev">the tahoe-dev mailing list</a> or the <tt>#tahoe-lafs</tt> IRC channel on irc.freenode.net are the best places to seek help.</p>
     </div>
     <div class="row-fluid">
         <h4><span class="number">3</span>Create an LAFS gateway on your trusted machine.</h4>
         <p>To create a Tahoe-LAFS gateway on your trusted machine (in the default location, which is the <tt>.tahoe</tt> subdirectory of your home directory), run:</p>
         <pre>
-          bin/tahoe create-client</pre>
+          tahoe create-client</pre>
         <p>Then to configure the gateway for use with your LAE account, edit
         <tt>YOUR_HOME_DIRECTORY/.tahoe/tahoe.cfg</tt> to use the following settings (the
         <tt>introducer.furl</tt> will have been sent to you in your sign-up confirmation
@@ -49,13 +49,13 @@
 
         <p>(If you are repurposing an existing node to use as the gateway, also set <tt>enabled = false</tt> in
         the <tt>[storage]</tt> section. It is already set that way when you create a node using
-        <tt>bin/tahoe create-client</tt>.)
+        <tt>tahoe create-client</tt>.)
     </div>
     <div class="row-fluid">
         <h4><span class="number">4</span>Start your gateway.</h4>
         <p>Now start your gateway using:</p>
         <pre>
-          bin/tahoe start</pre>
+          tahoe start</pre>
         <p>On Windows, you'll need to leave that command running; on other platforms
         it will run in the background. Next, in your web browser go to:</p>
         <pre>
@@ -69,10 +69,10 @@
         <p>We recommend that you create a directory and make the alias
         <tt>s4:</tt> point to it:</p>
         <pre>
-          bin/tahoe create-alias s4</pre>
+          tahoe create-alias s4</pre>
         <p>then to see that directory in your browser:</p>
         <pre>
-          bin/tahoe webopen s4:</pre>
+          tahoe webopen s4:</pre>
         <p>(The colon after <tt>s4</tt> is required here.)</p>
     </div>
 
@@ -80,7 +80,7 @@
         <h4><span class="number">6</span>Back up your files!</h4>
         <p>Just use the <tt>tahoe backup</tt> command to back up your files to your new alias. For example:</p>
         <pre>
-          bin/tahoe backup DIRECTORY_TO_BACKUP s4:</pre>
+          tahoe backup DIRECTORY_TO_BACKUP s4:</pre>
     </div>
 </section>
 
