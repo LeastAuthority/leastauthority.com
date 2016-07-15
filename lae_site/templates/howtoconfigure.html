@@ -5,19 +5,26 @@
 <h2>Configuration</h2>
 <p>If you do not already have the Tahoe-LAFS software on your trusted machine
 you can obtain it
-<a href="https://tahoe-lafs.org/trac/tahoe-lafs/browser/trunk/docs/quickstart.rst">here</a>.</p>
+<a href="https://github.com/tahoe-lafs/tahoe-lafs/blob/master/docs/INSTALL.rst">here</a>.</p>
 
-<p>We recommend that you use the latest release, version 1.10.</p>
+<p>We recommend that you use the latest release, version 1.11. (For previous
+releases, the installation process
+<a href="https://github.com/tahoe-lafs/tahoe-lafs/blob/allmydata-tahoe-1.10.0/docs/quickstart.rst">was
+different</a>.)</p>
 
-<p>Once you've built or installed Tahoe-LAFS, run '<tt>bin/tahoe --help</tt>' to check
-that it is working. If you have any problems up to this point,
+<p>Once you've built or installed Tahoe-LAFS, run '<tt>tahoe --help</tt>' to check
+that it is working. For version 1.11 and later, see
+<a href="https://github.com/tahoe-lafs/tahoe-lafs/blob/master/docs/INSTALL.rst#running-the-tahoe-executable">this</a>
+for more detail of how to run the <tt>tahoe</tt> executable.</p>
+
+<p>If you have any problems up to this point,
 <a href="https://tahoe-lafs.org/cgi-bin/mailman/listinfo/tahoe-dev">the tahoe-dev mailing list</a>
 or the <tt>#tahoe-lafs</tt> IRC channel on irc.freenode.net are the best places to seek help.</p>
 
 <p>To create a Tahoe-LAFS gateway on your trusted machine (in the default
 location, which is the '<tt>.tahoe</tt>' subdirectory of your home directory), run:</p>
 <pre>
-  bin/tahoe create-client
+  tahoe create-client
 </pre>
 <p>Then to configure the gateway for use with your LAE account, edit
 <tt>YOUR_HOME_DIRECTORY/.tahoe/tahoe.cfg</tt> to use the following settings (the
@@ -34,11 +41,11 @@ shares.total = 1
 
 <p>(If you are repurposing an existing node to use as the gateway, also set <tt>enabled = false</tt> in
 the <tt>[storage]</tt> section. It is already set that way when you create a node using
-<tt>bin/tahoe create-client</tt>.)
+<tt>tahoe create-client</tt>.)
 
 <p>Now start your gateway using:</p>
 <pre>
-  bin/tahoe start
+  tahoe start
 </pre>
 <p>On Windows, you'll need to leave that command running; on other platforms
 it will run in the background. Next, in your web browser go to:</p>
@@ -51,17 +58,17 @@ should see a green box starting with "Yes" in the list of connected servers.</p>
 <p>We recommend that you begin by creating a directory and making the alias
 '<tt>lae:</tt>' point to it:</p>
 <pre>
-  bin/tahoe create-alias lae
+  tahoe create-alias lae
 </pre>
 <p>then to see that directory in your browser:</p>
 <pre>
-  bin/tahoe webopen lae:
+  tahoe webopen lae:
 </pre>
 <p>(The colon after <tt>lae</tt> is required here.)</p>
 <p>You can use the '<tt>tahoe backup</tt>' command to back up your files to this
 directory, for example:</p>
 <pre>
-  bin/tahoe backup DIRECTORY_TO_BACKUP lae:
+  tahoe backup DIRECTORY_TO_BACKUP lae:
 </pre>
 
 {% endblock %}
