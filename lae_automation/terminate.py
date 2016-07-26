@@ -1,8 +1,12 @@
+import simplejson
+
+from twisted.python.filepath import FilePath
 from txaws.ec2.client import EC2Client
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceEndpoint
-from signup import EC2_ENDPOINT
-import simplejson
+
+from lae_automation.signup import EC2_ENDPOINT
+from lae_automation.config import Config
 
 DEBUG = True
 
@@ -38,9 +42,9 @@ def find_instance_id_for_signup(signupfp):
 
     raise Exception("instanceid not found")
 
-def delete_ec2_instance(ec2_accesskeyid, ec2_secretkey, instanceid):
+def delete_ec2_instance(config, instanceid):
     endpoint_uri = EC2_ENDPOINT
-    ec2creds = AWSCredentials(ec2_accesskeyid, ec2_secretkey)
+    ec2creds = load_ec2_credentials(config)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=ec2creds, endpoint=endpoint)
     try:
@@ -48,8 +52,19 @@ def delete_ec2_instance(ec2_accesskeyid, ec2_secretkey, instanceid):
     except Exception, e:
         if DEBUG: print str(e)
 
-def terminate_customer_server(email, customerid, secretsdirfp):
+def load_ec2_credentials(config):
+    accesskeyid = config.other["ssec2_access_key_id"]
+    secretpath = config.other["ssec2_secret_path"]
+    secretkey = FilePath(secretpath).getContent().strip()
+
+    creds = AWSCredentials(accesskeyid, secretkey)
+    return creds
+
+def terminate_customer_server(email, customerid, secretsdirfp,
+                              configpath='../secret_config/lae_automation_config.json'):
+    config = Config(configpath)
     signupfp = find_customer_signup(email, customerid, secretsdirfp)
     instanceid = find_instance_id_for_signup(signupfp)
 
     print "terminating %r" % (instanceid,)
+    delete_ec2_instance(config, instanceid)
