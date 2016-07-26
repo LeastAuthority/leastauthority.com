@@ -47,10 +47,8 @@ def delete_ec2_instance(config, instanceid):
     ec2creds = load_ec2_credentials(config)
     endpoint = AWSServiceEndpoint(uri=endpoint_uri)
     client = EC2Client(creds=ec2creds, endpoint=endpoint)
-    try:
-        client.terminate_instances(instanceid)
-    except Exception, e:
-        if DEBUG: print str(e)
+    print "here"
+    return client.terminate_instances(instanceid)
 
 def load_ec2_credentials(config):
     accesskeyid = config.other["ssec2_access_key_id"]
@@ -67,4 +65,4 @@ def terminate_customer_server(email, customerid, secretsdirfp,
     instanceid = find_instance_id_for_signup(signupfp)
 
     print "terminating %r" % (instanceid,)
-    delete_ec2_instance(config, instanceid)
+    return delete_ec2_instance(config, instanceid)
