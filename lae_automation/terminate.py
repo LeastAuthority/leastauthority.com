@@ -25,7 +25,7 @@ def find_customer_signup(email, customerid, secretsdirfp):
         except Exception, e:
             if DEBUG: print str(e)
 
-    raise Exception("signup not found")
+    raise KeyError("signup not found")
 
 
 def find_instance_id_for_signup(signupfp):
