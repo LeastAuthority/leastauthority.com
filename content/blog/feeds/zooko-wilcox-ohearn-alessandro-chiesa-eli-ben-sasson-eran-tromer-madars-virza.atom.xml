@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Least Authority Blog</title><link href="https://leastauthority.com/blog/" rel="alternate"></link><link href="https://leastauthority.com/blog/feeds/zooko-wilcox-ohearn-alessandro-chiesa-eli-ben-sasson-eran-tromer-madars-virza.atom.xml" rel="self"></link><id>https://leastauthority.com/blog/</id><updated>2015-05-16T00:00:00+00:00</updated><entry><title>A Bug in libsnark</title><link href="https://leastauthority.com/blog/a_bug_in_libsnark.html" rel="alternate"></link><published>2015-05-16T00:00:00+00:00</published><author><name>Zooko Wilcox-O'Hearn, Alessandro Chiesa, Eli Ben-Sasson, Eran Tromer, Madars Virza</name></author><id>tag:leastauthority.com,2015-05-16:blog/a_bug_in_libsnark.html</id><summary type="html">&lt;!-- -*- coding: utf-8-with-signature-unix; fill-column: 73; --&gt;
+&lt;!-- -*- indent-tabs-mode: nil -*- --&gt;
+&lt;div class="section" id="a-statement-from-least-authority"&gt;
+&lt;h2&gt;a statement from Least Authority&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;Zooko Wilcox-O'Hearn writing:&lt;/em&gt;&lt;/p&gt;
+&lt;div class="section" id="about-us"&gt;
+&lt;h3&gt;About us&lt;/h3&gt;
+&lt;p&gt;At Least Authority, &lt;a class="reference external" href="https://leastauthority.com/about_us"&gt;our mission&lt;/a&gt; is to bring verifiable end-to-end
+security to everyone. As a part of this mission, we have been
+collaborating with with the scientists behind &lt;a class="reference external" href="http://www.scipr-lab.org/"&gt;zk-SNARKS&lt;/a&gt;,
+&lt;a class="reference external" href="https://github.com/scipr-lab/libsnark"&gt;libsnark&lt;/a&gt;, and &lt;a class="reference external" href="http://zca.sh/"&gt;Zerocash&lt;/a&gt;. These are some of the most promising new
+advances in cryptography, and we are exploring whether they can be
+used to provide more safety and freedom to all users of the Internet.&lt;/p&gt;
+&lt;p&gt;We're not ready to post about our specific plans, but we want to
+address the recent news that a bug has been discovered in libsnark.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="id1"&gt;
+&lt;h3&gt;A bug in libsnark&lt;/h3&gt;
+&lt;p&gt;Recently there was &lt;a class="reference external" href="https://eprint.iacr.org/2015/437"&gt;a bug reported&lt;/a&gt; by &lt;a class="reference external" href="http://research.microsoft.com/en-us/people/parno/"&gt;Bryan Parno&lt;/a&gt; from Microsoft
+Research. Because libsnark is used to implement the cryptography in
+&lt;em&gt;Zerocash&lt;/em&gt;, some people have &lt;a class="reference external" href="http://www.reddit.com/r/Bitcoin/comments/35jnax/openpgp_proposal_for_a_separable_ring_signature/cr5c3kb"&gt;worried&lt;/a&gt; that this bug could have led
+to a critical failure in &lt;em&gt;Zerocash&lt;/em&gt;, if &lt;em&gt;Zerocash&lt;/em&gt; had already been
+deployed before the bug was discovered.&lt;/p&gt;
+&lt;p&gt;We asked some of the authors of libsnark to comment about the bug.&lt;/p&gt;
+&lt;/div&gt;
+&lt;div class="section" id="how-we-work"&gt;
+&lt;h3&gt;How we work&lt;/h3&gt;
+&lt;p&gt;Before turning the floor over to the libsnark scientists, I'd like to
+make two points myself:&lt;/p&gt;
+&lt;p&gt;First, in the long run, having independent scientists like Bryan Parno
+study the zk-SNARK literature and the libsnark implementation in
+search of flaws is the right way for a cryptographic innovation like
+this to get vetted and improved. It is encouraging to see this kind of
+scientific scrutiny happening, and we are grateful for the work he and
+other researchers have done.&lt;/p&gt;
+&lt;p&gt;Second, before we at Least Authority deploy new software or
+cryptography for our users to rely on, we perform our own internal
+security audits and solicit external security audits from independent
+experts. We have not yet performed that process for libsnark, and we
+would do so before deploying any libsnark-based systems to our users.&lt;/p&gt;
+&lt;p&gt;If you're interested in our history, here are the reports from &lt;a class="reference external" href="https://leastauthority.com/blog/tag/consultancy.html"&gt;some
+of the security audits&lt;/a&gt; that we've performed on behalf of others, and
+here is &lt;a class="reference external" href="https://tahoe-lafs.org/hacktahoelafs/"&gt;a contest we organized&lt;/a&gt; for others to find security flaws in
+our flagship product.&lt;/p&gt;
+&lt;p&gt;We also notified the authors of another zk-SNARK implementation named
+&lt;a class="reference external" href="https://github.com/jancarlsson/snarklib"&gt;snarklib&lt;/a&gt;, so that they could fix &lt;a class="reference external" href="https://github.com/jancarlsson/snarklib/blob/master/QAP_query.hpp#L45"&gt;the bug as it applies to
+snarklib&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+&lt;/div&gt;
+&lt;div class="section" id="a-statement-from-the-libsnark-team"&gt;
+&lt;h2&gt;A statement from the libsnark team&lt;/h2&gt;
+&lt;p&gt;&lt;em&gt;Alessandro Chiesa, Eli Ben-Sasson, Eran Tromer, and Madars Virza writing:&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Summary:&lt;/p&gt;
+&lt;ul class="simple"&gt;
+&lt;li&gt;Bryan Parno &lt;a class="reference external" href="https://eprint.iacr.org/2015/437"&gt;identified&lt;/a&gt; a bug in the R1CS-to-QAP reduction in &lt;a class="reference external" href="https://github.com/scipr-lab/libsnark"&gt;libsnark&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;Current libsnark includes a full and general fix, in &lt;a class="reference external" href="https://github.com/scipr-lab/libsnark/commit/af725eeb82bd380a02f8be0d8931c8edf55afd03"&gt;commit f55afd03&lt;/a&gt;.&lt;/li&gt;
+&lt;li&gt;The fix has negligible performance implications when the number of constraints is much larger than the number of inputs, as is typical in SNARK applications, including Zerocash.&lt;/li&gt;
+&lt;li&gt;Known users of libsnark have been notified, so that they may update their code to the latest release.&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;More details about the bug and its fix:&lt;/p&gt;
+&lt;p&gt;&lt;a class="reference external" href="https://github.com/scipr-lab/libsnark/tree/master/src/zk_proof_systems/ppzksnark/r1cs_ppzksnark"&gt;One of the preprocessing SNARKs in libsnark&lt;/a&gt; represents NP statements to be proved as rank-1 constraint systems (R1CS). Internally, a given R1CS is converted into a Quadratic Arithmetic Program (QAP), an algebraic representation of the NP statement. If the R1CS has an input of size &lt;em&gt;n&lt;/em&gt;, the QAP includes polynomials &lt;em&gt;A_0,...,A_n&lt;/em&gt; over a finite field F and, for the soundness of the SNARK to hold, these polynomials must be linearly independent over F. The R1CS-to-QAP reduction, which converts an R1CS into a QAP, should ensure this independence. Until recently, libsnark’s implementation of that reduction had a bug: it did not explicitly ensure this independence.&lt;/p&gt;
+&lt;p&gt;This bug does not always manifest, because a R1CS may naturally induce a QAP in which &lt;em&gt;A_0,...,A_n&lt;/em&gt; are linearly independent. However, the linear independence should be assured generically for all possible R1CS. The straightforward fix to do so is as follows.&lt;/p&gt;
+&lt;p&gt;In the following, consider an R1CS with &lt;em&gt;M&lt;/em&gt; constraints, &lt;em&gt;N&lt;/em&gt; variables, and &lt;em&gt;n&lt;/em&gt; inputs. (The &lt;em&gt;n&lt;/em&gt; inputs correspond to variables that are fixed to known values by the NP statement; the remaining &lt;em&gt;N-n&lt;/em&gt; variables are part of the witness, and can take on any value.)  The fix is to add &lt;em&gt;n+1&lt;/em&gt; dummy constraints that ensure that the constructed QAP always has linearly independent &lt;em&gt;A_0,...,A_n&lt;/em&gt;. This causes the degree of the constructed QAP to increase from &lt;em&gt;M&lt;/em&gt; to &lt;em&gt;M+n+1&lt;/em&gt;. (An optimization, not implemented in our code, is to only add as many additional constraints as needed to ensure that the constructed QAP satisfies the desired property; this number is at least 0 and at most &lt;em&gt;n+1&lt;/em&gt;.)&lt;/p&gt;
+&lt;p&gt;The increase has negligible performance implications when &lt;em&gt;M&lt;/em&gt; is much larger than &lt;em&gt;n&lt;/em&gt;. Our experiments show that this is the case for all the applications that we considered. For both &lt;em&gt;SNARKs for TinyRAM&lt;/em&gt; [BCTV14, USENIX Security] and &lt;em&gt;Scalable Zero-Knowledge&lt;/em&gt; [BCTV14, CRYPTO], the increase in the number of constraints is at most 0.007%. For &lt;em&gt;Zerocash&lt;/em&gt; [BCGGMTV14, S&amp;amp;P], the increase is smaller: 0.00022%. More generally, we believe that &lt;em&gt;M&lt;/em&gt; is much larger than &lt;em&gt;n&lt;/em&gt; for most interesting applications, e.g., for constraint systems that verify cryptographic computations.&lt;/p&gt;
+&lt;p&gt;For more details, see Remark 2.5 in the extended version (revised on 9 May 2015) of &lt;a class="reference external" href="https://eprint.iacr.org/2013/879"&gt;Succinct Non-Interactive Zero Knowledge for a von Neumann Architecture&lt;/a&gt;. (Note that the paper is phrased in terms of arithmetic circuits rather than rank-1 constraint systems, so that the paper’s remark and the explanation above differ slightly.)&lt;/p&gt;
+&lt;/div&gt;
+</summary><category term="zerocash"></category><category term="libsnark"></category><category term="cryptography"></category></entry></feed>
