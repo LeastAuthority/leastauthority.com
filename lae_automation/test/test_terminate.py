@@ -15,9 +15,21 @@ from lae_automation.config import Config
 
 
 class TestTerminate(TestCase):
+    SECRETKEY = "supersecret"
+    ACCESSKEYID = "accesskeyid"
+
     def setUp(self):
         self.testdir = FilePath('./test_terminate').child('TestTerminate')
         make_dirs(self.testdir.path)
+
+    def make_config(self):
+        FilePath('secret').setContent(self.SECRETKEY)
+        FilePath('test_config.json').setContent("""
+{ "products": [], "ssec2_access_key_id": "%s", "ssec2_secret_path": "secret" }
+"""
+% (self.ACCESSKEYID,))
+        return Config('test_config.json')
+
 
     def test_find_customer_signup(self):
         secretsfp = self.testdir.child('secrets')
@@ -74,16 +86,16 @@ class TestTerminate(TestCase):
 
         self.patch(terminate, 'EC2Client', FakeEC2Client)
 
-        FilePath('secret').setContent("supersecret")
-        FilePath('test_config.json').setContent("""
-{ "products": [], "ssec2_access_key_id": "accesskeyid", "ssec2_secret_path": "secret" }
-""")
-        config = Config('test_config.json')
+        config = self.make_config()
         terminate.delete_ec2_instance(config, expected_instanceid)
         self.failUnless(ns.called)
 
     def test_load_ec2_credentials(self):
-        pass
+        config = self.make_config()
+        creds = terminate.load_ec2_credentials(config)
+        self.failUnlessIsInstance(creds, AWSCredentials)
+        self.failUnlessEqual(creds.access_key, self.ACCESSKEYID)
+        self.failUnlessEqual(creds.secret_key, self.SECRETKEY)
 
     def test_terminate_customer_server(self):
         pass
