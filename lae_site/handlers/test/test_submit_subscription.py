@@ -42,8 +42,10 @@ class MockCard(object):
 
 
 class MockRequest(object):
-    def __init__(self, argdict):
+
+    def __init__(self, argdict, method='GET'):
         self.args = argdict
+        self.method = method
 
 
 class MockPlan(object):
@@ -343,7 +345,7 @@ class TestRunFullSignup(CommonFixture):
         self.flappcommand_run_return_values = []
         self.patch(submit_subscription, 'flappcommand', MockFlappCommand(self))
 
-        self.subscription_handler.run_full_signup(self.MC, MockRequest(REQUESTARGS))
+        self.subscription_handler.run_full_signup(self.MC, MockRequest(REQUESTARGS, method='POST'))
 
 
     def test_stdin_values(self):
@@ -435,47 +437,39 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
                                         "productname: {productname}")
             return _append(self.env_get_template_return_values, self.mock_template)
         self.patch(submit_subscription.env, 'get_template', call_get_template)
-
         # Note render mockery is handled inside of MockTemplate
+        
+        self.subscription_handler.render(MockRequest(REQUESTARGS, method='POST'))
 
     def test_get_creation_parameters_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.get_creation_parameters_return_values,
                              [(MOCKAPIKEY, MOCK_STRIPE_TOKEN, MOCK_EMAIL)])
 
     def test_create_customer_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
-
         self.failUnlessEqual(len(self.create_customers_return_values), 1)
         self.failUnless(isinstance(self.create_customers_return_values[0], MockCustomer),
                         self.create_customers_return_values[0])
 
     def test_basefp_child_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/subscriptions.csv')
 
     def test_append_record_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.append_record_return_values, [None])
 
     def test_run_full_signup_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.append_record_return_values, [None])
 
     def test_env_get_template_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(len(self.env_get_template_return_values), 1)
         self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
                         self.env_get_template_return_values[0])
 
     def test_env_get_template(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(len(self.env_get_template_return_values), 1)
         self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
                         self.env_get_template_return_values[0])
 
     def test_template_render(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.template_render_return_values,
                              ["Test template:\n"+
                               "productfullname: Simple Secure Storage Service\n"+
@@ -497,35 +491,29 @@ class TestRenderWithExceptions(CommonRenderFixture):
                                               "errorblock: {errorblock}")
             return _append(self.env_get_template_return_values, self.mock_template)
         self.patch(submit_subscription.env, 'get_template', call_get_template)
+        self.subscription_handler.render(MockRequest(REQUESTARGS, method='POST'))
 
     def test_get_creation_parameters_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.get_creation_parameters_return_values,
                              [(MOCKAPIKEY, MOCK_STRIPE_TOKEN, MOCK_EMAIL)])
 
     def test_create_customer_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.create_customers_return_values, [None])
 
     def test_env_get_template_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(len(self.env_get_template_return_values), 1)
         self.failUnless(isinstance(self.env_get_template_return_values[0], MockTemplate),
                         self.env_get_template_return_values[0])
 
     def test_template_render(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.template_render_return_values,
                              ["Test template:\nerrorblock: MOCKERROR"])
 
     def test_basefp_child_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(len(self.FilePath_return_values), 1)
 
     def test_append_record_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.append_record_return_values, [])
 
     def test_run_full_signup_calls(self):
-        self.subscription_handler.render(MockRequest(REQUESTARGS))
         self.failUnlessEqual(self.append_record_return_values, [])
