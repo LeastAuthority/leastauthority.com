@@ -33,7 +33,7 @@ class TestTerminate(TestCase):
 { "products": [], "ssec2_access_key_id": "%s", "ssec2_secret_path": "%s" }
 """
 % (self.ACCESSKEYID, secretkeyfp.path))
-        return Config(testconfigfp.path)
+        return testconfigfp.path
 
     def make_signupfp(self):
         secretsfp = self.testdir.child('secrets')
@@ -98,12 +98,12 @@ class TestTerminate(TestCase):
 
         self.patch(terminate, 'EC2Client', FakeEC2Client)
 
-        config = self.make_config()
+        config = Config(self.make_config())
         terminate.delete_ec2_instance(config, self.INSTANCEID)
         self.failUnless(ns.called)
 
     def test_load_ec2_credentials(self):
-        config = self.make_config()
+        config = Config(self.make_config())
         creds = terminate.load_ec2_credentials(config)
         self.failUnlessIsInstance(creds, AWSCredentials)
         self.failUnlessEqual(creds.access_key, self.ACCESSKEYID)
@@ -115,7 +115,7 @@ class TestTerminate(TestCase):
 
         def call_delete_ec2_instance(config, instanceid):
             self.failUnlessIsInstance(config, Config)
-            self.failUnlessIsInstance(instanceid, self.INSTANCEID)
+            self.failUnlessEqual(instanceid, self.INSTANCEID)
             ns.called = True
             return defer.succeed(None)
 
@@ -124,5 +124,7 @@ class TestTerminate(TestCase):
         signupfp = self.make_signupfp()
         self.make_signup(signupfp)
         self.make_signup_logs(signupfp)
-        terminate.terminate_customer_server(self.EMAIL, self.CUSTOMERID, self.testdir.child('secrets'))
+        configpath = self.make_config()
+        terminate.terminate_customer_server(self.EMAIL, self.CUSTOMERID, self.testdir.child('secrets'),
+                                            configpath=configpath)
         self.failUnless(ns.called)
