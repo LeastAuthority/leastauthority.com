@@ -12,12 +12,12 @@ from lae_automation.aws.queryapi import wait_for_EC2_properties, ServerInfoParse
 endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
 config = Config()
 
-ec2secretpath='../secret_config/ec2secret'
-ec2accesskeyid = str(config.other['ec2_access_key_id'])
+ec2secretpath='../secret_config/ssec2_secret_key'
+ec2accesskeyid = str(config.other['ssec2_access_key_id'])
 ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
 monitor_privkey_path = str(config.other['monitor_privkey_path'])
-admin_privkey_path = str(config.other['admin_privkey_path'])
+admin_privkey_path = str(config.other['ssec2admin_privkey_path'])
 
 
 POLL_TIME = 10
