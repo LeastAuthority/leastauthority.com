@@ -30,8 +30,9 @@ d = wait_for_EC2_properties(ec2accesskeyid, ec2secretkey, endpoint_uri,
 def list_public_hosts(remotepropstuplelist):
     for rpt in remotepropstuplelist:
         publichost = pubIPextractor(rpt[2])
+        instanceId = rpt[1]
         if publichost:
-            print publichost
+            print instanceId, publichost
 
 d.addCallback(list_public_hosts)
 
