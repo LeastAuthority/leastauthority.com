@@ -2,6 +2,7 @@
 import simplejson, traceback, logging
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
+from mock import Mock
 
 from lae_site.handlers import submit_subscription
 from lae_site.handlers.submit_subscription import stripe
@@ -415,6 +416,43 @@ class CommonRenderFixture(CommonFixture):
             return _append(self.run_full_signup_return_values, None)
         self.patch(SubmitSubscriptionHandler, 'run_full_signup',
                    call_run_full_signup)
+
+
+class TestRenderWrongMethod(CommonRenderFixture):
+    def setUp(self):
+        CommonRenderFixture.setUp(self)
+
+        def call_create_customer(subscription_handler, stripe_api_key,
+                                 stripe_authorization_token, user_email):
+            return _append(self.create_customers_return_values,
+                           MockCustomer.create(MockCustomer(),
+                                               stripe_api_key,
+                                               'card', 's4',
+                                               user_email))
+        self.patch(SubmitSubscriptionHandler, 'create_customer',
+                   call_create_customer)
+
+        def call_get_template(target_template):
+            self.mock_template = MockTemplate(self, "{errorblock}")
+            return _append(self.env_get_template_return_values, self.mock_template)
+        self.patch(submit_subscription.env, 'get_template', call_get_template)
+        # Note render mockery is handled inside of MockTemplate
+
+    def test_render_error_get(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS, method='GET'))
+        self.failUnlessEqual(
+            self.template_render_return_values,
+            ["Your browser requested this page with GET but we expected a POST."
+             "\n\nPlease try again."]
+        )
+
+    def test_render_error_options(self):
+        self.subscription_handler.render(MockRequest(REQUESTARGS, method='OPTIONS'))
+        self.failUnlessEqual(
+            self.template_render_return_values,
+            ["Your browser requested this page with OPTIONS but we expected a POST."
+             "\n\nPlease try again."]
+        )
 
 
 class TestRenderWithoutExceptions(CommonRenderFixture):
