@@ -349,7 +349,15 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     if sp.wait() != 0:
         raise subprocess.CalledProcessError
 
-    known_hosts = KnownHostsFile.fromPath(pubkey_filepath)
+    return _get_entry_from_keyscan(pubkey_filename)
+
+
+def _get_entry_from_keyscan(keyscan_filepath):
+    """
+    Read a single-entry known_hosts file and return the fingerprint of
+    the public key of the entry and the serialized entry.
+    """
+    known_hosts = KnownHostsFile.fromPath(keyscan_filepath)
     entries = list(known_hosts.iterentries())
     if len(entries) == 0:
         return None

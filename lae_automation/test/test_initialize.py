@@ -40,3 +40,11 @@ class InitializationTests (TestCase):
         d = self.failUnlessFailure(verify_and_store_serverssh_pubkey(*argtuple),
                                    mismatchfailure.value)
         return d
+
+
+class KeyscanTests(TestCase):
+    def test_empty(self):
+        self.fail("write me")
+
+    def test_rsakey(self):
+        self.fail("write me")
