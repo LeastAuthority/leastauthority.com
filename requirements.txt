@@ -10,5 +10,6 @@ mock
 pyOpenSSL
 simplejson
 twisted
+pem
 
 txAWS==0.2.1.post5
