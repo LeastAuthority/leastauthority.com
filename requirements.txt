@@ -1,6 +1,8 @@
 --find-links https://tahoe-lafs.org/deps/
 
-dateutil
+python-dateutil
+stripe
+foolscap
 Fabric
 filepath
 jinja2
