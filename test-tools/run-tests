@@ -1,4 +1,3 @@
 #!/bin/sh
 
-PYTHONPATH=${PWD}:${PYTHONPATH}
-trial lae_util lae_site lae_automation
+PYTHONPATH=${PWD}:${PYTHONPATH} trial lae_util lae_site lae_automation
