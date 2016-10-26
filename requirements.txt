@@ -1,4 +1,8 @@
-dateutil
+--find-links https://tahoe-lafs.org/deps/
+
+python-dateutil
+stripe
+foolscap
 Fabric
 filepath
 jinja2
@@ -7,4 +11,4 @@ pyOpenSSL
 simplejson
 twisted
 
-https://tahoe-lafs.org/source/tahoe-lafs/deps/tahoe-dep-sdists/txAWS-0.2.1.post5.tar.gz
+txAWS==0.2.1.post5
