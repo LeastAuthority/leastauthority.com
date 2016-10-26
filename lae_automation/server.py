@@ -373,8 +373,9 @@ postfix	postfix/main_mailer_type select	No configuration"""
     print >>stdout, "Installing dependencies..."
     package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES
     apt_install_dependencies(stdout, package_list)
-    # From:  https://stripe.com/docs/libraries
-    sudo('pip install --index-url https://code.stripe.com --upgrade stripe')
+
+    sudo('pip install --upgrade stripe pem')
+
     write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
     sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
     sudo_apt_get('install -y postfix')
