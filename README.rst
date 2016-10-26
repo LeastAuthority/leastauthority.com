@@ -20,9 +20,9 @@ Configuring a correct deployment requires these steps:
 
 0. FIXME: This procedure will be changing rapidly as we develop the site.  Please remember to update this list.
 1. Sign up for Amazon devpay: http://aws.amazon.com/devpay/
-1a. Enter the configuration necessary for the LAE product line.  This directly affects customer facing details and revenue flow.
-1b. You will be asked for the "Product Redirect URL".  That will be "https://${deployment_hostname}/devpay-complete".  FIXME: URL handler is not implemented;  FIXME: https not yet configured.
-1c. Enter the product code, product token, and purchase url in the configuration file as described below.  FIXME: Maybe all these do not need to be in the config file.  FIXME: only purchase url is currently implemented.
+  1. Enter the configuration necessary for the LAE product line.  This directly affects customer facing details and revenue flow.
+  2. You will be asked for the "Product Redirect URL".  That will be "https://${deployment_hostname}/devpay-complete".  FIXME: URL handler is not implemented;  FIXME: https not yet configured.
+  3. Enter the product code, product token, and purchase url in the configuration file as described below.  FIXME: Maybe all these do not need to be in the config file.  FIXME: only purchase url is currently implemented.
 2. Configure SSL certificates.  FIXME: This is not implemented.
 3. FIXME: Not implemented: configure the ec2 and s3 goo to auto-deploy tahoe services.
 
@@ -34,9 +34,9 @@ XXX Should break this into two sections: Deploy EC2 and Deploy Webserver
 
 1. Deploy the correct ec2 image.
 2. Checkout the website repository into the correct place.
-    The repo is at:
+   The repo is at:
          - 'leastauthority.com:/home/website/leastauthority.com'
-    By default /home/website is the parent repo.  This directory contains:
+   By default /home/website is the parent repo.  This directory contains:
          - leastauthority.com/:  The parent directory of the server code
          - signup.furl:   The furl for the flappserver signup service
          - lae_site_config.json: Contains the available product info.
