@@ -9,4 +9,4 @@ pyOpenSSL
 simplejson
 twisted
 
-txAWS-0.2.1.post5.tar.gz
+txAWS==0.2.1.post5
