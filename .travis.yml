@@ -1,0 +1,12 @@
+#
+# This is the Travis-CI configuration.
+#
+
+language: "python"
+sudo: false
+
+install:
+  - "./test-tools/install"
+
+script:
+  - "./test-tools/run-tests"
