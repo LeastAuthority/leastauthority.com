@@ -1,4 +1,5 @@
-= leastauthority.com =
+leastauthority.com
+==================
 
 .. image:: https://travis-ci.org/LeastAuthority/leastauthority.com.svg?master
     :target: https://travis-ci.org/LeastAuthority/leastauthority.com
@@ -9,7 +10,8 @@ Amazon's services (AWS), such as devpay, ec2, and s3 on behalf of LAE
 customers.
 
 
-== Preparatory Configuration =
+Preparatory Configuration
+=========================
 
 For this website to function correcly, Amazon Web Services (AWS) and
 SSL certificates must also be correctly configured.
@@ -25,7 +27,10 @@ Configuring a correct deployment requires these steps:
 3. FIXME: Not implemented: configure the ec2 and s3 goo to auto-deploy tahoe services.
 
 
-== Initial Webserver Deployment ==  XXX Should break this into two sections: Deploy EC2 and Deploy Webserver
+Initial Webserver Deployment
+============================
+
+XXX Should break this into two sections: Deploy EC2 and Deploy Webserver
 
 1. Deploy the correct ec2 image.
 2. Checkout the website repository into the correct place.
@@ -50,7 +55,8 @@ Configuring a correct deployment requires these steps:
 9. Update the DNS entry for the website host to point to the new IP address.
 
 
-== Configuration File ==
+Configuration File
+==================
 
 This website requires a configuration file in the home directory of the
 user which runs the webserver, named "lae_website_config.json" which is
@@ -61,7 +67,8 @@ This should be the "purchase URL" found on the devpay site after you
 have set up a particular application and billing configuration.
 
 
-== Upgrade ==
+Upgrade
+=======
 
 Follow the same steps as for "initial deployment", except you will have
 a new instance with a new IP.  In the last step, you will cause new DNS
