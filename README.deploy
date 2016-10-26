@@ -1,5 +1,8 @@
 = leastauthority.com =
 
+.. image:: https://travis-ci.org/LeastAuthority/leastauthority.com.svg?master
+    :target: https://travis-ci.org/LeastAuthority/leastauthority.com
+
 This website is a twisted web server with a set of static files.
 In addition it has some web-application logic for interacting with
 Amazon's services (AWS), such as devpay, ec2, and s3 on behalf of LAE
