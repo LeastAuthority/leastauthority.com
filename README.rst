@@ -36,7 +36,7 @@ XXX Should break this into two sections: Deploy EC2 and Deploy Webserver
 1. Deploy the correct ec2 image.
 2. Checkout the website repository into the correct place.
    The repo is at ``leastauthority.com:/home/website/leastauthority.com``
-   By default /home/website is the parent repo.  This directory contains:
+   By default /home/website is the parent repo.  This directory contains
 
       * leastauthority.com/:  The parent directory of the server code
       * signup.furl:   The furl for the flappserver signup service
