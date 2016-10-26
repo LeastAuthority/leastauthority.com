@@ -349,7 +349,7 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     if sp.wait() != 0:
         raise subprocess.CalledProcessError
 
-    return _get_entry_from_keyscan(pubkey_filename)
+    return _get_entry_from_keyscan(pubkey_filepath)
 
 
 def _get_entry_from_keyscan(keyscan_filepath):
