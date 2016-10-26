@@ -36,16 +36,16 @@ XXX Should break this into two sections: Deploy EC2 and Deploy Webserver
 1. Deploy the correct ec2 image.
 2. Checkout the website repository into the correct place.
    The repo is at ``leastauthority.com:/home/website/leastauthority.com``
-   By default /home/website is the parent repo.  This directory contains
+   By default /home/website is the parent repo.  This directory contains:
 
-      * leastauthority.com/:  The parent directory of the server code
-      * signup.furl:   The furl for the flappserver signup service
-      * lae_site_config.json: Contains the available product info.
-      * lae_automation_config.json:  Contains product secrets, credential paths.
+   * leastauthority.com/:  The parent directory of the server code
+   * signup.furl:   The furl for the flappserver signup service
+   * lae_site_config.json: Contains the available product info.
+   * lae_automation_config.json:  Contains product secrets, credential paths.
 3. Install the correct dependencies.
 
-      * foolscap:  for the flappserver
-      * jinja2:    handles webserver templates
+   * foolscap:  for the flappserver
+   * jinja2:    handles webserver templates
 4. Set up the correct website user account.
 
    * 'website'
