@@ -2,11 +2,23 @@
 # This is the Travis-CI configuration.
 #
 
+# This gets us an environment pretty well pre-configured for Python.
 language: "python"
+
+# This gets us a faster build via the container-based build system.
+# It comes with some limitations but they shouldn't be a problem.
 sudo: false
 
+# The default is to get email notification of build results.  This is
+# usually just spam.  Look at one of the many the web interfaces for
+# build results.
+notifications:
+  email: false
+
+# Install leastauthority.com's dependencies.
 install:
   - "./test-tools/install"
 
+# Run its test suite.
 script:
   - "./test-tools/run-tests"
