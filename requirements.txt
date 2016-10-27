@@ -1,3 +1,5 @@
+--find-links https://tahoe-lafs.org/deps/
+
 python-dateutil
 stripe
 foolscap
@@ -8,4 +10,5 @@ mock
 pyOpenSSL
 simplejson
 twisted
+
 txAWS==0.2.1.post5
