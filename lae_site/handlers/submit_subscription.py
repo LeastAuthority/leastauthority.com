@@ -1,6 +1,7 @@
 
-import stripe, traceback, simplejson
+import traceback, simplejson
 
+from lae_util import stripe
 from lae_util.servers import append_record
 from lae_util.send_email import send_plain_email, FROM_ADDRESS
 
@@ -96,10 +97,11 @@ class SubmitSubscriptionHandler(HandlerBase):
                                         email_subject="Stripe unexpected error")
 
     def run_full_signup(self, customer, request):
+        subscription = customer.subscriptions[0]
         def when_done(ign):
             service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
             try:
-                append_record(service_confirmed_fp, customer.subscription.id)
+                append_record(service_confirmed_fp, subscription.id)
             except Exception:
                 # The request really did succeed, we just failed to record that it did. Log the error
                 # locally.
@@ -123,8 +125,8 @@ class SubmitSubscriptionHandler(HandlerBase):
         stdin = simplejson.dumps((customer.email,
                                   customer_pgpinfo,
                                   customer.id,
-                                  customer.subscription.plan.id,
-                                  customer.subscription.id),
+                                  subscription.plan.id,
+                                  subscription.id),
                                  ensure_ascii=True
                                  )
 
@@ -153,8 +155,9 @@ class SubmitSubscriptionHandler(HandlerBase):
             return tmpl.render({"errorblock": e.details}).encode('utf-8', 'replace')
 
         # Log that a new subscription has been created (at stripe).
+        subscription = customer.subscriptions[0]
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
-        append_record(subscriptions_fp, customer.subscription.id)
+        append_record(subscriptions_fp, subscription.id)
         # Initiate the provisioning service
         self.run_full_signup(customer, request)
         # Return the a page notifying the user that they've been charged and their service is being set up.

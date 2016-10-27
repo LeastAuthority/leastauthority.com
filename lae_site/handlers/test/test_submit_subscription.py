@@ -62,7 +62,7 @@ class MockSubscription(object):
 
 class MockCustomer(object):
     def create(self, api_key, card, plan, email):
-        self.subscription = MockSubscription()
+        self.subscriptions = [MockSubscription()]
         self.email = email
         self.id = 'IDSTUB'
         self.init_email = email
