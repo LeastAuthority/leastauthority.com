@@ -2,6 +2,7 @@ import subprocess, os, urllib
 
 from twisted.internet import reactor, task, defer
 from twisted.python.filepath import FilePath
+from twisted.conch.client.knownhosts import KnownHostsFile
 
 from lae_automation.server import install_infrastructure_server
 from lae_automation.aws.license_service_client import LicenseServiceClient
@@ -201,6 +202,9 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
 
         def _verifyfp_and_write_pubkey( (fingerprint_from_keyscan, hashed_pubkey) ):
             if fingerprint_from_AWS != fingerprint_from_keyscan:
+                print >>stderr, "Fingerprint from AWS:", fingerprint_from_AWS
+                print >>stderr, "Fingerprint from keyscan:", fingerprint_from_keyscan
+
                 raise PublicKeyMismatch()
             print >>stderr, "The ssh public key on the server has fingerprint: %s" % (fingerprint_from_keyscan,)
             known_hosts_filepath = FilePath(os.path.expanduser('~')).child('.ssh').child('known_hosts')
@@ -322,9 +326,12 @@ PUBKEY_DIR = 'pubkeys'
 
 def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     """
-    Return the host's (ssh pubkey fingerprint, hashed public key, targetIP).
-    Because of the interface to ssh-keygen, this function creates files locally
-    under PUBKEY_DIR.
+    Return the host's (ssh pubkey fingerprint, known hosts line).
+
+    Because this used to ues ssh-keygen and because of the interface
+    to ssh-keygen, this function creates files locally under
+    PUBKEY_DIR.  If nothing needs the files in PUBKEY_DIR, this can be
+    eliminated.
     """
     pubkey_dir = FilePath(PUBKEY_DIR)
     try:
@@ -341,22 +348,21 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     sp = subprocess.Popen(keyscan_call, stdout=output, stderr=subprocess.PIPE)
     if sp.wait() != 0:
         raise subprocess.CalledProcessError
-    if pubkey_filepath.getContent() == '':
+
+    return _get_entry_from_keyscan(pubkey_filepath)
+
+
+def _get_entry_from_keyscan(keyscan_filepath):
+    """
+    Read a single-entry known_hosts file and return the fingerprint of
+    the public key of the entry and the serialized entry.
+    """
+    known_hosts = KnownHostsFile.fromPath(keyscan_filepath)
+    entries = list(known_hosts.iterentries())
+    if len(entries) == 0:
         return None
 
-    keygen_call = ('ssh-keygen', '-l', '-f', pubkey_relpath)
-    sp2 = subprocess.Popen(keygen_call, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-                           stdin=sp.stdout)
-    if sp2.wait() != 0:
-        raise subprocess.CalledProcessError
-    spoutput = sp2.stdout.read()
-    fingerprint = spoutput.split()[1]
-
-    sshkeygen_hash_call = ('ssh-keygen', '-H', '-f', pubkey_relpath)
-    sp = subprocess.Popen(sshkeygen_hash_call)
-    if sp.wait() != 0:
-        raise subprocess.CalledProcessError
-
-    hashed_pubkey = pubkey_filepath.getContent().rstrip('\n') + '\n'
-
-    return (fingerprint, hashed_pubkey)
+    entry = entries[0]
+    fingerprint = entry.publicKey.fingerprint()
+    hashed_entry = entry.toString()
+    return (fingerprint, hashed_entry)
