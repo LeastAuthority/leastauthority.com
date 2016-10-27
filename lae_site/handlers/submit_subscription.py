@@ -97,7 +97,7 @@ class SubmitSubscriptionHandler(HandlerBase):
                                         email_subject="Stripe unexpected error")
 
     def run_full_signup(self, customer, request):
-        subscription = customer.subscriptions[0]
+        subscription = customer.subscriptions.data[0]
         def when_done(ign):
             service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
             try:
@@ -155,7 +155,7 @@ class SubmitSubscriptionHandler(HandlerBase):
             return tmpl.render({"errorblock": e.details}).encode('utf-8', 'replace')
 
         # Log that a new subscription has been created (at stripe).
-        subscription = customer.subscriptions[0]
+        subscription = customer.subscriptions.data[0]
         subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
         append_record(subscriptions_fp, subscription.id)
         # Initiate the provisioning service
