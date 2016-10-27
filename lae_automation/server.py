@@ -160,7 +160,7 @@ TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
 EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
     'python-jinja2',
     'fabric',
-    'python-twisted-mail',
+    'python-twisted',
     'python-unidecode',
     'python-tz',
     'python-docutils',
