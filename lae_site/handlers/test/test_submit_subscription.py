@@ -59,10 +59,13 @@ class MockSubscription(object):
         self.id = "sub_"+"A"*14
         self.plan = MockPlan()
 
+class MockList(object):
+    def __init__(self, data):
+        self.data = data
 
 class MockCustomer(object):
     def create(self, api_key, card, plan, email):
-        self.subscription = MockSubscription()
+        self.subscriptions = MockList([MockSubscription()])
         self.email = email
         self.id = 'IDSTUB'
         self.init_email = email
@@ -476,7 +479,7 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
             return _append(self.env_get_template_return_values, self.mock_template)
         self.patch(submit_subscription.env, 'get_template', call_get_template)
         # Note render mockery is handled inside of MockTemplate
-        
+
         self.subscription_handler.render(MockRequest(REQUESTARGS, method='POST'))
 
     def test_get_creation_parameters_calls(self):
