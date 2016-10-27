@@ -36,7 +36,7 @@ def main(stdin, flapp_stdout, flapp_stderr):
 
     def errhandler(err):
         fh = flapp_stderr.open('a+')
-        fh.write(repr(err))
+        err.printTraceback(fh)
         fh.close()
         return err
 
