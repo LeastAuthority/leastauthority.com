@@ -1,0 +1,16 @@
+FROM leastauthority.com/infrastructure
+
+# Facilitate network connections to the application.
+EXPOSE 40185
+
+# Create the flapp server and add the signup command to it.  This is
+# the point of the container.  Also do some processing on the output
+# to make the furl more easily discoverable.
+RUN flappserver create /app/run/flapp && \
+    flappserver add /app/run/flapp run-command --accept-stdin /app/code /app/code/full_signup.sh | tail -1 | cut -d " " -f3 > /app/run/signup.furl
+
+# The command the container will run - the flapp server.  Avoid
+# daemonization so as to play nicely with containerization (the
+# container exits when the process this command launches exits).
+CMD mkdir -p /app/data/logs && \
+    flappserver start /app/run/flapp --nodaemon --logfile /app/data/logs/flappserver.log
