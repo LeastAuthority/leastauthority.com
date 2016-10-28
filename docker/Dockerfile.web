@@ -13,4 +13,4 @@ EXPOSE 8443
 # The command the container will run - the web server.  It would be
 # nice if it had some better logging behavior.
 CMD mkdir -p /app/data/logs && \
-    PYTHONPATH="/app/code" python -u /app/code/lae_site/main.py --noredirect=8000 --port=8443 >> /app/data/logs/site.out
+    PYTHONPATH="/app/code" /app/env/bin/python -u /app/code/lae_site/main.py --noredirect=8000 --port=8443 >> /app/data/logs/site.out
