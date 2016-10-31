@@ -15,6 +15,7 @@ import logging
 import pem
 
 from twisted.internet import ssl
+from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 
@@ -92,6 +93,7 @@ def main(reactor, *argv):
             not o["noredirect"], o["redirectport"],
         )
     )
+    d.addCallback(lambda ignored: Deferred())
     return d
 
 def start_site(reactor, site, port, ssl_enabled, redirect, redirect_port):
