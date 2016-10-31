@@ -1,6 +1,5 @@
 
 import string
-from cStringIO import StringIO
 
 import mock
 
@@ -9,16 +8,22 @@ from twisted.trial.unittest import TestCase
 from twisted.web.http import OK, NOT_FOUND
 from twisted.web.server import unquote
 
-from lae_site.config import Config
 from lae_site.handlers import make_site
 
 
 SITE_CONFIG_JSON = """{}"""
+STRIPE_API_KEY = b"abcdef"
 
 class Site(TestCase):
     def test_site(self):
-        config = Config(StringIO(SITE_CONFIG_JSON))
-        site = make_site(FilePath('.'), config)
+        root = FilePath(self.mktemp())
+        site = make_site(
+            root.child(b"emails.csv"),
+            STRIPE_API_KEY,
+            root.child(b"confirmed.csv"),
+            root.child(b"subscriptions.csv"),
+            root.child("sitelogs"),
+        )
 
         (req, resp) = self._mock_request(site, '/', 'GET')
         req.setResponseCode.assert_called_with(OK)

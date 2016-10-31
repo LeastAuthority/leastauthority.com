@@ -10,7 +10,6 @@ from lae_util.send_email import send_plain_email, FROM_EMAIL, FROM_ADDRESS
 from lae_site.handlers.web import env
 from lae_site.handlers.main import HandlerBase
 
-EMAILS_FILE = 'emails.csv'
 VALID_EMAIL_RE = re.compile("[^@]+@[^@]+")
 ACTIVE_PRODUCTS = set(['s4'])
 
@@ -32,10 +31,10 @@ The Least Authority Enterprises team
 
 
 class CollectEmailHandler(HandlerBase):
-    def __init__(self, basefp, out=None):
+    def __init__(self, email_path, out=None):
         HandlerBase.__init__(self, out=out)
         self._logger_helper(__name__)
-        self.basefp = basefp
+        self.email_path = email_path
 
     def render(self, request):
         print >>self.out, "Yay, another potential customer:", request.args
@@ -47,7 +46,7 @@ class CollectEmailHandler(HandlerBase):
         email = self.get_arg(request, 'Email')
         productfullname = self.get_arg(request, 'ProductFullName')
 
-        append_record(self.basefp.child(EMAILS_FILE), email, productname)
+        append_record(self.email_path, email, productname)
 
         request.setResponseCode(200)
 
