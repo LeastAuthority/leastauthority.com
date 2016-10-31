@@ -2,7 +2,6 @@
 import simplejson, traceback, logging
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
-from mock import Mock
 
 from lae_site.handlers import submit_subscription
 from lae_site.handlers.submit_subscription import stripe
@@ -158,7 +157,11 @@ class CommonFixture(TestCase):
         self.patch(submit_subscription, 'append_record', call_append_record)
 
         # The Subcription Handler Instance
-        self.subscription_handler = SubmitSubscriptionHandler(self.basedirfp)
+        self.subscription_handler = SubmitSubscriptionHandler(
+            MOCKAPIKEY,
+            self.basedirfp.child(b"confirmed.csv"),
+            self.basedirfp.child(b"subscriptions.csv"),
+        )
 
 
 # Begin test of start
@@ -171,60 +174,10 @@ class TestStart(CommonFixture):
         def call_FlappCommand(furl_path):
             return _append(self.FlappCommand_return_values, MockFlappCommand(self, furl_path))
         self.patch(submit_subscription, 'FlappCommand', call_FlappCommand)
-        submit_subscription.start(MockFilePath(self, "MOCKWORKDIR"))
-
-    def test_furl_path(self):
-        self.failUnlessEqual(self.FilePath_return_values[2].path, "MOCKWORKDIR/secret_config/signup.furl")
+        submit_subscription.start(MockFilePath(self, "signup.furl"))
 
     def test_FlappCommand_init_with_signup_furl_fp_path(self):
-        self.failUnlessEqual(self.flappcommand_start, ['MOCKWORKDIR/secret_config/signup.furl'])
-
-# Begin test of SubmitSubscriptionHandler.get_stripe_api_key
-class TestGetStripeAPIKeyWithoutException(CommonFixture):
-    def setUp(self):
-        CommonFixture.setUp(self)
-        self.subscription_handler.get_stripe_api_key()
-
-    # Fake of FilePath handled by MockFilePath
-    def test_correct_file_path_defined(self):
-        self.failUnlessEqual(self.gotContent, [MOCKAPIKEY])
-
-
-# Begin test of SubmitSubscriptionHandler.get_stripe_api_key
-class TestGetStripeAPIKeyWithException(CommonFixture):
-    def setUp(self):
-        CommonFixture.setUp(self)
-        self.subscription_handler.basefp.path = self.subscription_handler.basefp.path.replace(
-            'MOCKWORKDIR','leastauthority.com')
-        try:
-            self.subscription_handler.get_stripe_api_key()
-        except AssertionError, e:
-            self.failUnlessEqual(e.message, "Secrets are not allowed in the production code repo:"+
-                                 " 'leastauthority.com/secret_config/stripeapikey'")
-    # Fake of FilePath handled by MockFilePath
-    def test_correct_file_path_defined(self):
-        self.failUnlessEqual(self.FilePath_return_values[0].path, 'leastauthority.com')
-        self.failUnlessEqual(self.gotContent, [])
-
-
-# Begin test of SubmitSubscriptionHandler.get_creation_parameters
-class TestGetCreationParameters(CommonFixture):
-    def setUp(self):
-        CommonFixture.setUp(self)
-
-        # Patch get_stripe_api_key
-        self.get_stripe_api_key_return_values = []
-        def call_get_stripe_api_key(subscription_handler):
-            return _append(self.get_stripe_api_key_return_values, MOCKAPIKEY)
-        self.patch(SubmitSubscriptionHandler, 'get_stripe_api_key', call_get_stripe_api_key)
-
-        self.subscription_handler.get_creation_parameters(MockRequest(REQUESTARGS))
-
-    def test_get_stripe_api_key_call(self):
-        self.failUnlessEqual(self.get_stripe_api_key_return_values, [MOCKAPIKEY])
-
-    def test_get_arg_calls(self):
-        self.failUnlessEqual(self.get_arg_return_values, [['MOCK_stripe_token'], ['test@test']])
+        self.assertEqual(self.flappcommand_start, ['signup.furl'])
 
 # Begin test of SubmitSubscriptionHandler.handle_stripe_create_customer_errors
 class TestHandleStripeCreateCustomerErrors(CommonFixture):
@@ -359,8 +312,8 @@ class TestRunFullSignup(CommonFixture):
 
     def test_when_done_without_exception(self):
         self.flappcommand_run_return_values[0].callback('ignore')
-        self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/service_confirmed.csv')
-        self.failUnlessEqual(self.append_record_return_values, [None])
+        self.assertEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/confirmed.csv')
+        self.assertEqual(self.append_record_return_values, [None])
 
     def test_when_done_with_exception(self):
         # Patch append_record _IN_ exceptional cases.
@@ -368,7 +321,7 @@ class TestRunFullSignup(CommonFixture):
             raise Exception
         self.patch(submit_subscription, 'append_record', call_append_record_raise_exception)
         self.flappcommand_run_return_values[0].callback('ignore')
-        self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/service_confirmed.csv')
+        self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/confirmed.csv')
         self.failUnlessEqual(self.traceback_print_tb_returns_values[0][0], 100)
         self.failUnless(isinstance(self.traceback_print_tb_returns_values[0][1], logging.Logger))
 
@@ -491,9 +444,6 @@ class TestRenderWithoutExceptions(CommonRenderFixture):
         self.failUnless(isinstance(self.create_customers_return_values[0], MockCustomer),
                         self.create_customers_return_values[0])
 
-    def test_basefp_child_calls(self):
-        self.failUnlessEqual(self.FilePath_return_values[1].path, 'MOCKWORKDIR/subscriptions.csv')
-
     def test_append_record_calls(self):
         self.failUnlessEqual(self.append_record_return_values, [None])
 
@@ -549,9 +499,6 @@ class TestRenderWithExceptions(CommonRenderFixture):
     def test_template_render(self):
         self.failUnlessEqual(self.template_render_return_values,
                              ["Test template:\nerrorblock: MOCKERROR"])
-
-    def test_basefp_child_calls(self):
-        self.failUnlessEqual(len(self.FilePath_return_values), 1)
 
     def test_append_record_calls(self):
         self.failUnlessEqual(self.append_record_return_values, [])
