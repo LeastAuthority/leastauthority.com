@@ -9,16 +9,16 @@ from lae_site.handlers.web import JinjaHandler
 from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
 
 
-def make_site(basefp, config):
+def make_site(email_path, stripe_api_key, service_confirmed_path, subscriptions_path, site_logs_path):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
     resource.putChild('blog', File('content/blog'))
-    resource.putChild('collect-email', CollectEmailHandler(basefp))
+    resource.putChild('collect-email', CollectEmailHandler(email_path))
     resource.putChild('signup', Redirect("/"))
-    resource.putChild('submit-subscription', SubmitSubscriptionHandler(basefp))
+    resource.putChild('submit-subscription', SubmitSubscriptionHandler(stripe_api_key, service_confirmed_path, subscriptions_path))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
-    site = Site(resource, logPath=basefp.child('sitelogs').path)
+    site = Site(resource, logPath=site_logs_path.path)
     site.displayTracebacks = True
     return site
 
