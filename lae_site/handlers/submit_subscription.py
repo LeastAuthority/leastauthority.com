@@ -11,17 +11,13 @@ from lae_util.flapp import FlappCommand
 from lae_site.handlers.main import HandlerBase
 
 PLAN_ID                 = u'S4_consumer_iteration_2_beta1_2014-05-27'
-SUBSCRIPTIONS_FILE      = 'subscriptions.csv'
-SERVICE_CONFIRMED_FILE  = 'service_confirmed.csv'
-SIGNUP_FURL_FILE        = 'signup.furl'
 
 flappcommand = None
 
-def start(basefp):
+def start(signup_furl_path):
     global flappcommand
 
-    signup_furl_fp = basefp.child('secret_config').child(SIGNUP_FURL_FILE)
-    flappcommand = FlappCommand(signup_furl_fp.path)
+    flappcommand = FlappCommand(signup_furl_path.path)
     return flappcommand.start()
 
 class RenderErrorDetailsForBrowser(Exception):
@@ -30,22 +26,17 @@ class RenderErrorDetailsForBrowser(Exception):
 
 
 class SubmitSubscriptionHandler(HandlerBase):
-    def __init__(self, basefp):
+    def __init__(self, stripe_api_key, service_confirmed_path, subscriptions_path):
         HandlerBase.__init__(self, out=None)
         self._logger_helper(__name__)
-        self.basefp = basefp
+        self.stripe_api_key = stripe_api_key
+        self.service_confirmed_path = service_confirmed_path
+        self.subscriptions_path = subscriptions_path
 
     # The following helper methods are all called directly or indirectly by render.
-    def get_stripe_api_key(self):
-        stripefp = self.basefp.child('secret_config').child('stripeapikey')
-        if ('leastauthority.com' in stripefp.path) and ('_trial_temp' not in stripefp.path):
-            raise AssertionError("Secrets are not allowed in the production code repo: %r" %
-                                 (stripefp.path,))
-        return stripefp.getContent().strip()
-
     def get_creation_parameters(self, request):
         # Load apikey.
-        stripe_api_key = self.get_stripe_api_key()
+        stripe_api_key = self.stripe_api_key
         # Parse request, info from stripe and subscriber.
         stripe_authorization_token = self.get_arg(request, 'stripeToken')
         user_email = self.get_arg(request, 'email')
@@ -99,7 +90,7 @@ class SubmitSubscriptionHandler(HandlerBase):
     def run_full_signup(self, customer, request):
         subscription = customer.subscriptions.data[0]
         def when_done(ign):
-            service_confirmed_fp = self.basefp.child(SERVICE_CONFIRMED_FILE)
+            service_confirmed_fp = self.service_confirmed_path
             try:
                 append_record(service_confirmed_fp, subscription.id)
             except Exception:
@@ -156,7 +147,7 @@ class SubmitSubscriptionHandler(HandlerBase):
 
         # Log that a new subscription has been created (at stripe).
         subscription = customer.subscriptions.data[0]
-        subscriptions_fp = self.basefp.child(SUBSCRIPTIONS_FILE)
+        subscriptions_fp = self.subscriptions_path
         append_record(subscriptions_fp, subscription.id)
         # Initiate the provisioning service
         self.run_full_signup(customer, request)

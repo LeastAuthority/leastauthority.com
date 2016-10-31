@@ -1,46 +1,68 @@
-
-import sys, os, mimetypes
-import logging
-
 # before importing Twisted
+import mimetypes
 mimetypes.add_type("text/plain", ".rst")
 
+if __name__ == '__main__':
+    from sys import argv
+    from twisted.internet.task import react
+    from lae_site.main import main
 
-from twisted.internet import reactor
+    react(main, argv[1:])
+
+import sys, os
+import logging
+
+import pem
+
+from twisted.internet import ssl
+from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 
-from lae_site.config import Config
 from lae_site.handlers import make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import start
 
+root_log = logging.getLogger(__name__)
 
-def main(basefp):
-    print sys.argv
-    default_port = 443
-    port = None
-    ssl_enabled = True
-    redirect_port = 80
+class SiteOptions(Options):
+    optFlags = [
+        ("noredirect", None, "Disable the cleartext redirect-to-TLS site."),
+        ("nossl", None, "Run the site on a cleartext HTTP server instead of over TLS. "),
+    ]
 
-    for arg in sys.argv:
-        if arg.startswith('--port='):
-            port = int(arg[len('--port='):])
-        elif arg.startswith('--redirectport='):
-            redirect_port = int(arg[len('--redirectport='):])
-        elif arg == '--dev':
-            ssl_enabled = False
-            redirect_port = None
-            default_port = 8000
-        elif arg == '--nossl':
-            ssl_enabled = False
-            redirect_port = None
-            default_port = 80
-        elif arg == '--noredirect':
-            redirect_port = None
+    optParameters = [
+        ("signup-furl-path", None, None, "A path to a file containing the signup furl.", FilePath),
+        ("interest-path", None, None, "A path to a file to which contact information of people interested in products will be appended.", FilePath),
+        ("stripe-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
+        ("subscriptions-path", None, None, "A path to a file to which new subscription details will be appended.", FilePath),
+        ("service-confirmed-path", None, None, "A path to a file to which confirmed-service subscription details will be appended.", FilePath),
+        ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
 
-    if port is None:
-        port = default_port
+        ("port", None, "443", "The TCP port number on which to listen for TLS/HTTP requests.", int),
+        ("redirectport", "80", None, "A TCP port number on which to run a redirect-to-TLS site.", int),
+    ]
 
-    config = Config()
+
+    def postOptions(self):
+        required_options = [
+            "signup-furl-path",
+            "interest-path",
+            "stripe-api-key-path",
+            "service-confirmed-path",
+            "subscriptions-path",
+            "site-logs-path",
+        ]
+        for option in required_options:
+            if self[option] is None:
+                raise UsageError("Missing required option --{}".format(option))
+
+
+def main(reactor, *argv):
+    o = SiteOptions()
+    try:
+        o.parseOptions(argv)
+    except UsageError as e:
+        raise SystemExit(str(e))
+
 
     logging.basicConfig(
         stream = sys.stdout,
@@ -49,20 +71,36 @@ def main(basefp):
         datefmt = '%Y-%m-%dT%H:%M:%S%z',
         )
 
-    root_log = logging.getLogger(__name__)
+    root_log.info('Listening on port {}...'.format(o["port"]))
 
-    site = make_site(basefp, config)
+    d = start(o["signup-furl-path"])
+    d.addCallback(
+        lambda ignored: make_site(
+            o["email-path"],
+            o["stripe-api-key-path"].getContent().strip(),
+            o["service-confirmed-path"],
+            o["subscriptions-path"],
+            o["site-logs-path"],
+        )
+    )
+    d.addCallback(
+        lambda site: start_site(
+            reactor,
+            site,
+            o["port"],
+            not o["nossl"],
+            not o["noredirect"], o["redirectport"],
+        )
+    )
+    return d
 
-    root_log.info('Listening on port %d...' % (port,))
+def start_site(reactor, site, port, ssl_enabled, redirect, redirect_port):
     if ssl_enabled:
         root_log.info('SSL/TLS is enabled (start with --nossl to disable).')
         KEYFILE = '../secret_config/rapidssl/server.key'
         CERTFILE = '../secret_config/rapidssl/server.crt'
         assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
         assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
-
-        from twisted.internet import ssl
-        import pem
 
         with open(KEYFILE) as keyFile:
             key = keyFile.read()
@@ -71,7 +109,7 @@ def main(basefp):
         cert = ssl.PrivateCertificate.loadPEM(str(key) + str(certs[0]))
 
         extraCertChain = [ssl.Certificate.loadPEM(str(certData)).original
-                          for certData in certs[1 :]]
+                          for certData in certs[1:]]
 
         cert_options = ssl.CertificateOptions(
             privateKey=cert.privateKey.original,
@@ -81,22 +119,9 @@ def main(basefp):
 
         reactor.listenSSL(port, site, cert_options)
 
-        if redirect_port is not None:
+        if redirect:
             root_log.info('http->https redirector listening on port %d...' % (redirect_port,))
             reactor.listenTCP(redirect_port, make_redirector_site(port))
     else:
         root_log.info('SSL/TLS is disabled.')
         reactor.listenTCP(port, site)
-
-
-if __name__ == '__main__':
-    basefp = FilePath('..')
-    def _err(f):
-        print f
-        return f
-
-    d = start(basefp)
-    d.addCallback(lambda ign: main(basefp))
-    d.addErrback(_err)
-    d.addErrback(lambda ign: os._exit(1))
-    reactor.run()
