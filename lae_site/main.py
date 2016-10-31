@@ -38,8 +38,8 @@ class SiteOptions(Options):
         ("service-confirmed-path", None, None, "A path to a file to which confirmed-service subscription details will be appended.", FilePath),
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
 
-        ("port", None, "443", "The TCP port number on which to listen for TLS/HTTP requests.", int),
-        ("redirectport", "80", None, "A TCP port number on which to run a redirect-to-TLS site.", int),
+        ("port", None, 443, "The TCP port number on which to listen for TLS/HTTP requests.", int),
+        ("redirectport", None, 80, "A TCP port number on which to run a redirect-to-TLS site.", int),
     ]
 
 
