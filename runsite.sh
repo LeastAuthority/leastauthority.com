@@ -19,8 +19,8 @@ python -u ${PWD}/lae_site/main.py \
 --subscriptions-path ${LOGS}/subscriptions.csv \
 --service-confirmed-path ${LOGS}/service_confirmed.csv \
 \
---port 8443 \
---redirectport 8080 \
+--port 443 \
+--redirectport 80 \
 
 "
 pattern="python -u `pwd`/lae_site/main.py"
