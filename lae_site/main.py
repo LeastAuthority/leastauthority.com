@@ -77,7 +77,7 @@ def main(reactor, *argv):
     d = start(o["signup-furl-path"])
     d.addCallback(
         lambda ignored: make_site(
-            o["email-path"],
+            o["interest-path"],
             o["stripe-api-key-path"].getContent().strip(),
             o["service-confirmed-path"],
             o["subscriptions-path"],
