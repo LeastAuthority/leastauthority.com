@@ -4,7 +4,25 @@ set -e
 cd $(readlink -f $(dirname $0))
 flappserver restart `pwd`/flapp
 sleep 2
-cmd="python -u '`pwd`/lae_site/main.py'"
+
+SECRETS="${PWD}/../secret_config"
+LOGS="${PWD}/.."
+
+cmd="\
+python -u ${PWD}/lae_site/main.py \
+\
+--signup-furl-path ${SECRETS}/signup.furl \
+--stripe-api-key-path ${SECRETS}/stripeapikey \
+\
+--site-logs-path ${LOGS}/sitelogs \
+--interest-path ${LOGS}/emails.csv \
+--subscriptions-path ${LOGS}/subscriptions.csv \
+--service-confirmed-path ${LOGS}/service_confirmed.csv \
+\
+--port 8443 \
+--redirectport 8080 \
+
+"
 pattern="python -u `pwd`/lae_site/main.py"
 pids=$(pgrep -fl "$pattern" |cut -f1 -d' ')
 if [ "$pids" != "" ]; then
