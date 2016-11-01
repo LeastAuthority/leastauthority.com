@@ -12,7 +12,8 @@ cmd="\
 python -u ${PWD}/lae_site/main.py \
 \
 --signup-furl-path ${SECRETS}/signup.furl \
---stripe-api-key-path ${SECRETS}/stripeapikey \
+--stripe-secret-api-key-path ${SECRETS}/stripeapikey \
+--stripe-publishable-api-key-path ${SECRETS}/stripepublishableapikey \
 \
 --site-logs-path ${LOGS}/sitelogs \
 --interest-path ${LOGS}/emails.csv \

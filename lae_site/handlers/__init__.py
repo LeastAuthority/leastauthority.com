@@ -1,6 +1,7 @@
+from json import dumps
 
 from twisted.web.server import Site
-from twisted.web.static import File
+from twisted.web.static import File, Data
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
 
@@ -8,14 +9,29 @@ from lae_site.handlers.emailcollector import CollectEmailHandler
 from lae_site.handlers.web import JinjaHandler
 from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
 
+def configuration(stripe_publishable_api_key):
+    """
+    Create a ``Resource`` which serves up simple configuration used by
+    JavaScript on the website.
+    """
+    return Data(
+        dumps({
+            # Stripe publishable key identifies a Stripe account in
+            # API uses.  It's safe to share and required by the
+            # JavaScript Stripe client API.
+            u"stripe-publishable-api-key": stripe_publishable_api_key,
+        }),
+        b"application/json",
+    )
 
-def make_site(email_path, stripe_api_key, service_confirmed_path, subscriptions_path, site_logs_path):
+def make_site(email_path, stripe_secret_api_key, stripe_publishable_api_key, service_confirmed_path, subscriptions_path, site_logs_path):
     resource = JinjaHandler('index.html')
     resource.putChild('static', File('content/static'))
     resource.putChild('blog', File('content/blog'))
     resource.putChild('collect-email', CollectEmailHandler(email_path))
     resource.putChild('signup', Redirect("/"))
-    resource.putChild('submit-subscription', SubmitSubscriptionHandler(stripe_api_key, service_confirmed_path, subscriptions_path))
+    resource.putChild('configuration', configuration(stripe_publishable_api_key))
+    resource.putChild('submit-subscription', SubmitSubscriptionHandler(stripe_secret_api_key, service_confirmed_path, subscriptions_path))
     resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
     site = Site(resource, logPath=site_logs_path.path)

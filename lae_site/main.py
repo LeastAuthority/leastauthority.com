@@ -33,7 +33,8 @@ class SiteOptions(Options):
     optParameters = [
         ("signup-furl-path", None, None, "A path to a file containing the signup furl.", FilePath),
         ("interest-path", None, None, "A path to a file to which contact information of people interested in products will be appended.", FilePath),
-        ("stripe-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
+        ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
+        ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
         ("subscriptions-path", None, None, "A path to a file to which new subscription details will be appended.", FilePath),
         ("service-confirmed-path", None, None, "A path to a file to which confirmed-service subscription details will be appended.", FilePath),
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
@@ -47,7 +48,8 @@ class SiteOptions(Options):
         required_options = [
             "signup-furl-path",
             "interest-path",
-            "stripe-api-key-path",
+            "stripe-secret-api-key-path",
+            "stripe-publishable-api-key-path",
             "service-confirmed-path",
             "subscriptions-path",
             "site-logs-path",
@@ -78,7 +80,8 @@ def main(reactor, *argv):
     d.addCallback(
         lambda ignored: make_site(
             o["interest-path"],
-            o["stripe-api-key-path"].getContent().strip(),
+            o["stripe-secret-api-key-path"].getContent().strip(),
+            o["stripe-publishable-api-key-path"].getContent().strip(),
             o["service-confirmed-path"],
             o["subscriptions-path"],
             o["site-logs-path"],
