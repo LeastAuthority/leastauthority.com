@@ -3,8 +3,11 @@ FROM leastauthority.com/infrastructure
 # Create the flapp server and add the signup command to it.  This is
 # the point of the container.  Also do some processing on the output
 # to make the furl more easily discoverable.
-RUN flappserver create /app/run/flapp && \
-    flappserver add /app/run/flapp run-command --accept-stdin /app/code /app/code/full_signup.sh | tail -1 | cut -d " " -f3 > /app/run/signup.furl
+#
+# XXX The timeout for `flappserver create` can be dropped when
+# https://github.com/warner/foolscap/pull/32 is fixed.
+RUN timeout --signal INT --preserve-status 5 /app/env/bin/flappserver create --location flapp:3116 --port tcp:3116 /app/run/flapp && \
+    /app/env/bin/flappserver add /app/run/flapp run-command --accept-stdin /app/code /app/code/full_signup.sh
 
 # The command the container will run - the flapp server.  Avoid
 # daemonization so as to play nicely with containerization (the
