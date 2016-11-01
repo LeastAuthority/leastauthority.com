@@ -107,6 +107,8 @@ WORKDIR /app/run
 RUN chown ${INFRASTRUCTURE_USER_NAME} /app/run
 
 # Expose persistent storage to the application here.
+# XXX This ends up owned by root.  The website user can't write to it
+# unless manual intervention fixes the permissions.
 VOLUME /app/data
 
 # Install all of the application's Python library requirements.
