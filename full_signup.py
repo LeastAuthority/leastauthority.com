@@ -89,6 +89,6 @@ def main(reactor, *argv):
     flapp_stdout = log_dir.child('stdout')
     flapp_stderr = log_dir.child('stderr')
 
-    startLogging(flapp_stdout, setStdout=False)
+    startLogging(flapp_stdout.open("a+"), setStdout=False)
 
     return activate(secrets_dir, sys.stdin, flapp_stdout, flapp_stderr)
