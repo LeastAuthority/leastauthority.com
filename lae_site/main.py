@@ -76,7 +76,8 @@ def main(reactor, *argv):
 
     root_log.info('Listening on port {}...'.format(o["port"]))
 
-    d = start(o["signup-furl-path"])
+    signup_furl = o["signup-furl-path"].getContent().strip()
+    d = start(signup_furl)
     d.addCallback(
         lambda ignored: make_site(
             o["interest-path"],

@@ -14,10 +14,10 @@ PLAN_ID                 = u'S4_consumer_iteration_2_beta1_2014-05-27'
 
 flappcommand = None
 
-def start(signup_furl_path):
+def start(signup_furl):
     global flappcommand
 
-    flappcommand = FlappCommand(signup_furl_path.path)
+    flappcommand = FlappCommand(signup_furl)
     return flappcommand.start()
 
 class RenderErrorDetailsForBrowser(Exception):
