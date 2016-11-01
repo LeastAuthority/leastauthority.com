@@ -26,59 +26,23 @@ rm -rf /var/lib/apt/lists/*
 
 # Now install some dependencies.
 #
-# The first group of dependencies is for Tahoe LAFS.
+# The first group of non-Python dependencies required to build the
+# Python dependencies.
 #
-# XXX Q: Why install Tahoe's dependencies on the infrastructure node?
-# XXX A: This was to support installing Tahoe on the infrastructure
-# node in order to be able to run an end-to-end test of Tahoe on the
-# customer nodes.
-
-#
-# The second group is for the infrastructure server.
-#
-
-# XXX Q: Why have them instead of using pip for everything?  TODO Delete
-# them and add anything missing to requirements.txt.
-#
-# XXX A: (1) Tahoe wasn't always pip-installable.
-#        (2) Ubuntu packages get security updates (from unattended-upgrade job)
-#        (3) Ubuntu packages might lag behind what we want to depend on (new features etc)
-#
-#
-# The third group supports the deployment of the infrastructure server.
+# The second group supports the deployment of the infrastructure
+# server.
 RUN apt-get update && apt-get install -y \
     python-dev \
-    python-pip \
     git-core \
     libffi-dev \
     openssl \
     libssl-dev \
-    python-nevow \
-    python-crypto \
-    python-dateutil \
-    python-foolscap \
-    python-six \
-    python-pycparser \
-    python-unidecode \
-    python-zfec \
-    python-simplejson \
-    \
-    python-jinja2 \
-    fabric \
-    python-twisted \
-    python-unidecode \
-    python-tz \
-    python-docutils \
-    python-markdown \
     \
     python-virtualenv \
-    authbind \
 && rm -rf /var/lib/apt/lists/*
 
-# TODO drop authbind, we'll listen on high ports and bind them to low
-# ports when the container is run.
-
-# Create a virtualenv into which to install the infrastructure server software.
+# Create a virtualenv into which to install the infrastructure server
+# software.
 RUN virtualenv /app/env
 
 # Get a newer version of pip.  The version (1.5.4) in the
