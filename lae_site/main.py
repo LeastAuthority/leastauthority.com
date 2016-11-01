@@ -14,6 +14,7 @@ import logging
 
 import pem
 
+from twisted.python.log import startLogging
 from twisted.internet import ssl
 from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
@@ -64,13 +65,14 @@ def main(reactor, *argv):
     except UsageError as e:
         raise SystemExit(str(e))
 
-
     logging.basicConfig(
         stream = sys.stdout,
         level = logging.DEBUG,
         format = '%(asctime)s %(levelname) 7s [%(name)-65s L%(lineno)d] %(message)s',
         datefmt = '%Y-%m-%dT%H:%M:%S%z',
         )
+
+    startLogging(sys.stdout, setStdout=False)
 
     root_log.info('Listening on port {}...'.format(o["port"]))
 
