@@ -10,11 +10,11 @@ window.creditcardVerifier = (function () {
         },
         register_callbacks: function ($form) {
             // This identifies your website in the createToken call below
-	    jQuery.get('configuration', null, function(config) {
-		var key = config['stripe-publishable-api-key'];
-		Stripe.setPublishableKey(key);
-		$form.submit(creditcardVerifier.formSubmissionHandler);
-	    });
+            jQuery.get('configuration', null, function(config) {
+                var key = config['stripe-publishable-api-key'];
+                Stripe.setPublishableKey(key);
+                $form.submit(creditcardVerifier.formSubmissionHandler);
+            });
         },
         formSubmissionHandler: function (event) {
             var $form = $('#payment-form');
