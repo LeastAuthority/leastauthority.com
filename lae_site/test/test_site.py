@@ -12,6 +12,7 @@ from lae_site.handlers import make_site
 
 
 SITE_CONFIG_JSON = """{}"""
+STRIPE_PUBLISHABLE_API_KEY = b"abcdef"
 STRIPE_API_KEY = b"abcdef"
 
 class Site(TestCase):
@@ -20,6 +21,7 @@ class Site(TestCase):
         site = make_site(
             root.child(b"emails.csv"),
             STRIPE_API_KEY,
+            STRIPE_PUBLISHABLE_API_KEY,
             root.child(b"confirmed.csv"),
             root.child(b"subscriptions.csv"),
             root.child("sitelogs"),
