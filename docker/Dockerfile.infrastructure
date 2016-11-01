@@ -117,7 +117,3 @@ RUN /app/env/bin/pip install -r /app/code/requirements.txt
 # since it is a major impediment to image/layer caching.
 COPY . /app/code
 
-# Run the rest of this (and the container command as well) as the
-# application user.
-USER ${INFRASTRUCTURE_USER_NAME}
-

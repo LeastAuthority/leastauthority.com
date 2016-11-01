@@ -10,4 +10,6 @@ RUN flappserver create /app/run/flapp && \
 # daemonization so as to play nicely with containerization (the
 # container exits when the process this command launches exits).
 CMD mkdir -p /app/data/logs && \
-    flappserver start /app/run/flapp --nodaemon --logfile /app/data/logs/flappserver.log
+    chown -R 1000:1000 /app/data/logs /app/run && \
+    /app/env/bin/flappserver list /app/run/flapp | grep 'pb://' | sed -e 's/[[:space:]]//' > /app/data/signup.furl && \
+    /app/env/bin/flappserver start /app/run/flapp --uid 1000 --gid 1000 --nodaemon
