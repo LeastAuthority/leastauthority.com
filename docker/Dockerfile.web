@@ -18,7 +18,8 @@ CMD env && mkdir -p /app/data/logs && \
     --port=8443 \
     \
     --signup-furl-path /app/flapp-data/signup.furl \
-    --stripe-api-key-path /app/secret_config/stripeapikey \
+    --stripe-secret-api-key-path /app/secret_config/stripeapikey \
+    --stripe-publishable-api-key-path /app/secret_config/stripepublishableapikey \
     \
     --site-logs-path /app/data/logs/sitelogs \
     --interest-path /app/data/emails.csv \
