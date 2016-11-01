@@ -26,7 +26,10 @@ if __name__ == '__main__':
     (abslogdir_fp,
     stripesecrets_log_fp,
     SSEC2secrets_log_fp,
-    signup_log_fp) = create_log_filepaths(stripe_plan_id, stripe_customer_id, stripe_subscription_id)
+    signup_log_fp) = create_log_filepaths(
+        FilePath("../secrets/"), stripe_plan_id, stripe_customer_id,
+        stripe_subscription_id,
+    )
 
     # The stripe secrets are unchanged.
     stripesecrets_log_fp.setContent(simplejson.dumps(stripe_secrets))

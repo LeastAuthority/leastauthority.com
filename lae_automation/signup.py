@@ -185,12 +185,11 @@ def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
     return d
 
 
-def create_log_filepaths(stripe_plan_id, stripe_customer_id, stripe_subscription_id):
-    logdir_parent_fp = FilePath('../').child('secrets').child(stripe_plan_id)
+def create_log_filepaths(parent_dir, stripe_plan_id, stripe_customer_id, stripe_subscription_id):
     timestamp = format_iso_time(time.time())
     fpcleantimestamp = timestamp.replace(':', '')
     logdirname = "%s-%s" % (fpcleantimestamp, get_bucket_name(stripe_customer_id, stripe_subscription_id)[len('lae-') :])
-    abslogdir_fp = logdir_parent_fp.child(logdirname)
+    abslogdir_fp = parent_dir.child(stripe_plan_id).child(logdirname)
     abslogdir_fp.makedirs()
     stripelog_fp = abslogdir_fp.child('stripe')
     SSEC2log_fp = abslogdir_fp.child('SSEC2')
