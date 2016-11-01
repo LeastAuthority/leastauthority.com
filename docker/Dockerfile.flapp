@@ -1,8 +1,5 @@
 FROM leastauthority.com/infrastructure
 
-# Facilitate network connections to the application.
-EXPOSE 40185
-
 # Create the flapp server and add the signup command to it.  This is
 # the point of the container.  Also do some processing on the output
 # to make the furl more easily discoverable.
