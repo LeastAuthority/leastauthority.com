@@ -3,7 +3,7 @@
 if __name__ == '__main__':
     from sys import argv
     from twisted.internet.task import react
-    from fuill_signup import main
+    from full_signup import main
     react(main, argv[1:])
 
 import simplejson, sys
