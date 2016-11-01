@@ -1,7 +1,5 @@
 FROM leastauthority.com/infrastructure
 
-ENV
-
 # Create the flapp server and add the signup command to it.  This is
 # the point of the container.  Also do some processing on the output
 # to make the furl more easily discoverable.
