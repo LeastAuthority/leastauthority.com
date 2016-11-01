@@ -119,3 +119,4 @@ RUN /app/env/bin/pip install -r /app/code/requirements.txt
 # since it is a major impediment to image/layer caching.
 COPY . /app/code
 
+RUN mv /app/code/secret_config /app
