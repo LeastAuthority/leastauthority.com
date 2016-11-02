@@ -1,5 +1,17 @@
 FROM leastauthority.com/infrastructure
 
+# As long as we use fabric to initialize SSEC2 instances, we need a
+# writeable known_hosts file.  There is an unfortunate amount of
+# complexity involved in overriding the choice of known_hosts
+# location.  Rather than dealing with that, just redirect the default
+# path to a better location.
+#
+# This is pretty bad.  The good news is that we'll stop using fabric
+# as soon as we replace SSEC2 instances with containers.  Then we can
+# throw this out.
+RUN ln -s /app/data /home/website/.ssh && chown --no-dereference 1000:1000 /home/website/.ssh
+ENV HOME="/home/website"
+
 # Create the flapp server and add the signup command to it.  This is
 # the point of the container.  Also do some processing on the output
 # to make the furl more easily discoverable.
@@ -17,7 +29,7 @@ RUN . /app/env/bin/activate && \
 # daemonization so as to play nicely with containerization (the
 # container exits when the process this command launches exits).
 CMD mkdir -p /app/data/logs && \
-    chown -R 1000:1000 /app/data/logs /app/run && \
+    chown -R 1000:1000 /app/data /app/data/logs /app/run && \
     . /app/env/bin/activate && \
     flappserver list /app/run/flapp | grep 'pb://' | sed -e 's/[[:space:]]//' > /app/data/signup.furl && \
     flappserver start /app/run/flapp --uid 1000 --gid 1000 --nodaemon
