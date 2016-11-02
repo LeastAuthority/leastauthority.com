@@ -1,0 +1,56 @@
+version: '2'
+services:
+
+  # The leastauthority.com website, including handling of the signup forms.
+  web:
+    # See build.sh
+    image: 'leastauthority.com/web'
+
+    ports:
+      # The web server in the container listens for HTTPS on 8443.
+      # Publish that to the world on the standard HTTPS port.
+      - '443:8443'
+
+    volumes:
+
+      # The web server generates a lot of random output right now.
+      # Subscription logs, server logs, etc.  Give it a safe place to
+      # dump all of that data.
+      - 'web-data:/app/data'
+
+      # This is unfortunate.  It's here just so we can get the signup
+      # furl generated at flappserver startup time.  The web server
+      # reads the signup.furl file that the flapp server writes into
+      # this volume.
+      - 'flapp-data:/app/flapp-data'
+
+    depends_on:
+
+      # Start the flapp server first so the signup.furl is written.
+      # This is subject to startup race-conditions since Docker has no
+      # idea when signup.furl is written: it only knows that it has
+      # _started_ the flapp container.  Experiments suggest the flapp
+      # server typically wins.  Ideally some alternate mechanism could
+      # be used to convey the signup furl between processes (in other
+      # words, fix the application to not use the filesystem for RPC).
+        - "flapp"
+
+  # The flapp service which handles the hard work of signups.
+  flapp:
+    # See build.sh
+    image: 'leastauthority.com/flapp'
+
+    volumes:
+
+      # The flapp server also generates a lot of random output right
+      # now.  Here is a place for it to write it.
+      - 'flapp-data:/app/data'
+
+# Define the volume names referenced above.  All this says is that
+# someone else created the volumes already, probably with "docker
+# volume create ...".
+volumes:
+  web-data:
+    external: true
+  flapp-data:
+    external: true
