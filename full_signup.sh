@@ -3,6 +3,6 @@
 export PYTHONPATH=.
 
 timeout --kill-after=121m 2h \
-    python ./full_signup.py \
-    --log-directory ../secrets/flappserver_logs/ \
-    --secrets-directory ../secrets/
+    ./full_signup.py \
+    --log-directory /app/data/secrets/flappserver_logs/ \
+    --secrets-directory /app/data/secrets/
