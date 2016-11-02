@@ -322,7 +322,7 @@ def wait_for_and_store_pubkeyfp_from_keyscan(targetIP, polling_interval, total_w
     return _wait(total_wait_time)
 
 
-PUBKEY_DIR = 'pubkeys'
+PUBKEY_DIR = '/tmp/pubkeys'
 
 def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
     """
@@ -342,7 +342,6 @@ def get_and_store_pubkeyfp_from_keyscan(targetIP, stdout):
 
     pubkey_filename = 'sshpubkey_'+targetIP
     pubkey_filepath = pubkey_dir.child(pubkey_filename)
-    pubkey_relpath = os.path.join(PUBKEY_DIR, pubkey_filename)
     output = pubkey_filepath.open('w')
     keyscan_call = ('ssh-keyscan', '-t', 'rsa', '-H', targetIP)
     sp = subprocess.Popen(keyscan_call, stdout=output, stderr=subprocess.PIPE)
