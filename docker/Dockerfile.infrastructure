@@ -1,0 +1,86 @@
+#
+# Attempts are made to follow the guidelines at
+# https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
+#
+
+# Ubuntu 14.04 is the known-working baseline OS.  Others probably work
+# but this is a reasonable starting place.  14.04.5 already has many
+# updates applied so it makes more sense as a starting place than the
+# original 14.04.
+FROM library/ubuntu:14.04.5
+
+# If there are security updates for any of the packages we install,
+# bump the date in this environment variable to invalidate the Docker
+# build cache and force installation of the new packages.  Otherwise,
+# Docker's image/layer cache may prevent the security update from
+# being retrieved.
+ENV SECURITY_UPDATES="2016-10-28"
+
+# We'll do an upgrade because the base Ubuntu image isn't guaranteed
+# to include the latest security updates.  This is counter to best
+# practice recommendations but security updates are important.
+RUN apt-get update && \
+    apt-get install -y unattended-upgrades && \
+    unattended-upgrade --minimal_upgrade_steps && \
+rm -rf /var/lib/apt/lists/*
+
+# Now install some dependencies.
+#
+# The first group of non-Python dependencies required to build the
+# Python dependencies.
+#
+# The second group supports the deployment of the infrastructure
+# server.
+RUN apt-get update && apt-get install -y \
+    python-dev \
+    git-core \
+    libffi-dev \
+    openssl \
+    libssl-dev \
+    \
+    python-virtualenv \
+&& rm -rf /var/lib/apt/lists/*
+
+# Create a virtualenv into which to install the infrastructure server
+# software.
+RUN virtualenv /app/env
+
+# Get a newer version of pip.  The version (1.5.4) in the
+# python-virtualenv OS package has a bug that prevents it from
+# installing txAWS.
+RUN /app/env/bin/pip install --upgrade pip
+
+# Select a postfix configuration so that postfix can be installed
+# without prompting.  And install postfix.
+#
+# XXX Move the mail service elsewhere.
+RUN echo postfix postfix/main_mailer_type select No configuration | debconf-set-selections && \
+    apt-get update && apt-get install -y \
+        postfix \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create the website account, the user as which the infrastructure
+# server will run.
+ENV INFRASTRUCTURE_USER_NAME="website"
+RUN adduser --disabled-password --gecos "" "${INFRASTRUCTURE_USER_NAME}"
+
+# Run the application with this working directory.
+WORKDIR /app/run
+
+# And give it to the user the application will run as.
+RUN chown ${INFRASTRUCTURE_USER_NAME} /app/run
+
+# Expose persistent storage to the application here.
+# XXX This ends up owned by root.  The website user can't write to it
+# unless manual intervention fixes the permissions.
+VOLUME /app/data
+
+# Install all of the application's Python library requirements.
+COPY requirements.txt /app/code/requirements.txt
+RUN /app/env/bin/pip install -r /app/code/requirements.txt
+
+# Install the application itself.  This is done as late as possible
+# since it is a major impediment to image/layer caching.
+COPY . /app/code
+
+RUN mv /app/code/secret_config /app

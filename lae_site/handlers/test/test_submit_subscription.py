@@ -1,5 +1,6 @@
 
 import simplejson, traceback, logging
+
 from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 
@@ -163,21 +164,6 @@ class CommonFixture(TestCase):
             self.basedirfp.child(b"subscriptions.csv"),
         )
 
-
-# Begin test of start
-class TestStart(CommonFixture):
-    def setUp(self):
-        CommonFixture.setUp(self)
-        self.FilePath_return_values = []
-        self.flappcommand_start = []
-        self.FlappCommand_return_values = []
-        def call_FlappCommand(furl_path):
-            return _append(self.FlappCommand_return_values, MockFlappCommand(self, furl_path))
-        self.patch(submit_subscription, 'FlappCommand', call_FlappCommand)
-        submit_subscription.start(MockFilePath(self, "signup.furl"))
-
-    def test_FlappCommand_init_with_signup_furl_fp_path(self):
-        self.assertEqual(self.flappcommand_start, ['signup.furl'])
 
 # Begin test of SubmitSubscriptionHandler.handle_stripe_create_customer_errors
 class TestHandleStripeCreateCustomerErrors(CommonFixture):

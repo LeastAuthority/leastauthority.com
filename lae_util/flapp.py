@@ -10,8 +10,8 @@ class CommandFailed(Exception):
 
 
 class FlappCommand(object):
-    def __init__(self, furlfile):
-        self.flappclient_args = ["-f", furlfile, "run-command"]
+    def __init__(self, furl):
+        self.flappclient_args = ["--furl", furl, "run-command"]
         options = ClientOptions()
         options.parseOptions(self.flappclient_args)
         self.furl = options.furl

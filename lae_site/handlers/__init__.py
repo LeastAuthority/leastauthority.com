@@ -4,10 +4,15 @@ from twisted.web.server import Site
 from twisted.web.static import File, Data
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
+from twisted.python.filepath import FilePath
 
 from lae_site.handlers.emailcollector import CollectEmailHandler
 from lae_site.handlers.web import JinjaHandler
 from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
+
+from lae_site import __file__ as _lae_root
+
+_CONTENT = FilePath(_lae_root).parent().sibling("content")
 
 def configuration(stripe_publishable_api_key):
     """
@@ -26,8 +31,8 @@ def configuration(stripe_publishable_api_key):
 
 def make_site(email_path, stripe_secret_api_key, stripe_publishable_api_key, service_confirmed_path, subscriptions_path, site_logs_path):
     resource = JinjaHandler('index.html')
-    resource.putChild('static', File('content/static'))
-    resource.putChild('blog', File('content/blog'))
+    resource.putChild('static', File(_CONTENT.child(b"static").path))
+    resource.putChild('blog', File(_CONTENT.child(b"blog").path))
     resource.putChild('collect-email', CollectEmailHandler(email_path))
     resource.putChild('signup', Redirect("/"))
     resource.putChild('configuration', configuration(stripe_publishable_api_key))
