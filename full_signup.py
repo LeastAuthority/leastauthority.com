@@ -19,7 +19,7 @@ from lae_util.streams import LoggingStream
 from lae_util.servers import append_record
 from lae_util.fileutil import make_dirs
 
-def activate(secrets_dir, stdin, flapp_stdout, flapp_stderr):
+def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout, flapp_stderr):
     append_record(flapp_stdout, "Automation script started.")
     parameters_json = stdin.read()
     (customer_email,
@@ -56,7 +56,9 @@ def activate(secrets_dir, stdin, flapp_stdout, flapp_stderr):
                                                           customer_id, subscription_id,
                                                           plan_id,
                                                           signup_stdout, signup_stderr,
-                                                          SSEC2_secretsfile, signup_log_fp.path)
+                                                          SSEC2_secretsfile, signup_log_fp.path,
+                                                          configpath=automation_config_path.path,
+                                                          serverinfopath=server_info_path.path)
                   )
     d.addErrback(errhandler)
     d.addBoth(lambda ign: signup_logfile.close())
@@ -67,6 +69,9 @@ class SignupOptions(Options):
     optParameters = [
         ("log-directory", None, None, "Path to a directory to which to write signup logs.", FilePath),
         ("secrets-directory", None, None, "Path to a directory to which to write subscription secrets.", FilePath),
+
+        ("automation-config-path", None, None, "Path to an lae_automation_config.json file.", FilePath),
+        ("server-info-path", None, None, "Path to a file to write new server details to.", FilePath),
     ]
 
 
@@ -91,4 +96,8 @@ def main(reactor, *argv):
 
     startLogging(flapp_stdout.open("a+"), setStdout=False)
 
-    return activate(secrets_dir, sys.stdin, flapp_stdout, flapp_stderr)
+    return activate(
+        secrets_dir,
+        o["automation-config-path"], o["server-info-path"],
+        sys.stdin, flapp_stdout, flapp_stderr,
+    )
