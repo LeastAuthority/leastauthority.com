@@ -1,0 +1,19 @@
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'kube-system-kube-registry-pv'
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  capacity:
+    storage: '8G'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Manually created via
+    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
+    volumeID: 'vol-0d5f4c3a062e580bf'
+    fsType: 'ext4'

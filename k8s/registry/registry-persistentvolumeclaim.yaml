@@ -1,0 +1,15 @@
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'kube-registry-pvc'
+  namespace: 'kube-system'
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '8G'
