@@ -18,9 +18,18 @@ ENV HOME="/home/website"
 #
 # XXX The timeout for `flappserver create` can be dropped when
 # https://github.com/warner/foolscap/pull/32 is fixed.
+#
+
+# It's unfortunate the location hint needs to be specified at this
+# point.  Doing this embeds knowledge of the deployment configuration
+# in the image itself making the image much less re-usable.
+#
+# It would be better to be able to determine something about the
+# location at runtime and require the details be passed in (in an
+# environment variable or what have you).
 RUN . /app/env/bin/activate && \
     timeout --signal INT --preserve-status 5 \
-        flappserver create --location flapp:3116 --port tcp:3116 /app/run/flapp && \
+        flappserver create --location 127.0.0.1:3116 --port tcp:3116 /app/run/flapp && \
     flappserver add /app/run/flapp run-command --accept-stdin \
     /app/code \
     /app/code/full_signup_docker.sh
