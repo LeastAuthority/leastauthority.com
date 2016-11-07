@@ -1,0 +1,103 @@
+# Configuration for a private registry from
+# https://github.com/kubernetes/kubernetes/tree/v1.4.5/cluster/addons/registry
+
+# Read about Services at
+# http://kubernetes.io/docs/user-guide/services/
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  name: 'kube-registry'
+  namespace: 'kube-system'
+  labels:
+    k8s-app: 'kube-registry'
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: "KubeRegistry"
+spec:
+  selector:
+    k8s-app: 'kube-registry'
+  ports:
+  - name: 'registry'
+    port: 5000
+    protocol: 'TCP'
+---
+apiVersion: 'v1'
+kind: 'ReplicationController'
+metadata:
+  name: 'kube-registry-v0'
+  namespace: 'kube-system'
+  labels:
+    k8s-app: 'kube-registry'
+    version: 'v0'
+    kubernetes.io/cluster-service: "true"
+spec:
+  replicas: 1
+  selector:
+    k8s-app: 'kube-registry'
+    version: 'v0'
+  template:
+    metadata:
+      labels:
+        k8s-app: 'kube-registry'
+        version: 'v0'
+        kubernetes.io/cluster-service: "true"
+    spec:
+      containers:
+      - name: 'registry'
+        image: 'registry:2'
+        resources:
+          limits:
+            cpu: '100m'
+            memory: '100Mi'
+        env:
+        - name: 'REGISTRY_HTTP_ADDR'
+          value: ':5000'
+        - name: 'REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY'
+          value: '/var/lib/registry'
+        volumeMounts:
+        - name: 'image-store'
+          mountPath: '/var/lib/registry'
+        ports:
+        - containerPort: 5000
+          name: 'registry'
+          protocol: 'TCP'
+      volumes:
+      - name: 'image-store'
+        persistentVolumeClaim:
+          claimName: 'kube-registry-pvc'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'kube-registry-pvc'
+  namespace: 'kube-system'
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '8G'
+---
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'kube-system-kube-registry-pv'
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  capacity:
+    storage: '8G'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Manually created via
+    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
+    volumeID: 'vol-0d5f4c3a062e580bf'
+    fsType: 'ext4'
+---
