@@ -25,7 +25,7 @@ spec:
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
       - name: 'web'
-        image: 'localhost:5000/leastauthority.com/web'
+        image: 'localhost:30000/leastauthority.com/web'
         ports:
         - containerPort: 8443
         volumeMounts:
@@ -35,7 +35,7 @@ spec:
           name: 'flapp-data'
 
       - name: 'flapp'
-        image: 'localhost:5000/leastauthority.com/flapp'
+        image: 'localhost:30000/leastauthority.com/flapp'
         ports:
         - containerPort: 3116
         volumeMounts:

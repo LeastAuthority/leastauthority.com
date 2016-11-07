@@ -17,8 +17,10 @@ spec:
     k8s-app: 'kube-registry'
   ports:
   - name: 'registry'
-    port: 5000
+    port: 30000
+    nodePort: 30000
     protocol: 'TCP'
+  type: 'NodePort'
 ---
 apiVersion: 'v1'
 kind: 'ReplicationController'
@@ -50,14 +52,14 @@ spec:
             memory: '100Mi'
         env:
         - name: 'REGISTRY_HTTP_ADDR'
-          value: ':5000'
+          value: ':30000'
         - name: 'REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY'
           value: '/var/lib/registry'
         volumeMounts:
         - name: 'image-store'
           mountPath: '/var/lib/registry'
         ports:
-        - containerPort: 5000
+        - containerPort: 30000
           name: 'registry'
           protocol: 'TCP'
       volumes:
