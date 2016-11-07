@@ -4,3 +4,4 @@
 *~
 env/*
 _trial_temp/
+k8s/kube-aws/credentials/*
