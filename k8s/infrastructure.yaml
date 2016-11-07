@@ -1,0 +1,107 @@
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'infrastructure-deployment'
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: 'infrastructure'
+    spec:
+      # Read about EBS volumes at
+      # http://kubernetes.io/docs/user-guide/volumes/#awselasticblockstore
+      volumes:
+      - name: 'web-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-web-pvc'
+      - name: 'flapp-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-flapp-pvc'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      - name: 'web'
+        image: 'localhost:5000/leastauthority.com/web'
+        ports:
+        - containerPort: 8443
+        volumeMounts:
+        - mountPath: '/app/data'
+          name: 'web-data'
+        - mountPath: '/app/flapp-data'
+          name: 'flapp-data'
+
+      - name: 'flapp'
+        image: 'localhost:5000/leastauthority.com/flapp'
+        ports:
+        - containerPort: 3116
+        volumeMounts:
+        - mountPath: '/app/data'
+          name: 'flapp-data'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-web-pvc'
+  namespace: 'default'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '1G'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-flapp-pvc'
+  namespace: 'default'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '1G'
+---
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-web-pv'
+spec:
+  capacity:
+    storage: '1G'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Manually created via
+    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
+    volumeID: 'vol-01d518bc53892d142'
+    fsType: 'ext4'
+---
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-flapp-pv'
+spec:
+  capacity:
+    storage: '1G'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Manually created via
+    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
+    volumeID: 'vol-0078b206b7bfa2fdd'
+    fsType: 'ext4'
