@@ -1,3 +1,22 @@
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  name: 'infrastructure-deployment'
+  namespace: 'default'
+  labels:
+    k8s-app: 'infrastructure-deployment'
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: "LeastAuthority.com"
+spec:
+  selector:
+    k8s-app: 'infrastructure-deployment'
+  ports:
+  - name: 'web'
+    port: 8443
+    nodePort: 30443
+    protocol: 'TCP'
+  type: NodePort
+---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
