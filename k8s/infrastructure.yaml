@@ -27,6 +27,7 @@ spec:
   replicas: 2
   template:
     metadata:
+      namespace: default
       labels:
         app: 'infrastructure'
     spec:
