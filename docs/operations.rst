@@ -106,6 +106,13 @@ CoreOS receives and applies updates automatically.
 Kubernetes
 ----------
 
+Some errors are expected as kubernetes resources are created.
+Ordering of creation of different components is not enforced.
+The cluster should converge on a working state as dependencies get created.
+
+kube-aws
+========
+
 https://coreos.com/kubernetes/docs/latest/kubernetes-on-aws.html
 http://kubernetes.io/docs/user-guide/prereqs/
 
@@ -115,6 +122,55 @@ http://kubernetes.io/docs/user-guide/prereqs/
   kube-aws up
 
   kubectl create -f (all the yaml files!)
+
+kops
+====
+
+https://github.com/kubernetes/kops
+"Production Grade K8s Installation, Upgrades, and Management"
+
+::
+
+  # Make the configuration for a new cluster
+  export KOPS_STATE_STORE=s3://some-bucket-maybe-shared
+  aws s3 mb $CONFIG_BUCKET
+  kops create cluster \
+      --zones us-east-1a \
+      --name useast1.staging.leastauthority.com \
+      --cloud aws \
+      --dns-zone staging.leastauthority.com \
+      --ssh-public-key key.pub
+
+  # Customize it so it looks like we want
+  kops edit ig \
+      --name useast1.staging.leastauthority.com master-us-east-1a
+  kops edit ig \
+      --name useast1.staging.leastauthority.com nodes
+
+  # Deploy the cluster
+  kops update cluster useast1.staging.leastauthority.com --yes
+  kubectl cluster-info
+  kubectl create -f https://rawgit.com/kubernetes/dashboard/master/src/deploy/kubernetes-dashboard.yaml
+
+  # Deploy leastauthority.com on it
+  kubectl create -f registry.yaml
+  kubectl create -f infrastructure.yaml
+
+  # XXX Also push leastauthority docker images to cluster registry
+  # XXX Get http basic auth admin password from `kubectl config view`.
+  # XXX Probably change those credentials, too?
+
+  # Find LoadBalancer Ingress (ELB endpoint) for the website
+  kubectl describe services s4 | grep LoadBalancer
+  # Create a CNAME from whatever.leastauthority.com to the LoadBalancer Ingress name
+
+  # Change the number of worker nodes
+  kops edit ig \
+      --name useast1.staging.leastauthority.com nodes
+  # Deploy the change
+  kops update cluster useast1.staging.leastauthority.com --yes
+
+
 
 Stripe
 ------
