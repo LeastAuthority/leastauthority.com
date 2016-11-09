@@ -43,14 +43,31 @@ Looking at the service from the top down, the components involved in operating i
 Web Server
 ----------
 
+Twisted Web runs in a container serving up static content residing in that same container.
+The container is run by Docker on a Kubernetes worker node on an EC2 instance.
+The server uses filesystem storage to persist logs and other signup details.
+It is part of the s4-infrastructure pod.
+The server is implemented in lae_site.
+
 Flapp Server
 ------------
+
+A Foolscap application server runs in a container handling signup requests from the web server.
+The container is run by Docker on a Kubernetes worker node on an EC2 instance.
+The server uses filesystem storage to persist logs and other signup details.
+It is part of the s4-infrastructure pod.
+The application logic for the signup process is in full_signup_docker.sh.
 
 Tahoe-LAFS Introducer
 ---------------------
 
-Tahoe-LAFS Storage Server
--------------------------
+A Tahoe-LAFS introducer runs on a per-customer EC2 instance that is created by the signup process.
+
+Tahoe-LAFS Storage Service
+--------------------------
+
+A Tahoe-LAFS storage service runs alongside the introducer.
+This mediates access to the customer's S3 bucket.
 
 Bottom-Up Components
 ~~~~~~~~~~~~~~~~~~~~
@@ -61,7 +78,7 @@ AWS EC2
 -------
 
 The service runs on several EC2 instances.
-The EC2 instances are disposable.
+The EC2 instances used to run infrastructure are disposable.
 So long as enough of them are running to handle the service load, the service should operate properly.
 The EC2 instances run within a LeastAuthority-owned AWS account.
 
@@ -69,6 +86,10 @@ Persistent state related to the operation of the service
 (such as customer subscriptions, server logs, monitoring data - **not** customer-owned, Tahoe-LAFS-managed data)
 is stored on EBS instances attached to the EC2 instances.
 The EBS instances belong to a LeastAuthority-owned AWS account.
+
+Each customer has their own EC2 instance.
+Customer data is stored on S3, not instance storage of EBS.
+Recreating a destroyed customer EC2 instance is possible, though it is a manual task.
 
 AWS EC2 is not a very tightly coupled component of the system.
 The signup process does integrate against the EC2 APIs directly.
@@ -87,21 +108,16 @@ The Tahoe-LAFS S3 storage backend us leveraged extensively.
 Customer data is stored in S3 buckets.
 A transition to another storage system requires both code changes and data migration.
 
-AWS ECR
--------
+Docker Registry
+---------------
 
-The service launches Docker containers using images hosted on ECR.
-The images are encrypted in ECR storage using AWS KMS.
-The images are encrypted in transit from ECR using HTTPS.
+The service launches Docker containers using images hosted on a local Docker registry.
 
 It is possible for the images to be signed and the signatures to be checked before the containers are started.
 This is not currently implemented.
 
-CoreOS
-------
-
-The EC2 instances run a `CoreOS (stable) cluster`_.
-CoreOS receives and applies updates automatically.
+It is possible for images to be stored on an encrypted EBS volume.
+This is not currently implemented.
 
 Kubernetes
 ----------
@@ -110,26 +126,15 @@ Some errors are expected as kubernetes resources are created.
 Ordering of creation of different components is not enforced.
 The cluster should converge on a working state as dependencies get created.
 
-kube-aws
-========
-
-https://coreos.com/kubernetes/docs/latest/kubernetes-on-aws.html
-http://kubernetes.io/docs/user-guide/prereqs/
-
-  aws kms create-key --description 'kube-aws assets'
-  kube-aws init --cluster-name leastauthority-k8s-coreos-testing --external-dns-name $DOMAIN --region us-east-1 --availability-zone us-east-1a --key-name jeanpaul_meson_rsa --kms-key-arn $KMS_ARN
-  kube-aws render
-  kube-aws up
-
-  kubectl create -f (all the yaml files!)
-
 kops
 ====
 
-https://github.com/kubernetes/kops
-"Production Grade K8s Installation, Upgrades, and Management"
+The Kubernetes cluster is created and managed using kops_:
+"Production Grade K8s Installation, Upgrades, and Management."
 
-::
+A new Kubernetes cluster is deployed,
+running the leastauthority.com infrastructure services,
+using something like the following process::
 
   # Make the configuration for a new cluster
   export KOPS_STATE_STORE=s3://some-bucket-maybe-shared
@@ -170,10 +175,21 @@ https://github.com/kubernetes/kops
   # Deploy the change
   kops update cluster useast1.staging.leastauthority.com --yes
 
+  # Inspect the status of the infrastructure service
+  kubectl describe services s4
+  kubectl describe pods -l 'app=s4'
+  ...
 
+Consult the kops documentation to learn more about its operation.
+
+The infrastructure services are defined by the yaml files referenced in the above transcript.
+To ensure repeatability, the services should always be deployed from these version-controlled artifacts.
+The Kubernetes dashboard provides features for directly editing the configuration of the services.
+This can be useful for experimentation.
+However, after the experiment concludes, modified resources should always be deleted and re-created from the version controlled artifact.
+This will ensure repeatability of the changes.
 
 Stripe
 ------
 
-
-.. _CoreOS (stable) cluster: https://coreos.com/os/docs/latest/booting-on-ec2.html
+.. _kops: https://github.com/kubernetes/kops
