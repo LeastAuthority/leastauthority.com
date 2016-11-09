@@ -77,7 +77,12 @@ spec:
       # leastauthority.com content.
       - name: 'web'
         # This image is hosted by the cluster-private registry.
-        image: 'localhost:30000/leastauthority.com/web'
+	# XXX This avoids `localhost` because different k8s
+        # deployments seem to have different behavior with respect to
+        # localhost resolution for the purposes of image pulls.
+        # Specifically, kops deploys a cluster where localhost
+        # resolves to [::1] where the registry is not available.
+        image: '127.0.0.1:30000/leastauthority.com/web'
         ports:
         # We just happen to know this is the port this container listens on.
         - containerPort: 8443
@@ -91,7 +96,8 @@ spec:
 
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
-        image: 'localhost:30000/leastauthority.com/flapp'
+        # See above for explanation of 127.0.0.1
+        image: '127.0.0.1:30000/leastauthority.com/flapp'
         ports:
         - containerPort: 3116
         volumeMounts:
