@@ -249,6 +249,7 @@ Make it around ten times the size of the site's infrastructure image [#volumesiz
 Take note of the ``VolumeId`` of the created volume.
 Edit ``k8s/registry.yaml``.
 Put the ``VolumeId`` into the ``volumeID`` field of the ``leastauthority-tweaks-kube-registry-pv`` resource.
+If you pick a different volume size, also update the ``storage`` field to match.
 
 Repeat this procedure to create volumes for the web and flapp servers.
 These servers write human-readable logs and signup information to the volumes.
