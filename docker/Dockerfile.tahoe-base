@@ -6,8 +6,6 @@
 
 FROM leastauthority.com/base
 
-RUN apt-get remove -y --purge whoopsie
-
 ENV TAHOE_LAFS_GIT_REPO_URL="https://github.com/tahoe-lafs/tahoe-lafs.git"
 ENV TAHOE_LAFS_GIT_BRANCH="2237-cloud-backend-s4"
 RUN git clone -b "${TAHOE_LAFS_GIT_BRANCH}" "${TAHOE_LAFS_GIT_REPO_URL}" /app/code
