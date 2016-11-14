@@ -9,6 +9,6 @@ docker build -t leastauthority.com/flapp -f "${LEASTAUTHORITY}"/docker/Dockerfil
 docker build -t leastauthority.com/web -f "${LEASTAUTHORITY}"/docker/Dockerfile.web "${LEASTAUTHORITY}"
 
 EMPTY="$(mktemp -d)"
-docker build -t leastauthority.com/tahoe-base -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-base "${EMPTY}"
-docker build -t leastauthority.com/tahoe-introducer -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-introducer "${EMPTY}"
-docker build -t leastauthority.com/tahoe-storage -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-storage "${EMPTY}"
+docker build -t leastauthority.com/tahoe-base -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-base "${LEASTAUTHORITY}"/docker
+docker build -t leastauthority.com/tahoe-introducer -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-introducer "${LEASTAUTHORITY}"/docker
+docker build -t leastauthority.com/tahoe-storage -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-storage "${LEASTAUTHORITY}"/docker

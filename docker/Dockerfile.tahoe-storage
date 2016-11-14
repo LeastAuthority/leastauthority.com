@@ -1,4 +1,25 @@
 FROM leastauthority.com/tahoe-base
 
-RUN mkdir -p /var/run/introducer
-RUN /app/env/bin/tahoe create-introducer introducer
+RUN /app/env/bin/tahoe create-node /var/run/storageserver
+
+CMD \
+    . /app/env/bin/activate \
+    && /app/put-secrets \
+    		storage \
+		/var/run/storageserver \
+		--tub-port "${LAE_TUB_PORT}" \
+		--node-id "${LAE_NODEID}" \
+		--certificate "${LAE_CERTIFICATE}" \
+		--privatekey "${LAE_PRIVATEKEY}" \
+		--incident-gatherer-furl "${LAE_INCIDENT_GATHERER_FURL}" \
+		--stats-gatherer-furl "${LAE_STATS_GATHERER_FURL}" \
+		--nickname "${LAE_NICKNAME}" \
+		--public-host "${LAE_PUBLICHOST}" \
+		--privat-ehost "${LAE_PRIVATEHOST}" \
+		--introducer-furl "${LAE_INTRODUCER_FURL}" \
+		--s3-access-key-id "${LAE_S3_ACCESS_KEY_ID}" \
+		--s3-secret-key "${LAE_S3_SECRET_KEY}" \
+		--s3-user-token "${LAE_S3_USER_TOKEN}" \
+		--s3-product-token "${LAE_S3_PRODUCT_TOKEN}" \
+		"${LAE_BUCKET_NAME}" \
+    && /app/env/bin/tahoe start /var/run/storageserver --nodaemon

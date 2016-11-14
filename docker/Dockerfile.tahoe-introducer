@@ -1,4 +1,16 @@
 FROM leastauthority.com/tahoe-base
 
-RUN mkdir -p /var/run/introducer
-RUN /app/env/bin/tahoe create-introducer introducer
+RUN /app/env/bin/tahoe create-introducer /var/run/introducer
+
+CMD \
+    . /app/env/bin/activate \
+    && /app/put-secrets \
+    		introducer \
+		/var/run/introducer \
+		"${LAE_TUB_PORT}" \
+		"${LAE_NODEID}" \
+		"${LAE_CERTIFICATE}" \
+		"${LAE_PRIVATEKEY}" \
+		"${LAE_INCIDENT_GATHERER_FURL}" \
+		"${LAE_STATS_GATHERER_FURL}" \
+    && /app/env/bin/tahoe start /var/run/introducer --nodaemon
