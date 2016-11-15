@@ -184,7 +184,7 @@ Either way, set the bucket name in the environment so ``kops`` can find it::
 Then create the configuration, stored in that bucket, for a brand new cluster::
 
   kops create cluster \
-      --zones us-east-1a \
+      --zones us-east-1c \
       --name useast1.staging.leastauthority.com \
       --cloud aws \
       --dns-zone staging.leastauthority.com \
@@ -193,15 +193,16 @@ Then create the configuration, stored in that bucket, for a brand new cluster::
 Pick whatever AWS zones and cluster name you like.
 Stick to AWS because LeastAuthority.com has various AWS dependencies.
 The ``--dns-zone`` should be a zone managed by `AWS Route53`_.
-The SSH public key will be installed on the AWS instances that host the Kubernetes cluster.
+The SSH public key (RSA only due to AWS restrictions) will be installed on the AWS instances that host the Kubernetes cluster.
 The security of this key is critical to the security of the cluster.
 Use a good key and keep it safe.
+
 
 The next step is to customize the cluster configuration.
 For example, customize the size of the master or the number of workers (set ``${EDITOR}``!)::
 
   kops edit ig \
-      --name useast1.staging.leastauthority.com master-us-east-1a
+      --name useast1.staging.leastauthority.com master-us-east-1c
   kops edit ig \
       --name useast1.staging.leastauthority.com nodes
 
@@ -244,7 +245,7 @@ Make sure they are in the same availability zone as the cluster
 Create a volume for the Docker registry.
 Make it around ten times the size of the site's infrastructure image [#volumesize]::
 
-  aws ec2 create-volume --availability-zone us-east-1a --size 8
+  aws ec2 create-volume --availability-zone us-east-1c --size 8
 
 Take note of the ``VolumeId`` of the created volume.
 Edit ``k8s/registry.yaml``.
