@@ -262,7 +262,10 @@ You can now deploy the registry and web and flapp servers::
 
   kubectl create -f "k8s/"
 
-Now build the Docker images for the site::
+The next step is to build the Docker images for the site.
+To do this, you need to put a checkout of the ``secret_config`` repository into the ``leastauthority.com`` checkout.
+These secrets will be added to the image and used by the container when it is run.
+Once they are in place, build the images::
 
   docker/build.sh
 
