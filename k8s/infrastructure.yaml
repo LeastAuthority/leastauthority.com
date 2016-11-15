@@ -77,7 +77,7 @@ spec:
       # leastauthority.com content.
       - name: 'web'
         # This image is hosted by the cluster-private registry.
-	# XXX This avoids `localhost` because different k8s
+        # XXX This avoids `localhost` because different k8s
         # deployments seem to have different behavior with respect to
         # localhost resolution for the purposes of image pulls.
         # Specifically, kops deploys a cluster where localhost
