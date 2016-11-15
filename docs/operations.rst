@@ -230,6 +230,11 @@ Credentials for the dashboard can be found (and modified) in the "kubecfg"::
 
   kubectl config view
 
+Upgrade Kubernetes
+~~~~~~~~~~~~~~~~~~
+
+See https://github.com/kubernetes/kops/blob/master/docs/upgrade.md
+
 Deploy LeastAuthority.com (From Scratch)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
