@@ -1,4 +1,4 @@
-FROM leastauthority.com/infrastructure
+FROM leastauthority/infrastructure
 
 # As long as we use fabric to initialize SSEC2 instances, we need a
 # writeable known_hosts file.  There is an unfortunate amount of
