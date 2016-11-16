@@ -91,48 +91,6 @@ def deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id
     return d
 
 
-def deploy_infrastructure_EC2(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id, instance_size,
-                              bucket_name, keypair_name, instance_name, admin_privkey_path, 
-                              website_pubkey, leastauth_repo, la_commit_hash, secretconf_repo,
-                              sc_commit_hash, stdout, stderr, clock=None):
-    myclock = clock or reactor
-    d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, endpoint_uri, ami_image_id,
-                        instance_size, bucket_name, keypair_name, instance_name,
-                        stdout, stderr)
-
-    def _deployed(instance):
-        ADDRESS_DELAY_TIME = 75
-        POLL_TIME = 30
-        ADDRESS_WAIT_TIME = 5 * 60
-        d1 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
-                             ec2accesskeyid, ec2secretkey, endpoint_uri, stdout, stderr, POLL_TIME,
-                             ADDRESS_WAIT_TIME, instance.instance_id)
-        print >>stdout, "instance is %s" % instance
-        print >>stdout, "waiting for addresses..."
-        def  _got_addresses(addresses):
-            CONSOLE_ACCESS_DELAY_TIME = 155
-            address = addresses[0][0]
-            print >>stdout, "Waiting %d seconds for the server to be ready..." % (CONSOLE_ACCESS_DELAY_TIME,)
-            d2 = task.deferLater(reactor, CONSOLE_ACCESS_DELAY_TIME, verify_and_store_serverssh_pubkey,
-                                 ec2accesskeyid, ec2secretkey, endpoint_uri, address, 5, 20,
-                                 stdout, stderr, instance.instance_id)
-
-            def _pubkey_verified(ignore):
-                install_infrastructure_server(address, admin_privkey_path, website_pubkey,
-                                              leastauth_repo, la_commit_hash, secretconf_repo,
-                                              sc_commit_hash, stdout, stderr)
-
-            d2.addCallback(_pubkey_verified)
-
-            return d2
-
-        d1.addCallback(_got_addresses)
-        return d1
-
-    d.addCallback(_deployed)
-    return d
-
-
 def dump_instance_information(instance, stderr):
     if not isinstance(instance, Instance):
         print >>stderr, "not an instance: %r" % (instance,)
