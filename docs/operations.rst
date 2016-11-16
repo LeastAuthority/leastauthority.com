@@ -267,10 +267,19 @@ You can now deploy the registry and web and flapp servers::
 
   kubectl create -f "k8s/"
 
+.. note::
+   This also creates an "image building" deployment which is not necessary for production operation but is helpful later in the setup process.
+   You can skip creating this by identifying the registry and infrastructure configurations specifically, rather than the entire ``k8s`` directory.
+
 The next step is to build the Docker images for the site.
-To do this, you need to put a checkout of the ``secret_config`` repository into the ``leastauthority.com`` checkout.
+You can do this locally or you can use the k8s cluster to do it.
+
+Locally
+-------
+
+Get a checkout of the ``secret_config`` repository into your ``leastauthority.com`` checkout.
 These secrets will be added to the image and used by the container when it is run.
-Once they are in place, build the images::
+Once they are in place, build the images with the build script in the ``leastauthority.com`` checkout::
 
   docker/build.sh
 
@@ -287,17 +296,40 @@ Then forward the port (stays in the foreground)::
 
 Then tag the images so they can be pushed to the registry::
 
-  docker tag leastauthority.com/web 127.0.0.1:$port/leastauthority.com/web
-  docker tag leastauthority.com/flapp 127.0.0.1:$port/leastauthority.com/flapp
+  docker tag leastauthority.com/web 127.0.0.1:$port/leastauthority/web
+  docker tag leastauthority.com/flapp 127.0.0.1:$port/leastauthority/flapp
+
+You can also put a tag in these tags (no joke).
+Read more about image tags in the official Docker documentation.
 
 *Then* push the images::
 
-  docker push 127.0.0.1:$port/leastauthority.com/web 127.0.0.1:$port/leastauthority.com/flapp
+  docker push 127.0.0.1:$port/leastauthority/web
+  docker push 127.0.0.1:$port/leastauthority/flapp
 
-At this point, you are almost done.
+If you gave them a special tag, be sure to push that tag.
+You are now done with the forwarded port and can kill ``kubectl``.
+
+Using K8S
+---------
+
+Get a checkout of the ``secret_config`` repository.
+Once that is in place, use the k8s build script in the ``leastauthority.com`` checkout::
+
+  export POD=$(kubectl -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
+  export BRANCH=master
+  export TAG=latest
+  k8s/build.sh
+
+This will run steps similar to those for the local build described above but it will run them in a container on the k8s cluster.
+
+Check for Success
+-----------------
+
+After building the images locally or on k8s, you're almost done.
 Most likely, Kubernetes tried to start things up already and failed because the images were missing.
 This is okay.
-It will keep trying until things succeed.
+It will keep trying until things succeed (now that you've pushed the images).
 You can monitor the progress via the dashboard web interface or::
 
   kubectl get pods --selector provider=LeastAuthority
@@ -343,7 +375,6 @@ It is up to the Kubernetes scheduler to re-balance load on the cluster.
 
 .. warning::
    Reducing the number of worker nodes may temporarily disrupt service as pods running on those nodes die and are then rescheduled elsewhere.
-
 
 .. _kops: https://github.com/kubernetes/kops
 .. _kubectl: http://kubernetes.io/docs/user-guide/kubectl-overview/
