@@ -318,9 +318,8 @@ Using K8S
 Get a checkout of the ``secret_config`` repository.
 Once that is in place, use the k8s build script in the ``leastauthority.com`` checkout::
 
-  export POD=$(kubectl -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
-  export BRANCH=master
-  export TAG=latest
+  export K8S_POD=$(kubectl -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
+  export GIT_BRANCH=master
   k8s/build.sh
 
 This will run steps similar to those for the local build described above but it will run them in a container on the k8s cluster.
