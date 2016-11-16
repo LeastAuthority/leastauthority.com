@@ -271,6 +271,8 @@ You can now deploy the registry and web and flapp servers::
    This also creates an "image building" deployment which is not necessary for production operation but is helpful later in the setup process.
    You can skip creating this by identifying the registry and infrastructure configurations specifically, rather than the entire ``k8s`` directory.
 
+.. _build-docker-images:
+
 The next step is to build the Docker images for the site.
 You can do this locally or you can use the k8s cluster to do it.
 
@@ -345,6 +347,17 @@ Hit it via HTTPS.
 If you want, you can now create a CNAME for that domain to make the site accessible more easily.
 
 You're done.
+
+Update Version of leastauthority.com
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+`Build new Docker images for the new version of leastauthority.com<build-docker-images>`_.
+Edit the infrastructure deployment file, ``k8s/infrastructure.yaml``.
+Change the Docker image used by the containers to reference the tag of the newly built images
+(commit, PR, merge, etc).
+Use ``kubectl`` to apply the changes and begin a rolling update to deploy them::
+
+  kubectl apply -f k8s/infrastructure.yaml
 
 React to Increased Load
 ~~~~~~~~~~~~~~~~~~~~~~~
