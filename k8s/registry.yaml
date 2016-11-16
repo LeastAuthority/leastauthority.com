@@ -108,8 +108,8 @@ spec:
     # One node can mount this read-write.
     - 'ReadWriteOnce'
   awsElasticBlockStore:
-    # Manually created via
+    # Create this volume manually with a command like:
     #   aws ec2 create-volume --availability-zone us-east-1a --size 8
-    volumeID: 'vol-0d5f4c3a062e580bf'
+    volumeID: 'replace me'
     fsType: 'ext4'
 ---

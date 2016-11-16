@@ -158,9 +158,9 @@ spec:
     # Read about EBS volumes at
     # http://kubernetes.io/docs/user-guide/volumes/#awselasticblockstore
     #
-    # This particular volume manually created via
-    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
-    volumeID: 'vol-01d518bc53892d142'
+    # Create this volume manually with a command like:
+    #   aws ec2 create-volume --availability-zone us-east-1b --size 1
+    volumeID: 'replace me'
     fsType: 'ext4'
 ---
 # Read about PersistentVolumes at
@@ -180,7 +180,7 @@ spec:
     # One node can mount this read-write.
     - 'ReadWriteOnce'
   awsElasticBlockStore:
-    # This particular volume manually created via
-    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
-    volumeID: 'vol-0078b206b7bfa2fdd'
+    # Create this volume manually with a command like:
+    #   aws ec2 create-volume --availability-zone us-east-1b --size 1
+    volumeID: 'replace me'
     fsType: 'ext4'
