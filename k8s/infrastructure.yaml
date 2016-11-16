@@ -1,0 +1,186 @@
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 's4'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of the s4 app.
+    # This makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 's4'
+
+  # This service exposes network ports via a load balancer - ELB on
+  # AWS.  The load balancer will be configured to spread traffic
+  # across healthy pods in this service.  The load balancer also acts
+  # as the public endpoint for the service.  Without it, the service
+  # is only internally accessible.
+  #
+  # Note that ELB on AWS takes a minute or two to become usable,
+  # probably due to DNS record propagation delay.
+  type: LoadBalancer
+
+  ports:
+  # Define the service's one HTTPS port.
+  - name: 'https-server'
+    port: 443
+    targetPort: 8443
+    protocol: 'TCP'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 's4-infrastructure'
+spec:
+
+  # The containers both write directly to the filesystem.  It's not
+  # safe to have more than one instance running at a time.  So limit
+  # replicas to one and use a pod replacement strategy that destroys
+  # old pods _before_ creating new ones.  Once filesystem access issue
+  # is fixed, we can have horizontal scale-out and rolling updates
+  # instead.
+  replicas: 1
+  strategy:
+    type: 'Recreate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 's4'
+        component: 'Infrastructure'
+    spec:
+      volumes:
+      - name: 'web-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-web-pvc'
+      - name: 'flapp-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-flapp-pvc'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+
+      # This is the web server.  It serves up all the
+      # leastauthority.com content.
+      - name: 'web'
+        # This image is hosted by the cluster-private registry.
+        # XXX This avoids `localhost` because different k8s
+        # deployments seem to have different behavior with respect to
+        # localhost resolution for the purposes of image pulls.
+        # Specifically, kops deploys a cluster where localhost
+        # resolves to [::1] where the registry is not available.
+        image: '127.0.0.1:30000/leastauthority/web:e8877236a111df34c81b9f2fbb688541f9180560'
+        ports:
+        # We just happen to know this is the port this container listens on.
+        - containerPort: 8443
+        volumeMounts:
+        # We just happen to know these are the paths the container
+        # wants to use for interesting, persistent state.
+        - mountPath: '/app/data'
+          name: 'web-data'
+        - mountPath: '/app/flapp-data'
+          name: 'flapp-data'
+
+      # This is the flapp server.  It handles signup requests.
+      - name: 'flapp'
+        # See above for explanation of 127.0.0.1
+        image: '127.0.0.1:30000/leastauthority/flapp:e8877236a111df34c81b9f2fbb688541f9180560'
+        ports:
+        - containerPort: 3116
+        volumeMounts:
+        - mountPath: '/app/data'
+          name: 'flapp-data'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-web-pvc'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '1G'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-flapp-pvc'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '1G'
+---
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-web-pv'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+spec:
+  capacity:
+    storage: '1G'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Read about EBS volumes at
+    # http://kubernetes.io/docs/user-guide/volumes/#awselasticblockstore
+    #
+    # Create this volume manually with a command like:
+    #   aws ec2 create-volume --availability-zone us-east-1b --size 1
+    volumeID: 'vol-0e80ac26be3edd63f'
+    fsType: 'ext4'
+---
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-flapp-pv'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+spec:
+  capacity:
+    storage: '1G'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Create this volume manually with a command like:
+    #   aws ec2 create-volume --availability-zone us-east-1b --size 1
+    volumeID: 'vol-01b01d11a6b17e2de'
+    fsType: 'ext4'

@@ -1,4 +1,4 @@
-FROM leastauthority.com/infrastructure
+FROM leastauthority/infrastructure
 
 # Facilitate network connections to the application.  It would be nice
 # if we could run on the usual port number (443).  However, Docker

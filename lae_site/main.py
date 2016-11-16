@@ -28,6 +28,12 @@ root_log = logging.getLogger(__name__)
 class SiteOptions(Options):
     optFlags = [
         ("noredirect", None, "Disable the cleartext redirect-to-TLS site."),
+
+        # TODO:
+        # Make this HTTP-only.
+        # Terminate TLS externally.
+        # On K8S on AWS, consider using
+        # http://kubernetes.io/docs/user-guide/services/#ssl-support-on-aws
         ("nossl", None, "Run the site on a cleartext HTTP server instead of over TLS. "),
     ]
 

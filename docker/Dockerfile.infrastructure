@@ -39,4 +39,8 @@ RUN /app/env/bin/pip install -r /app/code/requirements.txt
 # since it is a major impediment to image/layer caching.
 COPY . /app/code
 
+# Make the super secret credentials and keys available inside the container.
+# TODO This is not the right way to manage secrets.  Fix it up.
+# This probably requires making a lot of application-code changes.
 RUN mv /app/code/secret_config /app
+RUN chown --recursive ${INFRASTRUCTURE_USER_NAME}:${INFRASTRUCTURE_USER_NAME} /app/secret_config
