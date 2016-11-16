@@ -160,7 +160,7 @@ spec:
     #
     # Create this volume manually with a command like:
     #   aws ec2 create-volume --availability-zone us-east-1b --size 1
-    volumeID: 'replace me'
+    volumeID: 'vol-0e80ac26be3edd63f'
     fsType: 'ext4'
 ---
 # Read about PersistentVolumes at
@@ -182,5 +182,5 @@ spec:
   awsElasticBlockStore:
     # Create this volume manually with a command like:
     #   aws ec2 create-volume --availability-zone us-east-1b --size 1
-    volumeID: 'replace me'
+    volumeID: 'vol-01b01d11a6b17e2de'
     fsType: 'ext4'

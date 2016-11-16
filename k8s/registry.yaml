@@ -110,6 +110,6 @@ spec:
   awsElasticBlockStore:
     # Create this volume manually with a command like:
     #   aws ec2 create-volume --availability-zone us-east-1a --size 8
-    volumeID: 'replace me'
+    volumeID: 'vol-0f1ca7d3ab1426833'
     fsType: 'ext4'
 ---
