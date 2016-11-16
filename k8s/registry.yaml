@@ -1,0 +1,115 @@
+# Configuration for a private registry from
+# https://github.com/kubernetes/kubernetes/tree/v1.4.5/cluster/addons/registry
+
+#
+apiVersion: v1
+kind: List
+items:
+- apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: 'leastauthority-tweaks'
+    resourceVersion: "10"
+---
+# Read about Services at
+# http://kubernetes.io/docs/user-guide/services/
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  name: 'private-registry'
+  namespace: 'leastauthority-tweaks'
+  labels:
+    k8s-app: 'private-registry'
+    kubernetes.io/cluster-service: "true"
+    kubernetes.io/name: "PrivateRegistry"
+spec:
+  selector:
+    k8s-app: 'private-registry'
+  ports:
+  - name: 'registry'
+    port: 30000
+    nodePort: 30000
+    protocol: 'TCP'
+  type: 'NodePort'
+---
+apiVersion: 'v1'
+kind: 'ReplicationController'
+metadata:
+  name: 'private-registry-v0'
+  namespace: 'leastauthority-tweaks'
+  labels:
+    k8s-app: 'private-registry'
+    version: 'v0'
+    kubernetes.io/cluster-service: "true"
+spec:
+  replicas: 1
+  selector:
+    k8s-app: 'private-registry'
+    version: 'v0'
+  template:
+    metadata:
+      labels:
+        k8s-app: 'private-registry'
+        version: 'v0'
+        kubernetes.io/cluster-service: "true"
+    spec:
+      containers:
+      - name: 'registry'
+        image: 'registry:2'
+        resources:
+          limits:
+            cpu: '100m'
+            memory: '100Mi'
+        env:
+        - name: 'REGISTRY_HTTP_ADDR'
+          value: ':30000'
+        - name: 'REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY'
+          value: '/var/lib/registry'
+        volumeMounts:
+        - name: 'image-store'
+          mountPath: '/var/lib/registry'
+        ports:
+        - containerPort: 30000
+          name: 'registry'
+          protocol: 'TCP'
+      volumes:
+      - name: 'image-store'
+        persistentVolumeClaim:
+          claimName: 'private-registry-pvc'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'private-registry-pvc'
+  namespace: 'leastauthority-tweaks'
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '8G'
+---
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'leastauthority-tweaks-kube-registry-pv'
+  labels:
+    kubernetes.io/cluster-service: "true"
+spec:
+  capacity:
+    storage: '8G'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Create this volume manually with a command like:
+    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
+    volumeID: 'vol-0f1ca7d3ab1426833'
+    fsType: 'ext4'
+---
