@@ -105,7 +105,7 @@ All customer-owned data resides in these S3 buckets.
 The S3 buckets belong to a LeastAuthority-owned AWS account.
 
 AWS S3 is a fairly tightly coupled component of the system.
-The Tahoe-LAFS S3 storage backend us leveraged extensively.
+The Tahoe-LAFS S3 storage backend is leveraged extensively.
 Customer data is stored in S3 buckets.
 A transition to another storage system requires both code changes and data migration.
 
@@ -142,6 +142,7 @@ The Kubernetes dashboard provides features for directly editing the configuratio
 This can be useful for experimentation.
 However, after the experiment concludes, modified resources should always be deleted and re-created from the version controlled artifact.
 This will ensure repeatability of the changes.
+See `Update Version of leastauthority.com`_ for an example of a properly version-controlled deployment change.
 
 Stripe
 ------
@@ -349,6 +350,8 @@ You're done.
 
 Update Version of leastauthority.com
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _update-lae:
 
 `Build new Docker images for the new version of leastauthority.com<build-docker-images>`_.
 Edit the infrastructure deployment file, ``k8s/infrastructure.yaml``.
