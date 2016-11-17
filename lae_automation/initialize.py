@@ -4,7 +4,6 @@ from twisted.internet import reactor, task, defer
 from twisted.python.filepath import FilePath
 from twisted.conch.client.knownhosts import KnownHostsFile
 
-from lae_automation.server import install_infrastructure_server
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from txaws.s3.client import S3Client, URLContext
 from lae_automation.aws.devpay_s3client import DevPayS3Client
