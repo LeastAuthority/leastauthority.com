@@ -32,6 +32,11 @@ spec:
     port: 443
     targetPort: 8443
     protocol: 'TCP'
+  # It also redirects from HTTP to HTTPS.
+  - name: 'http-server'
+    port: 80
+    targetPort: 8080
+    protocol: 'TCP'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -84,8 +89,9 @@ spec:
         # resolves to [::1] where the registry is not available.
         image: '127.0.0.1:30000/leastauthority/web:e8877236a111df34c81b9f2fbb688541f9180560'
         ports:
-        # We just happen to know this is the port this container listens on.
+        # We just happen to know this is the ports this container listens on.
         - containerPort: 8443
+        - containerPort: 8080
         volumeMounts:
         # We just happen to know these are the paths the container
         # wants to use for interesting, persistent state.

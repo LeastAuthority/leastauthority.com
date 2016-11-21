@@ -14,7 +14,7 @@ EXPOSE 8443
 # nice if it had some better logging behavior.
 CMD env && mkdir -p /app/data/logs && \
     PYTHONPATH="/app/code" /app/env/bin/python -u /app/code/lae_site/main.py \
-    --noredirect \
+    --redirectport=8080 \
     --port=8443 \
     \
     --signup-furl-path /app/flapp-data/signup.furl \
