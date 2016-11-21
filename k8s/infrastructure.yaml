@@ -91,7 +91,7 @@ spec:
         # localhost resolution for the purposes of image pulls.
         # Specifically, kops deploys a cluster where localhost
         # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/web:e8877236a111df34c81b9f2fbb688541f9180560'
+        image: '127.0.0.1:30000/leastauthority/web:888bd983c8025e75b38adaeaf137c02ddcf76354'
         ports:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 8443
@@ -107,7 +107,7 @@ spec:
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
         # See above for explanation of 127.0.0.1
-        image: '127.0.0.1:30000/leastauthority/flapp:e8877236a111df34c81b9f2fbb688541f9180560'
+        image: '127.0.0.1:30000/leastauthority/flapp:888bd983c8025e75b38adaeaf137c02ddcf76354'
         ports:
         - containerPort: 3116
         volumeMounts:
