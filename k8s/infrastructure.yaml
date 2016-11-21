@@ -27,7 +27,11 @@ spec:
   type: LoadBalancer
 
   ports:
-  # Define the service's one HTTPS port.
+  # Define the service's one HTTPS port.  This also causes
+  # S4_SERVICE_PORT_HTTPS_SERVER to be set in the container's
+  # environment.  This lets the container know where the HTTPS server
+  # is really listening, avoiding the need to hard-code that
+  # information into the container's image.
   - name: 'https-server'
     port: 443
     targetPort: 8443
