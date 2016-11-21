@@ -48,6 +48,7 @@ class SiteOptions(Options):
 
         ("port", None, 443, "The TCP port number on which to listen for TLS/HTTP requests.", int),
         ("redirectport", None, 80, "A TCP port number on which to run a redirect-to-TLS site.", int),
+        ("redirect-to-port", None, None, "A TCP port number to which to redirect for the TLS site.", int),
     ]
 
 
@@ -102,13 +103,13 @@ def main(reactor, *argv):
             site,
             o["port"],
             not o["nossl"],
-            not o["noredirect"], o["redirectport"],
+            not o["noredirect"], o["redirectport"], o["redirect-to-port"],
         )
     )
     d.addCallback(lambda ignored: Deferred())
     return d
 
-def start_site(reactor, site, port, ssl_enabled, redirect, redirect_port):
+def start_site(reactor, site, port, ssl_enabled, redirect, redirect_port, redirect_to_port):
     if ssl_enabled:
         root_log.info('SSL/TLS is enabled (start with --nossl to disable).')
         KEYFILE = '../secret_config/rapidssl/server.key'
@@ -134,8 +135,10 @@ def start_site(reactor, site, port, ssl_enabled, redirect, redirect_port):
         reactor.listenSSL(port, site, cert_options)
 
         if redirect:
+            if redirect_to_port is None:
+                redirect_to_port = port
             root_log.info('http->https redirector listening on port %d...' % (redirect_port,))
-            reactor.listenTCP(redirect_port, make_redirector_site(port))
+            reactor.listenTCP(redirect_port, make_redirector_site(redirect_to_port))
     else:
         root_log.info('SSL/TLS is disabled.')
         reactor.listenTCP(port, site)
