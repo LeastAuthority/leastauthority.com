@@ -161,7 +161,6 @@ def start_site(reactor, site, secure_ports, insecure_ports, redirect_to_port):
     if insecure_ports:
         redirector = make_redirector_site(redirect_to_port)
         for insecure in insecure_ports:
-            root_log.info('http->https redirector listening on port %s...' % (insecure,))
             StreamServerEndpointService(insecure, redirector).setServiceParent(parent)
 
     parent.privilegedStartService()
