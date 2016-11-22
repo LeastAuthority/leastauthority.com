@@ -19,7 +19,7 @@ CMD env && mkdir -p /app/data/logs && \
 certKey=/app/secret_config/rapidssl/server.crt:\
 privateKey=/app/secret_config/rapidssl/server.key:\
     \
-    --insecure-port=8080 \
+    --insecure-port=tcp:8080 \
     --redirect-to-port "${S4_SERVICE_PORT_HTTPS_SERVER}" \
     \
     --signup-furl-path /app/flapp-data/signup.furl \
