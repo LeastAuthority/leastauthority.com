@@ -17,12 +17,12 @@ ENV SECURITY_UPDATES="2016-11-22"
 # We'll do an upgrade because the base Ubuntu image isn't guaranteed
 # to include the latest security updates.  This is counter to best
 # practice recommendations but security updates are important.
-RUN apt-get update && \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update && \
     apt-get install -y unattended-upgrades && \
     unattended-upgrade --minimal_upgrade_steps && \
 rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y \
+RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get install -y \
     python-dev \
     libffi-dev \
     openssl \
