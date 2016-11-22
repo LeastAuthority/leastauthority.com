@@ -14,15 +14,23 @@ FROM library/ubuntu:14.04.5
 # being retrieved.
 ENV SECURITY_UPDATES="2016-11-22"
 
+# Tell apt/dpkg/debconf that we're non-interactive so it won't write
+# annoying warnings as it installs the software we ask for.  Making
+# this an `ARG` sets it in the environment for the duration of the
+# _build_ only - preventing this from having any effect on a container
+# running this image (which shouldn't really be installing more
+# software but who knows...).
+ARG DEBIAN_FRONTEND=noninteractive
+
 # We'll do an upgrade because the base Ubuntu image isn't guaranteed
 # to include the latest security updates.  This is counter to best
 # practice recommendations but security updates are important.
-RUN DEBIAN_FRONTEND="noninteractive" apt-get update && \
+RUN apt-get update && \
     apt-get install -y unattended-upgrades && \
     unattended-upgrade --minimal_upgrade_steps && \
 rm -rf /var/lib/apt/lists/*
 
-RUN DEBIAN_FRONTEND="noninteractive" apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y \
     python-dev \
     libffi-dev \
     openssl \
