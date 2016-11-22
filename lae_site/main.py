@@ -154,16 +154,15 @@ def main(reactor, *argv):
     return d
 
 def start_site(reactor, site, secure_ports, insecure_ports, redirect_to_port):
-    services = []
+    parent = MultiService()
     for secure in secure_ports:
-        services.append(StreamServerEndpointService(secure, site))
+        StreamServerEndpointService(secure, site).setServiceParent(parent)
 
     if insecure_ports:
         redirector = make_redirector_site(redirect_to_port)
         for insecure in insecure_ports:
             root_log.info('http->https redirector listening on port %s...' % (insecure,))
-            services.append(StreamServerEndpointService(insecure, redirector))
+            StreamServerEndpointService(insecure, redirector).setServiceParent(parent)
 
-    parent = MultiService(services)
     parent.privilegedStartService()
     parent.startService()
