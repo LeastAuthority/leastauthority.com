@@ -60,7 +60,7 @@ class SiteOptions(Options):
         """
         try:
             return serverFromString(self.reactor, description)
-        except ValueError as e:
+        except Exception as e:
             raise UsageError(
                 u"Could not parse {description}: {error}".format(
                     description=description,
