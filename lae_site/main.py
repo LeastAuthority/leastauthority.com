@@ -9,15 +9,13 @@ if __name__ == '__main__':
 
     react(main, argv[1:])
 
-import sys, os
+import sys
 import logging
 
-import pem
-
 from twisted.python.log import startLogging
-from twisted.internet import ssl
 from twisted.internet.endpoints import serverFromString
 from twisted.application.internet import StreamServerEndpointService
+from twisted.application.service import MultiService
 from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
@@ -163,7 +161,7 @@ def start_site(reactor, site, secure_ports, insecure_ports, redirect_to_port):
     if insecure_ports:
         redirector = make_redirector_site(redirect_to_port)
         for insecure in insecure_ports:
-            root_log.info('http->https redirector listening on port %d...' % (insecure,))
+            root_log.info('http->https redirector listening on port %s...' % (insecure,))
             services.append(StreamServerEndpointService(insecure, redirector))
 
     parent = MultiService(services)
