@@ -16,6 +16,8 @@ import pem
 
 from twisted.python.log import startLogging
 from twisted.internet import ssl
+from twisted.internet.endpoints import serverFromString
+from twisted.application.internet import StreamServerEndpointService
 from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
@@ -27,14 +29,11 @@ root_log = logging.getLogger(__name__)
 
 class SiteOptions(Options):
     optFlags = [
-        ("noredirect", None, "Disable the cleartext redirect-to-TLS site."),
-
         # TODO:
         # Make this HTTP-only.
         # Terminate TLS externally.
         # On K8S on AWS, consider using
         # http://kubernetes.io/docs/user-guide/services/#ssl-support-on-aws
-        ("nossl", None, "Run the site on a cleartext HTTP server instead of over TLS. "),
     ]
 
     optParameters = [
@@ -46,11 +45,49 @@ class SiteOptions(Options):
         ("service-confirmed-path", None, None, "A path to a file to which confirmed-service subscription details will be appended.", FilePath),
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
 
-        ("port", None, 443, "The TCP port number on which to listen for TLS/HTTP requests.", int),
-        ("redirectport", None, 80, "A TCP port number on which to run a redirect-to-TLS site.", int),
         ("redirect-to-port", None, None, "A TCP port number to which to redirect for the TLS site.", int),
     ]
+    def __init__(self, reactor):
+        Options.__init__(self)
+        self.reactor = reactor
+        self["secure-ports"] = []
+        self["insecure-ports"] = []
 
+    def _parse_endpoint(self, description):
+        """
+        Parse a Twisted endpoint description string into an endpoint or
+        convert the parse error into a raised L{UsageError}.
+        """
+        try:
+            return serverFromString(self.reactor, description)
+        except ValueError as e:
+            raise UsageError(
+                u"Could not parse {description}: {error}".format(
+                    description=description,
+                    error=str(e),
+                    )
+                )
+
+    def opt_secure_port(self, endpoint_description):
+        """
+        A Twisted endpoint description string describing an address at
+        which to listen for secure web client connections.  The
+        website will be served here.  This option must be used at
+        least once.
+        """
+        endpoint = self._parse_endpoint(endpoint_description)
+        self["secure-ports"].append(endpoint)
+
+    def opt_insecure_port(self, endpoint_description):
+        """
+        A Twisted endpoint description string describing an address at
+        which to listen for insecure web client connections.  A
+        redirect will be returned sending the client to a secure
+        location where the website can be accessed.  This option may
+        be used zero or more times.
+        """
+        endpoint = self._parse_endpoint(endpoint_description)
+        self["insecure-ports"].append(endpoint)
 
     def postOptions(self):
         required_options = [
@@ -66,9 +103,20 @@ class SiteOptions(Options):
             if self[option] is None:
                 raise UsageError("Missing required option --{}".format(option))
 
+        if not self["secure-ports"]:
+            raise UsageError(
+                u"Use --secure-port at least once to specify an address for "
+                u"the website."
+            )
+        if self["redirect-to-port"] is not None and not self["insecure-ports"]:
+            raise UsageError(
+                u"Use --insecure-port at least once or there is no server to "
+                u"use --redirect-to-port value."
+            )
+
 
 def main(reactor, *argv):
-    o = SiteOptions()
+    o = SiteOptions(reactor)
     try:
         o.parseOptions(argv)
     except UsageError as e:
@@ -82,8 +130,6 @@ def main(reactor, *argv):
         )
 
     startLogging(sys.stdout, setStdout=False)
-
-    root_log.info('Listening on port {}...'.format(o["port"]))
 
     signup_furl = o["signup-furl-path"].getContent().strip()
     d = start(signup_furl)
@@ -101,44 +147,25 @@ def main(reactor, *argv):
         lambda site: start_site(
             reactor,
             site,
-            o["port"],
-            not o["nossl"],
-            not o["noredirect"], o["redirectport"], o["redirect-to-port"],
+            o["secure-ports"],
+            o["insecure-ports"],
+            o["redirect-to-port"],
         )
     )
     d.addCallback(lambda ignored: Deferred())
     return d
 
-def start_site(reactor, site, port, ssl_enabled, redirect, redirect_port, redirect_to_port):
-    if ssl_enabled:
-        root_log.info('SSL/TLS is enabled (start with --nossl to disable).')
-        KEYFILE = '../secret_config/rapidssl/server.key'
-        CERTFILE = '../secret_config/rapidssl/server.crt'
-        assert os.path.exists(KEYFILE), "Private key file %s not found" % (KEYFILE,)
-        assert os.path.exists(CERTFILE), "Certificate file %s not found" % (CERTFILE,)
+def start_site(reactor, site, secure_ports, insecure_ports, redirect_to_port):
+    services = []
+    for secure in secure_ports:
+        services.append(StreamServerEndpointService(secure, site))
 
-        with open(KEYFILE) as keyFile:
-            key = keyFile.read()
+    if insecure_ports:
+        redirector = make_redirector_site(redirect_to_port)
+        for insecure in insecure_ports:
+            root_log.info('http->https redirector listening on port %d...' % (insecure,))
+            services.append(StreamServerEndpointService(insecure, redirector))
 
-        certs = pem.parse_file(CERTFILE)
-        cert = ssl.PrivateCertificate.loadPEM(str(key) + str(certs[0]))
-
-        extraCertChain = [ssl.Certificate.loadPEM(str(certData)).original
-                          for certData in certs[1:]]
-
-        cert_options = ssl.CertificateOptions(
-            privateKey=cert.privateKey.original,
-            certificate=cert.original,
-            extraCertChain=extraCertChain,
-        )
-
-        reactor.listenSSL(port, site, cert_options)
-
-        if redirect:
-            if redirect_to_port is None:
-                redirect_to_port = port
-            root_log.info('http->https redirector listening on port %d...' % (redirect_port,))
-            reactor.listenTCP(redirect_port, make_redirector_site(redirect_to_port))
-    else:
-        root_log.info('SSL/TLS is disabled.')
-        reactor.listenTCP(port, site)
+    parent = MultiService(services)
+    parent.privilegedStartService()
+    parent.startService()
