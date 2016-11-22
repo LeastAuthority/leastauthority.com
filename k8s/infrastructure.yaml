@@ -41,6 +41,12 @@ spec:
     port: 80
     targetPort: 8080
     protocol: 'TCP'
+  - name: 'wormhole-relay'
+    port: 4000
+    protocol: 'TCP'
+  - name: 'wormhole-transit-relay'
+    port: 4001
+    protocol: 'TCP'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -113,6 +119,21 @@ spec:
         volumeMounts:
         - mountPath: '/app/data'
           name: 'flapp-data'
+
+      # This is the wormhole relay server.  It will help people get
+      # introduced to their grid, someday.
+      - name: 'wormhole-relay'
+        # This image is hosted by the cluster-private registry.
+        # XXX This avoids `localhost` because different k8s
+        # deployments seem to have different behavior with respect to
+        # localhost resolution for the purposes of image pulls.
+        # Specifically, kops deploys a cluster where localhost
+        # resolves to [::1] where the registry is not available.
+        image: '127.0.0.1:30000/leastauthority/magicwormhole:e9b33b30f4ac5330e74c699da9c1953b99c30d9c'
+        ports:
+        # We just happen to know this is the ports this container listens on.
+        - containerPort: 4000
+        - containerPort: 4001
 ---
 # Read about PersistentVolumeClaims at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
