@@ -87,7 +87,7 @@ spec:
       # them into the container.
       - name: 'web-secrets'
         secret:
-          secretName: 'website-certificate'
+          secretName: 'website-secrets'
 
 
       # Read about containers at
