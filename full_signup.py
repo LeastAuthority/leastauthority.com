@@ -13,6 +13,8 @@ from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 from twisted.internet import defer
 
+from lae_automation.config import Config
+from lae_automation.signup import DeploymentConfiguration
 from lae_automation.signup import create_log_filepaths
 from lae_automation.signup import lookup_product
 from lae_automation.signup import get_bucket_name
@@ -53,18 +55,18 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         fh.close()
         return err
 
-    print >>stderr, "plan_id is %s" % plan_id
+    print >>flapp_stderr, "plan_id is %s" % plan_id
 
     config = Config(automation_config_path.path)
     product = lookup_product(config, plan_id)
     fullname = product['plan_name']
-    print >>stdout, "Signing up customer for %s..." % (fullname,)
+    print >>flapp_stdout, "Signing up customer for %s..." % (fullname,)
 
     deploy_config = DeploymentConfiguration(
         s3_access_key_id=config.other["s3_access_key_id"],
         s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip(),
         bucketname=get_bucket_name(subscription_id, customer_id),
-        amiimageid=product['ami_image_id']
+        amiimageid=product['ami_image_id'],
         instancesize=product['instance_size'],
 
         usertoken=None,
@@ -73,8 +75,8 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         oldsecrets=None,
         customer_email=customer_email,
         customer_pgpinfo=customer_pgpinfo,
-        secretsfile=secretsfile,
-        serverinfopath=serverinfopath,
+        secretsfile=SSEC2_secretsfile,
+        serverinfopath=server_info_path,
 
         ssec2_access_key_id=config["ssec2_access_key_id"],
         ssec2_secret_path=config["ssec2_secret_path"],
