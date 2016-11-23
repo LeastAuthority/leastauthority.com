@@ -77,7 +77,7 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         customer_email=customer_email,
         customer_pgpinfo=customer_pgpinfo,
         secretsfile=SSEC2_secretsfile,
-        serverinfopath=server_info_path,
+        serverinfopath=server_info_path.path,
 
         ssec2_access_key_id=config.other["ssec2_access_key_id"],
         ssec2_secret_path=config.other["ssec2_secret_path"],
