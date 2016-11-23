@@ -79,14 +79,14 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         secretsfile=SSEC2_secretsfile,
         serverinfopath=server_info_path,
 
-        ssec2_access_key_id=config["ssec2_access_key_id"],
-        ssec2_secret_path=config["ssec2_secret_path"],
+        ssec2_access_key_id=config.other["ssec2_access_key_id"],
+        ssec2_secret_path=config.other["ssec2_secret_path"],
 
-        ssec2admin_keypair_name=config["ssec2admin_keypair_name"],
-        ssec2admin_keypair_path=config["ssec2admin_keypair_path"],
+        ssec2admin_keypair_name=config.other["ssec2admin_keypair_name"],
+        ssec2admin_keypair_path=config.other["ssec2admin_keypair_path"],
 
-        monitor_pubkey_path=config["monitor_pubkey_path"],
-        monitor_privkey_path=config["monitor_privkey_path"],
+        monitor_pubkey_path=config.other["monitor_pubkey_path"],
+        monitor_privkey_path=config.other["monitor_privkey_path"],
     )
 
     d = defer.succeed(None)
