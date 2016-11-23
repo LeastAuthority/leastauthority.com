@@ -103,7 +103,7 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
         ssec2_secret_path=config["ssec2_secret_path"],
 
         ssec2admin_keypair_name=config["ssec2admin_keypair_name"],
-        ssec2admin_keypair_path=config["ssec2admin_keypair_path"],
+        ssec2admin_privkey_path=config["ssec2admin_privkey_path"],
 
         monitor_pubkey_path=config["monitor_pubkey_path"],
         monitor_privkey_path=config["monitor_privkey_path"],
@@ -133,7 +133,7 @@ class DeploymentConfiguration(object):
     ssec2_secret_path = attr.ib()
 
     ssec2admin_keypair_name = attr.ib()
-    ssec2admin_keypair_path = attr.ib()
+    ssec2admin_privkey_path = attr.ib()
 
     monitor_pubkey_path = attr.ib()
     monitor_privkey_path = attr.ib()

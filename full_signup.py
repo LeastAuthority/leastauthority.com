@@ -83,7 +83,7 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         ssec2_secret_path=config.other["ssec2_secret_path"],
 
         ssec2admin_keypair_name=config.other["ssec2admin_keypair_name"],
-        ssec2admin_keypair_path=config.other["ssec2admin_privkey_path"],
+        ssec2admin_privkey_path=config.other["ssec2admin_privkey_path"],
 
         monitor_pubkey_path=config.other["monitor_pubkey_path"],
         monitor_privkey_path=config.other["monitor_privkey_path"],

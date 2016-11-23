@@ -56,7 +56,7 @@ deploy_config = DeploymentConfiguration(
     ssec2_secret_path=config["ssec2_secret_path"],
 
     ssec2admin_keypair_name=config["ssec2admin_keypair_name"],
-    ssec2admin_keypair_path=config["ssec2admin_keypair_path"],
+    ssec2admin_privkey_path=config["ssec2admin_privkey_path"],
 
     monitor_pubkey_path=config["monitor_pubkey_path"],
     monitor_privkey_path=config["monitor_privkey_path"],
