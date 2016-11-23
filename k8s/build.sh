@@ -47,7 +47,8 @@ ${EXEC} bash -e -x -c '
     DOCKER_TAG="${TAG_FIRST}-${TAG_SECOND}"
 
     # Put the secrets in the place expected by the build.
-    cp -a secret_config leastauthority.com;
+    git --git-dir secret_config/.git archive --prefix leastauthority.com/secret_config/ HEAD \
+        | tar x --exclude k8s
 
     # Build the images.
     ./leastauthority.com/docker/build.sh;
