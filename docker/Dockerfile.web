@@ -26,7 +26,7 @@ extraCertChain=/app/k8s_secrets/website-chain.pem\
     --signup-furl-path /app/flapp-data/signup.furl \
     \
     --stripe-secret-api-key-path /app/k8s_secrets/stripe-private.key \
-    --stripe-publishable-api-key-path /app/secret_config/stripe-publishable.key \
+    --stripe-publishable-api-key-path /app/k8s_secrets/stripe-publishable.key \
     \
     --site-logs-path /app/data/logs/sitelogs \
     --interest-path /app/data/emails.csv \
