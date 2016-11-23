@@ -24,7 +24,7 @@ from lae_util.servers import append_record
 from lae_util.fileutil import make_dirs
 
 def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout, flapp_stderr):
-    append_record(flapp_stdout, "Automation script started.")
+    append_record(flapp_stdout.name, "Automation script started.")
     parameters_json = stdin.read()
     (customer_email,
      customer_pgpinfo,
@@ -39,7 +39,7 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         secrets_dir, plan_id, customer_id, subscription_id,
     )
 
-    append_record(flapp_stdout, "Writing logs to %r." % (abslogdir_fp.path,))
+    append_record(flapp_stdout.name, "Writing logs to %r." % (abslogdir_fp.path,))
 
     stripesecrets_log_fp.setContent(parameters_json)
 
@@ -50,9 +50,7 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
     sys.stdout = signup_stderr
 
     def errhandler(err):
-        fh = flapp_stderr.open('a+')
-        err.printTraceback(fh)
-        fh.close()
+        err.printTraceback(flapp_stderr)
         return err
 
     print >>flapp_stderr, "plan_id is %s" % plan_id
