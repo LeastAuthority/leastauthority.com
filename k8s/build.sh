@@ -74,5 +74,5 @@ ${EXEC} bash -e -x -c '
     docker push 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
     docker push 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
 
-    echo "Tagged images with ${DOCKER_TAG}."
+    echo "Tagged images with ${DOCKER_TAG}"
 '
