@@ -157,16 +157,6 @@ TAHOE_LAFS_PACKAGE_DEPENDENCIES = [
     'python-simplejson',
 ]
 
-EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES = [
-    'python-jinja2',
-    'fabric',
-    'python-twisted',
-    'python-unidecode',
-    'python-tz',
-    'python-docutils',
-    'python-markdown',
-]
-
 # The default 'pty=True' behaviour is unsafe because, when we are invoked via flapp,
 # we don't want the flapp client to be able to influence the ssh remote command's stdin.
 # pty=False will cause fabric to echo stdin, but that's fine.
@@ -320,110 +310,6 @@ def tag_push_checkout(local_repo_gitdir, src_ref_SHA1, host_IP_address, live_pat
     with cd(live_path):
         run_git('checkout %s' % (q_unique_tag,))
         run_git('checkout -b %s' % (q_unique_tag,))
-
-def setup_git_deploy(host_IP_address, admin_privkey_path, git_ssh_path, live_path, local_repo_gitdir,
-                     src_ref_SHA1):
-    if live_path.endswith('/') or not os.path.isabs(live_path):
-        bad_path = u"%s" % (live_path,)
-        error_message = u"live_path is: '%s': but the path must be absolute and not end with /" % (bad_path)
-        raise PathFormatError(error_message)
-
-    q_live_path = shell_quote(live_path)
-    q_update_hook_path = shell_quote('%s/.git/hooks/post-update' % (live_path,))
-
-    run('rm -rf %s' % (q_live_path,))
-    run_git('init %s' % (q_live_path,))
-    write(GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE % (live_path,), q_update_hook_path)
-    run('chmod -f +x %s' % (q_update_hook_path,))
-
-    tag_push_checkout(local_repo_gitdir, src_ref_SHA1, host_IP_address, live_path, git_ssh_path,
-                      admin_privkey_path)
-
-def run_unattended_upgrade(api, seconds_for_reboot_pause):
-    sudo_apt_get('update')
-    sudo('unattended-upgrade --minimal_upgrade_steps')
-    api.reboot(seconds_for_reboot_pause)
-
-def run_flapp_web_servers():
-    with cd('/home/website/leastauthority.com'):
-        # FIXME: make idempotent
-        if not files.exists('/home/website/leastauthority.com/flapp'):
-            run('flappserver create /home/website/leastauthority.com/flapp')
-            run('flappserver add /home/website/leastauthority.com/flapp run-command --accept-stdin /home/website/leastauthority.com /home/website/leastauthority.com/full_signup.sh | tail -1 | cut -d " " -f3 > /home/website/secret_config/signup.furl')
-        run('./runsite.sh')
-
-def install_infrastructure_server(publichost, admin_privkey_path, website_pubkey,
-                                  leastauth_repo_gitdir, leastauth_commit_hash,
-                                  secret_config_repo_gitdir, secret_config_commit_hash,
-                                  stdout, stderr):
-    """
-    This is the code that sets up the infrastructure server.
-    This is intended to be idempotent.
-
-    Known sources of non-idempotence:
-        - setup_git_deploy
-    """
-    set_host_and_key(publichost, admin_privkey_path)
-    print >>stdout, "Updating server..."
-    run_unattended_upgrade(api, UNATTENDED_UPGRADE_REBOOT_SECONDS)
-    postfixdebconfstring="""# General type of mail configuration:
-# Choices: No configuration, Internet Site, Internet with smarthost, Satellite system, Local only
-postfix	postfix/main_mailer_type select	No configuration"""
-
-    print >>stdout, "Installing dependencies..."
-    package_list = TAHOE_LAFS_PACKAGE_DEPENDENCIES + EXTRA_INFRASTRUCTURE_PACKAGE_DEPENDENCIES
-    apt_install_dependencies(stdout, package_list)
-
-    sudo('pip install --upgrade stripe pem')
-
-    write(postfixdebconfstring, '/home/ubuntu/postfixdebconfs.txt')
-    sudo('debconf-set-selections /home/ubuntu/postfixdebconfs.txt')
-    sudo_apt_get('install -y postfix')
-
-    run('wget https://pypi.python.org/packages/source/p/pelican/pelican-3.2.2.tar.gz')
-    run('tar zxf pelican-3.2.2.tar.gz')
-    with cd('pelican-3.2.2'):
-        sudo('python setup.py install')
-
-    create_account('website', website_pubkey, stdout, stderr)
-
-    sudo_apt_get('install -y authbind')
-    sudo('touch /etc/authbind/byport/{443,80}')
-    sudo('chown website:root /etc/authbind/byport/{443,80}')
-    sudo('chmod -f 744 /etc/authbind/byport/{443,80}')
-
-    # patch twisted to send intermediate certs, cf. https://github.com/LeastAuthority/leastauthority.com/issues/6
-    sudo("sed --in-place=bak 's/[.]use_certificate_file[(]/.use_certificate_chain_file(/g' $(python -c 'import twisted, os; print os.path.dirname(twisted.__file__)')/internet/ssl.py")
-
-    set_host_and_key(publichost, admin_privkey_path, 'website')
-    git_ssh_path = os.path.join(os.path.dirname(leastauth_repo_gitdir), 'git_ssh.sh')
-    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/leastauthority.com',
-                     leastauth_repo_gitdir, leastauth_commit_hash)
-    setup_git_deploy(publichost, admin_privkey_path, git_ssh_path, '/home/website/secret_config',
-                     secret_config_repo_gitdir, secret_config_commit_hash)
-
-    with cd('/home/website/'):
-        if not files.exists('signup_logs'):
-            run('mkdir signup_logs')
-        if not files.exists('secrets'):
-            run('mkdir secrets')
-
-    with cd('/home/website/secret_config'):
-        run('chmod -f 400 *pem')
-
-    run_flapp_web_servers()
-    set_up_crontab(INFRASTRUCTURE_CRONTAB, '/home/website/ctab')
-
-def update_leastauthority_repo(publichost, leastauth_repo_workdir, leastauth_commit_hash, admin_privkey_path):
-    set_host_and_key(publichost, admin_privkey_path, 'website')
-
-    leastauth_repo_gitdir = os.path.join(leastauth_repo_workdir, '.git')
-    live_path = '/home/website/leastauthority.com'
-    git_ssh_path = os.path.join(leastauth_repo_workdir, 'git_ssh.sh')
-
-    tag_push_checkout(leastauth_repo_gitdir, leastauth_commit_hash, publichost, live_path, git_ssh_path,
-                      admin_privkey_path)
-    run_flapp_web_servers()
 
 def update_blog(publichost, blog_repo_gitdir, blog_commit_hash, git_ssh_path, admin_privkey_path):
     set_host_and_key(publichost, admin_privkey_path, 'website')
