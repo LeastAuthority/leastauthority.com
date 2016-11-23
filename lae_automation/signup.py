@@ -129,12 +129,6 @@ class DeploymentConfiguration(object):
     usertoken = attr.ib()
     producttoken = attr.ib()
 
-    oldsecrets = attr.ib()
-    customer_email = attr.ib()
-    customer_pgpinfo = attr.ib()
-    secretsfile = attr.ib()
-    serverinfopath = attr.ib(default="../serverinfo.csv")
-
     ssec2_access_key_id = attr.ib()
     ssec2_secret_path = attr.ib()
 
@@ -143,6 +137,12 @@ class DeploymentConfiguration(object):
 
     monitor_pubkey_path = attr.ib()
     monitor_privkey_path = attr.ib()
+
+    oldsecrets = attr.ib()
+    customer_email = attr.ib()
+    customer_pgpinfo = attr.ib()
+    secretsfile = attr.ib()
+    serverinfopath = attr.ib(default="../serverinfo.csv")
 
 
 # TODO: too many args. Consider passing them in a dict.
