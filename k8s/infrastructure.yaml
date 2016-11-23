@@ -83,6 +83,12 @@ spec:
       - name: 'flapp-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-flapp-pvc'
+      # Kubernetes manages some of the secrets we require.  Mount
+      # them into the container.
+      - name: 'web-secrets'
+        secret:
+          secretName: 'website-certificate'
+
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/

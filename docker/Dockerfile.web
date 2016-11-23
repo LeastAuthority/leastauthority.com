@@ -16,8 +16,9 @@ CMD env && mkdir -p /app/data/logs && \
     PYTHONPATH="/app/code" /app/env/bin/python -u /app/code/lae_site/main.py \
     \
     --secure-port=ssl:port=8443:\
-certKey=/app/secret_config/rapidssl/server.crt:\
-privateKey=/app/secret_config/rapidssl/server.key\
+certKey=/app/k8s_secrets/website-cert.pem:\
+privateKey=/app/k8s_secrets/website-key.pem:\
+extraCertChain=/app/k8s_secrets/website-chain.pem:\
     \
     --insecure-port=tcp:8080 \
     --redirect-to-port "${S4_SERVICE_PORT_HTTPS_SERVER}" \
