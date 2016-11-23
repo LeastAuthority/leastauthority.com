@@ -123,10 +123,10 @@ def main(reactor, *argv):
         if not log_dir.isdir():
             make_dirs(log_dir.path)
 
-    flapp_stdout = log_dir.child('stdout')
-    flapp_stderr = log_dir.child('stderr')
+    flapp_stdout = log_dir.child('stdout').open("a")
+    flapp_stderr = log_dir.child('stderr').open("a")
 
-    startLogging(flapp_stdout.open("a+"), setStdout=False)
+    startLogging(flapp_stdout, setStdout=False)
 
     return activate(
         secrets_dir,
