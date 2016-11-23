@@ -115,6 +115,9 @@ spec:
           name: 'web-data'
         - mountPath: '/app/flapp-data'
           name: 'flapp-data'
+        - name: 'web-secrets'
+          mountPath: '/app/k8s_secrets'
+          readOnly: true
 
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
