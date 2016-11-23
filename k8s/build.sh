@@ -39,7 +39,12 @@ ${EXEC} bash -e -x -c '
     # Find the git revision hash that was just checked out.
     # Use it as the Docker image tag so that the image can be
     # unambiguously associated with a revision of the software.
-    DOCKER_TAG=$(git --git-dir leastauthority.com/.git rev-parse HEAD)
+    # Use revisions from both repositories so a change in either gives
+    # a new tag and so we can identify exactly what sources any given
+    # image was built from.
+    TAG_FIRST=$(git --git-dir leastauthority.com/.git rev-parse --short HEAD)
+    TAG_SECOND=$(git --git-dir secret_config/.git rev-parse --short HEAD)
+    DOCKER_TAG="${TAG_FIRST}-${TAG_SECOND}"
 
     # Put the secrets in the place expected by the build.
     cp -a secret_config leastauthority.com;
