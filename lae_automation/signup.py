@@ -47,44 +47,29 @@ def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
 
-def activate_subscribed_service(customer_email, customer_pgpinfo, customer_id, subscription_id,
-                                plan_id, stdout, stderr, secretsfile, logfile,
-                                configpath='../secret_config/lae_automation_config.json',
-                                serverinfopath=None, clock=None):
+def activate_subscribed_service(deploy_config, stdout, stderr, logfile, clock=None):
     print >>stderr, "entering activate_subscribed_service call."
-    print >>stderr, "configpath is %s" % configpath
-    config = Config(configpath)
-    myclock = clock or reactor
+    if clock is None:
+        clock = reactor
 
-    s3_access_key_id = config.other["s3_access_key_id"]
-    s3_secret_path = config.other["s3_secret_path"]
-    s3_secretkey = FilePath(s3_secret_path).getContent().strip()
-
-    bucketname = get_bucket_name(subscription_id, customer_id)
     location = None  # default S3 location for now
 
-    print >>stderr, "plan_id is %s" % plan_id
-    product = lookup_product(config, plan_id)
-    fullname = product['plan_name']
-    amiimageid = product['ami_image_id']
-    instancesize = product['instance_size']
+    d = create_stripe_user_bucket(
+        deploy_config.s3_access_key_id,
+        deploy_config.s3_secret_key,
+        deploy_config.bucketname,
+        stdout,
+        stderr,
+        location,
+    )
 
-    print >>stdout, "Signing up customer for %s..." % (fullname,)
+    print >>stdout, "After create_stripe_account_user_bucket %s..." % (deploy_config,)
 
-    d = create_stripe_user_bucket(s3_access_key_id, s3_secretkey, bucketname, stdout, stderr, location)
+    d.addCallback(lambda ign: deploy_server(deploy_config, stdout, stderr, clock=clock))
 
-    print >>stdout, "After create_stripe_account_user_bucket %s..." % str(
-        (s3_access_key_id, s3_secretkey, bucketname,
-         None, amiimageid, instancesize,
-         customer_email, customer_pgpinfo, stdout, stderr,
-         secretsfile, config, serverinfopath, myclock))
-
-    d.addCallback(lambda ign: deploy_server(s3_access_key_id, s3_secretkey, None, None, bucketname,
-                                            None, amiimageid, instancesize,
-                                            customer_email, customer_pgpinfo, stdout, stderr,
-                                            secretsfile, config, serverinfopath, clock=myclock))
-
-    d.addErrback(lambda f: send_notify_failure(f, customer_email, logfile, stdout, stderr))
+    d.addErrback(lambda f: send_notify_failure(
+        f, deploy_config.customer_email, logfile, stdout, stderr,
+    ))
     return d
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
@@ -98,41 +83,101 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     producttoken  = oldsecrets.get('product_token', None)  # DevPay only
     bucketname    = oldsecrets["bucket_name"]
 
-    d = deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
-                      bucketname, oldsecrets, amiimageid, instancesize,
-                      customer_email, None, stdout, stderr,
-                      secretsfile, config, serverinfopath, clock)
+    deploy_config = DeploymentConfiguration(
+        s3_access_key_id=s3_access_key_id,
+        s3_secret_key=s3_secretkey,
+        bucketname=bucketname,
+        amiimageid=amiimageid,
+        instancesize=instancesize,
+
+        usertoken=usertoken,
+        producttoken=producttoken,
+
+        oldsecrets=oldsecrets,
+        customer_email=customer_email,
+        customer_pgpinfo=None,
+        secretsfile=secretsfile,
+        serverinfopath=serverinfopath,
+
+        ssec2_access_key_id=config["ssec2_access_key_id"],
+        ssec2_secret_path=config["ssec2_secret_path"],
+
+        ssec2admin_keypair_name=config["ssec2admin_keypair_name"],
+        ssec2admin_keypair_path=config["ssec2admin_keypair_path"],
+
+        monitor_pubkey_path=config["monitor_pubkey_path"],
+        monitor_privkey_path=config["monitor_privkey_path"],
+    )
+
+    d = deploy_server(deploy_config, stdout, stderr, clock)
     d.addErrback(lambda f: send_notify_failure(f, customer_email, logfilename, stdout,
                                                stderr))
     return d
 
-# TODO: too many args. Consider passing them in a dict.
-def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
-                  bucketname, oldsecrets, amiimageid, instancesize,
-                  customer_email, customer_pgpinfo, stdout, stderr,
-                  secretsfile, config, serverinfopath=None, clock=None):
-    serverinfopath = serverinfopath or '../serverinfo.csv'
-    myclock = clock or reactor
 
-    ec2accesskeyid = config.other["ssec2_access_key_id"]
-    ec2secretpath = config.other["ssec2_secret_path"]
+import attr
+
+@attr.s(frozen=True)
+class DeploymentConfiguration(object):
+    s3_access_key_id = attr.ib()
+    s3_secret_key = attr.ib(repr=False)
+    bucketname = attr.ib()
+    amiimageid = attr.ib()
+    instancesize = attr.ib()
+
+    # DevPay configuration.  Just for TLoS3, probably obsolete.
+    usertoken = attr.ib()
+    producttoken = attr.ib()
+
+    oldsecrets = attr.ib()
+    customer_email = attr.ib()
+    customer_pgpinfo = attr.ib()
+    secretsfile = attr.ib()
+    serverinfopath = attr.ib(default="../serverinfo.csv")
+
+    ssec2_access_key_id = attr.ib()
+    ssec2_secret_path = attr.ib()
+
+    ssec2admin_keypair_name = attr.ib()
+    ssec2admin_keypair_path = attr.ib()
+
+    monitor_pubkey_path = attr.ib()
+    monitor_privkey_path = attr.ib()
+
+
+# TODO: too many args. Consider passing them in a dict.
+def deploy_server(deploy_config, stdout, stderr, clock=None):
+    if clock is None:
+        clock = reactor
+
+    ec2accesskeyid = deploy_config.ssec2_access_key_id
+    ec2secretpath = deploy_config.ssec2_secret_path
     ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
-    instancename = customer_email  # need not be unique
+    instancename = deploy_config.customer_email  # need not be unique
 
-    admin_keypair_name = str(config.other['ssec2admin_keypair_name'])
-    admin_privkey_path = str(config.other['ssec2admin_privkey_path'])
-    monitor_pubkey = FilePath(str(config.other['monitor_pubkey_path'])).getContent().strip()
-    monitor_privkey_path = str(config.other['monitor_privkey_path'])
+    admin_keypair_name = str(deploy_config.ssec2admin_keypair_name)
+    admin_privkey_path = str(deploy_config.ssec2admin_privkey_path)
+    monitor_pubkey = FilePath(str(deploy_config.monitor_pubkey_path)).getContent().strip()
+    monitor_privkey_path = str(deploy_config.monitor_privkey_path)
 
     # XXX Here's where we decide whether the new signup goes to a new EC2.
-    d = deploy_EC2_instance(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, amiimageid,
-                            instancesize, bucketname, admin_keypair_name, instancename,
-                            stdout, stderr)
+    d = deploy_EC2_instance(
+        ec2accesskeyid,
+        ec2secretkey,
+        EC2_ENDPOINT,
+        deploy_config.amiimageid,
+        deploy_config.instancesize,
+        deploy_config.bucketname,
+        admin_keypair_name,
+        instancename,
+        stdout,
+        stderr,
+    )
 
     def _deployed(instance):
         print >>stdout, "Waiting %d seconds for the server to be ready..." % (ADDRESS_DELAY_TIME,)
-        d2 = task.deferLater(myclock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
+        d2 = task.deferLater(clock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
                              ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr, POLL_TIME,
                              ADDRESS_WAIT_TIME, instance.instance_id)
 
@@ -161,21 +206,38 @@ def deploy_server(s3_access_key_id, s3_secretkey, usertoken, producttoken,
                         time.sleep(LISTEN_POLL_TIME)
                         continue
 
-                furl = bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
-                                     s3_secretkey, usertoken, producttoken, bucketname, oldsecrets,
-                                     stdout, stderr, secretsfile)
+                furl = bounce_server(
+                    publichost,
+                    admin_privkey_path,
+                    privatehost,
+                    deploy_config.s3_access_key_id,
+                    deploy_config.s3_secret_key,
+                    deploy_config.usertoken,
+                    deploy_config.producttoken,
+                    deploy_config.bucketname,
+                    deploy_config.oldsecrets,
+                    stdout,
+                    stderr,
+                    deploy_config.secretsfile,
+                )
 
                 # XXX We probably need to rethink this:
-                append_record(FilePath(serverinfopath), instance.launch_time, instance.instance_id,
+                append_record(FilePath(deploy_config.serverinfopath), instance.launch_time, instance.instance_id,
                               publichost)
 
                 print >>stderr, "Signup done."
                 d4 = defer.succeed(None)
-                if not oldsecrets:
-                    d4.addCallback(lambda ign: send_signup_confirmation(publichost,
-                                                                        customer_email, furl,
-                                                                        customer_pgpinfo,
-                                                                        stdout, stderr) )
+                if not deploy_config.oldsecrets:
+                    d4.addCallback(
+                        lambda ign: send_signup_confirmation(
+                            publichost,
+                            deploy_config.customer_email,
+                            furl,
+                            deploy_config.customer_pgpinfo,
+                            stdout,
+                            stderr,
+                        )
+                    )
                 return d4
             d3.addCallback(_got_sshfp)
             return d3

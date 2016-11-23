@@ -14,6 +14,8 @@ from twisted.python.filepath import FilePath
 from twisted.internet import defer
 
 from lae_automation.signup import create_log_filepaths
+from lae_automation.signup import lookup_product
+from lae_automation.signup import get_bucket_name
 from lae_automation.signup import activate_subscribed_service
 from lae_util.streams import LoggingStream
 from lae_util.servers import append_record
@@ -51,15 +53,43 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         fh.close()
         return err
 
+    print >>stderr, "plan_id is %s" % plan_id
+
+    config = Config(automation_config_path.path)
+    product = lookup_product(config, plan_id)
+    fullname = product['plan_name']
+    print >>stdout, "Signing up customer for %s..." % (fullname,)
+
+    deploy_config = DeploymentConfiguration(
+        s3_access_key_id=config.other["s3_access_key_id"],
+        s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip(),
+        bucketname=get_bucket_name(subscription_id, customer_id),
+        amiimageid=product['ami_image_id']
+        instancesize=product['instance_size'],
+
+        usertoken=None,
+        producttoken=None,
+
+        oldsecrets=None,
+        customer_email=customer_email,
+        customer_pgpinfo=customer_pgpinfo,
+        secretsfile=secretsfile,
+        serverinfopath=serverinfopath,
+
+        ssec2_access_key_id=config["ssec2_access_key_id"],
+        ssec2_secret_path=config["ssec2_secret_path"],
+
+        ssec2admin_keypair_name=config["ssec2admin_keypair_name"],
+        ssec2admin_keypair_path=config["ssec2admin_keypair_path"],
+
+        monitor_pubkey_path=config["monitor_pubkey_path"],
+        monitor_privkey_path=config["monitor_privkey_path"],
+    )
+
     d = defer.succeed(None)
-    d.addCallback(lambda ign: activate_subscribed_service(customer_email, customer_pgpinfo,
-                                                          customer_id, subscription_id,
-                                                          plan_id,
-                                                          signup_stdout, signup_stderr,
-                                                          SSEC2_secretsfile, signup_log_fp.path,
-                                                          configpath=automation_config_path.path,
-                                                          serverinfopath=server_info_path.path)
-                  )
+    d.addCallback(lambda ign: activate_subscribed_service(
+        deploy_config, signup_stdout, signup_stderr, signup_log_fp.path,
+    ))
     d.addErrback(errhandler)
     d.addBoth(lambda ign: signup_logfile.close())
     return d
