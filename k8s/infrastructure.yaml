@@ -83,6 +83,12 @@ spec:
       - name: 'flapp-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-flapp-pvc'
+      # Kubernetes manages some of the secrets we require.  Mount
+      # them into the container.
+      - name: 'web-secrets'
+        secret:
+          secretName: 'website-secrets'
+
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -109,6 +115,9 @@ spec:
           name: 'web-data'
         - mountPath: '/app/flapp-data'
           name: 'flapp-data'
+        - name: 'web-secrets'
+          mountPath: '/app/k8s_secrets'
+          readOnly: true
 
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
