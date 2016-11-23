@@ -23,8 +23,8 @@ from lae_util.streams import LoggingStream
 from lae_util.servers import append_record
 from lae_util.fileutil import make_dirs
 
-def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout, flapp_stderr):
-    append_record(flapp_stdout.name, "Automation script started.")
+def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout_path, flapp_stderr_path):
+    append_record(flapp_stdout_path, "Automation script started.")
     parameters_json = stdin.read()
     (customer_email,
      customer_pgpinfo,
@@ -39,7 +39,7 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         secrets_dir, plan_id, customer_id, subscription_id,
     )
 
-    append_record(flapp_stdout.name, "Writing logs to %r." % (abslogdir_fp.path,))
+    append_record(flapp_stdout_path, "Writing logs to %r." % (abslogdir_fp.path,))
 
     stripesecrets_log_fp.setContent(parameters_json)
 
@@ -50,15 +50,18 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
     sys.stdout = signup_stderr
 
     def errhandler(err):
-        err.printTraceback(flapp_stderr)
+        with flapp_stderr_path.open("a") as fh:
+            err.printTraceback(fh)
         return err
 
-    print >>flapp_stderr, "plan_id is %s" % plan_id
+    with flapp_stderr_path.open("a") as stderr:
+        print >>stderr, "plan_id is %s" % plan_id
 
     config = Config(automation_config_path.path)
     product = lookup_product(config, plan_id)
     fullname = product['plan_name']
-    print >>flapp_stdout, "Signing up customer for %s..." % (fullname,)
+    with flapp_stdout_path.open("a") as stdout:
+        print >>stdout, "Signing up customer for %s..." % (fullname,)
 
     deploy_config = DeploymentConfiguration(
         s3_access_key_id=config.other["s3_access_key_id"],
@@ -121,13 +124,13 @@ def main(reactor, *argv):
         if not log_dir.isdir():
             make_dirs(log_dir.path)
 
-    flapp_stdout = log_dir.child('stdout').open("a")
-    flapp_stderr = log_dir.child('stderr').open("a")
+    flapp_stdout_path = log_dir.child('stdout')
+    flapp_stderr_path = log_dir.child('stderr')
 
-    startLogging(flapp_stdout, setStdout=False)
+    startLogging(flapp_stdout_path.open("a"), setStdout=False)
 
     return activate(
         secrets_dir,
         o["automation-config-path"], o["server-info-path"],
-        sys.stdin, flapp_stdout, flapp_stderr,
+        sys.stdin, flapp_stdout_path, flapp_stderr_path,
     )
