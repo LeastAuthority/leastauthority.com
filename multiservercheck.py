@@ -22,15 +22,15 @@ endpoint_uri = 'https://ec2.us-east-1.amazonaws.com/'
 config = Config()
 
 service_lower = service.lower()
-ssec2_secret_path = '../secret_config/%s_secret' % (service_lower,)
-ssec2_accesskeyid_path = '../secret_config/%s_accesskeyid' % (service_lower,)
+ssec2_secret_path = '../k8s_secrets/%s.key' % (service_lower,)
+ssec2_accesskeyid_path = '../k8s_secrets/%s.id' % (service_lower,)
 
 ssec2_secret = FilePath(ssec2_secret_path).getContent().strip()
 ssec2_accesskeyid = FilePath(ssec2_accesskeyid_path).getContent().strip()
 serverinfo_csv_path = '../%s_serverinfo.csv' % (service_lower,)
 lasterrors_path = '../%s_lasterrors.txt' % (service_lower,)
 
-monitor_privkey_path = '../secret_config/%s_monitorkeys.pem' % (service_lower,)
+monitor_privkey_path = '../k8s_secrets/%s-monitorkey.pem' % (service_lower,)
 
 serverinfo_tuple = read_serverinfo(serverinfo_csv_path)
 local_state = {}

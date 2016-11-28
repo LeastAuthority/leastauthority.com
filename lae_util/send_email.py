@@ -19,7 +19,7 @@ PGP_NOTIFICATION_EMAIL = "zancas@leastauthority.com"
 SMTP_HOST = "smtp.googlemail.com"
 SMTP_PORT = 25
 SMTP_USERNAME = FROM_EMAIL
-SMTP_PASSWORD_PATH = "../secret_config/smtppassword"
+SMTP_PASSWORD_PATH = "../k8s_secrets/smtp.password"
 REQUIRE_AUTH = True
 REQUIRE_TRANSPORT_SECURITY = True
 
