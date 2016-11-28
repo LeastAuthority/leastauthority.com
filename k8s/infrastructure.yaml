@@ -88,6 +88,9 @@ spec:
       - name: 'web-secrets'
         secret:
           secretName: 'website-secrets'
+      - name: 'flapp-secrets'
+        secret:
+          secretName: 'signup-secrets'
 
 
       # Read about containers at
@@ -128,7 +131,7 @@ spec:
         volumeMounts:
         - mountPath: '/app/data'
           name: 'flapp-data'
-        - name: 'web-secrets'
+        - name: 'flapp-secrets'
           mountPath: '/app/k8s_secrets'
           readOnly: true
 
