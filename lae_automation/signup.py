@@ -84,6 +84,7 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     bucketname    = oldsecrets["bucket_name"]
 
     deploy_config = DeploymentConfiguration(
+        products=config.products,
         s3_access_key_id=s3_access_key_id,
         s3_secret_key=s3_secretkey,
         bucketname=bucketname,
@@ -117,8 +118,13 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
 
 import attr
 
+def _validate_products(instance, attribute, value):
+    if len(value) == 0:
+        raise ValueError("At least one product is required.")
+
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
+    products = attr.ib(validator=_validate_products)
     s3_access_key_id = attr.ib()
     s3_secret_key = attr.ib(repr=False)
     bucketname = attr.ib()
