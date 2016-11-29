@@ -68,7 +68,7 @@ class RedirectToHTTPS(Resource):
             newpath.netloc = host
         else:
             newpath.netloc = "%s:%d" % (host, self.port)
-        return redirectTo(newpath, request)
+        return redirectTo(bytes(newpath), request)
 
     def getChild(self, name, request):
         return self

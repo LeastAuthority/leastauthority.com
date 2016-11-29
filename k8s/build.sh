@@ -39,10 +39,16 @@ ${EXEC} bash -e -x -c '
     # Find the git revision hash that was just checked out.
     # Use it as the Docker image tag so that the image can be
     # unambiguously associated with a revision of the software.
-    DOCKER_TAG=$(git --git-dir leastauthority.com/.git rev-parse HEAD)
+    # Use revisions from both repositories so a change in either gives
+    # a new tag and so we can identify exactly what sources any given
+    # image was built from.
+    TAG_FIRST=$(git --git-dir leastauthority.com/.git rev-parse --short HEAD)
+    TAG_SECOND=$(git --git-dir secret_config/.git rev-parse --short HEAD)
+    DOCKER_TAG="${TAG_FIRST}-${TAG_SECOND}"
 
     # Put the secrets in the place expected by the build.
-    cp -a secret_config leastauthority.com;
+    git --git-dir secret_config/.git archive --prefix leastauthority.com/secret_config/ HEAD \
+        | tar x --exclude k8s
 
     # Build the images.
     ./leastauthority.com/docker/build.sh;
@@ -51,6 +57,7 @@ ${EXEC} bash -e -x -c '
     # with the tag given in the environment.
     docker tag leastauthority/web 127.0.0.1:30000/leastauthority/web:"${DOCKER_TAG}"
     docker tag leastauthority/flapp 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
+    docker tag leastauthority/magicwormhole 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
 
     # Clean up the last portforwarder, if necessary.
     [ -e /tmp/portforward.pid ] && kill $(cat /tmp/portforward.pid) || /bin/true
@@ -66,6 +73,7 @@ ${EXEC} bash -e -x -c '
     # And push them.
     docker push 127.0.0.1:30000/leastauthority/web:"${DOCKER_TAG}"
     docker push 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
+    docker push 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
 
-    echo "Tagged images with ${DOCKER_TAG}."
+    echo "Tagged images with ${DOCKER_TAG}"
 '

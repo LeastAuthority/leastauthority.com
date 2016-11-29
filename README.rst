@@ -31,34 +31,7 @@ Configuring a correct deployment requires these steps:
 Initial Webserver Deployment
 ============================
 
-XXX Should break this into two sections: Deploy EC2 and Deploy Webserver
-
-1. Deploy the correct ec2 image.
-2. Checkout the website repository into the correct place.
-   The repo is at ``leastauthority.com:/home/website/leastauthority.com``
-   By default /home/website is the parent repo.  This directory contains:
-
-   * leastauthority.com/:  The parent directory of the server code
-   * signup.furl:   The furl for the flappserver signup service
-   * lae_site_config.json: Contains the available product info.
-   * lae_automation_config.json:  Contains product secrets, credential paths.
-3. Install the correct dependencies.
-
-   * foolscap:  for the flappserver
-   * jinja2:    handles webserver templates
-4. Set up the correct website user account.
-
-   * 'website'
-5. Checkout the website configuration repository for the target deployment environment.
-
-   * 'leastauthority.com:/home/website'
-6. Run the webserver.
-
-   * You can do this by modifying: 'setuplocalserver.sh' to your system.  XXX Obviously much remains to be done here.
-7. Ensure the instance has a static IP address.
-8. Test the website in your browser by its IP address.
-9. Update the DNS entry for the website host to point to the new IP address.
-
+See ``docs/operations.rst``
 
 Configuration File
 ==================
@@ -75,9 +48,4 @@ have set up a particular application and billing configuration.
 Upgrade
 =======
 
-Follow the same steps as for "initial deployment", except you will have
-a new instance with a new IP.  In the last step, you will cause new DNS
-requests to target the new server instance.
-
-Wait the appropriate amount of time before taking down the old instance
-because remote browsers may be relying on cached DNS entries.
+See ``docs/operations.rst``

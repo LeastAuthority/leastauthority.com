@@ -27,10 +27,25 @@ spec:
   type: LoadBalancer
 
   ports:
-  # Define the service's one HTTPS port.
+  # Define the service's one HTTPS port.  This also causes
+  # S4_SERVICE_PORT_HTTPS_SERVER to be set in the container's
+  # environment.  This lets the container know where the HTTPS server
+  # is really listening, avoiding the need to hard-code that
+  # information into the container's image.
   - name: 'https-server'
     port: 443
     targetPort: 8443
+    protocol: 'TCP'
+  # It also redirects from HTTP to HTTPS.
+  - name: 'http-server'
+    port: 80
+    targetPort: 8080
+    protocol: 'TCP'
+  - name: 'wormhole-relay'
+    port: 4000
+    protocol: 'TCP'
+  - name: 'wormhole-transit-relay'
+    port: 4001
     protocol: 'TCP'
 ---
 # Read about deployments at
@@ -68,6 +83,12 @@ spec:
       - name: 'flapp-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-flapp-pvc'
+      # Kubernetes manages some of the secrets we require.  Mount
+      # them into the container.
+      - name: 'web-secrets'
+        secret:
+          secretName: 'website-secrets'
+
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -82,10 +103,11 @@ spec:
         # localhost resolution for the purposes of image pulls.
         # Specifically, kops deploys a cluster where localhost
         # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/web:e8877236a111df34c81b9f2fbb688541f9180560'
+        image: '127.0.0.1:30000/leastauthority/web:0089f685fd1c19eaeed31d24a9902a11de865e61'
         ports:
-        # We just happen to know this is the port this container listens on.
+        # We just happen to know this is the ports this container listens on.
         - containerPort: 8443
+        - containerPort: 8080
         volumeMounts:
         # We just happen to know these are the paths the container
         # wants to use for interesting, persistent state.
@@ -93,16 +115,34 @@ spec:
           name: 'web-data'
         - mountPath: '/app/flapp-data'
           name: 'flapp-data'
+        - name: 'web-secrets'
+          mountPath: '/app/k8s_secrets'
+          readOnly: true
 
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
         # See above for explanation of 127.0.0.1
-        image: '127.0.0.1:30000/leastauthority/flapp:e8877236a111df34c81b9f2fbb688541f9180560'
+        image: '127.0.0.1:30000/leastauthority/flapp:0089f685fd1c19eaeed31d24a9902a11de865e61'
         ports:
         - containerPort: 3116
         volumeMounts:
         - mountPath: '/app/data'
           name: 'flapp-data'
+
+      # This is the wormhole relay server.  It will help people get
+      # introduced to their grid, someday.
+      - name: 'wormhole-relay'
+        # This image is hosted by the cluster-private registry.
+        # XXX This avoids `localhost` because different k8s
+        # deployments seem to have different behavior with respect to
+        # localhost resolution for the purposes of image pulls.
+        # Specifically, kops deploys a cluster where localhost
+        # resolves to [::1] where the registry is not available.
+        image: '127.0.0.1:30000/leastauthority/magicwormhole:e9b33b30f4ac5330e74c699da9c1953b99c30d9c'
+        ports:
+        # We just happen to know this is the ports this container listens on.
+        - containerPort: 4000
+        - containerPort: 4001
 ---
 # Read about PersistentVolumeClaims at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
