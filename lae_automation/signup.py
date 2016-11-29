@@ -147,7 +147,7 @@ class DeploymentConfiguration(object):
     oldsecrets = attr.ib()
     customer_email = attr.ib()
     customer_pgpinfo = attr.ib()
-    secretsfile = attr.ib()
+    secretsfile = attr.ib(validator=attr.validators.instance_of(file))
     serverinfopath = attr.ib(default="../serverinfo.csv")
 
 

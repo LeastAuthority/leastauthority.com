@@ -118,26 +118,26 @@ class TestSignupModule(TestCase):
             products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
-            bucketname="fake bucket name",
-            amiimageid="fake ami id",
+            bucketname="lae-" + self.MENCODED_IDS,
+            amiimageid="ami-deadbeef", # XXX Where does this come from?  Who knows.
             instancesize="fake instance size",
 
             usertoken=None,
             producttoken=None,
 
-            ssec2_access_key_id=ZEROPRODUCT["ec2_access_key_id"],
-            ssec2_secret_path=MOCKEC2SECRETCONTENTS,
+            ssec2_access_key_id=ZEROPRODUCT["s3_access_key_id"],
+            ssec2_secret_path=self.S3SECRETPATH,
 
             ssec2admin_keypair_name=ZEROPRODUCT["admin_keypair_name"],
-            ssec2admin_privkey_path="fake ssec2 admin privkey path",
+            ssec2admin_privkey_path=ZEROPRODUCT["admin_privkey_path"],
 
             monitor_pubkey_path=ZEROPRODUCT["monitor_pubkey_path"],
-            monitor_privkey_path="fake monitor privkey path",
+            monitor_privkey_path=ZEROPRODUCT["monitor_privkey_path"],
 
             oldsecrets=None,
             customer_email=self.MEMAIL,
-            customer_pgpinfo=None,
-            secretsfile=self.MSECRETSFILE,
+            customer_pgpinfo=self.MKEYINFO,
+            secretsfile=open(self.MSECRETSFILE, "a+b"),
             serverinfopath=self.SERVERINFOPATH,
         )
 
@@ -228,7 +228,10 @@ class TestSignupModule(TestCase):
             self.failUnlessEqual(s3_secretkey, 'S3'*20)
             self.failUnlessEqual(bucket_name, "lae-" + self.MENCODED_IDS)
             self.failUnlessEqual(oldsecrets, None)
-            self.failUnless(secretsfile.name.endswith('secrets/XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX/1970-01-01T000000Z-%s/SSEC2' % (self.MENCODED_IDS,)), secretsfile.name)
+            expected_suffix = 'secrets/XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX/1970-01-01T000000Z-%s/SSEC2' % (self.MENCODED_IDS,)
+            self.assertTrue(
+                secretsfile.name.endswith(expected_suffix),
+                secretsfile.name)
         self.patch(signup, 'bounce_server', call_bounce_server)
 
         def call_send_signup_confirmation(publichost, customer_email, furl, customer_keyinfo, stdout,
@@ -281,8 +284,13 @@ class TestSignupModule(TestCase):
             return MOCKSERVERSSHFP
         self.patch(queryapi, 'hostpubkeyextractor', call_hostpubkeyextractor)
 
-        d = signup.activate_subscribed_service(
+        config = attr.assoc(
             self.DEPLOYMENT_CONFIGURATION,
+            secretsfile=MSSEC2SECRETSFILE,
+        )
+        attr.validate(config)
+        d = signup.activate_subscribed_service(
+            config,
             stdout, stderr,
             MLOGFILENAME,
         )
@@ -311,10 +319,12 @@ class TestSignupModule(TestCase):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
 
-        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID,
-                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr,
-                                               MSSEC2_secretsfile, MLOGFILENAME, self.CONFIGFILEPATH,
-                                               self.SERVERINFOPATH)
+        config = attr.assoc(
+            self.DEPLOYMENT_CONFIGURATION,
+            secretsfile=MSSEC2_secretsfile,
+        )
+        attr.validate(config)
+        d = signup.activate_subscribed_service(config, stdout, stderr, MLOGFILENAME)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -336,10 +346,12 @@ class TestSignupModule(TestCase):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_consoleoutput', call_get_EC2_consoleoutput)
 
-        d = signup.activate_subscribed_service(self.MEMAIL, self.MKEYINFO, self.MCUSTOMER_ID,
-                                               self.MSUBSCRIPTION_ID, self.MPLAN_ID, stdout, stderr,
-                                               MSSEC2_secretsfile, MLOGFILENAME, self.CONFIGFILEPATH,
-                                               self.SERVERINFOPATH)
+        config = attr.assoc(
+            self.DEPLOYMENT_CONFIGURATION,
+            secretsfile=MSSEC2_secretsfile,
+        )
+        attr.validate(config)
+        d = signup.activate_subscribed_service(config, stdout, stderr, MLOGFILENAME)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
