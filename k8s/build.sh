@@ -20,8 +20,8 @@ ${EXEC} bash -e -x -c '
     dpkg --status ${DEPS} >/dev/null 2>&1 || apt-get update && apt-get install -y ${DEPS};
 '
 
-# First synchronize the secrets to the container.
-TEMP=$(tar c ./secret_config/ | ${EXEC} bash -c 'cd $(mktemp -d); tar x; pwd')
+# Get a fresh, clean space to work in.
+TEMP=$(${EXEC} bash -c 'mktemp -d')
 
 ${EXEC} bash -e -x -c '
     # Clone the git branch variable to the remote environment.
@@ -39,16 +39,7 @@ ${EXEC} bash -e -x -c '
     # Find the git revision hash that was just checked out.
     # Use it as the Docker image tag so that the image can be
     # unambiguously associated with a revision of the software.
-    # Use revisions from both repositories so a change in either gives
-    # a new tag and so we can identify exactly what sources any given
-    # image was built from.
-    TAG_FIRST=$(git --git-dir leastauthority.com/.git rev-parse --short HEAD)
-    TAG_SECOND=$(git --git-dir secret_config/.git rev-parse --short HEAD)
-    DOCKER_TAG="${TAG_FIRST}-${TAG_SECOND}"
-
-    # Put the secrets in the place expected by the build.
-    git --git-dir secret_config/.git archive --prefix leastauthority.com/secret_config/ HEAD \
-        | tar x --exclude k8s
+    DOCKER_TAG=$(git --git-dir leastauthority.com/.git rev-parse --short HEAD)
 
     # Build the images.
     ./leastauthority.com/docker/build.sh;

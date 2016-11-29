@@ -288,9 +288,7 @@ You can do this locally or you can use the k8s cluster to do it.
 Locally
 -------
 
-Get a checkout of the ``secret_config`` repository into your ``leastauthority.com`` checkout.
-These secrets will be added to the image and used by the container when it is run.
-Once they are in place, build the images with the build script in the ``leastauthority.com`` checkout::
+Use the build script in your ``leastauthority.com`` checkout to build the Docker images using your local Docker daemon::
 
   docker/build.sh
 
@@ -324,14 +322,15 @@ You are now done with the forwarded port and can kill ``kubectl``.
 Using K8S
 ---------
 
-Get a checkout of the ``secret_config`` repository.
-Once that is in place, use the k8s build script in the ``leastauthority.com`` checkout::
+Use the build script in your ``leastauthority.com`` checkout to build the Docker images in a pod running on a Kubernetes cluster::
 
   export K8S_POD=$(kubectl -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
   export GIT_BRANCH=master
   k8s/build.sh
 
 This will run steps similar to those for the local build described above but it will run them in a container on the k8s cluster.
+You can build images for a different git branch by changing the value of ``GIT_BRANCH``.
+The current ``HEAD`` revision of the branch as found on GitHub is what is built into the image.
 
 Check for Success
 -----------------
