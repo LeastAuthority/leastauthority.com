@@ -58,8 +58,7 @@ def load_ec2_credentials(config):
     creds = AWSCredentials(accesskeyid, secretkey)
     return creds
 
-def terminate_customer_server(email, customerid, secretsdirfp,
-                              configpath='../secret_config/lae_automation_config.json'):
+def terminate_customer_server(email, customerid, secretsdirfp, configpath=None):
     config = Config(configpath)
     signupfp = find_customer_signup(email, customerid, secretsdirfp)
     instanceid = find_instance_id_for_signup(signupfp)

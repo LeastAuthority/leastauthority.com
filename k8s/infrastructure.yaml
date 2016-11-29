@@ -88,6 +88,9 @@ spec:
       - name: 'web-secrets'
         secret:
           secretName: 'website-secrets'
+      - name: 'flapp-secrets'
+        secret:
+          secretName: 'signup-secrets'
 
 
       # Read about containers at
@@ -122,12 +125,15 @@ spec:
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
         # See above for explanation of 127.0.0.1
-        image: '127.0.0.1:30000/leastauthority/flapp:0089f685fd1c19eaeed31d24a9902a11de865e61'
+        image: '127.0.0.1:30000/leastauthority/flapp:ca66e29-9450a37'
         ports:
         - containerPort: 3116
         volumeMounts:
         - mountPath: '/app/data'
           name: 'flapp-data'
+        - name: 'flapp-secrets'
+          mountPath: '/app/k8s_secrets'
+          readOnly: true
 
       # This is the wormhole relay server.  It will help people get
       # introduced to their grid, someday.
