@@ -74,7 +74,7 @@ def activate_subscribed_service(deploy_config, stdout, stderr, logfile, clock=No
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
                    secretsfile, logfilename,
-                   configpath='../secret_config/lae_automation_config.json',
+                   configpath=None,
                    serverinfopath=None, clock=None):
     config = Config(configpath)
     s3_access_key_id = oldsecrets['access_key_id']

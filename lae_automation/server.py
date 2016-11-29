@@ -459,7 +459,7 @@ def make_external_furl(internal_furl, publichost):
 
 def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
                   user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
-                  configpath='../secret_config/lae_automation_config.json'):
+                  configpath=None):
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")
