@@ -272,6 +272,14 @@ You can now deploy the registry and web and flapp servers::
    This also creates an "image building" deployment which is not necessary for production operation but is helpful later in the setup process.
    You can skip creating this by identifying the registry and infrastructure configurations specifically, rather than the entire ``k8s`` directory.
 
+After the infrastructure resources are configured on the cluster, it's time to configure their credentials.
+The infrastructure resources need things like a private key and x509 certificate, an AWS API keys, etc.
+These are exposed via Kubernetes "secrets" resources.
+To create these resources, get a checkout of the ``secret_config`` repository.
+Then, run the ``k8s/create-secrets`` script it contains.
+By default, this creates resources in a "staging" namespace.
+To deploy production secrets, override this setting with ``--namespace default``.
+
 .. _build-docker-images:
 
 The next step is to build the Docker images for the site.
