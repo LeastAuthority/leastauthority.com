@@ -2,12 +2,17 @@ FROM leastauthority.com/tahoe-base
 
 RUN /app/env/bin/tahoe create-node /var/run/storageserver
 
+# Select an arbitrary non-privileged port on which to expose the tub.
+# This value doesn't really matter since the container orchestrator
+# can hook it up to any externally visible port they like.
+EXPOSE 12345
+
 CMD \
-    . /app/env/bin/activate \
-    && /app/put-secrets \
+    /app/env/bin/python /app/put-secrets \
     		storage \
-		/var/run/storageserver \
-		--tub-port "${LAE_TUB_PORT}" \
+		--root /var/run/storageserver \
+
+                --tub-port "${LAE_TUB_PORT}" \
 		--node-id "${LAE_NODEID}" \
 		--certificate "${LAE_CERTIFICATE}" \
 		--privatekey "${LAE_PRIVATEKEY}" \
