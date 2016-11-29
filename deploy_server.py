@@ -40,6 +40,7 @@ def cb(x):
 
 config = Config(configpath)
 deploy_config = DeploymentConfiguration(
+    products=config.products,
     s3_access_key_id=useraccesskeyid,
     s3_secret_key=usersecretkey,
     bucketname=bucketname,

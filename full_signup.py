@@ -64,6 +64,7 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         print >>stdout, "Signing up customer for %s..." % (fullname,)
 
     deploy_config = DeploymentConfiguration(
+        products=config.products,
         s3_access_key_id=config.other["s3_access_key_id"],
         s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip(),
         bucketname=get_bucket_name(subscription_id, customer_id),
