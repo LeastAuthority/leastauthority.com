@@ -65,54 +65,6 @@ enabled = false
 local.directory =
 """
 
-NGINX_CONFIG = """# You may add here your
-# server {
-#       ...
-# }
-# statements for each of your virtual hosts
-
-server {
-    listen 8443 default ssl;
-    server_name leastauthority.com;
-    ssl on;
-    ssl_certificate /home/website/secret_config/rapidssl/server.crt;
-    ssl_certificate_key /home/website/secret_config/rapidssl/server.key;
-
-    ssl_session_cache   shared:SSL:10m;
-    ssl_session_timeout 10000m;
-
-    ssl_protocols SSLv3 TLSv1;
-    ssl_ciphers RC4-SHA:AES128-SHA:DHE-DSS-AES128-SHA:DHE-RSA-AES128-SHA:AES256-SHA:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA;
-    ssl_prefer_server_ciphers on;
-
-    add_header Strict-Transport-Security max-age=100000;
-
-    add_header Cache-Control public;
-    expires 30d;
-
-    gzip on;
-    gzip_static on;
-    gzip_comp_level 9;
-    gzip_types *;
-
-    access_log /home/website/mailman/server.log;
-
-    # match https://leastauthority.com:8443/cgi-bin/mailman/listinfo/*
-    # and ask thttpd to run the CGI for us
-    location /cgi-bin {
-        expires off;
-        include proxy_params;
-        proxy_pass http://127.0.0.1:8581;
-    }
-    location /images/mailman {
-        alias /var/lib/mailman/icons;
-    }
-    location /pipermail {
-        alias /var/lib/mailman/archives/public;
-        autoindex on;
-    }
-}"""
-
 INFRASTRUCTURE_CRONTAB = """\
 @reboot /home/website/leastauthority.com/start.sh
 @reboot /home/website/cronbackupjob.sh
@@ -459,7 +411,7 @@ def make_external_furl(internal_furl, publichost):
 
 def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
                   user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
-                  configpath='../secret_config/lae_automation_config.json'):
+                  configpath=None):
     nickname = bucket_name
 
     set_host_and_key(publichost, admin_privkey_path, username="customer")

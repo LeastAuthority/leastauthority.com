@@ -6,7 +6,7 @@ from twisted.internet import reactor
 from twisted.python.failure import Failure
 
 from lae_automation.config import Config
-from lae_automation.signup import deploy_server
+from lae_automation.signup import DeploymentConfiguration, deploy_server
 
 
 if len(sys.argv) < 13:
@@ -39,10 +39,31 @@ def cb(x):
         print x.value.response
 
 config = Config(configpath)
-d = deploy_server(useraccesskeyid, usersecretkey, usertoken, producttoken,
-                  bucketname, None, amiimageid, instancesize,
-                  customer_name, customer_email, customer_keyinfo, sys.stdout, sys.stderr,
-                  secretsfile, config)
+deploy_config = DeploymentConfiguration(
+    products=config.products,
+    s3_access_key_id=useraccesskeyid,
+    s3_secret_key=usersecretkey,
+    bucketname=bucketname,
+    amiimageid=amiimageid,
+    instancesize=instancesize,
+    usertoken=usertoken,
+    producttoken=producttoken,
+    oldsecrets=None,
+    customer_email=customer_email,
+    customer_pgpinfo=None,
+    secretsfile=secretspath,
+
+    ssec2_access_key_id=config["ssec2_access_key_id"],
+    ssec2_secret_path=config["ssec2_secret_path"],
+
+    ssec2admin_keypair_name=config["ssec2admin_keypair_name"],
+    ssec2admin_privkey_path=config["ssec2admin_privkey_path"],
+
+    monitor_pubkey_path=config["monitor_pubkey_path"],
+    monitor_privkey_path=config["monitor_privkey_path"],
+)
+
+d = deploy_server(deploy_config, sys.stdout, sys.stderr)
 d.addBoth(cb)
 d.addCallbacks(lambda ign: os._exit(0), lambda ign: os._exit(1))
 reactor.run()
