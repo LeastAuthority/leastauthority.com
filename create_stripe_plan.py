@@ -6,7 +6,7 @@ from lae_automation.config import Config
 
 config = Config()
 
-stripe.api_key = FilePath('../../secret_config/stripeapikey').getContent().strip()
+stripe.api_key = FilePath('../../k8s_secrets/stripe-private.key').getContent().strip()
 product = config.products[0]
 
 amount = int(product["amount"])
