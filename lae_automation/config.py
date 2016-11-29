@@ -7,7 +7,7 @@ from twisted.python.filepath import FilePath
 class Config(object):
     # .../leastauthority.com/lae_automation/config.py -> .../k8s_secrets
     _secrets = FilePath(__file__).parent().parent().parent().child('k8s_secrets')
-    DEFAULT_CONFIG_PATH = _secrets.child('config-lae-automation.json')
+    DEFAULT_CONFIG_PATH = _secrets.child('config-lae-automation.json').path
 
     def __init__(self, configFile=None):
         """
