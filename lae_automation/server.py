@@ -22,6 +22,10 @@ from lae_util.streams import LoggingStream
 class PathFormatError(Exception):
     pass
 
+STORAGE_ROOT = "/home/customer/storageserver"
+INTRODUCER_ROOT = "/home/customer/introducer"
+CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
+
 UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
 
 INFRASTRUCTURE_CRONTAB = """\
@@ -154,9 +158,18 @@ def get_and_install_tahoe(stdout):
 
 def create_intro_and_storage_nodes(stdout):
     print >>stdout, "Creating introducer and storage server..."
-    run('mkdir -p introducer storageserver')
-    run('venv/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
-    run('venv/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
+    run(
+        'venv/bin/tahoe create-introducer {} || '
+        'echo Assuming that introducer already exists.'.format(
+            INTRODUCER_ROOT
+        )
+    )
+    run(
+        'venv/bin/tahoe create-node {} || '
+        'echo Assuming that storage server already exists.'.format(
+            STORAGE_ROOT
+        )
+    )
 
 def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
                    stderr):
@@ -368,8 +381,6 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
-
 def tahoe_configuration(
         introducer_pem, introducer_node_id,
         storage_pem, storage_privkey, storage_node_id,
@@ -378,13 +389,13 @@ def tahoe_configuration(
 ):
     return dict(
         introducer=dict(
-            root="/home/customer/introducer",
+            root=INTRODUCER_ROOT,
             port=INTRODUCER_PORT,
             node_pem=introducer_pem,
             node_id=introducer_node_id,
         ),
         storage=dict(
-            root="/home/customer/storage",
+            root=STORAGE_ROOT,
             port=SERVER_PORT,
             node_pem=storage_pem,
             node_privkey=storage_privkey,
