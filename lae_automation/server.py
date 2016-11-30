@@ -312,7 +312,7 @@ def _record_secrets(publichost):
         mode=0500,
     )
     secrets = simplejson.loads(run(
-        "/tmp/record-secrets /home/customer/introducer /home/introducer/storageserver"
+        "/tmp/record-secrets /home/customer/introducer /home/customer/storageserver"
     ))
     secrets["external_introducer_furl"] = make_external_furl(
         secrets["internal_introducer_furl"], publichost,
