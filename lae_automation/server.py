@@ -26,7 +26,7 @@ STORAGE_ROOT = "/home/customer/storageserver"
 INTRODUCER_ROOT = "/home/customer/introducer"
 
 CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
-RECORD_SECRETS_PATH = FilePath(__file__).sibling(b"record-tahoe-secrets")
+RECORD_SECRETS_PATH = FilePath(__file__).sibling(b"record-secrets")
 
 UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
 
