@@ -1,0 +1,92 @@
+#!/usr/bin/env python
+
+from errno import ENOENT
+from sys import stdin
+from json import load
+
+from twisted.python.filepath import FilePath
+
+
+def main():
+    config = load(stdin)
+    if "introducer" in config:
+        section = config["introducer"]
+        configure_introducer(
+            introducer=FilePath(section["root"]),
+            port=section["port"],
+            node_pem=section["node_pem"],
+            node_id=section["node_id"],
+        )
+    if "storage" in config:
+        section = config["storage"]
+        configure_storage(
+            introducer=FilePath(section["root"]),
+            port=section["port"],
+            node_pem=section["node_pem"],
+            node_privkey=section["node_privkey"],
+            node_id=section["node_id"],
+            bucket_name=section["bucket_name"],
+            publichost=section["publichost"],
+            privatehost=section["privatehost"],
+            introducer_furl=section["introducer_furl"],
+            s3_access_key_id=section["s3_access_key_id"],
+            s3_secret_key=section["s3_secret_key"],
+        )
+
+
+def configure_introducer(introducer, port, node_pem, node_id):
+    force_remove(introducer.child(b"introducer.furl"))
+    force_remove(introducer.descendant(b"private", b"introducer.furl"))
+    force_remove(introducer.child(b"logport.furl"))
+
+    introducer.child(b"introducer.port").setContent(
+        u"{}".format(port).encode("ascii")
+    )
+    configure_secrets(introducer, node_pem, node_id)
+
+
+def configure_storage(
+        storage, port, node_pem, node_id, node_privkey,
+        bucket_name, publichost, privatehost, introducer_furl,
+        s3_access_key_id, s3_secret_key
+):
+    storage.child(b"client.port").setContent(
+        u"{}".format(port).encode("ascii")
+    )
+
+    configure_secrets(storage, node_pem, node_id)
+    storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
+    storage.descendant((b"private", "s3secret")).setContent(s3_secret_key)
+
+    tahoe_cfg = TAHOE_CFG_TEMPLATE % dict(
+        nickname=bucket_name,
+        publichost=publichost,
+        privatehost=privatehost,
+        introducer_furl=introducer_furl,
+        s3_access_key_id=s3_access_key_id,
+        bucket_name=bucket_name,
+        incident_gatherer_furl="",
+        stats_gatherer_furl="",
+    )
+
+    storage.child(b"tahoe.cfg").setContent(tahoe_cfg)
+
+
+def configure_secrets(root, node_pem, node_id):
+    private = root.child(b"private")
+    makedir_if_missing(private, mode=0700)
+    private.child(b"node.pem").setContent(node_pem)
+
+    root.child(b"my_nodeid").setContent(node_id)
+
+
+def force_remove(path):
+    try:
+        path.remove()
+    except OSError as e:
+        if ENOENT != e.errno:
+            raise
+
+
+if __name__ == '__main__':
+    main()

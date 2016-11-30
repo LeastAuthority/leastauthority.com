@@ -14,13 +14,10 @@ from ConfigParser import SafeConfigParser
 
 from fabric import api
 from fabric.context_managers import cd
-from fabric.contrib import files
+
+from twisted.python.filepath import FilePath
 
 from lae_util.streams import LoggingStream
-
-# The incident gatherer and stats gatherer furls are secret, so they are obtained from
-# lae_automation_config.
-from lae_automation.config import Config
 
 class PathFormatError(Exception):
     pass
@@ -409,52 +406,74 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
+CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
+
+def tahoe_configuration(
+        introducer_pem, introducer_node_id,
+        storage_pem, storage_privkey, storage_node_id,
+        bucket_name, publichost, privatehost, introducer_furl,
+        s3_access_key_id, s3_secret_key,
+):
+    return dict(
+        introducer=dict(
+            root="/home/customer/introducer",
+            port=INTRODUCER_PORT,
+            node_pem=introducer_pem,
+            node_id=introducer_node_id,
+        ),
+        storage=dict(
+            root="/home/customer/storage",
+            port=SERVER_PORT,
+            node_pem=storage_pem,
+            node_privkey=storage_privkey,
+            node_id=storage_node_id,
+            bucket_name=bucket_name,
+            publichost=publichost,
+            privatehost=privatehost,
+            introducer_furl=introducer_furl,
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+        ),
+    )
+
 def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
                   user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
                   configpath=None):
-    nickname = bucket_name
-
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
-    print >>stdout, "Starting introducer..."
-    run('rm -f /home/customer/introducer/introducer.furl'
-             ' /home/customer/introducer/private/introducer.furl'
-             ' /home/customer/introducer/logport.furl')
-    write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
-    write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
+    if oldsecrets is None:
+        oldsecrets = {}
 
-    if oldsecrets:
-        restore_secrets(oldsecrets, 'introducer', stdout, stderr)
+    api.put(
+        local_path=CONFIGURE_TAHOE_PATH.path,
+        remote_path="/tmp/configure-tahoe",
+        mode=0500,
+    )
+    api.put(
+        local_path=StringIO(simplejson.dumps(tahoe_configuration(
+            introducer_pem=oldsecrets.get("introducer_node_pem"),
+            introducer_node_id=oldsecrets.get("introducer_my_nodeid"),
+            storage_pem=oldsecrets.get("storageserver_node_pem"),
+            storage_privkey=oldsecrets.get("server_node_privkey"),
+            storage_node_id=oldsecrets.get("storageserver_my_nodeid"),
+            bucket_name=bucket_name,
+            publichost=publichost,
+            privatehost=privatehost,
+            introducer_furl=oldsecrets.get("internal_introducer_furl"),
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+        ))),
+        remote_path="/tmp/tahoe-config.json",
+        mode=0400,
+    )
+    print >>stdout, "Configuring Tahoe-LAFS..."
+    api.run("/tmp/configure-tahoe < /tmp/tahoe-config.json")
 
-    run('venv/bin/tahoe restart introducer && sleep 5')
+    print >>stdout, "Restarting introducer..."
+    run('venv/bin/tahoe restart introducer')
 
-    internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
-    assert '\n' not in internal_introducer_furl, internal_introducer_furl
-
-    config = Config(configpath)
-    tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
-                                      'publichost': publichost,
-                                      'privatehost': privatehost,
-                                      'introducer_furl': internal_introducer_furl,
-                                      's3_access_key_id': s3_access_key_id,
-                                      'bucket_name': bucket_name,
-                                      'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
-                                      'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
-    write(tahoe_cfg, '/home/customer/storageserver/tahoe.cfg')
-
-    if oldsecrets:
-        restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
-
-    run('chmod -f u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(s3_secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
-    if user_token and product_token:
-        write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
-        write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
-
-    print >>stdout, "Starting storage server..."
-    run('venv/bin/tahoe restart storageserver && sleep 5')
-    run('ps -fC tahoe')
-    run('netstat -atW')
+    print >>stdout, "Restarting storage server..."
+    run('venv/bin/tahoe restart storageserver')
 
     set_up_reboot(stdout, stderr)
 
@@ -466,9 +485,11 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
                               ' then cat /home/customer/storageserver/private/node.privkey; fi')
 
+    internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
+    external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
+
     print >>stdout, "The introducer and storage server are running."
 
-    external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
 
     # The webserver will HTML-escape the FURL in its output, so no need to escape here.
     print >>stdout, """
