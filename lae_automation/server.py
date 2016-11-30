@@ -351,7 +351,7 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
         set_host_and_key(publichost, admin_privkey_path, username="customer")
 
         print >>stdout, "Reading secrets..."
-        secrets = _record_secrets()
+        secrets = _record_secrets(publichost)
 
         print >>stdout, "Writing secrets file..."
         print >>secretsfile, simplejson.dumps(secrets)
@@ -440,7 +440,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
 
     set_up_reboot(stdout, stderr)
 
-    secrets = _record_secrets()
+    secrets = _record_secrets(publichost)
 
     print >>stdout, "The introducer and storage server are running."
 
