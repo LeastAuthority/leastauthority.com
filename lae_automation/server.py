@@ -304,6 +304,31 @@ def set_up_crontab(crontab, tmp_path):
     write(crontab, tmp_path)
     run('crontab %s' % (tmp_path,))
 
+
+def _record_secrets(publichost):
+    api.put(
+        RECORD_SECRETS_PATH.path,
+        remote_path="/tmp/record-secrets",
+        mode=0500,
+    )
+    secrets = simplejson.loads(run(
+        "/tmp/record-secrets /home/customer/introducer /home/introducer/storageserver"
+    ))
+    secrets["external_introducer_furl"] = make_external_furl(
+        secrets["internal_introducer_furl"], publichost,
+    )
+
+    # %(publichost)s:12346,%(privatehost)s:12346
+    secrets["privatehost"] = secrets.pop("tub_location").partition(',')[2].partition(':')[0]
+    secrets["publichost"] = publichost
+
+    # TLoS3 only.
+    secrets["user_token"] = None
+    secrets["product_token"] = None
+
+    return secrets
+
+
 def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
     seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
     logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
@@ -326,26 +351,7 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
         set_host_and_key(publichost, admin_privkey_path, username="customer")
 
         print >>stdout, "Reading secrets..."
-        api.put(
-            RECORD_SECRETS_PATH.path,
-            remote_path="/tmp/record-secrets",
-            mode=0500,
-        )
-        secrets = run(
-            "/tmp/record-secrets /home/customer/introducer /home/introducer/storageserver"
-        )
-
-        secrets["external_introducer_furl"] = make_external_furl(
-            secrets["internal_introducer_furl"], publichost,
-        )
-
-        # %(publichost)s:12346,%(privatehost)s:12346
-        secrets["privatehost"] = secrets.pop("tub_location").partition(',')[2].partition(':')[0]
-        secrets["publichost"] = publichost
-
-        # TLoS3 only.
-        secrets["user_token"] = None
-        secrets["product_token"] = None
+        secrets = _record_secrets()
 
         print >>stdout, "Writing secrets file..."
         print >>secretsfile, simplejson.dumps(secrets)
@@ -434,19 +440,9 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
 
     set_up_reboot(stdout, stderr)
 
-    # FIXME: eliminate code duplication with record_secrets.
-    introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
-    introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
-    server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
-    server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
-    server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
-                              ' then cat /home/customer/storageserver/private/node.privkey; fi')
-
-    internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
-    external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
+    secrets = _record_secrets()
 
     print >>stdout, "The introducer and storage server are running."
-
 
     # The webserver will HTML-escape the FURL in its output, so no need to escape here.
     print >>stdout, """
@@ -459,27 +455,12 @@ shares.needed = 1
 shares.happy = 1
 shares.total = 1
 
-""" % (external_introducer_furl,)
+""" % (secrets["external_introducer_furl"],)
 
-    print >>secretsfile, simplejson.dumps({
-        'publichost':               publichost,
-        'privatehost':              privatehost,
-        'access_key_id':            s3_access_key_id,
-        'secret_key':               s3_secret_key,
-        'user_token':               user_token,
-        'product_token':            product_token,
-        'bucket_name':              bucket_name,
-        'introducer_node_pem':      introducer_node_pem,
-        'introducer_nodeid':        introducer_nodeid,
-        'server_node_pem':          server_node_pem,
-        'server_nodeid':            server_nodeid,
-        'server_node_privkey':      server_node_privkey,
-        'internal_introducer_furl': internal_introducer_furl,
-        'external_introducer_furl': external_introducer_furl,
-    })
+    print >>secretsfile, simplejson.dumps(secrets)
     secretsfile.flush()
 
-    return external_introducer_furl
+    return secrets["external_introducer_furl"]
 
 
 def restore_secrets(secrets, nodetype, stdout, stderr):
