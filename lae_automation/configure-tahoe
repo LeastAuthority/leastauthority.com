@@ -117,7 +117,7 @@ def configure_secrets(root, node_pem, node_id):
     if node_pem is not None:
         private.child(b"node.pem").setContent(node_pem)
 
-    if my_nodeid is not None:
+    if node_id is not None:
         root.child(b"my_nodeid").setContent(node_id)
 
 
