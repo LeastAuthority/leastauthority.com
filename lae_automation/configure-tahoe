@@ -93,7 +93,8 @@ def configure_storage(
     )
 
     configure_secrets(storage, node_pem, node_id)
-    storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
+    if node_privkey is not None:
+        storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
     storage.descendant((b"private", "s3secret")).setContent(s3_secret_key)
 
     tahoe_cfg = TAHOE_CFG_TEMPLATE % dict(
@@ -113,9 +114,11 @@ def configure_storage(
 def configure_secrets(root, node_pem, node_id):
     private = root.child(b"private")
     makedir_if_missing(private, mode=0700)
-    private.child(b"node.pem").setContent(node_pem)
+    if node_pem is not None:
+        private.child(b"node.pem").setContent(node_pem)
 
-    root.child(b"my_nodeid").setContent(node_id)
+    if my_nodeid is not None:
+        root.child(b"my_nodeid").setContent(node_id)
 
 
 def makedir_if_missing(path, mode):
