@@ -23,44 +23,6 @@ class PathFormatError(Exception):
     pass
 
 UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
-TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
-
-# This file controls the configuration of the Tahoe node that
-# lives in this directory. It is only read at node startup.
-# For details about the keys that can be set here, please
-# read the 'docs/configuration.rst' file that came with your
-# Tahoe installation.
-
-
-[node]
-nickname = %(nickname)s
-web.port =
-web.static = public_html
-tub.location = %(publichost)s:12346,%(privatehost)s:12346
-log_gatherer.furl = %(incident_gatherer_furl)s
-
-[client]
-# Which services should this client connect to?
-introducer.furl = %(introducer_furl)s
-helper.furl =
-stats_gatherer.furl = %(stats_gatherer_furl)s
-
-[storage]
-# Shall this node provide storage service?
-enabled = true
-backend = s3
-s3.access_key_id = %(s3_access_key_id)s
-s3.bucket = %(bucket_name)s
-
-[helper]
-# Shall this node run a helper service that clients can use?
-enabled = false
-
-[drop_upload]
-# Shall this node automatically upload files created or modified in a local directory?
-enabled = false
-local.directory =
-"""
 
 INFRASTRUCTURE_CRONTAB = """\
 @reboot /home/website/leastauthority.com/start.sh
@@ -470,10 +432,10 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     api.run("/tmp/configure-tahoe < /tmp/tahoe-config.json")
 
     print >>stdout, "Restarting introducer..."
-    run('venv/bin/tahoe restart introducer')
+    run('venv/bin/tahoe restart introducer && sleep 5')
 
     print >>stdout, "Restarting storage server..."
-    run('venv/bin/tahoe restart storageserver')
+    run('venv/bin/tahoe restart storageserver && sleep 5')
 
     set_up_reboot(stdout, stderr)
 
