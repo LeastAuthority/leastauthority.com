@@ -24,7 +24,9 @@ class PathFormatError(Exception):
 
 STORAGE_ROOT = "/home/customer/storageserver"
 INTRODUCER_ROOT = "/home/customer/introducer"
+
 CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
+RECORD_SECRETS_PATH = FilePath(__file__).sibling(b"record-tahoe-secrets")
 
 UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
 
@@ -324,47 +326,29 @@ def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout
         set_host_and_key(publichost, admin_privkey_path, username="customer")
 
         print >>stdout, "Reading secrets..."
-        introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
-        introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
-        server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
-        server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
-        server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
-                                  ' then cat /home/customer/storageserver/private/node.privkey; fi')
+        api.put(
+            RECORD_SECRETS_PATH.path,
+            remote_path="/tmp/record-secrets",
+            mode=0500,
+        )
+        secrets = run(
+            "/tmp/record-secrets /home/customer/introducer /home/introducer/storageserver"
+        )
 
-        tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
-        config = SafeConfigParser()
-        config.readfp(StringIO(tahoe_cfg))
-        internal_introducer_furl = config.get('client', 'introducer.furl')
-        external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
+        secrets["external_introducer_furl"] = make_external_furl(
+            secrets["internal_introducer_furl"], publichost,
+        )
 
-        access_key_id = config.get('storage', 's3.access_key_id')
-        bucket_name = config.get('storage', 's3.bucket')
-
-        secret_key = run('cat /home/customer/storageserver/private/s3secret')
-        user_token = run('cat /home/customer/storageserver/private/s3usertoken')
-        product_token = run('cat /home/customer/storageserver/private/s3producttoken')
-
-        tub_location = config.get('node', 'tub.location')
         # %(publichost)s:12346,%(privatehost)s:12346
-        privatehost = tub_location.partition(',')[2].partition(':')[0]
+        secrets["privatehost"] = secrets.pop("tub_location").partition(',')[2].partition(':')[0]
+        secrets["publichost"] = publichost
+
+        # TLoS3 only.
+        secrets["user_token"] = None
+        secrets["product_token"] = None
 
         print >>stdout, "Writing secrets file..."
-        print >>secretsfile, simplejson.dumps({
-            'publichost':               publichost,
-            'privatehost':              privatehost,
-            'access_key_id':            access_key_id,
-            'secret_key':               secret_key,
-            'user_token':               user_token,
-            'product_token':            product_token,
-            'bucket_name':              bucket_name,
-            'introducer_node_pem':      introducer_node_pem,
-            'introducer_nodeid':        introducer_nodeid,
-            'server_node_pem':          server_node_pem,
-            'server_nodeid':            server_nodeid,
-            'server_node_privkey':      server_node_privkey,
-            'internal_introducer_furl': internal_introducer_furl,
-            'external_introducer_furl': external_introducer_furl,
-        })
+        print >>secretsfile, simplejson.dumps(secrets)
     finally:
         stdout.flush()
         stderr.flush()
