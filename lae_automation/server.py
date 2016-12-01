@@ -533,17 +533,18 @@ def new_tahoe_configuration(nickname, bucket_name, publichost, privatehost, s3_a
     base_name = dict(
         organizationName=b"Least Authority Enterprises",
         organizationalUnitName=b"S4",
+        emailAddress=nickname,
     )
 
     keypair = KeyPair.generate(size=2048)
     introducer_certificate = keypair.selfSignedCert(
         serialNumber=1,
-        commonName=nickname + b" (introducer)",
+        commonName=b"introducer",
         **base_name
     )
     storage_certificate = keypair.selfSignedCert(
         serialNumber=1,
-        commonName=nickname + b" (storage)",
+        commonName=b"storage",
         **base_name
     )
     def pem(key, cert):
