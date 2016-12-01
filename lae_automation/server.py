@@ -371,7 +371,7 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-def tahoe_configuration(
+def marshal_tahoe_configuration(
         introducer_pem, introducer_node_id,
         storage_pem, storage_privkey, storage_node_id,
         bucket_name, publichost, privatehost, introducer_furl,
@@ -413,7 +413,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
         mode=0500,
     )
     api.put(
-        local_path=StringIO(simplejson.dumps(tahoe_configuration(
+        local_path=StringIO(simplejson.dumps(marshal_tahoe_configuration(
             introducer_pem=oldsecrets.get("introducer_node_pem"),
             introducer_node_id=oldsecrets.get("introducer_my_nodeid"),
             storage_pem=oldsecrets.get("storageserver_node_pem"),
@@ -504,3 +504,68 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     write(outgoingconfig.read(), temppath)
     run('mv '+temppath+' '+pathtoremote)
     os.remove('tempconfigfile')
+
+
+def new_tahoe_configuration(nickname):
+    """
+    Create brand new secrets and configuration for use by an
+    introducer/storage pair.
+
+    @param nickname: The nickname of the storage node which will be
+        created.  Also, the common name put into the certificate for
+        the nodes.
+
+    @type nickname: bytes
+    """
+    from os import urandom
+    from OpenSSL.crypto import FILETYPE_PEM
+    from twisted.internet.ssl import (
+        DistinguishedName, KeyPair, PrivateCertificate
+    )
+    from allmydata.util import base32
+
+    base_name = DistinguishedName(
+        commonName=nickname,
+        organizationName=b"Least Authority Enterprises",
+        organizationalUnitName=b"S4",
+    )
+    introducer_name = DistinguishedName(**base_name.copy())
+    introducer_name[b"commonName"] += b" (introducer)"
+
+    storage_name = DistinguishedName(**base_name.copy())
+    storage_name[b"commonName"] += b" (storage)"
+
+    keypair = KeyPair.generate(size=2048)
+    introducer_certificate = keypair.selfSignedCert(
+        serialNumber=1,
+        distinguishedName=introducer_name,
+    )
+    storage_certificate = keypair.selfSignedCert(
+        serialNumber=1,
+        distinguishedName=storage_name,
+    )
+    def pem(key, cert):
+        return b"\n".join((key.dump(FILETYPE_PEM), cert.dump(FILETYPE_PEM)))
+
+    def new_node_id():
+        return base32.b2a(urandom(12))
+
+    from foolscap import Tub
+    introducer_tub = Tub(certData=pem(keypair, introducer_certificate))
+    storage_tub = Tub(certDAta=pem(keypair, storage_certificate))
+    
+    return marshal_tahoe_configuration(
+        introducer_pem=introducer_tub.getCertData(),
+        introducer_node_id=new_node_id(),
+
+        storage_pem=storage_tub.getCertData(),
+        storage_privkey=key.dump(FILETYPE_PEM),
+        storage_node_id=new_node_id(),
+
+        bucket_name=bucket_name,
+        publichost=publichost,
+        privatehost=privatehost,
+        introducer_furl=introducer_tub.registerReference(None),
+
+        s3_access_key_id=s3_access_key_id, s3_secret_key=s3_secret_key,
+    )
