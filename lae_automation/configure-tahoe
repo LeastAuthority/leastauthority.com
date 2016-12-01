@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 
+#
+# configure-tahoe reads an lae-specific description of tahoe
+# introducer/storage configuration and dumps it into a form usable by
+# tahoe introducer and storage nodes.
+#
+# The configuration is a json blob read from stdin.  The structure is
+# that emitted by lae_automation.server.marshal_tahoe_configuration.
+#
+# This is an independent script so it can be copied to and run in
+# another execution context (such as an EC2 instance or a container)
+# where the rest of the leastauthority.com repository is unavailable.
+#
+
 from errno import ENOENT, EEXIST
 from sys import stdin
 from json import load
