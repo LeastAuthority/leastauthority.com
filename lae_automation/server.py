@@ -405,7 +405,28 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     if oldsecrets is None:
-        oldsecrets = {}
+        configuration = new_tahoe_configuration(
+            nickname=bucket_name,
+            bucket_name=bucket_name,
+            publichost=publichost,
+            privatehost=privatehost,
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+        )
+    else:
+        configuration = marshal_tahoe_configuration(
+            introducer_pem=oldsecrets["introducer_node_pem"],
+            introducer_node_id=oldsecrets["introducer_my_nodeid"],
+            storage_pem=oldsecrets["storageserver_node_pem"],
+            storage_privkey=oldsecrets["server_node_privkey"],
+            storage_node_id=oldsecrets["storageserver_my_nodeid"],
+            bucket_name=bucket_name,
+            publichost=publichost,
+            privatehost=privatehost,
+            introducer_furl=oldsecrets["internal_introducer_furl"],
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+        )
 
     api.put(
         local_path=CONFIGURE_TAHOE_PATH.path,
@@ -413,19 +434,7 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
         mode=0500,
     )
     api.put(
-        local_path=StringIO(simplejson.dumps(marshal_tahoe_configuration(
-            introducer_pem=oldsecrets.get("introducer_node_pem"),
-            introducer_node_id=oldsecrets.get("introducer_my_nodeid"),
-            storage_pem=oldsecrets.get("storageserver_node_pem"),
-            storage_privkey=oldsecrets.get("server_node_privkey"),
-            storage_node_id=oldsecrets.get("storageserver_my_nodeid"),
-            bucket_name=bucket_name,
-            publichost=publichost,
-            privatehost=privatehost,
-            introducer_furl=oldsecrets.get("internal_introducer_furl"),
-            s3_access_key_id=s3_access_key_id,
-            s3_secret_key=s3_secret_key,
-        ))),
+        local_path=StringIO(simplejson.dumps(configuration)),
         remote_path="/tmp/tahoe-config.json",
         mode=0400,
     )
