@@ -506,7 +506,7 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     os.remove('tempconfigfile')
 
 
-def new_tahoe_configuration(nickname):
+def new_tahoe_configuration(nickname, bucket_name, publichost, privatehost, s3_access_key_id, s3_secret_key):
     """
     Create brand new secrets and configuration for use by an
     introducer/storage pair.
@@ -519,53 +519,51 @@ def new_tahoe_configuration(nickname):
     """
     from os import urandom
     from OpenSSL.crypto import FILETYPE_PEM
-    from twisted.internet.ssl import (
-        DistinguishedName, KeyPair, PrivateCertificate
-    )
-    from allmydata.util import base32
+    from twisted.internet.ssl import KeyPair
 
-    base_name = DistinguishedName(
-        commonName=nickname,
+    base_name = dict(
         organizationName=b"Least Authority Enterprises",
         organizationalUnitName=b"S4",
     )
-    introducer_name = DistinguishedName(**base_name.copy())
-    introducer_name[b"commonName"] += b" (introducer)"
-
-    storage_name = DistinguishedName(**base_name.copy())
-    storage_name[b"commonName"] += b" (storage)"
 
     keypair = KeyPair.generate(size=2048)
     introducer_certificate = keypair.selfSignedCert(
         serialNumber=1,
-        distinguishedName=introducer_name,
+        commonName=nickname + b" (introducer)",
+        **base_name
     )
     storage_certificate = keypair.selfSignedCert(
         serialNumber=1,
-        distinguishedName=storage_name,
+        commonName=nickname + b" (storage)",
+        **base_name
     )
     def pem(key, cert):
         return b"\n".join((key.dump(FILETYPE_PEM), cert.dump(FILETYPE_PEM)))
 
     def new_node_id():
-        return base32.b2a(urandom(12))
+        return base64.b32encode(urandom(12)).lower().strip("=")
 
-    from foolscap import Tub
+    from foolscap.api import Tub
     introducer_tub = Tub(certData=pem(keypair, introducer_certificate))
-    storage_tub = Tub(certDAta=pem(keypair, storage_certificate))
-    
+    introducer_tub.setLocation(publichost)
+    storage_tub = Tub(certData=pem(keypair, storage_certificate))
+
     return marshal_tahoe_configuration(
         introducer_pem=introducer_tub.getCertData(),
         introducer_node_id=new_node_id(),
 
         storage_pem=storage_tub.getCertData(),
-        storage_privkey=key.dump(FILETYPE_PEM),
+        storage_privkey=keypair.dump(FILETYPE_PEM),
         storage_node_id=new_node_id(),
 
         bucket_name=bucket_name,
         publichost=publichost,
         privatehost=privatehost,
-        introducer_furl=introducer_tub.registerReference(None),
+        # The object of the reference is irrelevant.  The furl will
+        # get hooked up to something else when Tahoe really runs.
+        # Just need to pass something _weak referenceable_!  Which
+        # rules out a lot of things...
+        introducer_furl=introducer_tub.registerReference(introducer_tub),
 
         s3_access_key_id=s3_access_key_id, s3_secret_key=s3_secret_key,
     )

@@ -15,3 +15,5 @@ twisted
 service_identity
 
 txAWS==0.2.1.post5
+
+hypothesis==3.6.0

@@ -1,13 +1,16 @@
 
 import mock
+from hypothesis import strategies, given, settings
 
+from json import loads, dumps
+from string import uppercase, lowercase, letters, digits
 from cStringIO import StringIO
-from twisted.trial.unittest import TestCase
+from twisted.trial.unittest import TestCase, SynchronousTestCase
 from twisted.python.filepath import FilePath
 
 from datetime import datetime
 
-from lae_automation import server
+from lae_automation import server, signup
 from lae_automation.server import api
 
 
@@ -273,3 +276,80 @@ class TestServerModule(TestCase):
                              STDOUT, STDERR, MSECRETSFILE, self.CONFIGFILEPATH)
         self._check_all_done()
 
+
+_BASE32_CHARS = lowercase + "234567"
+
+def nickname():
+    return strategies.text(
+        alphabet=_BASE32_CHARS, min_size=24, max_size=24
+    )
+
+def subscription_id():
+    return strategies.binary(min_size=10, max_size=10).map(
+        lambda b: b'sub_' + b.encode('base64').strip('_')
+    )
+
+def customer_id():
+    return strategies.binary(min_size=10, max_size=10).map(
+        lambda b: b'cus_' + b.encode('base64').strip('_')
+    )
+
+def bucket_name():
+    return strategies.tuples(
+        subscription_id(),
+        customer_id(),
+    ).map(
+        lambda (s, c): signup.get_bucket_name(s, c)
+    )
+
+def ipv4_address():
+    return strategies.lists(
+        elements=strategies.integers(min_value=0, max_value=255),
+        min_size=4, max_size=4,
+    ).map(
+        lambda parts: "{}.{}.{}.{}".format(*parts)
+    )
+
+def aws_access_key_id():
+    return strategies.text(
+        alphabet=uppercase + digits,
+        min_size=20,
+        max_size=20,
+    )
+
+def aws_secret_key():
+    # Maybe it's base64 encoded?
+    return strategies.text(
+        alphabet=letters + digits + "/+",
+        min_size=40,
+        max_size=40,
+    )
+
+class NewTahoeConfigurationTests(SynchronousTestCase):
+    """
+    Tests for ``new_tahoe_configuration``.
+    """
+    @given(
+        nickname(), bucket_name(),
+        ipv4_address(), ipv4_address(),
+        aws_access_key_id(), aws_secret_key(),
+    )
+    # Limit the number of iterations of this test - generating RSA
+    # keys is slow.
+    @settings(max_examples=10)
+    def test_json_serializable(
+            self,
+            nickname, bucket_name,
+            publichost, privatehost,
+            s3_access_key_id, s3_secret_key
+    ):
+        """
+        It returns an object which can be round-tripped through the JSON
+        format.
+        """
+        config = server.new_tahoe_configuration(
+            nickname, bucket_name,
+            publichost, privatehost,
+            s3_access_key_id, s3_secret_key,
+        )
+        self.assertEqual(config, loads(dumps(config)))
