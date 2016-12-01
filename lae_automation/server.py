@@ -17,6 +17,8 @@ from fabric.context_managers import cd
 
 from twisted.python.filepath import FilePath
 
+from allmydata.util import keyutil
+
 from lae_util.streams import LoggingStream
 
 class PathFormatError(Exception):
@@ -563,7 +565,7 @@ def new_tahoe_configuration(nickname, bucket_name, publichost, privatehost, s3_a
         introducer_node_id=new_node_id(),
 
         storage_pem=storage_tub.getCertData(),
-        storage_privkey=keypair.dump(FILETYPE_PEM),
+        storage_privkey=keyutil.make_keypair()[0] + b"\n",
         storage_node_id=new_node_id(),
 
         bucket_name=bucket_name,
