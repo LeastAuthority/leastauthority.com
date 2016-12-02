@@ -451,6 +451,8 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
 
     set_up_reboot(stdout, stderr)
 
+    # XXX We shouldn't need this anymore right?  The recorded secrets
+    # should be the same as the ones we just splatted on to it.
     secrets = _record_secrets(publichost)
 
     print >>stdout, "The introducer and storage server are running."
