@@ -4,7 +4,6 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-from pprint import pformat
 import os, sys, base64, simplejson, subprocess
 from datetime import datetime
 utcnow = datetime.utcnow
@@ -374,6 +373,33 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
+
+def secrets_to_legacy_format(secrets):
+    return dict(
+        user_token=None,
+        product_token=None,
+
+        introducer_nodeid=secrets["storage"]["node_id"],
+        introducer_node_pem=secrets["introducer"]["node_pem"],
+
+        publichost=secrets["storage"]["publichost"],
+        privatehost=secrets["storage"]["privatehost"],
+
+        external_introducer_furl=make_external_furl(
+            secrets["storage"]["introducer_furl"],
+            secrets["storage"]["publichost"],
+        ),
+        internal_introducer_furl=secrets["storage"]["introducer_furl"],
+
+        bucket_name=secrets["storage"]["bucket_name"],
+        server_node_privkey=secrets["storage"]["node_privkey"],
+        server_nodeid=secrets["storage"]["node_id"],
+        server_node_pem=secrets["storage"]["node_pem"],
+
+        access_key_id=secrets["storage"]["s3_access_key_id"],
+        secret_key=secrets["storage"]["s3_secret_key"],
+    )
+
 def marshal_tahoe_configuration(
         introducer_pem, introducer_node_id,
         storage_pem, storage_privkey, storage_node_id,
@@ -452,15 +478,6 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
 
     set_up_reboot(stdout, stderr)
 
-    # XXX We shouldn't need this anymore right?  The recorded secrets
-    # should be the same as the ones we just splatted on to it.
-    secrets = _record_secrets(publichost)
-
-    print >>stdout, "Pushed configuration::"
-    print >>stdout, pformat(configuration)
-    print >>stdout, "Recorded configuration::"
-    print >>stdout, pformat(secrets)
-
     external_introducer_furl = make_external_furl(
         configuration["storage"]["introducer_furl"],
         publichost,
@@ -481,7 +498,7 @@ shares.total = 1
 
 """ % (external_introducer_furl,)
 
-    print >>secretsfile, simplejson.dumps(secrets)
+    print >>secretsfile, simplejson.dumps(secrets_to_legacy_format(configuration))
     secretsfile.flush()
 
     return external_introducer_furl
