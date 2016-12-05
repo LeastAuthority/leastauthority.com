@@ -66,7 +66,6 @@ def main():
             introducer=FilePath(section["root"]),
             port=section["port"],
             node_pem=section["node_pem"],
-            node_id=section["node_id"],
         )
     if "storage" in config:
         section = config["storage"]
@@ -75,7 +74,6 @@ def main():
             port=section["port"],
             node_pem=section["node_pem"],
             node_privkey=section["node_privkey"],
-            node_id=section["node_id"],
             bucket_name=section["bucket_name"],
             publichost=section["publichost"],
             privatehost=section["privatehost"],
@@ -85,7 +83,7 @@ def main():
         )
 
 
-def configure_introducer(introducer, port, node_pem, node_id):
+def configure_introducer(introducer, port, node_pem):
     force_remove(introducer.child(b"introducer.furl"))
     force_remove(introducer.descendant((b"private", b"introducer.furl")))
     force_remove(introducer.child(b"logport.furl"))
@@ -93,11 +91,11 @@ def configure_introducer(introducer, port, node_pem, node_id):
     introducer.child(b"introducer.port").setContent(
         u"{}".format(port).encode("ascii")
     )
-    configure_secrets(introducer, node_pem, node_id)
+    configure_secrets(introducer, node_pem)
 
 
 def configure_storage(
-        storage, port, node_pem, node_id, node_privkey,
+        storage, port, node_pem, node_privkey,
         bucket_name, publichost, privatehost, introducer_furl,
         s3_access_key_id, s3_secret_key
 ):
@@ -105,7 +103,7 @@ def configure_storage(
         u"{}".format(port).encode("ascii")
     )
 
-    configure_secrets(storage, node_pem, node_id)
+    configure_secrets(storage, node_pem)
     if node_privkey is not None:
         storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
     storage.descendant((b"private", "s3secret")).setContent(s3_secret_key)
@@ -124,14 +122,11 @@ def configure_storage(
     storage.child(b"tahoe.cfg").setContent(tahoe_cfg)
 
 
-def configure_secrets(root, node_pem, node_id):
+def configure_secrets(root, node_pem):
     private = root.child(b"private")
     makedir_if_missing(private, mode=0700)
     if node_pem is not None:
         private.child(b"node.pem").setContent(node_pem)
-
-    if node_id is not None:
-        root.child(b"my_nodeid").setContent(node_id)
 
 
 def makedir_if_missing(path, mode):
