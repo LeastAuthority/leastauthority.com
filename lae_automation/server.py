@@ -4,6 +4,7 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
+from pprint import pformat
 import os, sys, base64, simplejson, subprocess
 from datetime import datetime
 utcnow = datetime.utcnow
@@ -455,6 +456,16 @@ def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id,
     # should be the same as the ones we just splatted on to it.
     secrets = _record_secrets(publichost)
 
+    print >>stdout, "Pushed configuration::"
+    print >>stdout, pformat(configuration)
+    print >>stdout, "Recorded configuration::"
+    print >>stdout, pformat(secrets)
+
+    external_introducer_furl = make_external_furl(
+        configuration["storage"]["introducer_furl"],
+        publichost,
+    )
+
     print >>stdout, "The introducer and storage server are running."
 
     # The webserver will HTML-escape the FURL in its output, so no need to escape here.
@@ -468,12 +479,12 @@ shares.needed = 1
 shares.happy = 1
 shares.total = 1
 
-""" % (secrets["external_introducer_furl"],)
+""" % (external_introducer_furl,)
 
     print >>secretsfile, simplejson.dumps(secrets)
     secretsfile.flush()
 
-    return secrets["external_introducer_furl"]
+    return external_introducer_furl
 
 
 def restore_secrets(secrets, nodetype, stdout, stderr):
