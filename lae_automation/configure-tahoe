@@ -66,6 +66,7 @@ def main():
             introducer=FilePath(section["root"]),
             port=section["port"],
             node_pem=section["node_pem"],
+            introducer_furl=section["introducer_furl"],
         )
     if "storage" in config:
         section = config["storage"]
@@ -83,14 +84,16 @@ def main():
         )
 
 
-def configure_introducer(introducer, port, node_pem):
+def configure_introducer(introducer, port, node_pem, introducer_furl):
+    introducer_furl_path = introducer.descendant((b"private", b"introducer.furl"))
     force_remove(introducer.child(b"introducer.furl"))
-    force_remove(introducer.descendant((b"private", b"introducer.furl")))
+    force_remove(introducer_furl_path)
     force_remove(introducer.child(b"logport.furl"))
 
     introducer.child(b"introducer.port").setContent(
         u"{}".format(port).encode("ascii")
     )
+    introducer_furl_path.setContent(introducer_furl)
     configure_secrets(introducer, node_pem)
 
 
