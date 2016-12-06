@@ -1,4 +1,4 @@
-FROM leastauthority.com/tahoe-base
+FROM leastauthority/tahoe-base
 
 RUN /app/env/bin/tahoe create-node /var/run/storageserver
 
