@@ -51,6 +51,7 @@ ${EXEC} bash -e -x -c '
 
     docker tag leastauthority/tahoe-introducer 127.0.0.1:30000/leastauthority/tahoe-introducer:"${DOCKER_TAG}"
     docker tag leastauthority/tahoe-storage 127.0.0.1:30000/leastauthority/tahoe-storage:"${DOCKER_TAG}"
+    docker tag leastauthority/tahoe-gatherer 127.0.0.1:30000/leastauthority/tahoe-gatherer:"${DOCKER_TAG}"
 
     docker tag leastauthority/magicwormhole 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
 
@@ -70,6 +71,7 @@ ${EXEC} bash -e -x -c '
     docker push 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
     docker push 127.0.0.1:30000/leastauthority/tahoe-introducer:"${DOCKER_TAG}"
     docker push 127.0.0.1:30000/leastauthority/tahoe-storage:"${DOCKER_TAG}"
+    docker push 127.0.0.1:30000/leastauthority/tahoe-gatherer:"${DOCKER_TAG}"
     docker push 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
 
     echo "Tagged images with ${DOCKER_TAG}"
