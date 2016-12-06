@@ -33,7 +33,6 @@ STORAGE_ROOT = "/home/customer/storageserver"
 INTRODUCER_ROOT = "/home/customer/introducer"
 
 CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
-RECORD_SECRETS_PATH = FilePath(__file__).sibling(b"record-secrets")
 
 UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
 
@@ -310,63 +309,6 @@ def set_up_reboot(stdout, stderr):
 def set_up_crontab(crontab, tmp_path):
     write(crontab, tmp_path)
     run('crontab %s' % (tmp_path,))
-
-
-def _record_secrets(publichost):
-    api.put(
-        RECORD_SECRETS_PATH.path,
-        remote_path="/tmp/record-secrets",
-        mode=0500,
-    )
-    secrets = simplejson.loads(run(
-        "/tmp/record-secrets /home/customer/introducer /home/customer/storageserver"
-    ))
-    secrets["external_introducer_furl"] = make_external_furl(
-        secrets["internal_introducer_furl"], publichost,
-    )
-
-    # %(publichost)s:12346,%(privatehost)s:12346
-    secrets["privatehost"] = secrets.pop("tub_location").partition(',')[2].partition(':')[0]
-    secrets["publichost"] = publichost
-
-    # TLoS3 only.
-    secrets["user_token"] = None
-    secrets["product_token"] = None
-
-    return secrets
-
-
-def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
-    seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
-    logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
-    dirfp = basefp.child('secrets').child('active_SSEC2s')
-    try:
-        dirfp.makedirs()
-    except OSError:
-        pass
-    secretsfile = dirfp.child(logfilename).open('a+')
-    logfile = basefp.child('signup_logs').child(logfilename).open('a+')
-
-    stdout = LoggingStream(logfile, '>')
-    stderr = LoggingStream(logfile, '')
-
-    # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
-    # It does have a way to disable that, but not (easily) to redirect it.
-    sys.stdout = stderr
-
-    try:
-        set_host_and_key(publichost, admin_privkey_path, username="customer")
-
-        print >>stdout, "Reading secrets..."
-        secrets = _record_secrets(publichost)
-
-        print >>stdout, "Writing secrets file..."
-        print >>secretsfile, simplejson.dumps(secrets)
-    finally:
-        stdout.flush()
-        stderr.flush()
-        secretsfile.close()
-        logfile.close()
 
 
 def make_external_furl(internal_furl, publichost):
