@@ -1,0 +1,30 @@
+FROM leastauthority.com/tahoe-base
+
+RUN /app/env/bin/tahoe create-introducer /var/run/introducer
+
+# Select an arbitrary non-privileged port on which to expose the tub.
+# This value doesn't really matter since the container orchestrator
+# can hook it up to any externally visible port they like.
+EXPOSE 12345
+
+CMD \
+    /app/env/bin/python /app/put-secrets \
+    		introducer \
+		--root /var/run/introducer \
+		--tub-advertise-address "tcp:${LAE_PUBLICHOST}:12345" \
+		--tub-listen-address "tcp:12345" \
+		--node-id "${LAE_NODE_ID}" \
+		--certificate "${LAE_CERTIFICATE}" \
+		--private-key "${LAE_PRIVATEKEY}" \
+		--s3-bucket "${LAE_S3_BUCKET}" \
+		--s3-access-key-id "${LAE_S3_ACCESS_KEY_ID}" \
+		--s3-secret-key "${LAE_S3_SECRET_KEY}" \
+		--introducer-furl "${LAE_INTRODUCER_FURL}" \
+		${LAE_INCIDENT_GATHERER_FURL:+--incident-gatherer-furl "${LAE_INCIDENT_GATHERER_FURL}"} \
+		${LAE_STATS_GATHERER_FURL:+--stats-gatherer-furl "${LAE_STATS_GATHERER_FURL}"} \
+    && unset \
+       LAE_PUBLICHOST LAE_NODEID \
+       LAE_CERTIFICATE LAE_PRIVATEKEY \
+       LAE_S3_BUCKET LAE_S3_ACCESS_KEY_ID LAE_S3_SECRET_KEY \
+       LAE_INTRODUCER_FURL LAE_INCIDENT_GATHERER_FURL LAE_STATS_GATHERER_FURL \
+    && /app/env/bin/tahoe start /var/run/introducer --nodaemon
