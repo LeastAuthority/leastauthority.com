@@ -1,7 +1,7 @@
 #
 # This builds an image that should be usable as a starting point for
 # most or all of LeastAuthority's Docker images.  The anticipated name
-# for the image is <leastauthority.com/base>.
+# for the image is <leastauthority/base>.
 #
 
 #

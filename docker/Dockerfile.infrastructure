@@ -1,10 +1,10 @@
 #
 # This builds an image which is used as the base for both the web and
 # flapp servers, the infrastructure containers for leastauthority.com.
-# The anticipated name is <leastauthority.com/infrastructure>.
+# The anticipated name is <leastauthority/infrastructure>.
 #
 
-FROM leastauthority.com/base
+FROM leastauthority/base
 
 # Select a postfix configuration so that postfix can be installed
 # without prompting.  And install postfix.
