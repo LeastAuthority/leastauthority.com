@@ -8,23 +8,6 @@ RUN /app/env/bin/tahoe create-introducer /var/run/introducer
 EXPOSE 12345
 
 CMD \
-    /app/env/bin/python /app/put-secrets \
-    		introducer \
-		--root /var/run/introducer \
-		--tub-advertise-address "tcp:${LAE_PUBLICHOST}:12345" \
-		--tub-listen-address "tcp:12345" \
-		--node-id "${LAE_NODE_ID}" \
-		--certificate "${LAE_CERTIFICATE}" \
-		--private-key "${LAE_PRIVATEKEY}" \
-		--s3-bucket "${LAE_S3_BUCKET}" \
-		--s3-access-key-id "${LAE_S3_ACCESS_KEY_ID}" \
-		--s3-secret-key "${LAE_S3_SECRET_KEY}" \
-		--introducer-furl "${LAE_INTRODUCER_FURL}" \
-		${LAE_INCIDENT_GATHERER_FURL:+--incident-gatherer-furl "${LAE_INCIDENT_GATHERER_FURL}"} \
-		${LAE_STATS_GATHERER_FURL:+--stats-gatherer-furl "${LAE_STATS_GATHERER_FURL}"} \
-    && unset \
-       LAE_PUBLICHOST LAE_NODEID \
-       LAE_CERTIFICATE LAE_PRIVATEKEY \
-       LAE_S3_BUCKET LAE_S3_ACCESS_KEY_ID LAE_S3_SECRET_KEY \
-       LAE_INTRODUCER_FURL LAE_INCIDENT_GATHERER_FURL LAE_STATS_GATHERER_FURL \
+    echo "${LAE_TAHOE_INTRODUCER_CONFIG}" | /app/env/bin/python /app/configure-tahoe \
+    && unset LAE_TAHOE_INTRODUCER_CONFIG \
     && /app/env/bin/tahoe start /var/run/introducer --nodaemon

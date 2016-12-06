@@ -17,4 +17,4 @@ ENV LAE_NODEID ""
 ENV LAE_CERTIFICATE ""
 ENV LAE_PRIVATEKEY ""
 
-ADD put-secrets /app/
+ADD lae_automation/configure-tahoe /app/configure-tahope
