@@ -93,8 +93,9 @@ def configure_introducer(introducer, port, node_pem, introducer_furl):
     introducer.child(b"introducer.port").setContent(
         u"{}".format(port).encode("ascii")
     )
-    introducer_furl_path.setContent(introducer_furl)
     configure_secrets(introducer, node_pem)
+    # configure_secrets creates private directory if necessary
+    introducer_furl_path.setContent(introducer_furl)
 
 
 def configure_storage(
