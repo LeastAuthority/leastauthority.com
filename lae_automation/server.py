@@ -12,58 +12,29 @@ from pipes import quote as shell_quote
 from cStringIO import StringIO
 from ConfigParser import SafeConfigParser
 
+from OpenSSL.crypto import FILETYPE_PEM
+
 from fabric import api
 from fabric.context_managers import cd
-from fabric.contrib import files
+
+from twisted.internet.ssl import KeyPair
+from twisted.python.filepath import FilePath
+
+from foolscap.api import Tub
+
+from allmydata.util import keyutil
 
 from lae_util.streams import LoggingStream
-
-# The incident gatherer and stats gatherer furls are secret, so they are obtained from
-# lae_automation_config.
-from lae_automation.config import Config
 
 class PathFormatError(Exception):
     pass
 
+STORAGE_ROOT = "/home/customer/storageserver"
+INTRODUCER_ROOT = "/home/customer/introducer"
+
+CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
+
 UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
-TAHOE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
-
-# This file controls the configuration of the Tahoe node that
-# lives in this directory. It is only read at node startup.
-# For details about the keys that can be set here, please
-# read the 'docs/configuration.rst' file that came with your
-# Tahoe installation.
-
-
-[node]
-nickname = %(nickname)s
-web.port =
-web.static = public_html
-tub.location = %(publichost)s:12346,%(privatehost)s:12346
-log_gatherer.furl = %(incident_gatherer_furl)s
-
-[client]
-# Which services should this client connect to?
-introducer.furl = %(introducer_furl)s
-helper.furl =
-stats_gatherer.furl = %(stats_gatherer_furl)s
-
-[storage]
-# Shall this node provide storage service?
-enabled = true
-backend = s3
-s3.access_key_id = %(s3_access_key_id)s
-s3.bucket = %(bucket_name)s
-
-[helper]
-# Shall this node run a helper service that clients can use?
-enabled = false
-
-[drop_upload]
-# Shall this node automatically upload files created or modified in a local directory?
-enabled = false
-local.directory =
-"""
 
 INFRASTRUCTURE_CRONTAB = """\
 @reboot /home/website/leastauthority.com/start.sh
@@ -195,9 +166,18 @@ def get_and_install_tahoe(stdout):
 
 def create_intro_and_storage_nodes(stdout):
     print >>stdout, "Creating introducer and storage server..."
-    run('mkdir -p introducer storageserver')
-    run('venv/bin/tahoe create-introducer introducer || echo Assuming that introducer already exists.')
-    run('venv/bin/tahoe create-node storageserver || echo Assuming that storage server already exists.')
+    run(
+        'venv/bin/tahoe create-introducer {} || '
+        'echo Assuming that introducer already exists.'.format(
+            INTRODUCER_ROOT
+        )
+    )
+    run(
+        'venv/bin/tahoe create-node {} || '
+        'echo Assuming that storage server already exists.'.format(
+            STORAGE_ROOT
+        )
+    )
 
 def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
                    stderr):
@@ -330,75 +310,6 @@ def set_up_crontab(crontab, tmp_path):
     write(crontab, tmp_path)
     run('crontab %s' % (tmp_path,))
 
-def record_secrets(basefp, publichost, timestamp, admin_privkey_path, raw_stdout, raw_stderr):
-    seed = base64.b32encode(os.urandom(20)).rstrip('=').lower()
-    logfilename = "%s-%s" % (timestamp.replace(':', ''), seed)
-    dirfp = basefp.child('secrets').child('active_SSEC2s')
-    try:
-        dirfp.makedirs()
-    except OSError:
-        pass
-    secretsfile = dirfp.child(logfilename).open('a+')
-    logfile = basefp.child('signup_logs').child(logfilename).open('a+')
-
-    stdout = LoggingStream(logfile, '>')
-    stderr = LoggingStream(logfile, '')
-
-    # This is to work around the fact that fabric echoes all commands and output to sys.stdout.
-    # It does have a way to disable that, but not (easily) to redirect it.
-    sys.stdout = stderr
-
-    try:
-        set_host_and_key(publichost, admin_privkey_path, username="customer")
-
-        print >>stdout, "Reading secrets..."
-        introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
-        introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
-        server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
-        server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
-        server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
-                                  ' then cat /home/customer/storageserver/private/node.privkey; fi')
-
-        tahoe_cfg = run('cat /home/customer/storageserver/tahoe.cfg')
-        config = SafeConfigParser()
-        config.readfp(StringIO(tahoe_cfg))
-        internal_introducer_furl = config.get('client', 'introducer.furl')
-        external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
-
-        access_key_id = config.get('storage', 's3.access_key_id')
-        bucket_name = config.get('storage', 's3.bucket')
-
-        secret_key = run('cat /home/customer/storageserver/private/s3secret')
-        user_token = run('cat /home/customer/storageserver/private/s3usertoken')
-        product_token = run('cat /home/customer/storageserver/private/s3producttoken')
-
-        tub_location = config.get('node', 'tub.location')
-        # %(publichost)s:12346,%(privatehost)s:12346
-        privatehost = tub_location.partition(',')[2].partition(':')[0]
-
-        print >>stdout, "Writing secrets file..."
-        print >>secretsfile, simplejson.dumps({
-            'publichost':               publichost,
-            'privatehost':              privatehost,
-            'access_key_id':            access_key_id,
-            'secret_key':               secret_key,
-            'user_token':               user_token,
-            'product_token':            product_token,
-            'bucket_name':              bucket_name,
-            'introducer_node_pem':      introducer_node_pem,
-            'introducer_nodeid':        introducer_nodeid,
-            'server_node_pem':          server_node_pem,
-            'server_nodeid':            server_nodeid,
-            'server_node_privkey':      server_node_privkey,
-            'internal_introducer_furl': internal_introducer_furl,
-            'external_introducer_furl': external_introducer_furl,
-        })
-    finally:
-        stdout.flush()
-        stderr.flush()
-        secretsfile.close()
-        logfile.close()
-
 
 def make_external_furl(internal_furl, publichost):
     (prefix, atsign, suffix) = internal_furl.partition('@')
@@ -409,66 +320,117 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
+
+def secrets_to_legacy_format(secrets):
+    def nodeid(pem):
+        # XXX < warner> we're moving to non-foolscap ed25519 pubkey
+        return Tub(certData=pem).tubID.lower()
+
+    return dict(
+        user_token=None,
+        product_token=None,
+
+        introducer_nodeid=nodeid(secrets["introducer"]["node_pem"]),
+        introducer_node_pem=secrets["introducer"]["node_pem"],
+
+        publichost=secrets["storage"]["publichost"],
+        privatehost=secrets["storage"]["privatehost"],
+
+        external_introducer_furl=make_external_furl(
+            secrets["storage"]["introducer_furl"],
+            secrets["storage"]["publichost"],
+        ),
+        internal_introducer_furl=secrets["storage"]["introducer_furl"],
+
+        bucket_name=secrets["storage"]["bucket_name"],
+        server_node_privkey=secrets["storage"]["node_privkey"],
+        server_nodeid=nodeid(secrets["storage"]["node_pem"]),
+        server_node_pem=secrets["storage"]["node_pem"],
+
+        access_key_id=secrets["storage"]["s3_access_key_id"],
+        secret_key=secrets["storage"]["s3_secret_key"],
+    )
+
+def marshal_tahoe_configuration(
+        introducer_pem,
+        storage_pem, storage_privkey,
+        bucket_name, publichost, privatehost, introducer_furl,
+        s3_access_key_id, s3_secret_key,
+):
+    return dict(
+        introducer=dict(
+            root=INTRODUCER_ROOT,
+            port=INTRODUCER_PORT,
+            node_pem=introducer_pem,
+        ),
+        storage=dict(
+            root=STORAGE_ROOT,
+            port=SERVER_PORT,
+            node_pem=storage_pem,
+            node_privkey=storage_privkey,
+            bucket_name=bucket_name,
+            publichost=publichost,
+            privatehost=privatehost,
+            introducer_furl=introducer_furl,
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+        ),
+    )
+
 def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
                   user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
                   configpath=None):
-    nickname = bucket_name
-
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
-    print >>stdout, "Starting introducer..."
-    run('rm -f /home/customer/introducer/introducer.furl'
-             ' /home/customer/introducer/private/introducer.furl'
-             ' /home/customer/introducer/logport.furl')
-    write(INTRODUCER_PORT + '\n', '/home/customer/introducer/introducer.port')
-    write(SERVER_PORT + '\n', '/home/customer/storageserver/client.port')
+    if oldsecrets is None:
+        configuration = new_tahoe_configuration(
+            nickname=bucket_name,
+            bucket_name=bucket_name,
+            publichost=publichost,
+            privatehost=privatehost,
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+        )
+    else:
+        configuration = marshal_tahoe_configuration(
+            introducer_pem=oldsecrets["introducer_node_pem"],
+            storage_pem=oldsecrets["storageserver_node_pem"],
+            storage_privkey=oldsecrets["server_node_privkey"],
+            bucket_name=bucket_name,
+            publichost=publichost,
+            privatehost=privatehost,
+            introducer_furl=oldsecrets["internal_introducer_furl"],
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+        )
 
-    if oldsecrets:
-        restore_secrets(oldsecrets, 'introducer', stdout, stderr)
+    api.put(
+        local_path=CONFIGURE_TAHOE_PATH.path,
+        remote_path="/tmp/configure-tahoe",
+        mode=0500,
+    )
+    api.put(
+        local_path=StringIO(simplejson.dumps(configuration)),
+        remote_path="/tmp/tahoe-config.json",
+        mode=0400,
+    )
+    print >>stdout, "Configuring Tahoe-LAFS..."
+    api.run("/tmp/configure-tahoe < /tmp/tahoe-config.json")
 
+    print >>stdout, "Restarting introducer..."
     run('venv/bin/tahoe restart introducer && sleep 5')
 
-    internal_introducer_furl = run('cat /home/customer/introducer/private/introducer.furl').strip()
-    assert '\n' not in internal_introducer_furl, internal_introducer_furl
-
-    config = Config(configpath)
-    tahoe_cfg = TAHOE_CFG_TEMPLATE % {'nickname': nickname,
-                                      'publichost': publichost,
-                                      'privatehost': privatehost,
-                                      'introducer_furl': internal_introducer_furl,
-                                      's3_access_key_id': s3_access_key_id,
-                                      'bucket_name': bucket_name,
-                                      'incident_gatherer_furl': str(config.other['incident_gatherer_furl']),
-                                      'stats_gatherer_furl': str(config.other['stats_gatherer_furl'])}
-    write(tahoe_cfg, '/home/customer/storageserver/tahoe.cfg')
-
-    if oldsecrets:
-        restore_secrets(oldsecrets, 'storageserver', stdout, stderr)
-
-    run('chmod -f u+w /home/customer/storageserver/private/s3* || echo Assuming there are no existing s3 secret files.')
-    write(s3_secret_key, '/home/customer/storageserver/private/s3secret', mode=0640)
-    if user_token and product_token:
-        write(user_token, '/home/customer/storageserver/private/s3usertoken', mode=0640)
-        write(product_token, '/home/customer/storageserver/private/s3producttoken', mode=0640)
-
-    print >>stdout, "Starting storage server..."
+    print >>stdout, "Restarting storage server..."
     run('venv/bin/tahoe restart storageserver && sleep 5')
-    run('ps -fC tahoe')
-    run('netstat -atW')
 
     set_up_reboot(stdout, stderr)
 
-    # FIXME: eliminate code duplication with record_secrets.
-    introducer_node_pem = run('cat /home/customer/introducer/private/node.pem')
-    introducer_nodeid   = run('cat /home/customer/introducer/my_nodeid')
-    server_node_pem     = run('cat /home/customer/storageserver/private/node.pem')
-    server_nodeid       = run('cat /home/customer/storageserver/my_nodeid')
-    server_node_privkey = run('if [[ -e /home/customer/storageserver/private/node.privkey ]];'
-                              ' then cat /home/customer/storageserver/private/node.privkey; fi')
+    external_introducer_furl = make_external_furl(
+        configuration["storage"]["introducer_furl"],
+        publichost,
+    )
 
     print >>stdout, "The introducer and storage server are running."
-
-    external_introducer_furl = make_external_furl(internal_introducer_furl, publichost)
 
     # The webserver will HTML-escape the FURL in its output, so no need to escape here.
     print >>stdout, """
@@ -483,22 +445,7 @@ shares.total = 1
 
 """ % (external_introducer_furl,)
 
-    print >>secretsfile, simplejson.dumps({
-        'publichost':               publichost,
-        'privatehost':              privatehost,
-        'access_key_id':            s3_access_key_id,
-        'secret_key':               s3_secret_key,
-        'user_token':               user_token,
-        'product_token':            product_token,
-        'bucket_name':              bucket_name,
-        'introducer_node_pem':      introducer_node_pem,
-        'introducer_nodeid':        introducer_nodeid,
-        'server_node_pem':          server_node_pem,
-        'server_nodeid':            server_nodeid,
-        'server_node_privkey':      server_node_privkey,
-        'internal_introducer_furl': internal_introducer_furl,
-        'external_introducer_furl': external_introducer_furl,
-    })
+    print >>secretsfile, simplejson.dumps(secrets_to_legacy_format(configuration))
     secretsfile.flush()
 
     return external_introducer_furl
@@ -545,3 +492,57 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     write(outgoingconfig.read(), temppath)
     run('mv '+temppath+' '+pathtoremote)
     os.remove('tempconfigfile')
+
+
+def new_tahoe_configuration(nickname, bucket_name, publichost, privatehost, s3_access_key_id, s3_secret_key):
+    """
+    Create brand new secrets and configuration for use by an
+    introducer/storage pair.
+
+    @param nickname: The nickname of the storage node which will be
+        created.  Also, the common name put into the certificate for
+        the nodes.
+
+    @type nickname: bytes
+    """
+    base_name = dict(
+        organizationName=b"Least Authority Enterprises",
+        organizationalUnitName=b"S4",
+        emailAddress=nickname,
+    )
+
+    keypair = KeyPair.generate(size=2048)
+    introducer_certificate = keypair.selfSignedCert(
+        serialNumber=1,
+        commonName=b"introducer",
+        **base_name
+    )
+    storage_certificate = keypair.selfSignedCert(
+        serialNumber=1,
+        commonName=b"storage",
+        **base_name
+    )
+    def pem(key, cert):
+        return b"\n".join((key.dump(FILETYPE_PEM), cert.dump(FILETYPE_PEM)))
+
+    introducer_tub = Tub(certData=pem(keypair, introducer_certificate))
+    introducer_tub.setLocation(publichost)
+    storage_tub = Tub(certData=pem(keypair, storage_certificate))
+
+    return marshal_tahoe_configuration(
+        introducer_pem=introducer_tub.getCertData().strip(),
+
+        storage_pem=storage_tub.getCertData().strip(),
+        storage_privkey=keyutil.make_keypair()[0] + b"\n",
+
+        bucket_name=bucket_name,
+        publichost=publichost,
+        privatehost=privatehost,
+        # The object of the reference is irrelevant.  The furl will
+        # get hooked up to something else when Tahoe really runs.
+        # Just need to pass something _weak referenceable_!  Which
+        # rules out a lot of things...
+        introducer_furl=introducer_tub.registerReference(introducer_tub),
+
+        s3_access_key_id=s3_access_key_id, s3_secret_key=s3_secret_key,
+    )

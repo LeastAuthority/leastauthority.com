@@ -15,3 +15,9 @@ twisted
 service_identity
 
 txAWS==0.2.1.post5
+
+# For the test suite.
+hypothesis==3.6.0
+
+# So we can generate tahoe configuration parameters.
+tahoe-lafs==1.11.0
