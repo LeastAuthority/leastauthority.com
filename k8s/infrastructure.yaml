@@ -96,6 +96,11 @@ spec:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
+      - name: 'flog-gatherer'
+        image: '127.0.0.1:30000/leastauthority/tahoe-gatherer:391e3d0'
+        ports:
+        - containerPort: 3117
+
 
       # This is the web server.  It serves up all the
       # leastauthority.com content.
