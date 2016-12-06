@@ -8,7 +8,5 @@ RUN /app/env/bin/tahoe create-introducer /var/run/introducer
 EXPOSE 12345
 
 CMD \
-    env \
-    && echo "${LAE_TAHOE_INTRODUCER_CONFIG}" | /app/env/bin/python /app/configure-tahoe \
-    && unset LAE_TAHOE_INTRODUCER_CONFIG \
+    /app/env/bin/python /app/configure-tahoe < /app/config/introducer.json \
     && /app/env/bin/tahoe start /var/run/introducer --nodaemon

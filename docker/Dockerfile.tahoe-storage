@@ -8,6 +8,5 @@ RUN /app/env/bin/tahoe create-node /var/run/storageserver
 EXPOSE 12345
 
 CMD \
-    echo "${LAE_TAHOE_STORAGE_CONFIG}" | /app/env/bin/python /app/configure-tahoe \
-    && unset LAE_TAHOE_STORAGE_CONFIG \
+    /app/env/bin/python /app/configure-tahoe < /app/config/storage.json \
     && /app/env/bin/tahoe start /var/run/storageserver --nodaemon
