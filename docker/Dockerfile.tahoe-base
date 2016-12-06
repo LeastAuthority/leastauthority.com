@@ -1,10 +1,10 @@
 #
 # This builds an image which is used as the base for both the
 # Tahoe-LAFS introducer and storage servers.  The anticipated name is
-# <leastauthority.com/tahoe-base>.
+# <leastauthority/tahoe-base>.
 #
 
-FROM leastauthority.com/base
+FROM leastauthority/base
 
 ENV TAHOE_LAFS_GIT_REPO_URL="https://github.com/tahoe-lafs/tahoe-lafs.git"
 ENV TAHOE_LAFS_GIT_BRANCH="2237-cloud-backend-s4"
