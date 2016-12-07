@@ -113,9 +113,13 @@ spec:
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
       - name: 'flog-gatherer'
-        image: '127.0.0.1:30000/leastauthority/tahoe-gatherer:391e3d0'
+        image: '127.0.0.1:30000/leastauthority/tahoe-gatherer:fbe9412'
+	env:
+	- name: LAE_GATHERER_HINT
+	  value: "tcp:s4-logging:3117"
         ports:
-        - containerPort: 3117
+        - name: 'log-gatherer'
+          containerPort: 3117
 
 
       # This is the web server.  It serves up all the
