@@ -77,6 +77,9 @@ spec:
         component: 'Infrastructure'
     spec:
       volumes:
+      - name: 'log-gatherer-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-foolscap-logs-pvc'
       - name: 'web-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-web-pvc'
@@ -96,6 +99,18 @@ spec:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
+      # Here is the Foolscap log gatherer.
+      - name: 'foolscap-log-gatherer'
+        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:d0a568e'
+        env:
+        - name: 'LAE_GATHERER_HINT'
+          value: 'tcp:s4-logging:3117'
+        ports:
+        - name: 'log-gatherer'
+          containerPort: 3117
+        volumeMounts:
+        - mountPath: '/data'
+          name: 'log-gatherer-data'
 
       # This is the web server.  It serves up all the
       # leastauthority.com content.
