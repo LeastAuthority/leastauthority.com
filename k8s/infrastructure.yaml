@@ -48,6 +48,44 @@ spec:
     port: 4001
     protocol: 'TCP'
 ---
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 's4-logging'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of the s4 app.
+    # This makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 's4'
+
+  # This service exposes the log gatherer internally only.  Pods
+  # running on the cluster can access it but the public internet
+  # cannot.  ClusterIP is the default service type but we'll spell it
+  # out here just to be clear.
+  type: 'ClusterIP'
+
+  # Tahoe-LAFS and other Foolscap-using applications can publish their
+  # logs to a "log gatherer".  Centralizing the logs in a single place
+  # makes it easier to inspect them later.
+  ports:
+  - name: 'gatherer-port'
+    # Expose the service to the cluster on the normal port.
+    port: 3117
+    # We can select the port based on the name of a port of a
+    # container belonging to the service.  It's probably also 3117 but
+    # at least we can avoid duplicating that number one more time
+    # here.
+    targetPort: 'log-gatherer'
+    protocol: 'TCP'
+---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
