@@ -48,6 +48,22 @@ spec:
     port: 4001
     protocol: 'TCP'
 ---
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  name: 's4-logging'
+  labels:
+    provider: 'LeastAuthority'
+spec:
+  selector:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+  ports:
+  - name: 'gatherer-port'
+    port: 3117
+    protocol: 'TCP'
+---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
