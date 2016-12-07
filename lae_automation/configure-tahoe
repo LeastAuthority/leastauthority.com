@@ -80,6 +80,8 @@ def main():
             introducer_furl=section["introducer_furl"],
             s3_access_key_id=section["s3_access_key_id"],
             s3_secret_key=section["s3_secret_key"],
+            log_gatherer_furl=section.get("log_gatherer_furl", ""),
+            stats_gatherer_furl=section.get("stats_gatherer_furl", ""),
         )
 
 
@@ -97,7 +99,8 @@ def configure_introducer(introducer, port, node_pem):
 def configure_storage(
         storage, port, node_pem, node_privkey,
         bucket_name, publichost, privatehost, introducer_furl,
-        s3_access_key_id, s3_secret_key
+        s3_access_key_id, s3_secret_key,
+        log_gatherer_furl, stats_gatherer_furl,
 ):
     storage.child(b"client.port").setContent(
         u"{}".format(port).encode("ascii")
@@ -115,8 +118,8 @@ def configure_storage(
         introducer_furl=introducer_furl,
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
-        incident_gatherer_furl="",
-        stats_gatherer_furl="",
+        incident_gatherer_furl=log_gatherer_furl,
+        stats_gatherer_furl=stats_gatherer_furl,
     )
 
     storage.child(b"tahoe.cfg").setContent(tahoe_cfg)
