@@ -71,6 +71,9 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         amiimageid=product['ami_image_id'],
         instancesize=product['instance_size'],
 
+        log_gatherer_furl=config.other.get("log_gatherer_furl") or None,
+        stats_gatherer_furl=config.other.get("stats_gatherer_furl") or None,
+
         usertoken=None,
         producttoken=None,
 

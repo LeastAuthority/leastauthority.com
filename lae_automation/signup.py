@@ -1,10 +1,13 @@
 #!/usr/bin/python
 
 import time
+import attr
 from base64 import b32encode
 
 from twisted.internet import defer, reactor, task
 from twisted.python.filepath import FilePath
+
+from foolscap.furl import decode_furl
 
 from lae_automation.config import Config
 from lae_automation.initialize import create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
@@ -116,11 +119,17 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
     return d
 
 
-import attr
-
 def _validate_products(instance, attribute, value):
     if len(value) == 0:
         raise ValueError("At least one product is required.")
+
+def and_(*v):
+    def _and(inst, attr, value):
+        for validator in v:
+            validator(inst, attr, value)
+    return _and
+
+validate_furl = and_(attr.validators.instance_of(str), decode_furl)
 
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
@@ -149,6 +158,9 @@ class DeploymentConfiguration(object):
     customer_pgpinfo = attr.ib()
     secretsfile = attr.ib(validator=attr.validators.instance_of(file))
     serverinfopath = attr.ib(default="../serverinfo.csv")
+
+    log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
+    stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
 
 
 # TODO: too many args. Consider passing them in a dict.
@@ -213,18 +225,12 @@ def deploy_server(deploy_config, stdout, stderr, clock=None):
                         continue
 
                 furl = bounce_server(
+                    deploy_config,
                     publichost,
                     admin_privkey_path,
                     privatehost,
-                    deploy_config.s3_access_key_id,
-                    deploy_config.s3_secret_key,
-                    deploy_config.usertoken,
-                    deploy_config.producttoken,
-                    deploy_config.bucketname,
-                    deploy_config.oldsecrets,
                     stdout,
                     stderr,
-                    deploy_config.secretsfile,
                 )
 
                 # XXX We probably need to rethink this:

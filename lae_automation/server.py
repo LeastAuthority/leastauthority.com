@@ -385,31 +385,32 @@ def marshal_tahoe_configuration(
         ),
     )
 
-def bounce_server(publichost, admin_privkey_path, privatehost, s3_access_key_id, s3_secret_key,
-                  user_token, product_token, bucket_name, oldsecrets, stdout, stderr, secretsfile,
+def bounce_server(deploy_config, publichost, admin_privkey_path, privatehost, stdout, stderr,
                   configpath=None):
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
-    if oldsecrets is None:
+    if deploy_config.oldsecrets is None:
         configuration = new_tahoe_configuration(
-            nickname=bucket_name,
-            bucket_name=bucket_name,
+            nickname=deploy_config.bucketname,
+            bucket_name=deploy_config.bucketname,
             publichost=publichost,
             privatehost=privatehost,
-            s3_access_key_id=s3_access_key_id,
-            s3_secret_key=s3_secret_key,
+            s3_access_key_id=deploy_config.s3_access_key_id,
+            s3_secret_key=deploy_config.s3_secret_key,
         )
     else:
         configuration = marshal_tahoe_configuration(
-            introducer_pem=oldsecrets["introducer_node_pem"],
-            storage_pem=oldsecrets["storageserver_node_pem"],
-            storage_privkey=oldsecrets["server_node_privkey"],
-            bucket_name=bucket_name,
+            introducer_pem=deploy_config.oldsecrets["introducer_node_pem"],
+            storage_pem=deploy_config.oldsecrets["storageserver_node_pem"],
+            storage_privkey=deploy_config.oldsecrets["server_node_privkey"],
+            bucket_name=deploy_config.bucketname,
             publichost=publichost,
             privatehost=privatehost,
-            introducer_furl=oldsecrets["internal_introducer_furl"],
-            s3_access_key_id=s3_access_key_id,
-            s3_secret_key=s3_secret_key,
+            introducer_furl=deploy_config.oldsecrets["internal_introducer_furl"],
+            s3_access_key_id=deploy_config.s3_access_key_id,
+            s3_secret_key=deploy_config.s3_secret_key,
+            log_gatherer_furl=deploy_config.log_gatherer_furl,
+            stats_gatherer_furl=deploy_config.stats_gatherer_furl,
         )
 
     api.put(
@@ -453,8 +454,8 @@ shares.total = 1
 
 """ % (external_introducer_furl,)
 
-    print >>secretsfile, simplejson.dumps(secrets_to_legacy_format(configuration))
-    secretsfile.flush()
+    print >>deploy_config.secretsfile, simplejson.dumps(secrets_to_legacy_format(configuration))
+    deploy_config.secretsfile.flush()
 
     return external_introducer_furl
 
