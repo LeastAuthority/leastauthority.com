@@ -82,6 +82,21 @@ def port_number():
         min_value=0, max_value=2 ** 16 - 1
     )
 
+def furl():
+    tubID = Tub(node_pem().example()).getTubID()
+    # XXX Not well factored probably.
+    return strategies.builds(
+        lambda pem, addr, port, swissnum: encode_furl(
+            Tub(pem).getTubID(),
+            ["{}:{}".format(addr, port)],
+            swissnum,
+        ),
+        node_pem(),
+        ipv4_address(),
+        port_number(),
+        swissnum(),
+    )
+
 def _add_furl(swissnum, target):
     def add(config):
         num = config.pop(swissnum)
