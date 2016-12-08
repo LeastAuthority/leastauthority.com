@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -ex
 
 LEASTAUTHORITY=$(dirname $(dirname $0))
 
