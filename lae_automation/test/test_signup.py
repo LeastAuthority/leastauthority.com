@@ -1,5 +1,4 @@
 
-import json
 from base64 import b32encode
 
 import attr

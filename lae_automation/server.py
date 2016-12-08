@@ -4,7 +4,7 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-import os, sys, base64, simplejson, subprocess
+import os, simplejson, subprocess
 from datetime import datetime
 utcnow = datetime.utcnow
 
@@ -23,8 +23,6 @@ from twisted.python.filepath import FilePath
 from foolscap.api import Tub
 
 from allmydata.util import keyutil
-
-from lae_util.streams import LoggingStream
 
 class PathFormatError(Exception):
     pass
