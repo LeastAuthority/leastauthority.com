@@ -133,7 +133,14 @@ def introducer_configuration():
         "root": absolute_path(),
         "port": port_number(),
         "node_pem": node_pem(),
-    })
+
+        "log-gatherer-swissnum": swissnum(),
+        "stats-gatherer-swissnum": swissnum(),
+    }).map(
+        _add_furl("log-gatherer-swissnum", "log_gatherer_furl")
+    ).map(
+        _add_furl("stats-gatherer-swissnum", "stats_gatherer_furl")
+    )
 
 def storage_configuration(keypair=keyutil.make_keypair()):
     return strategies.fixed_dictionaries({

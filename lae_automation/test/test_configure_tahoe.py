@@ -8,13 +8,15 @@ from ConfigParser import SafeConfigParser
 from hypothesis import given, settings
 
 from testtools import TestCase
-from testtools.matchers import AfterPreprocessing, Equals, AllMatch
+from testtools.matchers import AfterPreprocessing, Equals, AllMatch, MatchesListwise
 
 from fixtures import Fixture
 
 from twisted.python.filepath import FilePath
 
 from .strategies import introducer_configuration, storage_configuration
+
+from lae_automation.server import marshal_tahoe_configuration
 
 CONFIGURE_TAHOE = FilePath(__file__).parent().parent().child(b"configure-tahoe")
 
@@ -76,15 +78,21 @@ class ConfigureTahoeTests(TestCase):
         introducer configurations are written with empty strings for
         these fields.
         """
-        introducer_config["root"] = self.nodes.introducer.path
-        storage_config["root"] = self.nodes.storage.path
-
-        for config in [introducer_config, storage_config]:
-            for gatherer in {"log", "stats"}:
-                config.pop(gatherer + "_gatherer_furl", None)
-
-
-        config = dict(introducer=introducer_config, storage=storage_config)
+        config = marshal_tahoe_configuration(
+            introducer_pem=introducer_config["node_pem"],
+            storage_pem=storage_config["node_pem"],
+            storage_privkey=storage_config["node_privkey"],
+            bucket_name=storage_config["bucket_name"],
+            publichost=storage_config["publichost"],
+            privatehost=storage_config["privatehost"],
+            introducer_furl=storage_config["introducer_furl"],
+            s3_access_key_id=storage_config["s3_access_key_id"],
+            s3_secret_key=storage_config["s3_secret_key"],
+            log_gatherer_furl=None,
+            stats_gatherer_furl=None,
+        )
+        config["introducer"]["root"] = self.nodes.introducer.path
+        config["storage"]["root"] = self.nodes.storage.path
         configure_tahoe(config)
 
         config_files = [
@@ -106,16 +114,21 @@ class ConfigureTahoeTests(TestCase):
         introducer configurations are written with those values for
         those fields.
         """
-        introducer_config["root"] = self.nodes.introducer.path
-        storage_config["root"] = self.nodes.storage.path
-
-        # They should match anyway and this makes the assertion below
-        # easier.  Also, one is just as randomly generated as the
-        # other...
-        introducer_config["log_gatherer_furl"] = storage_config["log_gatherer_furl"]
-        introducer_config["stats_gatherer_furl"] = storage_config["stats_gatherer_furl"]
-
-        config = dict(introducer=introducer_config, storage=storage_config)
+        config = marshal_tahoe_configuration(
+            introducer_pem=introducer_config["node_pem"],
+            storage_pem=storage_config["node_pem"],
+            storage_privkey=storage_config["node_privkey"],
+            bucket_name=storage_config["bucket_name"],
+            publichost=storage_config["publichost"],
+            privatehost=storage_config["privatehost"],
+            introducer_furl=storage_config["introducer_furl"],
+            s3_access_key_id=storage_config["s3_access_key_id"],
+            s3_secret_key=storage_config["s3_secret_key"],
+            log_gatherer_furl=introducer_config["log_gatherer_furl"],
+            stats_gatherer_furl=introducer_config["stats_gatherer_furl"],
+        )
+        config["introducer"]["root"] = self.nodes.introducer.path
+        config["storage"]["root"] = self.nodes.storage.path
         configure_tahoe(config)
 
         config_files = [
@@ -129,3 +142,25 @@ class ConfigureTahoeTests(TestCase):
                 ("client", "stats_gatherer.furl", introducer_config["stats_gatherer_furl"]),
             })
         ))
+
+
+class MarshalTahoeConfiguration(TestCase):
+    """
+    Tests for ``marshal_tahoe_configuration``.
+    """
+    def test_structure_matches_strategy(self):
+        """
+        The basic structure of the result returned matches the structure
+        created by the hypothesis strategies used by other tests.
+        """
+        marshalled = marshal_tahoe_configuration("", "", "", "", "", "", "", "", "")
+        introducer = introducer_configuration().example()
+        storage = storage_configuration().example()
+
+        self.assertThat(
+            [set(introducer), set(storage)],
+            MatchesListwise([
+                Equals(set(marshalled["introducer"])),
+                Equals(set(marshalled["storage"])),
+            ]),
+        )

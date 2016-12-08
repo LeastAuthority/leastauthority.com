@@ -354,12 +354,20 @@ def marshal_tahoe_configuration(
         storage_pem, storage_privkey,
         bucket_name, publichost, privatehost, introducer_furl,
         s3_access_key_id, s3_secret_key,
+        log_gatherer_furl=None,
+        stats_gatherer_furl=None,
 ):
+    if log_gatherer_furl is None:
+        log_gatherer_furl = ""
+    if stats_gatherer_furl is None:
+        stats_gatherer_furl = ""
     return dict(
         introducer=dict(
             root=INTRODUCER_ROOT,
             port=INTRODUCER_PORT,
             node_pem=introducer_pem,
+            log_gatherer_furl=log_gatherer_furl,
+            stats_gatherer_furl=stats_gatherer_furl,
         ),
         storage=dict(
             root=STORAGE_ROOT,
@@ -372,6 +380,8 @@ def marshal_tahoe_configuration(
             introducer_furl=introducer_furl,
             s3_access_key_id=s3_access_key_id,
             s3_secret_key=s3_secret_key,
+            log_gatherer_furl=log_gatherer_furl,
+            stats_gatherer_furl=stats_gatherer_furl,
         ),
     )
 
