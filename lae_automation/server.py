@@ -391,12 +391,9 @@ def bounce_server(deploy_config, publichost, admin_privkey_path, privatehost, st
 
     if deploy_config.oldsecrets is None:
         configuration = new_tahoe_configuration(
-            nickname=deploy_config.bucketname,
-            bucket_name=deploy_config.bucketname,
+            deploy_config=deploy_config,
             publichost=publichost,
             privatehost=privatehost,
-            s3_access_key_id=deploy_config.s3_access_key_id,
-            s3_secret_key=deploy_config.s3_secret_key,
         )
     else:
         configuration = marshal_tahoe_configuration(
@@ -503,21 +500,15 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     os.remove('tempconfigfile')
 
 
-def new_tahoe_configuration(nickname, bucket_name, publichost, privatehost, s3_access_key_id, s3_secret_key):
+def new_tahoe_configuration(deploy_config, publichost, privatehost):
     """
     Create brand new secrets and configuration for use by an
     introducer/storage pair.
-
-    @param nickname: The nickname of the storage node which will be
-        created.  Also, the common name put into the certificate for
-        the nodes.
-
-    @type nickname: bytes
     """
     base_name = dict(
         organizationName=b"Least Authority Enterprises",
         organizationalUnitName=b"S4",
-        emailAddress=nickname,
+        emailAddress=deploy_config.bucketname,
     )
 
     keypair = KeyPair.generate(size=2048)
@@ -544,7 +535,7 @@ def new_tahoe_configuration(nickname, bucket_name, publichost, privatehost, s3_a
         storage_pem=storage_tub.getCertData().strip(),
         storage_privkey=keyutil.make_keypair()[0] + b"\n",
 
-        bucket_name=bucket_name,
+        bucket_name=deploy_config.bucketname,
         publichost=publichost,
         privatehost=privatehost,
         # The object of the reference is irrelevant.  The furl will
@@ -553,5 +544,9 @@ def new_tahoe_configuration(nickname, bucket_name, publichost, privatehost, s3_a
         # rules out a lot of things...
         introducer_furl=introducer_tub.registerReference(introducer_tub),
 
-        s3_access_key_id=s3_access_key_id, s3_secret_key=s3_secret_key,
+        s3_access_key_id=deploy_config.s3_access_key_id,
+        s3_secret_key=deploy_config.s3_secret_key,
+
+        log_gatherer_furl=deploy_config.log_gatherer_furl,
+        stats_gatherer_furl=deploy_config.stats_gatherer_furl,
     )
