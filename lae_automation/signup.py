@@ -129,7 +129,10 @@ def and_(*v):
             validator(inst, attr, value)
     return _and
 
-validate_furl = and_(attr.validators.instance_of(str), decode_furl)
+validate_furl = and_(
+    attr.validators.instance_of(str),
+    lambda inst, attr, value: decode_furl(value),
+)
 
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
