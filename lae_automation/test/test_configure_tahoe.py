@@ -34,6 +34,12 @@ def configure_tahoe(configuration):
         check_call([executable, CONFIGURE_TAHOE.path], stdin=fObj)
 
 
+def hasContents(contents):
+    def _readPath(path):
+        return path.getContent()
+    return AfterPreprocessing(_readPath, Equals(contents))
+
+
 def hasConfiguration(fields):
     expected_fields = sorted(fields)
 
@@ -66,6 +72,16 @@ class ConfigureTahoeTests(TestCase):
     """
     Tests for the command-line ``configure-tahoe`` tool.
     """
+    def setup_example(self):
+        try:
+            del self.force_failure
+        except AttributeError:
+            pass
+
+    def teardown_example(self, ignored):
+        if getattr(self, "force_failure", False):
+            self.fail("expectation failed")
+
     def setUp(self):
         TestCase.setUp(self)
         self.nodes = self.useFixture(TahoeNodes(mkdtemp()))
@@ -108,12 +124,12 @@ class ConfigureTahoeTests(TestCase):
 
     @given(introducer_configuration(), storage_configuration())
     @settings(parent=simple)
-    def test_gatherers(self, introducer_config, storage_config):
+    def test_complete(self, introducer_config, storage_config):
         """
-        If the log and stats gatherers are given, the storage and
-        introducer configurations are written with those values for
-        those fields.
+        Introducer and storage configuration can be supplied via ``configure_tahoe``.
         """
+        introducer_furl = introducer_config["introducer_furl"]
+
         config = marshal_tahoe_configuration(
             introducer_pem=introducer_config["node_pem"],
             storage_pem=storage_config["node_pem"],
@@ -121,7 +137,7 @@ class ConfigureTahoeTests(TestCase):
             bucket_name=storage_config["bucket_name"],
             publichost=storage_config["publichost"],
             privatehost=storage_config["privatehost"],
-            introducer_furl=storage_config["introducer_furl"],
+            introducer_furl=introducer_furl,
             s3_access_key_id=storage_config["s3_access_key_id"],
             s3_secret_key=storage_config["s3_secret_key"],
             log_gatherer_furl=introducer_config["log_gatherer_furl"],
@@ -131,17 +147,35 @@ class ConfigureTahoeTests(TestCase):
         config["storage"]["root"] = self.nodes.storage.path
         configure_tahoe(config)
 
-        config_files = [
-            self.nodes.introducer.child(b"tahoe.cfg"),
-            self.nodes.storage.child(b"tahoe.cfg"),
-        ]
-        self.assertThat(
+        intro_config_path = self.nodes.introducer.child(b"tahoe.cfg")
+        storage_config_path = self.nodes.storage.child(b"tahoe.cfg")
+        config_files = [intro_config_path, storage_config_path]
+
+        # If the log and stats gatherers are given, the storage and
+        # introducer configurations are written with those values for
+        # those fields.
+        self.expectThat(
             config_files, AllMatch(
             hasConfiguration({
                 ("node", "log_gatherer.furl", introducer_config["log_gatherer_furl"]),
                 ("client", "stats_gatherer.furl", introducer_config["stats_gatherer_furl"]),
             })
         ))
+
+        # The introducer furl in the introducer configuration is
+        # written to the ``private/introducer.furl`` file in the
+        # introducer's state/configuration directory and to the
+        # storage node's configuration file.
+        self.expectThat(
+            self.nodes.introducer.descendant([b"private", b"introducer.furl"]),
+            hasContents(introducer_furl),
+        )
+        self.expectThat(
+            storage_config_path,
+            hasConfiguration({
+                ("client", "introducer.furl", introducer_furl),
+            }),
+        )
 
 
 class MarshalTahoeConfiguration(TestCase):
