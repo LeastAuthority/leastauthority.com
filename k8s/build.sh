@@ -23,7 +23,7 @@ ${EXEC} bash -e -x -c '
 # Get a fresh, clean space to work in.
 TEMP=$(${EXEC} bash -c 'mktemp -d')
 
-${EXEC} bash -e -x -c '
+${EXEC} bash -ex -c '
     # Clone the git branch variable to the remote environment.
     GIT_BRANCH="'"${GIT_BRANCH}"'"
     WORKDIR="'"${TEMP}"'"
