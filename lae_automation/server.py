@@ -366,6 +366,7 @@ def marshal_tahoe_configuration(
             root=INTRODUCER_ROOT,
             port=INTRODUCER_PORT,
             node_pem=introducer_pem,
+            introducer_furl=introducer_furl,
             log_gatherer_furl=log_gatherer_furl,
             stats_gatherer_furl=stats_gatherer_furl,
         ),
