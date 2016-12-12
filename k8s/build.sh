@@ -48,6 +48,7 @@ ${EXEC} bash -e -x -c '
     # with the tag given in the environment.
     docker tag leastauthority/web 127.0.0.1:30000/leastauthority/web:"${DOCKER_TAG}"
     docker tag leastauthority/flapp 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
+    docker tag leastauthority/foolscap-gatherer 127.0.0.1:30000/leastauthority/foolscap-gatherer:"${DOCKER_TAG}"
     docker tag leastauthority/magicwormhole 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
 
     # Clean up the last portforwarder, if necessary.
@@ -64,6 +65,7 @@ ${EXEC} bash -e -x -c '
     # And push them.
     docker push 127.0.0.1:30000/leastauthority/web:"${DOCKER_TAG}"
     docker push 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
+    docker push 127.0.0.1:30000/leastauthority/foolscap-gatherer:"${DOCKER_TAG}"
     docker push 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
 
     echo "Tagged images with ${DOCKER_TAG}"

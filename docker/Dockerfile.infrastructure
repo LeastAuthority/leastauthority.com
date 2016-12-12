@@ -1,54 +1,10 @@
 #
-# Attempts are made to follow the guidelines at
-# https://docs.docker.com/engine/userguide/eng-image/dockerfile_best-practices/
+# This builds an image which is used as the base for both the web and
+# flapp servers, the infrastructure containers for leastauthority.com.
+# The anticipated name is <leastauthority/infrastructure>.
 #
 
-# Ubuntu 14.04 is the known-working baseline OS.  Others probably work
-# but this is a reasonable starting place.  14.04.5 already has many
-# updates applied so it makes more sense as a starting place than the
-# original 14.04.
-FROM library/ubuntu:14.04.5
-
-# If there are security updates for any of the packages we install,
-# bump the date in this environment variable to invalidate the Docker
-# build cache and force installation of the new packages.  Otherwise,
-# Docker's image/layer cache may prevent the security update from
-# being retrieved.
-ENV SECURITY_UPDATES="2016-10-28"
-
-# We'll do an upgrade because the base Ubuntu image isn't guaranteed
-# to include the latest security updates.  This is counter to best
-# practice recommendations but security updates are important.
-RUN apt-get update && \
-    apt-get install -y unattended-upgrades && \
-    unattended-upgrade --minimal_upgrade_steps && \
-rm -rf /var/lib/apt/lists/*
-
-# Now install some dependencies.
-#
-# The first group of non-Python dependencies required to build the
-# Python dependencies.
-#
-# The second group supports the deployment of the infrastructure
-# server.
-RUN apt-get update && apt-get install -y \
-    python-dev \
-    git-core \
-    libffi-dev \
-    openssl \
-    libssl-dev \
-    \
-    python-virtualenv \
-&& rm -rf /var/lib/apt/lists/*
-
-# Create a virtualenv into which to install the infrastructure server
-# software.
-RUN virtualenv /app/env
-
-# Get a newer version of pip.  The version (1.5.4) in the
-# python-virtualenv OS package has a bug that prevents it from
-# installing txAWS.
-RUN /app/env/bin/pip install --upgrade pip
+FROM leastauthority/base
 
 # Select a postfix configuration so that postfix can be installed
 # without prompting.  And install postfix.

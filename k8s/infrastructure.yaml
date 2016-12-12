@@ -48,6 +48,44 @@ spec:
     port: 4001
     protocol: 'TCP'
 ---
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 's4-logging'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of the s4 app.
+    # This makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 's4'
+
+  # This service exposes the log gatherer internally only.  Pods
+  # running on the cluster can access it but the public internet
+  # cannot.  ClusterIP is the default service type but we'll spell it
+  # out here just to be clear.
+  type: 'ClusterIP'
+
+  # Tahoe-LAFS and other Foolscap-using applications can publish their
+  # logs to a "log gatherer".  Centralizing the logs in a single place
+  # makes it easier to inspect them later.
+  ports:
+  - name: 'gatherer-port'
+    # Expose the service to the cluster on the normal port.
+    port: 3117
+    # We can select the port based on the name of a port of a
+    # container belonging to the service.  It's probably also 3117 but
+    # at least we can avoid duplicating that number one more time
+    # here.
+    targetPort: 'log-gatherer'
+    protocol: 'TCP'
+---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
@@ -77,6 +115,9 @@ spec:
         component: 'Infrastructure'
     spec:
       volumes:
+      - name: 'log-gatherer-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-foolscap-logs-pvc'
       - name: 'web-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-web-pvc'
@@ -96,6 +137,18 @@ spec:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
+      # Here is the Foolscap log gatherer.
+      - name: 'foolscap-log-gatherer'
+        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:d0a568e'
+        env:
+        - name: 'LAE_GATHERER_HINT'
+          value: 'tcp:s4-logging:3117'
+        ports:
+        - name: 'log-gatherer'
+          containerPort: 3117
+        volumeMounts:
+        - mountPath: '/data'
+          name: 'log-gatherer-data'
 
       # This is the web server.  It serves up all the
       # leastauthority.com content.
@@ -149,6 +202,45 @@ spec:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 4000
         - containerPort: 4001
+---
+# Read about StorageClass at
+# http://blog.kubernetes.io/2016/10/dynamic-provisioning-and-storage-in-kubernetes.html
+# and
+# http://kubernetes.io/docs/user-guide/persistent-volumes/#storageclasses
+# and
+# http://kubernetes.io/docs/user-guide/persistent-volumes/#class-1
+kind: 'StorageClass'
+apiVersion: 'storage.k8s.io/v1beta1'
+metadata:
+  name: 'normal'
+provisioner: 'kubernetes.io/aws-ebs'
+parameters:
+  # Read about types at
+  # http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html
+  # and
+  # https://aws.amazon.com/ebs/pricing/
+  type: 'gp2'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-foolscap-logs-pvc'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+  annotations:
+    # This enables dynamic provisioning of the volume.  See
+    # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
+    volume.beta.kubernetes.io/storage-class: 'normal'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '10G'
 ---
 # Read about PersistentVolumeClaims at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
