@@ -3,17 +3,17 @@ from tempfile import mkstemp, mkdtemp
 from os import fdopen
 from json import dumps
 from subprocess import check_call
-from ConfigParser import SafeConfigParser
 
 from hypothesis import given, settings
 
-from testtools import TestCase
-from testtools.matchers import AfterPreprocessing, Equals, AllMatch, MatchesListwise
+from testtools.matchers import Equals, AllMatch, MatchesListwise
 
 from fixtures import Fixture
 
 from twisted.python.filepath import FilePath
 
+from .testcase import TestBase
+from .matchers import hasContents, hasConfiguration
 from .strategies import introducer_configuration, storage_configuration
 
 from lae_automation.server import marshal_tahoe_configuration
@@ -34,27 +34,6 @@ def configure_tahoe(configuration):
         check_call([executable, CONFIGURE_TAHOE.path], stdin=fObj)
 
 
-def hasContents(contents):
-    def _readPath(path):
-        return path.getContent()
-    return AfterPreprocessing(_readPath, Equals(contents))
-
-
-def hasConfiguration(fields):
-    expected_fields = sorted(fields)
-
-    def _readConfig(config_path):
-        config = SafeConfigParser()
-        config.readfp(config_path.open())
-        actual_fields = sorted(
-            (section, field, config.get(section, field))
-            for (section, field, _)
-            in expected_fields
-        )
-        return actual_fields
-    return AfterPreprocessing(_readConfig, Equals(expected_fields))
-
-
 class TahoeNodes(Fixture):
     def __init__(self, root):
         Fixture.__init__(self)
@@ -68,22 +47,12 @@ class TahoeNodes(Fixture):
         self.storage.makedirs()
 
 
-class ConfigureTahoeTests(TestCase):
+class ConfigureTahoeTests(TestBase):
     """
     Tests for the command-line ``configure-tahoe`` tool.
     """
-    def setup_example(self):
-        try:
-            del self.force_failure
-        except AttributeError:
-            pass
-
-    def teardown_example(self, ignored):
-        if getattr(self, "force_failure", False):
-            self.fail("expectation failed")
-
     def setUp(self):
-        TestCase.setUp(self)
+        TestBase.setUp(self)
         self.nodes = self.useFixture(TahoeNodes(mkdtemp()))
 
     @given(introducer_configuration(), storage_configuration())
@@ -178,7 +147,7 @@ class ConfigureTahoeTests(TestCase):
         )
 
 
-class MarshalTahoeConfiguration(TestCase):
+class MarshalTahoeConfiguration(TestBase):
     """
     Tests for ``marshal_tahoe_configuration``.
     """

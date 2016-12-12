@@ -2,17 +2,24 @@
 import mock
 from hypothesis import given, settings
 
+from os import fdopen
 from json import loads, dumps
 from cStringIO import StringIO
-from twisted.trial.unittest import TestCase, SynchronousTestCase
+from tempfile import mkstemp
+
+from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
 
 from datetime import datetime
+
+from testtools.matchers import Equals
 
 from lae_automation import server
 from lae_automation.signup import DeploymentConfiguration
 from lae_automation.server import api
 
+from .testcase import TestBase
+from .matchers import hasLocationHint
 from .strategies import (
     nickname, bucket_name, ipv4_address, aws_access_key_id, aws_secret_key,
     furl,
@@ -212,7 +219,7 @@ class TestServerModule(TestCase):
         self._check_all_done()
 
 
-class NewTahoeConfigurationTests(SynchronousTestCase):
+class NewTahoeConfigurationTests(TestBase):
     """
     Tests for ``new_tahoe_configuration``.
     """
@@ -225,7 +232,7 @@ class NewTahoeConfigurationTests(SynchronousTestCase):
     # Limit the number of iterations of this test - generating RSA
     # keys is slow.
     @settings(max_examples=10)
-    def test_json_serializable(
+    def test_generated(
             self,
             nickname, bucket_name,
             publichost, privatehost,
@@ -233,8 +240,8 @@ class NewTahoeConfigurationTests(SynchronousTestCase):
             log_gatherer_furl, stats_gatherer_furl,
     ):
         """
-        It returns an object which can be round-tripped through the JSON
-        format.
+        New introducer and storage configuration can be created with
+        ``new_tahoe_configuration``.
         """
         deploy_config = DeploymentConfiguration(
                 products=[{}],
@@ -250,7 +257,7 @@ class NewTahoeConfigurationTests(SynchronousTestCase):
                 oldsecrets=None,
                 customer_email=None,
                 customer_pgpinfo=None,
-                secretsfile=FilePath(self.mktemp()).open("w"),
+                secretsfile=fdopen(mkstemp()[0], "w"),
                 serverinfopath=None,
 
                 ssec2_access_key_id=None,
@@ -268,4 +275,20 @@ class NewTahoeConfigurationTests(SynchronousTestCase):
         config = server.new_tahoe_configuration(
             deploy_config, publichost, privatehost,
         )
-        self.assertEqual(config, loads(dumps(config)))
+        # It returns an object which can be round-tripped through the
+        # JSON format.
+        self.expectThat(config, Equals(loads(dumps(config))))
+
+        # The introducer and storage are both told the same introducer
+        # furl.
+        self.expectThat(
+            config["introducer"]["introducer_furl"],
+            Equals(config["storage"]["introducer_furl"]),
+        )
+
+        # The introducer furl is contains a location hint of the
+        # public host and the hard-coded introducer port we use.
+        self.expectThat(
+            config["introducer"]["introducer_furl"],
+            hasLocationHint(config["storage"]["publichost"], INTRODUCER_PORT),
+        )

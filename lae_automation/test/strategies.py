@@ -91,7 +91,6 @@ def port_number():
     )
 
 def furl():
-    tubID = Tub(node_pem().example()).getTubID()
     # XXX Not well factored probably.
     return strategies.builds(
         lambda pem, addr, port, swissnum: encode_furl(

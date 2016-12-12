@@ -527,7 +527,7 @@ def new_tahoe_configuration(deploy_config, publichost, privatehost):
         return b"\n".join((key.dump(FILETYPE_PEM), cert.dump(FILETYPE_PEM)))
 
     introducer_tub = Tub(certData=pem(keypair, introducer_certificate))
-    introducer_tub.setLocation(publichost)
+    introducer_tub.setLocation("{}:{}".format(publichost, INTRODUCER_PORT))
     storage_tub = Tub(certData=pem(keypair, storage_certificate))
 
     return marshal_tahoe_configuration(
