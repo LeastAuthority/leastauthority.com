@@ -85,6 +85,7 @@ def main():
             introducer=FilePath(section["root"]),
             port=section["port"],
             node_pem=section["node_pem"],
+            introducer_furl=section["introducer_furl"],
             log_gatherer_furl=section.get("log_gatherer_furl", ""),
             stats_gatherer_furl=section.get("stats_gatherer_furl", ""),
         )
@@ -107,17 +108,19 @@ def main():
 
 
 def configure_introducer(
-        introducer, port, node_pem,
+        introducer, port, node_pem, introducer_furl,
         log_gatherer_furl, stats_gatherer_furl,
 ):
+    preferred_furl_path = introducer.descendant((b"private", b"introducer.furl"))
     force_remove(introducer.child(b"introducer.furl"))
-    force_remove(introducer.descendant((b"private", b"introducer.furl")))
+    force_remove(preferred_furl_path)
     force_remove(introducer.child(b"logport.furl"))
 
     introducer.child(b"introducer.port").setContent(
         u"{}".format(port).encode("ascii")
     )
     configure_secrets(introducer, node_pem)
+    preferred_furl_path.setContent(introducer_furl)
     tahoe_cfg = INTRODUCER_CFG_TEMPLATE % dict(
         log_gatherer_furl=log_gatherer_furl,
         stats_gatherer_furl=stats_gatherer_furl,

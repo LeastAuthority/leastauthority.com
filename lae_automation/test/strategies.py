@@ -91,7 +91,6 @@ def port_number():
     )
 
 def furl():
-    tubID = Tub(node_pem().example()).getTubID()
     # XXX Not well factored probably.
     return strategies.builds(
         lambda pem, addr, port, swissnum: encode_furl(
@@ -157,9 +156,12 @@ def introducer_configuration():
         "port": port_number(),
         "node_pem": node_pem(),
 
+        "introducer-swissnum": swissnum(),
         "log-gatherer-swissnum": swissnum(),
         "stats-gatherer-swissnum": swissnum(),
     }).map(
+        _add_furl("introducer-swissnum", "introducer_furl")
+    ).map(
         _add_furl("log-gatherer-swissnum", "log_gatherer_furl")
     ).map(
         _add_furl("stats-gatherer-swissnum", "stats_gatherer_furl")

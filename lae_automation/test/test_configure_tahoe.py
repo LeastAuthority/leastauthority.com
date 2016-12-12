@@ -3,17 +3,17 @@ from tempfile import mkstemp, mkdtemp
 from os import fdopen
 from json import dumps
 from subprocess import check_call
-from ConfigParser import SafeConfigParser
 
 from hypothesis import given, settings
 
-from testtools import TestCase
-from testtools.matchers import AfterPreprocessing, Equals, AllMatch, MatchesListwise
+from testtools.matchers import Equals, AllMatch, MatchesListwise
 
 from fixtures import Fixture
 
 from twisted.python.filepath import FilePath
 
+from .testcase import TestBase
+from .matchers import hasContents, hasConfiguration
 from .strategies import introducer_configuration, storage_configuration
 
 from lae_automation.server import marshal_tahoe_configuration
@@ -34,21 +34,6 @@ def configure_tahoe(configuration):
         check_call([executable, CONFIGURE_TAHOE.path], stdin=fObj)
 
 
-def hasConfiguration(fields):
-    expected_fields = sorted(fields)
-
-    def _readConfig(config_path):
-        config = SafeConfigParser()
-        config.readfp(config_path.open())
-        actual_fields = sorted(
-            (section, field, config.get(section, field))
-            for (section, field, _)
-            in expected_fields
-        )
-        return actual_fields
-    return AfterPreprocessing(_readConfig, Equals(expected_fields))
-
-
 class TahoeNodes(Fixture):
     def __init__(self, root):
         Fixture.__init__(self)
@@ -62,12 +47,12 @@ class TahoeNodes(Fixture):
         self.storage.makedirs()
 
 
-class ConfigureTahoeTests(TestCase):
+class ConfigureTahoeTests(TestBase):
     """
     Tests for the command-line ``configure-tahoe`` tool.
     """
     def setUp(self):
-        TestCase.setUp(self)
+        TestBase.setUp(self)
         self.nodes = self.useFixture(TahoeNodes(mkdtemp()))
 
     @given(introducer_configuration(), storage_configuration())
@@ -108,12 +93,12 @@ class ConfigureTahoeTests(TestCase):
 
     @given(introducer_configuration(), storage_configuration())
     @settings(parent=simple)
-    def test_gatherers(self, introducer_config, storage_config):
+    def test_complete(self, introducer_config, storage_config):
         """
-        If the log and stats gatherers are given, the storage and
-        introducer configurations are written with those values for
-        those fields.
+        Introducer and storage configuration can be supplied via ``configure_tahoe``.
         """
+        introducer_furl = introducer_config["introducer_furl"]
+
         config = marshal_tahoe_configuration(
             introducer_pem=introducer_config["node_pem"],
             storage_pem=storage_config["node_pem"],
@@ -121,7 +106,7 @@ class ConfigureTahoeTests(TestCase):
             bucket_name=storage_config["bucket_name"],
             publichost=storage_config["publichost"],
             privatehost=storage_config["privatehost"],
-            introducer_furl=storage_config["introducer_furl"],
+            introducer_furl=introducer_furl,
             s3_access_key_id=storage_config["s3_access_key_id"],
             s3_secret_key=storage_config["s3_secret_key"],
             log_gatherer_furl=introducer_config["log_gatherer_furl"],
@@ -131,11 +116,14 @@ class ConfigureTahoeTests(TestCase):
         config["storage"]["root"] = self.nodes.storage.path
         configure_tahoe(config)
 
-        config_files = [
-            self.nodes.introducer.child(b"tahoe.cfg"),
-            self.nodes.storage.child(b"tahoe.cfg"),
-        ]
-        self.assertThat(
+        intro_config_path = self.nodes.introducer.child(b"tahoe.cfg")
+        storage_config_path = self.nodes.storage.child(b"tahoe.cfg")
+        config_files = [intro_config_path, storage_config_path]
+
+        # If the log and stats gatherers are given, the storage and
+        # introducer configurations are written with those values for
+        # those fields.
+        self.expectThat(
             config_files, AllMatch(
             hasConfiguration({
                 ("node", "log_gatherer.furl", introducer_config["log_gatherer_furl"]),
@@ -143,8 +131,23 @@ class ConfigureTahoeTests(TestCase):
             })
         ))
 
+        # The introducer furl in the introducer configuration is
+        # written to the ``private/introducer.furl`` file in the
+        # introducer's state/configuration directory and to the
+        # storage node's configuration file.
+        self.expectThat(
+            self.nodes.introducer.descendant([b"private", b"introducer.furl"]),
+            hasContents(introducer_furl),
+        )
+        self.expectThat(
+            storage_config_path,
+            hasConfiguration({
+                ("client", "introducer.furl", introducer_furl),
+            }),
+        )
 
-class MarshalTahoeConfiguration(TestCase):
+
+class MarshalTahoeConfiguration(TestBase):
     """
     Tests for ``marshal_tahoe_configuration``.
     """
