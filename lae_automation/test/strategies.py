@@ -1,3 +1,11 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
+"""
+This module implements various Hypothesis strategies useful for
+QuickCheck-style testing of ``lae_automation`` APIs.
+"""
+
 from string import uppercase, lowercase, letters, digits
 from base64 import b32encode
 
