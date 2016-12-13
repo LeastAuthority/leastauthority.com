@@ -123,7 +123,7 @@ def configure_introducer(
     preferred_furl_path.setContent(introducer_furl)
     tahoe_cfg = INTRODUCER_CFG_TEMPLATE % dict(
         public_port_number=2000,
-        private_port_number=12345,
+        private_port_number=2000,
         log_gatherer_furl=log_gatherer_furl,
         stats_gatherer_furl=stats_gatherer_furl,
     )
@@ -146,7 +146,7 @@ def configure_storage(
         publichost=publichost,
         privatehost=privatehost,
         public_port_number=2001,
-        private_port_number=12346,
+        private_port_number=2001,
         introducer_furl=introducer_furl,
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
