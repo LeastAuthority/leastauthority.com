@@ -32,7 +32,7 @@ INTRODUCER_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname =
 web.port =
 web.static = public_html
-tub.port = tcp:port=%(private_port_number)s
+tub.port = tcp:port=%(tub_port_number)s
 log_gatherer.furl = %(log_gatherer_furl)s
 
 [client]
@@ -52,8 +52,8 @@ STORAGE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname = %(nickname)s
 web.port =
 web.static = public_html
-tub.port = tcp:port=%(private_port_number)s
-tub.location = %(publichost)s:%(public_port_number)s,%(privatehost)s:%(private_port_number)s
+tub.port = tcp:port=%(tub_port_number)s
+tub.location = %(publichost)s:%(tub_port_number)s,%(privatehost)s:%(tub_port_number)s
 log_gatherer.furl = %(incident_gatherer_furl)s
 
 [client]
@@ -122,8 +122,7 @@ def configure_introducer(
     # configure_secrets creates private directory if necessary
     preferred_furl_path.setContent(introducer_furl)
     tahoe_cfg = INTRODUCER_CFG_TEMPLATE % dict(
-        public_port_number=2000,
-        private_port_number=2000,
+        tub_port_number=port,
         log_gatherer_furl=log_gatherer_furl,
         stats_gatherer_furl=stats_gatherer_furl,
     )
@@ -145,8 +144,7 @@ def configure_storage(
         nickname=bucket_name,
         publichost=publichost,
         privatehost=privatehost,
-        public_port_number=2001,
-        private_port_number=2001,
+        tub_port_number=port,
         introducer_furl=introducer_furl,
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
