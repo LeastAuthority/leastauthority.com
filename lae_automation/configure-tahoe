@@ -32,7 +32,13 @@ INTRODUCER_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname =
 web.port =
 web.static = public_html
+
+# This gives a Twisted endpoint description string defining where the
+# introducer will listen for Foolscap connections.
 tub.port = tcp:port=%(tub_port_number)s
+
+# This gives the furl of a Foolscap log gatherer where we can send our
+# logs.
 log_gatherer.furl = %(log_gatherer_furl)s
 
 [client]
@@ -52,9 +58,19 @@ STORAGE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname = %(nickname)s
 web.port =
 web.static = public_html
+
+# This gives a Twisted endpoint description string defining where the
+# storage node will listen for Foolscap connections.
 tub.port = tcp:port=%(tub_port_number)s
+
+# This gives a comma-separated list of ip:port pairs which will be
+# published as locations at which this storage node's Foolscap server
+# can be reached.
 tub.location = %(publichost)s:%(tub_port_number)s,%(privatehost)s:%(tub_port_number)s
-log_gatherer.furl = %(incident_gatherer_furl)s
+
+# This gives the furl of a Foolscap log gatherer where we can send our
+# logs.
+log_gatherer.furl = %(log_gatherer_furl)s
 
 [client]
 # Which services should this client connect to?
@@ -148,7 +164,7 @@ def configure_storage(
         introducer_furl=introducer_furl,
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
-        incident_gatherer_furl=log_gatherer_furl,
+        log_gatherer_furl=log_gatherer_furl,
         stats_gatherer_furl=stats_gatherer_furl,
     )
 
