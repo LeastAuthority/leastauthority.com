@@ -118,9 +118,6 @@ def configure_introducer(
     force_remove(preferred_furl_path)
     force_remove(introducer.child(b"logport.furl"))
 
-    introducer.child(b"introducer.port").setContent(
-        u"{}".format(port).encode("ascii")
-    )
     configure_secrets(introducer, node_pem)
     # configure_secrets creates private directory if necessary
     preferred_furl_path.setContent(introducer_furl)
@@ -139,10 +136,6 @@ def configure_storage(
         s3_access_key_id, s3_secret_key,
         log_gatherer_furl, stats_gatherer_furl,
 ):
-    storage.child(b"client.port").setContent(
-        u"{}".format(port).encode("ascii")
-    )
-
     configure_secrets(storage, node_pem)
     if node_privkey is not None:
         storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
