@@ -139,7 +139,7 @@ spec:
       containers:
       # Here is the Foolscap log gatherer.
       - name: 'foolscap-log-gatherer'
-        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:d0a568e'
+        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:b5671da'
         env:
         - name: 'LAE_GATHERER_HINT'
           value: 'tcp:s4-logging:3117'
@@ -159,7 +159,7 @@ spec:
         # localhost resolution for the purposes of image pulls.
         # Specifically, kops deploys a cluster where localhost
         # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/web:e06e5db'
+        image: '127.0.0.1:30000/leastauthority/web:b5671da'
         ports:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 8443
@@ -178,7 +178,7 @@ spec:
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
         # See above for explanation of 127.0.0.1
-        image: '127.0.0.1:30000/leastauthority/flapp:e06e5db'
+        image: '127.0.0.1:30000/leastauthority/flapp:b5671da'
         ports:
         - containerPort: 3116
         volumeMounts:
@@ -197,7 +197,7 @@ spec:
         # localhost resolution for the purposes of image pulls.
         # Specifically, kops deploys a cluster where localhost
         # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/magicwormhole:e06e5db'
+        image: '127.0.0.1:30000/leastauthority/magicwormhole:b5671da'
         ports:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 4000
