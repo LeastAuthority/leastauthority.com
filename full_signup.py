@@ -60,6 +60,7 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
     config = Config(automation_config_path.path)
     product = lookup_product(config, plan_id)
     fullname = product['plan_name']
+
     with flapp_stdout_path.open("a") as stdout:
         print >>stdout, "Signing up customer for %s..." % (fullname,)
 
@@ -70,6 +71,9 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         bucketname=get_bucket_name(subscription_id, customer_id),
         amiimageid=product['ami_image_id'],
         instancesize=product['instance_size'],
+
+        log_gatherer_furl=config.other.get("log_gatherer_furl") or None,
+        stats_gatherer_furl=config.other.get("stats_gatherer_furl") or None,
 
         usertoken=None,
         producttoken=None,
@@ -89,7 +93,6 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         monitor_pubkey_path=config.other["monitor_pubkey_path"],
         monitor_privkey_path=config.other["monitor_privkey_path"],
     )
-
     d = defer.succeed(None)
     d.addCallback(lambda ign: activate_subscribed_service(
         deploy_config, signup_stdout, signup_stderr, signup_log_fp.path,

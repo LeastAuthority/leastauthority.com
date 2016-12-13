@@ -13,11 +13,14 @@ pyOpenSSL
 simplejson
 twisted
 service_identity
+attrs==16.3.0
 
 txAWS==0.2.1.post5
 
 # For the test suite.
 hypothesis==3.6.0
+testtools==2.2.0
+fixtures==3.0.0
 
 # So we can generate tahoe configuration parameters.
 tahoe-lafs==1.11.0

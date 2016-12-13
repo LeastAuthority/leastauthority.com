@@ -12,6 +12,7 @@ docker build -t leastauthority/tahoe-base -f "${LEASTAUTHORITY}"/docker/Dockerfi
 docker build -t leastauthority/tahoe-introducer -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-introducer "${LEASTAUTHORITY}"/docker
 docker build -t leastauthority/tahoe-storage -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-storage "${LEASTAUTHORITY}"/docker
 
-docker build -t leastauthority/tahoe-gatherer -f "${LEASTAUTHORITY}"/docker/Dockerfile.tahoe-gatherer "${LEASTAUTHORITY}"/docker
+docker build -t leastauthority/foolscap-base -f "${LEASTAUTHORITY}"/docker/Dockerfile.foolscap-base "${LEASTAUTHORITY}"
+docker build -t leastauthority/foolscap-gatherer -f "${LEASTAUTHORITY}"/docker/Dockerfile.foolscap-gatherer "${LEASTAUTHORITY}"
 
 docker build -t leastauthority/magicwormhole -f "${LEASTAUTHORITY}"/docker/Dockerfile.magicwormhole-relay "${LEASTAUTHORITY}"/docker
