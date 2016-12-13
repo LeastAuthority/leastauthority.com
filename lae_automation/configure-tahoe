@@ -32,7 +32,7 @@ INTRODUCER_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname =
 web.port =
 web.static = public_html
-tub.port = tcp:interface=%(privatehost)s:port=%(private_port_number)s
+tub.port = tcp:port=%(private_port_number)s
 log_gatherer.furl = %(log_gatherer_furl)s
 
 [client]
@@ -52,7 +52,7 @@ STORAGE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname = %(nickname)s
 web.port =
 web.static = public_html
-tub.port = tcp:interface=%(privatehost)s:port=%(private_port_number)s
+tub.port = tcp:port=%(private_port_number)s
 tub.location = %(publichost)s:%(public_port_number)s,%(privatehost)s:%(private_port_number)s
 log_gatherer.furl = %(incident_gatherer_furl)s
 
@@ -125,7 +125,6 @@ def configure_introducer(
     # configure_secrets creates private directory if necessary
     preferred_furl_path.setContent(introducer_furl)
     tahoe_cfg = INTRODUCER_CFG_TEMPLATE % dict(
-        privatehost="customer-testing-service",
         public_port_number=2000,
         private_port_number=12345,
         log_gatherer_furl=log_gatherer_furl,
