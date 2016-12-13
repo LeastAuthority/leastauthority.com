@@ -2,11 +2,6 @@ FROM leastauthority/tahoe-base
 
 RUN /app/env/bin/tahoe create-node /var/run/storageserver
 
-# Select an arbitrary non-privileged port on which to expose the tub.
-# This value doesn't really matter since the container orchestrator
-# can hook it up to any externally visible port they like.
-EXPOSE 12345
-
 CMD \
     /app/env/bin/python /app/configure-tahoe < /app/config/storage.json \
     && /app/env/bin/tahoe start /var/run/storageserver --nodaemon
