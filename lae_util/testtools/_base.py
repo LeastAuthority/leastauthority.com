@@ -15,7 +15,7 @@
 """
 Base classes for unit tests.
 
-Originally ``flocker/testtools/__base.py``.
+Originally ``flocker/testtools/_base.py``.
 """
 
 from datetime import timedelta
