@@ -14,6 +14,8 @@ from lae_automation.initialize import create_stripe_user_bucket, deploy_EC2_inst
 from lae_automation.aws.queryapi import TimeoutError, wait_for_EC2_addresses
 from lae_automation.server import install_server, bounce_server, NotListeningError
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
+from lae_automation.containers import provision_subscription
+
 from lae_util.servers import append_record
 from lae_util.timestamp import format_iso_time
 
@@ -68,12 +70,13 @@ def activate_subscribed_service(deploy_config, stdout, stderr, logfile, clock=No
 
     print >>stdout, "After create_stripe_account_user_bucket %s..." % (deploy_config,)
 
-    d.addCallback(lambda ign: deploy_server(deploy_config, stdout, stderr, clock=clock))
-
+    d.addCallback(lambda ignored: provision_subscription(clock, deploy_config))
     d.addErrback(lambda f: send_notify_failure(
         f, deploy_config.customer_email, logfile, stdout, stderr,
     ))
     return d
+
+
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
                    secretsfile, logfilename,
@@ -136,10 +139,12 @@ validate_furl = and_(
 
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
+    domain = "leastauthority.com"
+    private_host = "customer-grid-service"
+
     products = attr.ib(validator=_validate_products)
     s3_access_key_id = attr.ib()
     s3_secret_key = attr.ib(repr=False)
-    bucketname = attr.ib()
     amiimageid = attr.ib()
     instancesize = attr.ib()
 
@@ -156,15 +161,26 @@ class DeploymentConfiguration(object):
     monitor_pubkey_path = attr.ib()
     monitor_privkey_path = attr.ib()
 
-    oldsecrets = attr.ib()
-    customer_email = attr.ib()
-    customer_pgpinfo = attr.ib()
     secretsfile = attr.ib(validator=attr.validators.instance_of(file))
     serverinfopath = attr.ib(default="../serverinfo.csv")
 
     log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
     stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
 
+
+@attr.s(frozen=True)
+class SubscriptionDetails(object):
+    bucketname = attr.ib()
+    oldsecrets = attr.ib()
+    customer_email = attr.ib()
+    customer_pgpinfo = attr.ib()
+
+    product_id = attr.ib()
+
+    # Referencing opaque stripe identifiers
+    customer_id = attr.ib()
+    subscription_id = attr.ib()
+    
 
 # TODO: too many args. Consider passing them in a dict.
 def deploy_server(deploy_config, stdout, stderr, clock=None):
