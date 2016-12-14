@@ -4,7 +4,8 @@
 __all__ = [
     "with_retry", "retry_if",
     "loop_until", "poll_until",
-    "retry_failure", "timeout",
+    "retry_failure", "backoff",
+    "timeout",
     "get_default_retry_steps",
     "decorate_methods",
 ]
@@ -36,7 +37,8 @@ del _redirect_eliot_logs_for_trial
 from ._retry import (
     with_retry, retry_if,
     loop_until, poll_until,
-    retry_failure, timeout,
+    retry_failure, backoff,
+    timeout,
     get_default_retry_steps,
     decorate_methods,
 )
