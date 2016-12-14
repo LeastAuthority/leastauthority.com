@@ -60,7 +60,7 @@ from twisted.python.procutils import which
 from twisted.python.logfile import LogFile
 
 from ._base import (
-    TestCase, async_runner, extract_eliot_from_twisted_log,
+    TestCase, extract_eliot_from_twisted_log,
 )
 
 __all__ = [
@@ -74,7 +74,6 @@ __all__ = [
     'assertNoFDsLeaked',
     'assert_equal_comparison',
     'assert_not_equal_comparison',
-    'async_runner',
     'attempt_effective_uid',
     'extract_eliot_from_twisted_log',
     'find_free_port',

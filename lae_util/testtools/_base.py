@@ -167,25 +167,6 @@ class _AsyncRunner(AsynchronousDeferredRunTestForBrokenTwisted):
         super(_AsyncRunner, self)._run_core()
 
 
-def async_runner(timeout):
-    """
-    Make a ``RunTest`` instance for asynchronous tests.
-
-    :param timedelta timeout: The maximum length of time that a test is allowed
-        to take.
-    """
-    # XXX: The acceptance tests (which were the first tests that we tried to
-    # migrate) aren't cleaning up after themselves even in the successful
-    # case. Use AsynchronousDeferredRunTestForBrokenTwisted, which loops the
-    # reactor a couple of times after the test is done.
-    async_factory = _AsyncRunner.make_factory(
-        timeout=timeout.total_seconds(),
-        suppress_twisted_logging=False,
-        store_twisted_logs=False,
-    )
-    return partial(RunTest, async_factory)
-
-
 def _test_skipped(case, result, exception):
     result.addSkip(case, details={'reason': text_content(unicode(exception))})
 
