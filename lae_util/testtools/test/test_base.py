@@ -47,7 +47,7 @@ from twisted.internet.defer import Deferred, succeed, fail
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 
-from .. import CustomException, TestCase, async_runner
+from .. import CustomException, TestCase
 from .._base import (
     _SplitEliotLogs,
     _iter_lines,
