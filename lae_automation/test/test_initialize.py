@@ -1,28 +1,42 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 import sys
 
-from twisted.trial.unittest import TestCase
+from twisted.trial.unittest import TestCase as AsyncTestCase
 from twisted.internet import defer
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
+from twisted.internet.task import Clock
 
 from twisted.conch.ssh.keys import Key
 from twisted.conch.client.knownhosts import KnownHostsFile
 
+from hypothesis import given
+
 import mock
+
+from testtools.matchers import Is
+
+from lae_util.testtools import TestCase
 
 import lae_automation.initialize
 from lae_automation.initialize import (
     verify_and_store_serverssh_pubkey, PublicKeyMismatch,
-    _get_entry_from_keyscan,
+    _get_entry_from_keyscan, create_user_bucket,
 )
 
+from .strategies import aws_access_key_id, aws_secret_key, bucket_name
+from .s3 import (
+    MemoryS3Client, set_rate_limit_exceeded, clear_rate_limit_exceeded
+)
 
 ACTIVATIONKEY= 'MOCKACTIVATONKEY'
 PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
 USERTOKEN = 'TESTUSERTOKEN'+'A'*385
 
 
-class InitializationTests (TestCase):
+class InitializationTests(AsyncTestCase):
     def _patch_mock(self, obj, attribute):
         m = mock.Mock()
         self.patch(obj, attribute, m)
@@ -99,3 +113,32 @@ yxxXP/Crot2XznHTZLWsSdgRzc0GuLysclbOo6jIcw4=
             (self.RSA_KEY.fingerprint(), rsa_path.getContent().strip()),
             _get_entry_from_keyscan(rsa_path)
         )
+
+
+class CreateUserBucketTests(TestCase):
+    """
+    Tests for ``create_user_bucket``.
+    """
+    @given(aws_access_key_id(), aws_secret_key(), bucket_name())
+    def test_retry_on_failure(self, access_key_id, secret_key, bucket_name):
+        """
+        If bucket creation fails with an S3 error, the creation attempt is
+        retried after a delay.
+        """
+        reactor = Clock()
+        client = MemoryS3Client(None, None)
+        set_rate_limit_exceeded(client)
+        d = create_user_bucket(reactor, client, bucket_name)
+        # Let several minutes pass (in one second increments) while
+        # the rate limit error is in place.
+        reactor.pump([1] * 60 * 3)
+
+        # It should still be retrying.
+        self.assertNoResult(d)
+
+        # Clear the rate limit error and let it try again.
+        clear_rate_limit_exceeded(client)
+        reactor.pump([1] * 60)
+
+        # It should have met with success at this point.
+        self.assertThat(self.successResultOf(d), Is(None))
