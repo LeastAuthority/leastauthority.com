@@ -63,9 +63,6 @@ from ._base import (
     AsyncTestCase, TestCase, async_runner, extract_eliot_from_twisted_log,
 )
 from ._flaky import flaky
-from ..common.process import (
-    _ProcessResult, _CalledProcessError, run_process
-)
 
 __all__ = [
     'AsyncTestCase',
@@ -86,12 +83,9 @@ __all__ = [
     'flaky',
     'help_problems',
     'if_root',
-    'logged_run_process',
     'make_with_init_tests',
     'not_root',
     'random_name',
-    # XXX Refactor code that imports run_process from here.
-    'run_process',
     'skip_on_broken_permissions',
 ]
 
@@ -559,103 +553,3 @@ class CustomException(Exception):
     An exception that will never be raised by real code, useful for
     testing.
     """
-
-
-TWISTED_CHILD_PROCESS_ACTION = ActionType(
-    u'flocker:testtools:logged_run_process',
-    fields(command=list),
-    [],
-    u'A child process is spawned using Twisted',
-)
-
-STDOUT_RECEIVED = MessageType(
-    u'flocker:testtools:logged_run_process:stdout',
-    fields(output=str),
-    u'A chunk of stdout received from a child process',
-)
-
-STDERR_RECEIVED = MessageType(
-    u'flocker:testtools:logged_run_process:stdout',
-    fields(output=str),
-    u'A chunk of stderr received from a child process',
-)
-
-PROCESS_ENDED = MessageType(
-    u'flocker:testtools:logged_run_process:process_ended',
-    fields(status=int),
-    u'The process terminated')
-
-
-class _LoggingProcessProtocol(ProcessProtocol):
-    """
-    A ``ProcessProtocol`` that both stores and logs output from the
-    subprocess. Output is logged as it is received.
-
-    Intended to be used by ``logged_run_process``.
-    """
-
-    def __init__(self, deferred, action):
-        """
-        Construct a ``_LoggingProcessProtocol``.
-
-        :param deferred: A ``Deferred`` that will fire with
-            ``(reason, output)``
-            when the process ends, where ``reason`` is a ``Failure`` with the
-            reason for the process ending (see ``IProcessProtocol``), and
-            ``output`` are the bytes outputted by the process (both to stdout
-            and stderr).
-        :param action: The Eliot ``Action`` under which this process is being
-            run.
-        """
-        self._deferred = deferred
-        self._action = action
-        self._output_buffer = StringIO()
-
-    def outReceived(self, data):
-        with self._action.context():
-            self._output_buffer.write(data)
-            STDOUT_RECEIVED(output=data).write()
-
-    def errReceived(self, data):
-        with self._action.context():
-            self._output_buffer.write(data)
-            STDERR_RECEIVED(output=data).write()
-
-    def processExited(self, reason):
-        with self._action.context():
-            PROCESS_ENDED(status=reason.value.status).write()
-            self._deferred.callback((reason, self._output_buffer.getvalue()))
-
-
-def logged_run_process(reactor, command):
-    """
-    Run a child process, and log the output as we get it.
-
-    :param reactor: An ``IReactorProcess`` to spawn the process on.
-    :param command: An argument list specifying the child process to run.
-
-    :return: A ``Deferred`` that calls back with ``_ProcessResult`` if the
-        process exited successfully, or errbacks with
-        ``_CalledProcessError`` otherwise.
-    """
-    d = Deferred()
-    action = TWISTED_CHILD_PROCESS_ACTION(command=command)
-    with action.context():
-        d2 = DeferredContext(d)
-        protocol = _LoggingProcessProtocol(d, action)
-        reactor.spawnProcess(protocol, command[0], command)
-
-        def process_ended((reason, output)):
-            status = reason.value.status
-            if status:
-                raise _CalledProcessError(
-                    returncode=status, cmd=command, output=output)
-            return _ProcessResult(
-                command=command,
-                status=status,
-                output=output,
-            )
-
-        d2.addCallback(process_ended)
-        d2.addActionFinish()
-        return d2.result
