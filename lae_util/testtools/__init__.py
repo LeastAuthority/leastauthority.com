@@ -60,12 +60,10 @@ from twisted.python.procutils import which
 from twisted.python.logfile import LogFile
 
 from ._base import (
-    AsyncTestCase, TestCase, async_runner, extract_eliot_from_twisted_log,
+    TestCase, async_runner, extract_eliot_from_twisted_log,
 )
-from ._flaky import flaky
 
 __all__ = [
-    'AsyncTestCase',
     'CustomException',
     'FakeProcessReactor',
     'FakeSysModule',
@@ -80,7 +78,6 @@ __all__ = [
     'attempt_effective_uid',
     'extract_eliot_from_twisted_log',
     'find_free_port',
-    'flaky',
     'help_problems',
     'if_root',
     'make_with_init_tests',

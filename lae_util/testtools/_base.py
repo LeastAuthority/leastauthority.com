@@ -38,8 +38,6 @@ from twisted.python import log
 from twisted.python.filepath import FilePath
 from twisted.trial import unittest
 
-from ._flaky import retry_flaky
-
 
 def make_file(path, content='', permissions=None):
     """
@@ -125,8 +123,6 @@ class TestCase(testtools.TestCase, _MktempMixin, _DeferredAssertionMixin):
     """
     Base class for synchronous test cases.
     """
-
-    run_tests_with = retry_flaky(testtools.RunTest)
     # Eliot's validateLogging hard-codes a check for SkipTest when deciding
     # whether to check for valid logging, which is fair enough, since there's
     # no other API for checking whether a test has skipped. Setting
@@ -187,37 +183,11 @@ def async_runner(timeout):
         suppress_twisted_logging=False,
         store_twisted_logs=False,
     )
-    return retry_flaky(async_factory)
-
-
-# By default, asynchronous tests are timed out after 2 minutes.
-DEFAULT_ASYNC_TIMEOUT = timedelta(minutes=2)
+    return partial(RunTest, async_factory)
 
 
 def _test_skipped(case, result, exception):
     result.addSkip(case, details={'reason': text_content(unicode(exception))})
-
-
-class AsyncTestCase(testtools.TestCase, _MktempMixin, _DeferredAssertionMixin):
-    """
-    Base class for asynchronous test cases.
-
-    :ivar reactor: The Twisted reactor that the test is being run in. Set by
-        ``async_runner`` and only available for the duration of the test.
-    """
-
-    run_tests_with = async_runner(timeout=DEFAULT_ASYNC_TIMEOUT)
-    # See comment on TestCase.skipException.
-    skipException = SkipTest
-
-    def assertFailure(self, deferred, exception):
-        """
-        ``twisted.trial.unittest.TestCase.assertFailure``-alike.
-
-        This is not completely compatible.  ``assert_fails_with`` should be
-        preferred for new code.
-        """
-        return assert_fails_with(deferred, exception)
 
 
 class _SplitEliotLogs(Fixture):
