@@ -63,7 +63,6 @@ from ._base import (
     AsyncTestCase, TestCase, async_runner, extract_eliot_from_twisted_log,
 )
 from ._flaky import flaky
-from .. import __version__
 from ..common import RACKSPACE_MINIMUM_VOLUME_SIZE
 from ..common.script import FlockerScriptRunner, ICommandLineScript
 from ..common.process import (
@@ -91,7 +90,6 @@ __all__ = [
     'help_problems',
     'if_root',
     'logged_run_process',
-    'make_script_tests',
     'make_with_init_tests',
     'not_root',
     'random_name',
@@ -344,144 +342,6 @@ def make_flocker_script_test(script, options, command_name):
             )
 
     return FlockerScriptTestCase
-
-
-def make_standard_options_test(options):
-    """
-    Return a ``StandardOptionsTestCase`` which tests that the passed in
-    options class provides the expected defaults and basic functionality.
-
-    :ivar usage.Options options: The ``usage.Options`` class under test.
-
-    :returns: a ``TestCase``
-    """
-    class StandardOptionsTestCase(TestCase):
-        """
-        Tests for the standard options that should be available for every
-        flocker command.
-        """
-        def test_sys_module_default(self):
-            """
-            ``flocker_standard_options`` adds a ``_sys_module`` attribute
-            which is ``sys`` by default.
-            """
-            self.assertIs(sys, options()._sys_module)
-
-        def test_sys_module_override(self):
-            """
-            ``flocker_standard_options`` adds a ``sys_module`` argument to the
-            initialiser which is assigned to ``_sys_module``.
-            """
-            fake_sys_module = FakeSysModule()
-            self.assertIs(
-                fake_sys_module,
-                options(sys_module=fake_sys_module)._sys_module
-            )
-
-        def test_version(self):
-            """
-            Flocker commands have a `--version` option which prints the current
-            version string to stdout and causes the command to exit with status
-            `0`.
-            """
-            sys = FakeSysModule()
-            error = self.assertRaises(
-                SystemExit,
-                options(sys_module=sys).parseOptions,
-                ['--version']
-            )
-            self.assertEqual(
-                (__version__ + '\n', 0),
-                (sys.stdout.getvalue(), error.code)
-            )
-
-        def test_verbosity_default(self):
-            """
-            Flocker commands have `verbosity` of `0` by default.
-            """
-            options_instance = options()
-            self.assertEqual(0, options_instance['verbosity'])
-
-        def test_verbosity_option(self):
-            """
-            Flocker commands have a `--verbose` option which increments the
-            configured verbosity by `1`.
-            """
-            options_instance = options()
-            # The command may otherwise give a UsageError "Wrong
-            # number of arguments." if there are arguments required.
-            # See https://clusterhq.atlassian.net/browse/FLOC-184
-            # about a solution which does not involve patching.
-            self.patch(options_instance, "parseArgs", lambda: None)
-            options_instance.parseOptions(['--verbose'])
-            self.assertEqual(1, options_instance['verbosity'])
-
-        def test_verbosity_option_short(self):
-            """
-            Flocker commands have a `-v` option which increments the configured
-            verbosity by 1.
-            """
-            options_instance = options()
-            # The command may otherwise give a UsageError "Wrong
-            # number of arguments." if there are arguments required.
-            # See https://clusterhq.atlassian.net/browse/FLOC-184
-            # about a solution which does not involve patching.
-            self.patch(options_instance, "parseArgs", lambda: None)
-            options_instance.parseOptions(['-v'])
-            self.assertEqual(1, options_instance['verbosity'])
-
-        def test_verbosity_multiple(self):
-            """
-            `--verbose` can be supplied multiple times to increase the
-            verbosity.
-            """
-            options_instance = options()
-            # The command may otherwise give a UsageError "Wrong
-            # number of arguments." if there are arguments required.
-            # See https://clusterhq.atlassian.net/browse/FLOC-184
-            # about a solution which does not involve patching.
-            self.patch(options_instance, "parseArgs", lambda: None)
-            options_instance.parseOptions(['-v', '--verbose'])
-            self.assertEqual(2, options_instance['verbosity'])
-
-        def test_logfile_default(self):
-            """
-            `--logfile` is optional and if ommited, logs will be directed to
-            ``stdout``.
-            """
-            sys = FakeSysModule()
-            options_instance = options(sys_module=sys)
-            # The command may otherwise give a UsageError "Wrong
-            # number of arguments." if there are arguments required.
-            # See https://clusterhq.atlassian.net/browse/FLOC-184
-            # about a solution which does not involve patching.
-            self.patch(options_instance, "parseArgs", lambda: None)
-            options_instance.parseOptions([])
-            self.assertIs(sys.stdout, options_instance.eliot_destination.file)
-
-        def test_logfile_override(self):
-            """
-            If `--logfile` is supplied, the Eliot logging destination wraps
-            ``twisted.python.logfile.LogFile``.
-            """
-            options_instance = options()
-            # The command may otherwise give a UsageError "Wrong
-            # number of arguments." if there are arguments required.
-            # See https://clusterhq.atlassian.net/browse/FLOC-184
-            # about a solution which does not involve patching.
-            self.patch(options_instance, "parseArgs", lambda: None)
-            expected_path = FilePath(self.mktemp()).path
-            options_instance.parseOptions(
-                ['--logfile={}'.format(expected_path)]
-            )
-            logfile = options_instance.eliot_destination.file
-            self.assertEqual(
-                (LogFile, expected_path, int(MiB(100).to_Byte().value), 5),
-                (logfile.__class__, logfile.path,
-                 logfile.rotateLength, logfile.maxRotatedFiles)
-            )
-
-    return StandardOptionsTestCase
 
 
 def make_with_init_tests(record_type, kwargs, expected_defaults=None):
@@ -740,34 +600,6 @@ class MemoryCoreReactor(MemoryReactor, Clock):
         event = self._triggers.get(eventType)
         if event is not None:
             event.fireEvent()
-
-
-def make_script_tests(executable):
-    """
-    Generate a test suite which applies to any Flocker-installed node script.
-
-    :param bytes executable: The basename of the script to be tested.
-
-    :return: A ``TestCase`` subclass which defines some tests applied to the
-        given executable.
-    """
-    class ScriptTests(TestCase):
-        @skipUnless(which(executable), executable + " not installed")
-        def test_version(self):
-            """
-            The script is a command available on the system path.
-            """
-            result = run_process([executable] + [b"--version"])
-            self.assertEqual(result.output, b"%s\n" % (__version__,))
-
-        @skipUnless(which(executable), executable + " not installed")
-        def test_identification(self):
-            """
-            The script identifies itself as what it is.
-            """
-            result = run_process([executable] + [b"--help"])
-            self.assertIn(executable, result.output)
-    return ScriptTests
 
 
 class CustomException(Exception):
