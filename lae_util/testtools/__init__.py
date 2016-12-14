@@ -63,8 +63,6 @@ from ._base import (
     AsyncTestCase, TestCase, async_runner, extract_eliot_from_twisted_log,
 )
 from ._flaky import flaky
-from ..common import RACKSPACE_MINIMUM_VOLUME_SIZE
-from ..common.script import FlockerScriptRunner, ICommandLineScript
 from ..common.process import (
     _ProcessResult, _CalledProcessError, run_process
 )
@@ -75,7 +73,6 @@ __all__ = [
     'FakeProcessReactor',
     'FakeSysModule',
     'MemoryCoreReactor',
-    'REALISTIC_BLOCKDEVICE_SIZE',
     'make_standard_options_test',
     'TestCase',
     'assertContainsAll',
@@ -98,7 +95,6 @@ __all__ = [
     'skip_on_broken_permissions',
 ]
 
-REALISTIC_BLOCKDEVICE_SIZE = RACKSPACE_MINIMUM_VOLUME_SIZE
 
 
 @implementer(IProcessTransport)
@@ -298,50 +294,6 @@ class FakeSysModule(object):
         # unicode.
         self.stdout = io.BytesIO()
         self.stderr = io.BytesIO()
-
-
-def make_flocker_script_test(script, options, command_name):
-    """
-    Return a ``FlockerScriptTestCase`` which tests that the script
-    class provides ICommandLineScript
-
-    :param ICommandLineScript script: The script class under test.
-    :param usage.Options options: The options parser class to use in the test.
-    :param text command_name: The name of the command represented by
-    ``script``.
-
-    :returns: A ``TestCase``.
-    """
-    class FlockerScriptTestCase(TestCase):
-        """
-        Test for classes that implement ``ICommandLineScript``
-        """
-
-        def test_interface(self):
-            """
-            A script that is meant to be run by ``FlockerScriptRunner`` must
-            implement ``ICommandLineScript``.
-            """
-            self.assertTrue(verifyObject(ICommandLineScript, script()))
-
-        def test_incorrect_arguments(self):
-            """
-            ``FlockerScriptRunner.main`` exits with status 1 and prints help to
-            `stderr` if supplied with unexpected arguments.
-            """
-            sys_module = FakeSysModule(
-                argv=[command_name, b'--unexpected_argument'])
-            script_runner = FlockerScriptRunner(
-                reactor=None, script=script(), options=options(),
-                sys_module=sys_module)
-            error = self.assertRaises(SystemExit, script_runner.main)
-            error_text = sys_module.stderr.getvalue()
-            self.assertEqual(
-                (1, []),
-                (error.code, help_problems(command_name, error_text))
-            )
-
-    return FlockerScriptTestCase
 
 
 def make_with_init_tests(record_type, kwargs, expected_defaults=None):
