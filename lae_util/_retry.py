@@ -39,10 +39,6 @@ from twisted.python.failure import Failure
 from twisted.internet.task import deferLater
 from twisted.internet.defer import maybeDeferred
 
-from effect import Effect, Constant, Delay
-from effect.retry import retry
-
-
 def backoff(step=5.0, maximum_step=60.0, timeout=10*60.0, jitter=0.2):
     """
     Generate increasingly large values for use as the ``steps`` argument to
@@ -312,60 +308,6 @@ def poll_until(predicate, steps, sleep=None):
     if result:
         return result
     raise LoopExceeded(predicate, result)
-
-
-# TODO: Would be nice if this interface were more similar to some of the other
-# retry functions in this module.  For example, accept an iterable of intervals
-# instead of timeout/retry_wait/backoff.
-def retry_effect_with_timeout(effect, timeout, retry_wait=timedelta(seconds=1),
-                              backoff=True, time=time.time):
-    """
-    If ``effect`` fails, retry it until ``timeout`` expires.
-
-    To avoid excessive retrying, this function uses the exponential backoff
-    algorithm by default, waiting double the time between each retry.
-
-    :param Effect effect: The Effect to retry.
-    :param int timeout: Keep retrying until timeout.  This is measured in
-        seconds from the time of the first failure of ``effect``.
-    :param timedelta retry_wait: The wait time between retries
-    :param bool backoff: Whether we should use exponential backoff
-    :param callable time: A nullary callable that returns a UNIX timestamp.
-
-    :return: An Effect that does what ``effect`` does, but retrying on
-        exception.
-    """
-    class State(object):
-        end_time = None
-        wait_time = None
-
-    def should_retry(exc_info):
-        # This is the wrong time to compute end_time.  It's a lot simpler to do
-        # this than to hook into the effect being wrapped and record the time
-        # it starts to run.  Perhaps implementing that would be a nice thing to
-        # do later.
-        #
-        # Anyway, make note of when we want to be finished if we haven't yet
-        # done so.
-        if State.end_time is None:
-            State.end_time = time() + timeout
-
-        if time() >= State.end_time:
-            return Effect(Constant(False))
-        else:
-            retry_delay = State.wait_time.total_seconds()
-            effect = Effect(Delay(retry_delay)).on(
-                success=lambda x: Effect(Constant(True))
-            )
-
-            if backoff:
-                State.wait_time *= 2
-
-            return effect
-
-    State.wait_time = retry_wait
-
-    return retry(effect, should_retry)
 
 
 _TRY_UNTIL_SUCCESS = u"flocker:failure-retry"

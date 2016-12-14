@@ -41,17 +41,10 @@ from twisted.internet.defer import CancelledError
 from twisted.internet.task import Clock
 from twisted.python.failure import Failure
 
-from effect import (
-    Effect,
-    Func,
-    Constant,
-    Delay,
-)
-from effect.testing import perform_sequence
+from lae_util.testtools import TestCase
 
 from .. import (
     loop_until,
-    retry_effect_with_timeout,
     retry_failure,
     poll_until,
     timeout,
@@ -66,7 +59,10 @@ from .._retry import (
     LOOP_UNTIL_ITERATION_MESSAGE,
     LoopExceeded,
 )
-from ...testtools import TestCase, CustomException
+
+
+class CustomException(Exception):
+    pass
 
 
 class LoopUntilTests(TestCase):
@@ -591,165 +587,6 @@ class PollUntilTests(TestCase):
         self.assertEqual(
             42,
             poll_until(lambda: results.pop(0), steps, lambda ignored: None))
-
-
-class RetryEffectTests(TestCase):
-    """
-    Tests for :py:func:`retry_effect_with_timeout`.
-    """
-    def get_time(self, times=None):
-        if times is None:
-            times = [1.0, 2.0, 3.0, 4.0, 5.0]
-
-        def fake_time():
-            return times.pop(0)
-        return fake_time
-
-    def test_immediate_success(self):
-        """
-        If the wrapped effect succeeds at first, no delay or retry is done and
-        the retry effect's result is the wrapped effect's result.
-        """
-        effect = Effect(Constant(1000))
-        retrier = retry_effect_with_timeout(effect, 10, time=self.get_time())
-        result = perform_sequence([], retrier)
-        self.assertEqual(result, 1000)
-
-    def test_one_retry(self):
-        """
-        Retry the effect if it fails once.
-        """
-        divisors = [0, 1]
-
-        def tester():
-            x = divisors.pop(0)
-            return 1 / x
-
-        seq = [
-            (Delay(1), lambda ignore: None),
-        ]
-
-        retrier = retry_effect_with_timeout(Effect(Func(tester)), 10,
-                                            time=self.get_time())
-        result = perform_sequence(seq, retrier)
-        self.assertEqual(result, 1 / 1)
-
-    def test_exponential_backoff(self):
-        """
-        Retry the effect multiple times with exponential backoff between
-        retries.
-        """
-        divisors = [0, 0, 0, 1]
-
-        def tester():
-            x = divisors.pop(0)
-            return 1 / x
-
-        seq = [
-            (Delay(1), lambda ignore: None),
-            (Delay(2), lambda ignore: None),
-            (Delay(4), lambda ignore: None),
-        ]
-
-        retrier = retry_effect_with_timeout(
-            Effect(Func(tester)), timeout=10, time=self.get_time(),
-        )
-        result = perform_sequence(seq, retrier)
-        self.assertEqual(result, 1)
-
-    def test_no_exponential_backoff(self):
-        """
-        If ``False`` is passed for the ``backoff`` parameter, the effect is
-        always retried with the same delay.
-        """
-        divisors = [0, 0, 0, 1]
-
-        def tester():
-            x = divisors.pop(0)
-            return 1 / x
-
-        seq = [
-            (Delay(5), lambda ignore: None),
-            (Delay(5), lambda ignore: None),
-            (Delay(5), lambda ignore: None),
-        ]
-
-        retrier = retry_effect_with_timeout(
-            Effect(Func(tester)), timeout=1, retry_wait=timedelta(seconds=5),
-            backoff=False,
-        )
-        result = perform_sequence(seq, retrier)
-        self.assertEqual(result, 1)
-
-    def test_timeout(self):
-        """
-        If the timeout expires, the retry effect fails with the exception from
-        the final time the wrapped effect is performed.
-        """
-        expected_intents = [
-            (Delay(1), lambda ignore: None),
-            (Delay(2), lambda ignore: None),
-        ]
-
-        exceptions = [
-            Exception("Wrong (1)"),
-            Exception("Wrong (2)"),
-            CustomException(),
-        ]
-
-        def tester():
-            raise exceptions.pop(0)
-
-        retrier = retry_effect_with_timeout(
-            Effect(Func(tester)),
-            timeout=3,
-            time=self.get_time([0.0, 1.0, 2.0, 3.0, 4.0, 5.0]),
-        )
-
-        self.assertRaises(
-            CustomException,
-            perform_sequence, expected_intents, retrier
-        )
-
-    def test_timeout_measured_from_perform(self):
-        """
-        The timeout is measured from the time the effect is performed (not from
-        the time it is created).
-        """
-        timeout = 3.0
-        time = self.get_time([0.0] + list(timeout + i for i in range(10)))
-
-        exceptions = [Exception("One problem")]
-        result = object()
-
-        def tester():
-            if exceptions:
-                raise exceptions.pop()
-            return result
-
-        retrier = retry_effect_with_timeout(
-            Effect(Func(tester)),
-            timeout=3,
-            time=time,
-        )
-
-        # The retry effect has been created.  Advance time a little bit before
-        # performing it.
-        time()
-
-        expected_intents = [
-            # The first call raises an exception and should be retried even
-            # though (as a side-effect of the `time` call above) the timeout,
-            # as measured from when `retry_effect_with_timeout` was called, has
-            # already elapsed.
-            #
-            # There's no second intent because the second call to the function
-            # succeeds.
-            (Delay(1), lambda ignore: None),
-        ]
-        self.assertThat(
-            perform_sequence(expected_intents, retrier), Is(result)
-        )
 
 
 EXPECTED_RETRY_SOME_TIMES_RETRIES = 1200
