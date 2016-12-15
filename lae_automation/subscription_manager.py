@@ -3,14 +3,20 @@ This module implement an HTTP-accessible microservice which
 provides persistence of S4 subscriptions.
 """
 
-from json import dumps
+from io import BytesIO
+from json import loads, dumps
+from os import O_CREAT, O_EXCL, O_WRONLY, open as os_open, fdopen
+from urllib import quote
+from base64 import b32encode, b32decode
 
 import attr
 from attr import validators
 
+from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
-from twisted.web.http import CREATED, NO_CONTENT
+from twisted.web.http import CREATED, NO_CONTENT, OK
 from twisted.web.server import Site
+from twisted.web.client import FileBodyProducer, readBody
 from twisted.python.usage import Options as _Options, UsageError
 from twisted.python.filepath import FilePath
 from twisted.application.internet import StreamServerEndpointService
@@ -18,6 +24,18 @@ from twisted.internet.endpoints import serverFromString
 
 from lae_util import validators as my_validators
 from lae_util.fileutil import make_dirs
+
+def create(path):
+    flags = (
+        # Create the subscription file
+        O_CREAT
+        # Fail if it already exists
+        | O_EXCL
+        # Open it for writing only
+        | O_WRONLY
+    )
+    return fdopen(os_open(path.path, flags), "w")
+
 
 class Subscriptions(Resource):
     """
@@ -40,6 +58,7 @@ class Subscriptions(Resource):
 
 class Subscription(Resource):
     def __init__(self, database, subscription_id):
+        Resource.__init__(self)
         self.database = database
         self.subscription_id = subscription_id
 
@@ -77,9 +96,13 @@ class SubscriptionDatabase(object):
         return SubscriptionDatabase(path=path)
 
     def _subscription_path(self, subscription_id):
-        return self.path.child(subscription_id + u".json")
+        return self.path.child(b32encode(subscription_id) + u".json")
 
-    def _subscription_state(self, subscription_id, introducer_furl, bucket_name):
+    def _subscription_state(
+            self,
+            subscription_id, introducer_pem, storage_pem, storage_privkey,
+            introducer_furl, bucket_name,
+    ):
         return dict(
             version=1,
             details=dict(
@@ -87,19 +110,13 @@ class SubscriptionDatabase(object):
                 subscription_id=subscription_id,
                 introducer_furl=introducer_furl,
                 bucket_name=bucket_name,
+                introducer_pem=introducer_pem,
+                storage_pem=storage_pem,
             ),
         )
 
     def _write(self, path, content):
-        flags = (
-            # Create the subscription file
-            O_CREAT
-            # Fail if it already exists
-            | O_EXCL
-            # Open it for writing only
-            | O_WRONLY
-        )
-        with open(path.path, flags) as subscription_file:
+        with create(path) as subscription_file:
             # XXX Crash here and we have inconsistent state on disk.
             # It would be better to write to a temporary file and then
             # renameat2(..., RENAME_NOREPLACE) but Python doesn't
@@ -107,16 +124,27 @@ class SubscriptionDatabase(object):
             #
             # At least we can dump the whole config in memory and then
             # write it in one go.
-            subscription_file.write(dumps(state))
+            subscription_file.write(content)
 
-    def create_subscription(self, subscription_id, introducer_furl, bucket_name):
+    def create_subscription(
+            self,
+            subscription_id,
+            introducer_pem,
+            storage_pem,
+            storage_privkey,
+            introducer_furl,
+            bucket_name,
+    ):
         path = self._subscription_path(subscription_id)
-        state = self._subscription_state(subscription_id, introducer_furl, bucket_name)
+        state = self._subscription_state(
+            subscription_id, introducer_pem, storage_pem, storage_privkey,
+            introducer_furl, bucket_name,
+        )
         self._write(path, dumps(state))
 
     def list_subscriptions_identifiers(self):
         return [
-            child.basename()[:len(u".json")]
+            b32decode(child.basename()[:-len(u".json")])
             for child in self.path.children()
         ]
 
@@ -148,6 +176,9 @@ class Options(_Options):
         self["state-path"] = FilePath(self["state-path"].decode("utf-8"))
 
 def makeService(options):
+    """
+    Make a new subscription manager ``IService``.
+    """
     from twisted.internet import reactor
 
     make_dirs(options["state-path"].path)
@@ -157,3 +188,46 @@ def makeService(options):
         serverFromString(reactor, options["listen-address"]),
         site,
     )
+
+
+@attr.s
+class Client(object):
+    endpoint = attr.ib(validators.instance_of(bytes))
+    agent = attr.ib(validators.provides(IAgent))
+
+    def create(self, subscription_id, details, bodyProducerKwargs=None):
+        d = self.agent.request(
+            b"PUT",
+            self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
+            bodyProducer=FileBodyProducer(
+                BytesIO(dumps(details)),
+                **bodyProducerKwargs
+            ),
+        )
+        d.addCallback(require_code(CREATED))
+        d.addCallback(lambda ignored: None)
+        return d
+
+    def list(self):
+        d = self.agent.request(
+            b"GET",
+            self.endpoint + b"/v1/subscriptions",
+        )
+        d.addCallback(require_code(OK))
+        d.addCallback(readBody)
+        d.addCallback(loads)
+        d.addCallback(lambda response: response["subscriptions"])
+        return d
+
+
+@attr.s
+class UnexpectedResponseCode(Exception):
+    response = attr.ib(validator=validators.provides(IResponse))
+    required = attr.ib(validator=validators.instance_of(int))
+
+def require_code(required):
+    def check(response):
+        if response.code != required:
+            raise UnexpectedResponseCode(response, required)
+        return response
+    return check
