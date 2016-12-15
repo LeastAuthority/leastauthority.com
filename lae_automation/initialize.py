@@ -1,20 +1,28 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 import subprocess, os, urllib
 
 from twisted.internet import reactor, task, defer
 from twisted.python.filepath import FilePath
 from twisted.conch.client.knownhosts import KnownHostsFile
 
+from eliot import startAction
+from eliot.twisted import DeferredContext
+
+from lae_util import retry_failure, backoff
+
 from lae_automation.aws.license_service_client import LicenseServiceClient
-from txaws.s3.client import S3Client, URLContext
 from lae_automation.aws.devpay_s3client import DevPayS3Client
 from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError, \
      wait_for_EC2_addresses
 
+from txaws.s3.exception import S3Error
+from txaws.s3.client import S3Client, URLContext
 from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
-from txaws.service import AWSServiceEndpoint
+from txaws.service import AWSServiceEndpoint, AWSServiceRegion
 from txaws.credentials import AWSCredentials
-
 
 class PublicKeyMismatch(Exception):
     pass
@@ -177,12 +185,44 @@ def verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, endpoint_uri
     d.addCallback(_got_fingerprintfromconsole)
     return d
 
-def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr, location):
-    if location is None:
-        print >>stdout, "Creating S3 bucket in 'US East' region..."
-    else:
-        # TODO: print user-friendly region name
-        print >>stdout, "Creating S3 bucket..."
+
+def create_user_bucket(reactor, client, bucketname):
+    """
+    Create an S3 bucket for a user's grid.
+
+    If S3 errors are encountered, retries will be attempted.  If too
+    many errors are encountered, this will give up and return a
+    failure.
+
+    @param reactor: An IReactorTime which can be used to schedule retries.
+    @param client: A txaws.s3.client.S3Client which can be used to create the bucket.
+    @param bucketname: The name of the S3 bucket to create.
+
+    @return: A Deferred that fires when the bucket has been created or
+        fails when too many errors are encountered.
+    """
+    action = startAction(
+        action_type=u"initialize:create_user_bucket",
+        name=bucketname,
+    )
+    with action.context():
+        d = DeferredContext(
+            retry_failure(
+                reactor,
+                lambda: client.create_bucket(bucketname),
+                expected=[S3Error],
+                steps=backoff(),
+            ),
+        )
+        d.addActionFinish()
+        return d.result
+
+
+def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr, location, reactor=None):
+    if reactor is None:
+        from twisted.internet import reactor
+
+    assert location is None, "Alternate S3 bucket locations unimplemented."
 
     print >>stderr, ('usertoken = %r\n'
                      'bucketname = %r\n'
@@ -191,22 +231,11 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
                      'secretkey = %r\n'
                      % (None, bucketname, location, accesskeyid, secretkey))
 
-    LAcreds = AWSCredentials(accesskeyid, secretkey)
-    client = S3Client(creds=LAcreds)
+    region = AWSServiceRegion(creds=AWSCredentials(accesskeyid, secretkey))
+    client = region.get_s3_client()
     print >>stderr, "client is %s" % (client,)
 
-    if location:
-        object_name = "?LocationConstraint=" + urllib.quote(location)
-    else:
-        object_name = None
-
-    query = client.query_factory(
-        action="PUT", creds=client.creds, endpoint=client.endpoint,
-        bucket=bucketname, object_name=object_name)
-    print >>stderr, "query is %s" % (query,)
-    print >>stderr, "%r %r %r" % (query.action, query.data, query.get_headers())
-    print >>stdout, "URL: %r" % (URLContext(query.endpoint, query.bucket, query.object_name).get_url(),)
-    d = query.submit()
+    d  = create_user_bucket(reactor, client, bucketname)
 
     def bucket_created(res):
         print >>stdout, "S3 bucket created."
