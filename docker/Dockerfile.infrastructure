@@ -6,6 +6,10 @@
 
 FROM leastauthority/base
 
+# This was already set in leastauthority/base but ARG does not cross
+# Dockerfiles.  See Dockerfile.base for explanation.
+ARG DEBIAN_FRONTEND=noninteractive
+
 # Select a postfix configuration so that postfix can be installed
 # without prompting.  And install postfix.
 #
