@@ -120,3 +120,29 @@ class SubscriptionManagerTests(TestCase):
             details_b["details"]["storage_port"],
         }
         self.expectThat(ports, HasLength(4))
+
+    @given(subscription_id(), furl(), bucket_name())
+    def test_deactivate_subscription(self, subscription_id, introducer_furl, bucket_name):
+        """
+        A DELETE to /v1/subscriptions/<id> causes a subscription to be
+        deactivated such that it is no longer included in the result
+        of a GET to /v1/subscriptions.
+        """
+        root = make_resource(FilePath(mkdtemp().decode("utf-8")))
+        agent = MemoryAgent(root)
+        client = SMClient(endpoint=b"", agent=agent)
+
+        details = dict(
+            introducer_pem=u"introducer pem",
+            storage_pem=u"storage pem",
+            storage_privkey=u"storage privkey",
+            bucket_name=bucket_name,
+            introducer_furl=introducer_furl,
+        )
+        kwargs = dict(cooperator=Uncooperator())
+
+        self.successResultOf(client.create(subscription_id, details, kwargs))
+        self.successResultOf(client.delete(subscription_id))
+
+        subscriptions = self.successResultOf(client.list())
+        self.assertThat(subscriptions, Equals([]))

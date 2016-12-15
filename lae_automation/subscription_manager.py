@@ -125,7 +125,7 @@ class SubscriptionDatabase(object):
         )
 
 
-    def _write(self, path, content):
+    def _create(self, path, content):
         with create(path) as subscription_file:
             # XXX Crash here and we have inconsistent state on disk.
             # It would be better to write to a temporary file and then
@@ -169,7 +169,13 @@ class SubscriptionDatabase(object):
             introducer_furl, bucket_name,
             **self._assign_addresses()
         )
-        self._write(path, dumps(state))
+        self._create(path, dumps(state))
+
+    def deactivate_subscription(self, subscription_id):
+        path = self._subscription_path(subscription_id)
+        subscription = loads(path.getContent())
+        subscription["details"]["active"] = False
+        path.setContent(dumps(subscription))
 
     def get_subscription(self, subscription_id):
         path = self._subscription_path(subscription_id)
@@ -179,6 +185,7 @@ class SubscriptionDatabase(object):
         return [
             b32decode(child.basename()[:-len(u".json")])
             for child in self.path.children()
+            if loads(child.getContent())["details"]["active"]
         ]
 
 
@@ -260,6 +267,15 @@ class Client(object):
         d.addCallback(readBody)
         d.addCallback(loads)
         d.addCallback(lambda response: response["subscriptions"])
+        return d
+
+    def delete(self, subscription_id):
+        d = self.agent.request(
+            b"DELETE",
+            self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
+        )
+        d.addCallback(require_code(NO_CONTENT))
+        d.addCallback(lambda ignored: None)
         return d
 
 
