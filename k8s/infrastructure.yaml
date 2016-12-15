@@ -137,6 +137,7 @@ spec:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
+
       # Here is the Foolscap log gatherer.
       - name: 'foolscap-log-gatherer'
         image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:b5671da'

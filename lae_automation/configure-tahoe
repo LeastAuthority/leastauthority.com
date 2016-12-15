@@ -32,6 +32,13 @@ INTRODUCER_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname =
 web.port =
 web.static = public_html
+
+# This gives a Twisted endpoint description string defining where the
+# introducer will listen for Foolscap connections.
+tub.port = tcp:port=%(tub_port_number)s
+
+# This gives the furl of a Foolscap log gatherer where we can send our
+# logs.
 log_gatherer.furl = %(log_gatherer_furl)s
 
 [client]
@@ -51,8 +58,19 @@ STORAGE_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 nickname = %(nickname)s
 web.port =
 web.static = public_html
-tub.location = %(publichost)s:12346,%(privatehost)s:12346
-log_gatherer.furl = %(incident_gatherer_furl)s
+
+# This gives a Twisted endpoint description string defining where the
+# storage node will listen for Foolscap connections.
+tub.port = tcp:port=%(tub_port_number)s
+
+# This gives a comma-separated list of ip:port pairs which will be
+# published as locations at which this storage node's Foolscap server
+# can be reached.
+tub.location = %(publichost)s:%(tub_port_number)s,%(privatehost)s:%(tub_port_number)s
+
+# This gives the furl of a Foolscap log gatherer where we can send our
+# logs.
+log_gatherer.furl = %(log_gatherer_furl)s
 
 [client]
 # Which services should this client connect to?
@@ -116,12 +134,11 @@ def configure_introducer(
     force_remove(preferred_furl_path)
     force_remove(introducer.child(b"logport.furl"))
 
-    introducer.child(b"introducer.port").setContent(
-        u"{}".format(port).encode("ascii")
-    )
     configure_secrets(introducer, node_pem)
+    # configure_secrets creates private directory if necessary
     preferred_furl_path.setContent(introducer_furl)
     tahoe_cfg = INTRODUCER_CFG_TEMPLATE % dict(
+        tub_port_number=port,
         log_gatherer_furl=log_gatherer_furl,
         stats_gatherer_furl=stats_gatherer_furl,
     )
@@ -134,10 +151,6 @@ def configure_storage(
         s3_access_key_id, s3_secret_key,
         log_gatherer_furl, stats_gatherer_furl,
 ):
-    storage.child(b"client.port").setContent(
-        u"{}".format(port).encode("ascii")
-    )
-
     configure_secrets(storage, node_pem)
     if node_privkey is not None:
         storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
@@ -147,10 +160,11 @@ def configure_storage(
         nickname=bucket_name,
         publichost=publichost,
         privatehost=privatehost,
+        tub_port_number=port,
         introducer_furl=introducer_furl,
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
-        incident_gatherer_furl=log_gatherer_furl,
+        log_gatherer_furl=log_gatherer_furl,
         stats_gatherer_furl=stats_gatherer_furl,
     )
 
