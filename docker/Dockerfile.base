@@ -25,6 +25,7 @@ ENV SECURITY_UPDATES="2016-10-28"
 # Set a build-only environment variable to suppress warnings from apt
 # and other package management tools caused by the lack of a tty.
 # This can be overridden by --build-arg but that's not the point.
+# See https://github.com/docker/docker/issues/4032
 ARG DEBIAN_FRONTEND=noninteractive
 
 # We'll do an upgrade because the base Ubuntu image isn't guaranteed
