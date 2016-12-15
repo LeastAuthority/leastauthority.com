@@ -398,6 +398,36 @@ It is up to the Kubernetes scheduler to re-balance load on the cluster.
 .. warning::
    Reducing the number of worker nodes may temporarily disrupt service as pods running on those nodes die and are then rescheduled elsewhere.
 
+Customer Subscription Cancellation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This process `should be automated https://github.com/LeastAuthority/leastauthority.com/issues/361`_.
+Until it is, the Stripe subscription and AWS resources must be adjusted directly.
+
+#. Cancel the Stripe subscription in the Stripe admin web interface.
+#. Get a shell in the flapp container of the s4-infrastructure pod.
+
+   #. ``kubectl get -o json pods -l provider=LeastAuthority,app=s4,component=Infrastructure | jq '.items[].metadata.name'``
+   #. ``kubectl exec -it <pod name> -c flapp -- /bin/bash``
+
+#. Find the customer's directory
+
+   #. ``cd /app/data/secrets``
+   #. ``grep -r <email address> ./``
+
+#. Find the EC2 ``instance_id`` associated with the customer
+
+   #. ``grep instance <customer directory>/signup_logs``
+
+#. Terminate that EC2 instance (AWS S4 customer account) using the AWS Web Console, CLI tools, or other means.
+   e.g.:
+
+   #. ``aws ec2 terminate-instances --instance-ids i-...``
+
+#. Move the customer's directory to the ``cancelled`` directory
+
+   #. ``mv -iv ... /app/data/secrets/cancelled``
+
 .. _kops: https://github.com/kubernetes/kops
 .. _kubectl: http://kubernetes.io/docs/user-guide/kubectl-overview/
 .. _awscli: https://aws.amazon.com/cli/
