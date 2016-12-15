@@ -107,6 +107,7 @@ class SubscriptionDatabase(object):
             self,
             subscription_id, introducer_pem, storage_pem, storage_privkey,
             introducer_furl, bucket_name,
+            introducer_port, storage_port,
     ):
         return dict(
             version=1,
@@ -118,8 +119,11 @@ class SubscriptionDatabase(object):
                 introducer_pem=introducer_pem,
                 storage_pem=storage_pem,
                 storage_privkey=storage_privkey,
+                introducer_port=introducer_port,
+                storage_port=storage_port,
             ),
         )
+
 
     def _write(self, path, content):
         with create(path) as subscription_file:
@@ -131,6 +135,24 @@ class SubscriptionDatabase(object):
             # At least we can dump the whole config in memory and then
             # write it in one go.
             subscription_file.write(content)
+
+
+    def _assign_addresses(self):
+        subscription_count = len(self.path.listdir())
+
+        start_port = 10000
+        end_port = 65535
+
+        first_port = start_port + 2 * subscription_count
+        if first_port > end_port:
+            # We ran out of ports to allocate.
+            raise Exception("We ran out of ports to allocate.")
+
+        return dict(
+            introducer_port=first_port,
+            storage_port=first_port + 1,
+        )
+
 
     def create_subscription(
             self,
@@ -145,6 +167,7 @@ class SubscriptionDatabase(object):
         state = self._subscription_state(
             subscription_id, introducer_pem, storage_pem, storage_privkey,
             introducer_furl, bucket_name,
+            **self._assign_addresses()
         )
         self._write(path, dumps(state))
 
