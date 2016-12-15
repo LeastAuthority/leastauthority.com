@@ -43,7 +43,7 @@ class MemoryS3Client(object):
     def get_bucket(self, bucket):
         try:
             pieces = self.buckets[bucket]
-        except KeyEror:
+        except KeyError:
             return fail(S3Error("<nosuchbucket/>", 400))
         return pieces["listing"]
 
