@@ -46,7 +46,7 @@ class Subscriptions(Resource):
     def __init__(self, database):
         Resource.__init__(self)
         self.database = database
-        
+
     def getChild(self, name, request):
         return Subscription(self.database, name)
 
@@ -67,6 +67,11 @@ class Subscription(Resource):
         self.database.create_subscription(subscription_id=self.subscription_id, **payload)
         request.setResponseCode(CREATED)
         return b""
+
+    def render_GET(self, request):
+        subscription = self.database.get_subscription(subscription_id=self.subscription_id)
+        request.setResponseCode(OK)
+        return dumps(subscription)
 
     def render_DELETE(self, request):
         self.database.deactivate_subscription(subscription_id=self.subscription_id)
@@ -107,11 +112,12 @@ class SubscriptionDatabase(object):
             version=1,
             details=dict(
                 active=True,
-                subscription_id=subscription_id,
+                id=subscription_id,
                 introducer_furl=introducer_furl,
                 bucket_name=bucket_name,
                 introducer_pem=introducer_pem,
                 storage_pem=storage_pem,
+                storage_privkey=storage_privkey,
             ),
         )
 
@@ -142,6 +148,10 @@ class SubscriptionDatabase(object):
         )
         self._write(path, dumps(state))
 
+    def get_subscription(self, subscription_id):
+        path = self._subscription_path(subscription_id)
+        return loads(path.getContent())
+
     def list_subscriptions_identifiers(self):
         return [
             b32decode(child.basename()[:-len(u".json")])
@@ -157,7 +167,7 @@ def required(options, key):
 def make_resource(path):
     v1 = Resource()
     v1.putChild("subscriptions", Subscriptions(SubscriptionDatabase.from_directory(path)))
-    
+
     root = Resource()
     root.putChild("v1", v1)
 
@@ -206,6 +216,16 @@ class Client(object):
         )
         d.addCallback(require_code(CREATED))
         d.addCallback(lambda ignored: None)
+        return d
+
+    def get(self, subscription_id):
+        d = self.agent.request(
+            b"GET",
+            self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
+        )
+        d.addCallback(require_code(OK))
+        d.addCallback(readBody)
+        d.addCallback(loads)
         return d
 
     def list(self):

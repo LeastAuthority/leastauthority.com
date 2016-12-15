@@ -77,3 +77,10 @@ class SubscriptionManagerTests(TestCase):
         d = client.list()
         subscriptions = self.successResultOf(d)
         self.expectThat(subscriptions, Equals([subscription_id]))
+
+        d = client.get(subscription_id)
+        subscription = self.successResultOf(d)
+        expected = details.copy()
+        expected["id"] = subscription_id
+        expected["active"] = True
+        self.expectThat(subscription, Equals(dict(version=1, details=expected)))
