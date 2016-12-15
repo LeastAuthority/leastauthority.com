@@ -419,7 +419,7 @@ Until it is, the Stripe subscription and AWS resources must be adjusted directly
 
    #. ``grep instance <customer directory>/signup_logs``
 
-#. Stop that EC2 instance (AWS S4 customer account) using the AWS Web Console, CLI tools, or other means.
+#. Terminate that EC2 instance (AWS S4 customer account) using the AWS Web Console, CLI tools, or other means.
    e.g.:
 
    #. ``aws ec2 terminate-instances --instance-ids i-...``
