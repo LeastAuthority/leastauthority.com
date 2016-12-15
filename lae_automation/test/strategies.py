@@ -27,12 +27,12 @@ def nickname():
 
 def subscription_id():
     return strategies.binary(min_size=10, max_size=10).map(
-        lambda b: b'sub_' + b.encode('base64').strip('_')
+        lambda b: b'sub_' + b.encode('base64').strip('=\n')
     )
 
 def customer_id():
     return strategies.binary(min_size=10, max_size=10).map(
-        lambda b: b'cus_' + b.encode('base64').strip('_')
+        lambda b: b'cus_' + b.encode('base64').strip('=\n')
     )
 
 def bucket_name():
