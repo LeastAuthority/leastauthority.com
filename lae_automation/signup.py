@@ -18,6 +18,7 @@ from lae_automation.containers import provision_subscription
 
 from lae_util.servers import append_record
 from lae_util.timestamp import format_iso_time
+from lae_util.validators import all
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
@@ -126,13 +127,7 @@ def _validate_products(instance, attribute, value):
     if len(value) == 0:
         raise ValueError("At least one product is required.")
 
-def and_(*v):
-    def _and(inst, attr, value):
-        for validator in v:
-            validator(inst, attr, value)
-    return _and
-
-validate_furl = and_(
+validate_furl = all(
     attr.validators.instance_of(str),
     lambda inst, attr, value: decode_furl(value),
 )
