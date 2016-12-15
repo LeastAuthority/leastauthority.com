@@ -1,7 +1,6 @@
 from json import dumps
 
 from pyrsistent import freeze
-import pykube
 
 from .server import new_tahoe_configuration, marshal_tahoe_configuration
 
