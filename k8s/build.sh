@@ -9,7 +9,7 @@
 }
 
 # A helper to run commands inside a container in the pod.
-EXEC="kubectl exec -i ${K8S_POD} --"
+EXEC="kubectl --namespace default exec -i ${K8S_POD} --"
 
 ${EXEC} bash -e -x -c '
     # Dependencies for the build.
