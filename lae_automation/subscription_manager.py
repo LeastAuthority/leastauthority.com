@@ -1,5 +1,5 @@
 """
-This module implement an HTTP-accessible microservice which
+This module implements an HTTP-accessible microservice which
 provides persistence of S4 subscriptions.
 """
 
