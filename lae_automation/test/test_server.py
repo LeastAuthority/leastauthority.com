@@ -15,7 +15,7 @@ from datetime import datetime
 from testtools.matchers import Equals
 
 from lae_automation import server
-from lae_automation.signup import DeploymentConfiguration
+from lae_automation.signup import DeploymentConfiguration, SubscriptionDetails
 from lae_automation.server import api
 
 from .testcase import TestBase
@@ -244,36 +244,41 @@ class NewTahoeConfigurationTests(TestBase):
         ``new_tahoe_configuration``.
         """
         deploy_config = DeploymentConfiguration(
-                products=[{}],
-                s3_access_key_id=s3_access_key_id,
-                s3_secret_key=s3_secret_key,
-                bucketname=bucket_name,
-                amiimageid=None,
-                instancesize=None,
+            products=[{}],
+            s3_access_key_id=s3_access_key_id,
+            s3_secret_key=s3_secret_key,
+            amiimageid=None,
+            instancesize=None,
 
-                usertoken=None,
-                producttoken=None,
+            usertoken=None,
+            producttoken=None,
 
-                oldsecrets=None,
-                customer_email=None,
-                customer_pgpinfo=None,
-                secretsfile=fdopen(mkstemp()[0], "w"),
-                serverinfopath=None,
+            secretsfile=fdopen(mkstemp()[0], "w"),
+            serverinfopath=None,
 
-                ssec2_access_key_id=None,
-                ssec2_secret_path=None,
+            ssec2_access_key_id=None,
+            ssec2_secret_path=None,
 
-                ssec2admin_keypair_name=None,
-                ssec2admin_privkey_path=None,
+            ssec2admin_keypair_name=None,
+            ssec2admin_privkey_path=None,
 
-                monitor_pubkey_path=None,
-                monitor_privkey_path=None,
+            monitor_pubkey_path=None,
+            monitor_privkey_path=None,
 
-                log_gatherer_furl=log_gatherer_furl,
-                stats_gatherer_furl=stats_gatherer_furl,
-            )
+            log_gatherer_furl=log_gatherer_furl,
+            stats_gatherer_furl=stats_gatherer_furl,
+        )
+        subscription = SubscriptionDetails(
+            bucketname=bucket_name,
+            oldsecrets=None,
+            customer_email=None,
+            customer_pgpinfo=None,
+            product_id=None,
+            customer_id=None,
+            subscription_id=None,
+        )
         config = server.new_tahoe_configuration(
-            deploy_config, publichost, privatehost,
+            deploy_config, subscription, publichost, privatehost,
         )
         # It returns an object which can be round-tripped through the
         # JSON format.

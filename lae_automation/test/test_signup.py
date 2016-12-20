@@ -117,7 +117,6 @@ class TestSignupModule(TestCase):
             products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
-            bucketname="lae-" + self.MENCODED_IDS,
             amiimageid="ami-deadbeef", # XXX Where does this come from?  Who knows.
             instancesize="fake instance size",
 
@@ -133,11 +132,17 @@ class TestSignupModule(TestCase):
             monitor_pubkey_path=ZEROPRODUCT["monitor_pubkey_path"],
             monitor_privkey_path=ZEROPRODUCT["monitor_privkey_path"],
 
+            secretsfile=open(self.MSECRETSFILE, "a+b"),
+            serverinfopath=self.SERVERINFOPATH,
+        )
+        self.SUBSCRIPTION = signup.SubscriptionDetails(
+            bucketname="lae-" + self.MENCODED_IDS,
             oldsecrets=None,
             customer_email=self.MEMAIL,
             customer_pgpinfo=self.MKEYINFO,
-            secretsfile=open(self.MSECRETSFILE, "a+b"),
-            serverinfopath=self.SERVERINFOPATH,
+            product_id=None,
+            customer_id=None,
+            subscription_id=None,
         )
 
         self.patch(signup, 'POLL_TIME', 0.1)
@@ -217,7 +222,7 @@ class TestSignupModule(TestCase):
                 raise NotListeningError()
         self.patch(signup, 'install_server', call_install_server)
 
-        def call_bounce_server(deploy_config, publichost, admin_privkey_path, privatehost,
+        def call_bounce_server(deploy_config, subscription, publichost, admin_privkey_path, privatehost,
                                stdout, stderr):
             self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
@@ -289,6 +294,7 @@ class TestSignupModule(TestCase):
         attr.validate(config)
         d = signup.activate_subscribed_service(
             config,
+            self.SUBSCRIPTION,
             stdout, stderr,
             MLOGFILENAME,
         )
@@ -322,7 +328,7 @@ class TestSignupModule(TestCase):
             secretsfile=MSSEC2_secretsfile,
         )
         attr.validate(config)
-        d = signup.activate_subscribed_service(config, stdout, stderr, MLOGFILENAME)
+        d = signup.activate_subscribed_service(config, self.SUBSCRIPTION, stdout, stderr, MLOGFILENAME)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
@@ -349,7 +355,7 @@ class TestSignupModule(TestCase):
             secretsfile=MSSEC2_secretsfile,
         )
         attr.validate(config)
-        d = signup.activate_subscribed_service(config, stdout, stderr, MLOGFILENAME)
+        d = signup.activate_subscribed_service(config, self.SUBSCRIPTION, stdout, stderr, MLOGFILENAME)
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):

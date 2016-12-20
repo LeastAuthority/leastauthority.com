@@ -386,25 +386,26 @@ def marshal_tahoe_configuration(
         ),
     )
 
-def bounce_server(deploy_config, publichost, admin_privkey_path, privatehost, stdout, stderr,
+def bounce_server(deploy_config, subscription, publichost, admin_privkey_path, privatehost, stdout, stderr,
                   configpath=None):
     set_host_and_key(publichost, admin_privkey_path, username="customer")
 
     if deploy_config.oldsecrets is None:
         configuration = new_tahoe_configuration(
             deploy_config=deploy_config,
+            subscription=subscription,
             publichost=publichost,
             privatehost=privatehost,
         )
     else:
         configuration = marshal_tahoe_configuration(
-            introducer_pem=deploy_config.oldsecrets["introducer_node_pem"],
-            storage_pem=deploy_config.oldsecrets["storageserver_node_pem"],
-            storage_privkey=deploy_config.oldsecrets["server_node_privkey"],
-            bucket_name=deploy_config.bucketname,
+            introducer_pem=subscription.oldsecrets["introducer_node_pem"],
+            storage_pem=subscription.oldsecrets["storageserver_node_pem"],
+            storage_privkey=subscription.oldsecrets["server_node_privkey"],
+            bucket_name=subscription.bucketname,
             publichost=publichost,
             privatehost=privatehost,
-            introducer_furl=deploy_config.oldsecrets["internal_introducer_furl"],
+            introducer_furl=subscription.oldsecrets["internal_introducer_furl"],
             s3_access_key_id=deploy_config.s3_access_key_id,
             s3_secret_key=deploy_config.s3_secret_key,
             log_gatherer_furl=deploy_config.log_gatherer_furl,
@@ -501,7 +502,7 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     os.remove('tempconfigfile')
 
 
-def new_tahoe_configuration(deploy_config, publichost, privatehost):
+def new_tahoe_configuration(deploy_config, subscription, publichost, privatehost):
     """
     Create brand new secrets and configuration for use by an
     introducer/storage pair.
@@ -509,7 +510,7 @@ def new_tahoe_configuration(deploy_config, publichost, privatehost):
     base_name = dict(
         organizationName=b"Least Authority Enterprises",
         organizationalUnitName=b"S4",
-        emailAddress=deploy_config.bucketname,
+        emailAddress=subscription.bucketname,
     )
 
     keypair = KeyPair.generate(size=2048)
@@ -536,7 +537,7 @@ def new_tahoe_configuration(deploy_config, publichost, privatehost):
         storage_pem=storage_tub.getCertData().strip(),
         storage_privkey=keyutil.make_keypair()[0] + b"\n",
 
-        bucket_name=deploy_config.bucketname,
+        bucket_name=subscription.bucketname,
         publichost=publichost,
         privatehost=privatehost,
         # The object of the reference is irrelevant.  The furl will

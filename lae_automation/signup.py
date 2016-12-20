@@ -53,7 +53,7 @@ def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
 
-def activate_subscribed_service(deploy_config, stdout, stderr, logfile, clock=None):
+def activate_subscribed_service(deploy_config, subscription, stdout, stderr, logfile, clock=None):
     print >>stderr, "entering activate_subscribed_service call."
     if clock is None:
         clock = reactor
@@ -63,7 +63,7 @@ def activate_subscribed_service(deploy_config, stdout, stderr, logfile, clock=No
     d = create_stripe_user_bucket(
         deploy_config.s3_access_key_id,
         deploy_config.s3_secret_key,
-        deploy_config.bucketname,
+        subscription.bucketname,
         stdout,
         stderr,
         location,
@@ -71,9 +71,9 @@ def activate_subscribed_service(deploy_config, stdout, stderr, logfile, clock=No
 
     print >>stdout, "After create_stripe_account_user_bucket %s..." % (deploy_config,)
 
-    d.addCallback(lambda ignored: provision_subscription(clock, deploy_config))
+    d.addCallback(lambda ignored: provision_subscription(clock, deploy_config, subscription))
     d.addErrback(lambda f: send_notify_failure(
-        f, deploy_config.customer_email, logfile, stdout, stderr,
+        f, subscription.customer_email, logfile, stdout, stderr,
     ))
     return d
 
@@ -94,16 +94,12 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
         products=config.products,
         s3_access_key_id=s3_access_key_id,
         s3_secret_key=s3_secretkey,
-        bucketname=bucketname,
         amiimageid=amiimageid,
         instancesize=instancesize,
 
         usertoken=usertoken,
         producttoken=producttoken,
 
-        oldsecrets=oldsecrets,
-        customer_email=customer_email,
-        customer_pgpinfo=None,
         secretsfile=secretsfile,
         serverinfopath=serverinfopath,
 
@@ -116,7 +112,17 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
         monitor_pubkey_path=config["monitor_pubkey_path"],
         monitor_privkey_path=config["monitor_privkey_path"],
     )
+    subscription = SubscriptionDetails(
+        bucketname=bucketname,
+        oldsecrets=oldsecrets,
+        customer_email=customer_email,
+        customer_pgpinfo=None,
 
+        product_id=None,
+        customer_id=None,
+        subscription_id=None,
+    )
+        
     d = deploy_server(deploy_config, stdout, stderr, clock)
     d.addErrback(lambda f: send_notify_failure(f, customer_email, logfilename, stdout,
                                                stderr))
@@ -177,8 +183,7 @@ class SubscriptionDetails(object):
     subscription_id = attr.ib()
 
 
-# TODO: too many args. Consider passing them in a dict.
-def deploy_server(deploy_config, stdout, stderr, clock=None):
+def deploy_server(deploy_config, subscription, stdout, stderr, clock=None):
     if clock is None:
         clock = reactor
 
@@ -186,7 +191,7 @@ def deploy_server(deploy_config, stdout, stderr, clock=None):
     ec2secretpath = deploy_config.ssec2_secret_path
     ec2secretkey = FilePath(ec2secretpath).getContent().strip()
 
-    instancename = deploy_config.customer_email  # need not be unique
+    instancename = subscription.customer_email  # need not be unique
 
     admin_keypair_name = str(deploy_config.ssec2admin_keypair_name)
     admin_privkey_path = str(deploy_config.ssec2admin_privkey_path)
@@ -200,7 +205,7 @@ def deploy_server(deploy_config, stdout, stderr, clock=None):
         EC2_ENDPOINT,
         deploy_config.amiimageid,
         deploy_config.instancesize,
-        deploy_config.bucketname,
+        subscription.bucketname,
         admin_keypair_name,
         instancename,
         stdout,
@@ -240,6 +245,7 @@ def deploy_server(deploy_config, stdout, stderr, clock=None):
 
                 furl = bounce_server(
                     deploy_config,
+                    subscription,
                     publichost,
                     admin_privkey_path,
                     privatehost,
@@ -253,13 +259,13 @@ def deploy_server(deploy_config, stdout, stderr, clock=None):
 
                 print >>stderr, "Signup done."
                 d4 = defer.succeed(None)
-                if not deploy_config.oldsecrets:
+                if not subscription.oldsecrets:
                     d4.addCallback(
                         lambda ign: send_signup_confirmation(
                             publichost,
-                            deploy_config.customer_email,
+                            subscription.customer_email,
                             furl,
-                            deploy_config.customer_pgpinfo,
+                            subscription.customer_pgpinfo,
                             stdout,
                             stderr,
                         )
