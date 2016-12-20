@@ -175,7 +175,7 @@ class SubscriptionDetails(object):
     # Referencing opaque stripe identifiers
     customer_id = attr.ib()
     subscription_id = attr.ib()
-    
+
 
 # TODO: too many args. Consider passing them in a dict.
 def deploy_server(deploy_config, stdout, stderr, clock=None):

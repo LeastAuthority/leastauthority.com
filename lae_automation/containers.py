@@ -12,7 +12,7 @@ def provision_subscription(reactor, deploy_config, details):
     kube = KubeClient()
     old_service = get_service(kube, deploy_config)
     intro_number, storage_number = assign_ports(old_service, 2)
-    
+
     configmap = create_configuration(deploy_config, details)
     deployment = create_deployment(deploy_config, intro_number, storage_number)
     new_service = add_subscription_to_service(
@@ -21,7 +21,7 @@ def provision_subscription(reactor, deploy_config, details):
     dns = create_dns(deploy_config)
 
     create(kube, configmap, deployment, new_service, dns)
-    
+
     record_serverinfo(reactor, deploy_config)
     send_confirmation(reactor, deploy_config)
 
@@ -124,7 +124,7 @@ def create_configuration(reactor, deploy_config, details, kube):
             log_gatherer_furl=deploy_config.log_gatherer_furl,
             stats_gatherer_furl=deploy_config.stats_gatherer_furl,
         )
-        
+
     return CONFIGMAP_TEMPLATE.transform(
         # Add some metadata to make inspecting this stuff a little
         # easier.
@@ -243,7 +243,7 @@ def create_deployment(deploy_config, details, intro_number, storage_number):
     # Length is a factor for these fields. :(
     intro_name = introducer_port_name(details.subscription_id)
     storage_name = storage_port_name(details.subscription_id)
-    
+
     return DEPLOYMENT_TEMPLATE.transform(
         # Add some metadata to make inspecting this stuff a little
         # easier.
