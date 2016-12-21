@@ -140,7 +140,12 @@ validate_furl = all(
 
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
+    # XXX Would be nice to be able to set this to
+    # staging.leastauthority.com sometimes.
     domain = "leastauthority.com"
+
+    # XXX Sets up internal DNS, must agree with other bits of the
+    # system
     private_host = "customer-grid-service"
 
     products = attr.ib(validator=_validate_products)
@@ -181,6 +186,9 @@ class SubscriptionDetails(object):
     # Referencing opaque stripe identifiers
     customer_id = attr.ib()
     subscription_id = attr.ib()
+
+    introducer_port_number = attr.ib()
+    storage_port_number = attr.ib()
 
 
 def deploy_server(deploy_config, subscription, stdout, stderr, clock=None):

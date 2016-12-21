@@ -15,9 +15,8 @@ def provision_subscription(reactor, deploy_config, details):
 
     configmap = create_configuration(deploy_config, details)
     deployment = create_deployment(deploy_config, intro_number, storage_number)
-    new_service = add_subscription_to_service(
-        deploy_config, details, old_service, intro_number, storage_number
-    )
+    new_service = add_subscription_to_service(old_service, details)
+
     dns = create_dns(deploy_config)
 
     create(kube, configmap, deployment, new_service, dns)
@@ -92,7 +91,7 @@ def configmap_name(subscription_id):
 def configmap_public_host(subscription_id, domain):
     return "{}.{}".format(subscription_id, domain)
 
-def create_configuration(reactor, deploy_config, details, kube):
+def create_configuration(deploy_config, details, kube):
     """
     Create the Kubernetes configuration resource necessary to provide
     service to the given subscription.
@@ -235,7 +234,7 @@ def storage_port_name(subscription_id):
     return "s-" + subscription_id.replace("_", "-")
 
 
-def create_deployment(deploy_config, details, intro_number, storage_number):
+def create_deployment(deploy_config, details):
     name = deployment_name(details.subscription_id)
     configmap = configmap_name(details.subscription_id)
     metadata = subscription_metadata(details)
@@ -255,21 +254,22 @@ def create_deployment(deploy_config, details, intro_number, storage_number):
 
         # Assign it service names and a port numbers.
         ["spec", "template", "spec", "containers", 0, "ports", 0, "name"], intro_name,
-        ["spec", "template", "spec", "containers", 0, "ports", 0, "name"], intro_number,
+        ["spec", "template", "spec", "containers", 0, "ports", 0, "containerPort"], intro_number,
 
         ["spec", "template", "spec", "containers", 1, "ports", 0, "name"], storage_name,
-        ["spec", "template", "spec", "containers", 1, "ports", 0, "name"], storage_number,
+        ["spec", "template", "spec", "containers", 1, "ports", 0, "containerPort"], storage_number,
 
         # And assign it a unique identifier the deployment can use to
         # refer to it.
         ["metadata", "name"], name
     )
 
-SERVICE_TEMPLATE = freeze({
+EMPTY_SERVICE = freeze({
     "kind": "Service",
     "apiVersion": "v1",
     "metadata": {
-	"name": MISSING,
+        # XXX ???
+	"name": "s4-customer-grids",
 	"labels": {
 	    "provider": "LeastAuthority"
 	}
@@ -291,21 +291,34 @@ def extender(values):
         return pvector.extend(values)
     return f
 
-def add_subscription_to_service(deploy_config, details, old_service, intro_number, storage_number):
+def service_ports(details):
     intro = {
         "name": introducer_port_name(details.subscription_id),
-        "port": intro_number,
+        "port": details.introducer_port_number,
         "targetPort": introducer_port_name(details.subscription_id),
         "protocol":  "TCP",
     }
     storage = {
         "name": storage_port_name(details.subscription_id),
-        "port": storage_number,
+        "port": details.storage_port_number,
         "targetPort": storage_port_name(details.subscription_id),
         "protocol":  "TCP",
     }
-    return old_service.transform(["spec", "ports"], extender([intro, storage]))
+    return [intro, storage]
 
+
+def add_subscription_to_service(old_service, details):
+    return old_service.transform(["spec", "ports"], service_ports(details))
+
+def remove_subscription_from_service(old_service, details):
+    ports = {
+        introducer_port_name(details.subscription_id),
+        storage_port_name(details.subscription_id),
+    }
+    return old_service.transform(
+        ["spec", "ports", lambda p: p["name"] in ports],
+        discard,
+    )
 
 def create_dns():
     pass

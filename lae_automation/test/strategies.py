@@ -6,7 +6,8 @@ This module implements various Hypothesis strategies useful for
 QuickCheck-style testing of ``lae_automation`` APIs.
 """
 
-from string import uppercase, lowercase, letters, digits
+from os import devnull
+from string import uppercase, lowercase, ascii_letters, digits
 from base64 import b32encode
 
 from hypothesis import strategies
@@ -61,7 +62,7 @@ def aws_access_key_id():
 def aws_secret_key():
     # Maybe it's base64 encoded?
     return strategies.text(
-        alphabet=letters + digits + "/+",
+        alphabet=ascii_letters + digits + "/+",
         min_size=40,
         max_size=40,
     )
@@ -76,6 +77,40 @@ def absolute_path():
         lambda p: u"/" + p
     )
 
+def _local_part():
+    alphabet = "".join((
+        digits,
+        ascii_letters,
+        "!#$%&'*+-/=?^_`{|}~",
+    )).decode("ascii")
+    return strategies.text(
+        alphabet=alphabet,
+        min_size=1,
+        average_size=8,
+        max_size=64,
+    )
+
+
+def domain():
+    return strategies.lists(
+        strategies.text(min_size=1, average_size=8, max_size=255),
+        min_size=1, average_size=2
+    ).map(
+        lambda parts: u".".join(parts)
+    ).filter(
+        lambda domain: len(domain) <= 255,
+    )
+
+
+def email():
+    # Not capable of generating the full range of legal email
+    # addresses (RFC 5321 ``Mailbox`` productions).  Might be worth
+    # expanding someday.  Or might not.
+    return strategies.builds(
+        u"{local}@{domain}".format,
+        local=_local_part(),
+        domain=domain(),
+    )
 
 def swissnum():
     return strategies.binary(
@@ -190,4 +225,58 @@ def storage_configuration(keypair=keyutil.make_keypair()):
         _add_furl("log-gatherer-swissnum", "log_gatherer_furl")
     ).map(
         _add_furl("stats-gatherer-swissnum", "stats_gatherer_furl")
+    )
+
+def aws_keypair_name():
+    # So far as I can tell, based on ``1aws ec2 create-key-pair help``
+    return strategies.lists(
+        strategies.characters(
+            min_codepoint=0,
+            max_codepoint=255,
+        ),
+        min_size=1,
+        average_size=8,
+        max_size=255,
+    ).map(
+        u"".join
+    )
+
+def deployment_configuration():
+    return strategies.builds(
+        signup.DeploymentConfiguration,
+        products=strategies.just([{"foo": "bar"}]),
+        s3_access_key_id=aws_access_key_id(),
+        s3_secret_key=aws_secret_key(),
+        amiimageid=strategies.just("ami-018c9568"),
+        instancesize=strategies.just("t1.micro"),
+        usertoken=strategies.none(),
+        producttoken=strategies.none(),
+
+        ssec2_access_key_id=aws_access_key_id(),
+        ssec2_secret_path=absolute_path(),
+
+        ssec2admin_keypair_name=aws_keypair_name(),
+        ssec2admin_privkey_path=absolute_path(),
+
+        monitor_pubkey_path=absolute_path(),
+        monitor_privkey_path=absolute_path(),
+
+        secretsfile=strategies.just(open(devnull)),
+    )
+
+
+def subscription_details():
+    return strategies.builds(
+        signup.SubscriptionDetails,
+        bucketname=bucket_name(),
+        oldsecrets=strategies.none(),
+        customer_email=email(),
+        customer_pgpinfo=strategies.none(),
+        product_id=strategies.just("S4_consumer_iteration_2_beta1_2014-05-27"),
+        customer_id=customer_id(),
+        subscription_id=subscription_id(),
+        introducer_port_number=port_number(),
+        storage_port_number=port_number(),
+    ).filter(
+        lambda details: details.introducer_port_number != details.storage_port_number,
     )
