@@ -17,6 +17,8 @@ from lae_automation.subscription_manager import memory_client
 from lae_util.testtools import TestCase
 
 from .strategies import subscription_id, subscription_details
+from .matchers import AttrsEquals
+
 
 class SubscriptionManagerTestMixin(object):
     """
@@ -35,23 +37,24 @@ class SubscriptionManagerTestMixin(object):
         d = client.create(subscription_id, details)
         self.expectThat(self.successResultOf(d), Is(None))
 
-        subscriptions = self.successResultOf(client.list())
-        self.expectThat(subscriptions, Equals([subscription_id]))
+        [subscription] = self.successResultOf(client.list())
+        # Ports are randomly assigned, don't bother comparing them.
+        expected = attr.assoc(
+            details,
+            introducer_port_number=subscription.introducer_port_number,
+            storage_port_number=subscription.storage_port_number,
+        )
+        self.expectThat(expected, AttrsEquals(subscription))
 
         subscription = self.successResultOf(client.get(subscription_id))
 
         # Ports are randomly assigned, don't bother comparing them.
         expected = attr.assoc(
             details,
-            introducer_port_number=0,
-            storage_port_number=0,
+            introducer_port_number=subscription.introducer_port_number,
+            storage_port_number=subscription.storage_port_number,
         )
-        subscription = attr.assoc(
-            subscription,
-            introducer_port_number=0,
-            storage_port_number=0,
-        )            
-        self.expectThat(attr.asdict(expected), Equals(attr.asdict(subscription)))
+        self.expectThat(expected, AttrsEquals(subscription))
 
     @given(subscription_id(), subscription_id(), subscription_details())
     def test_port_assignment(self, id_a, id_b, details):

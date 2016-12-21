@@ -56,7 +56,12 @@ class Subscriptions(Resource):
         return Subscription(self.database, name)
 
     def render_GET(self, request):
-        subscriptions = self.database.list_subscriptions_identifiers()
+        ids = self.database.list_subscriptions_identifiers()
+        subscriptions = list(
+            attr.asdict(self.database.get_subscription(sid))
+            for sid
+            in ids
+        )
         request.responseHeaders.setRawHeaders(u"content-type", [u"application/json"])
         return dumps(dict(subscriptions=subscriptions))
 
@@ -245,6 +250,9 @@ def makeService(options):
     )
 
 
+def decode_subscription(fields):
+    return SubscriptionDetails(**fields)
+
 @attr.s
 class Client(object):
     endpoint = attr.ib(validator=validators.instance_of(bytes))
@@ -294,7 +302,7 @@ class Client(object):
         d.addCallback(require_code(OK))
         d.addCallback(readBody)
         d.addCallback(loads)
-        d.addCallback(lambda fields: SubscriptionDetails(**fields))
+        d.addCallback(decode_subscription)
         return d
 
     def list(self):
@@ -309,6 +317,7 @@ class Client(object):
         d.addCallback(readBody)
         d.addCallback(loads)
         d.addCallback(lambda response: response["subscriptions"])
+        d.addCallback(lambda json: map(decode_subscription, json))
         return d
 
     def delete(self, subscription_id):

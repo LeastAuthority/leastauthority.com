@@ -6,9 +6,12 @@ This module implements Hamcrest-style matchers for testtools-based
 tests.
 """
 
+import operator
 from ConfigParser import SafeConfigParser
 
-from testtools.matchers import AfterPreprocessing, Contains, Equals
+import attr
+
+from testtools.matchers import Mismatch, AfterPreprocessing, Contains, Equals
 
 from foolscap.furl import decode_furl
 
@@ -51,3 +54,53 @@ def hasConfiguration(fields):
         )
         return actual_fields
     return AfterPreprocessing(_readConfig, Equals(expected_fields))
+
+
+@attr.s(frozen=True)
+class AttrsEquals(object):
+    expected = attr.ib()
+
+    comparator = operator.eq
+    mismatch_string = "!="
+
+    def __str__(self):
+        return "%s(%r)" % (self.__class__.__name__, self.expected)
+
+    def match(self, other):
+        if self.comparator(other, self.expected):
+            return None
+        return _AttrsMismatch(other, self.mismatch_string, self.expected)
+
+
+class _AttrsMismatch(Mismatch):
+    def __init__(self, actual, mismatch_string, reference,
+                 reference_on_right=True):
+        self._actual = actual
+        self._mismatch_string = mismatch_string
+        self._reference = reference
+        self._reference_on_right = reference_on_right
+
+    def describe(self):
+        if type(self._actual) != type(self._reference):
+            return (
+                "type mismatch:\n"
+                "reference = %s\n"
+                "actual = %s\n"
+            ) % (
+                type(self._reference),
+                type(self._actual),
+            )
+
+        mismatched = []
+        fields = attr.fields(type(self._actual))
+        for field in fields:
+            actual = getattr(self._actual, field.name)
+            reference = getattr(self._reference, field.name)
+            if actual != reference:
+                mismatched.append((field.name, actual, reference))
+
+        return "field mismatch:\n" + "".join(
+            "field: %s\nreference = %s\nactual = %s\n" % mismatch
+            for mismatch
+            in mismatched
+        )
