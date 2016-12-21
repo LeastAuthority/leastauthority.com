@@ -23,6 +23,8 @@ from twisted.python.filepath import FilePath
 from twisted.application.internet import StreamServerEndpointService
 from twisted.internet.endpoints import serverFromString
 
+from .model import SubscriptionDetails
+
 from lae_util import validators as my_validators
 from lae_util.fileutil import make_dirs
 from lae_util.memoryagent import MemoryAgent
@@ -67,14 +69,19 @@ class Subscription(Resource):
 
     def render_PUT(self, request):
         payload = loads(request.content.read())
-        self.database.create_subscription(subscription_id=self.subscription_id, **payload)
+        self.database.create_subscription(
+            subscription_id=self.subscription_id,
+            details=SubscriptionDetails(**payload),
+        )
         request.setResponseCode(CREATED)
         return b""
 
     def render_GET(self, request):
-        subscription = self.database.get_subscription(subscription_id=self.subscription_id)
+        details = self.database.get_subscription(
+            subscription_id=self.subscription_id
+        )
         request.setResponseCode(OK)
-        return dumps(subscription)
+        return dumps(attr.asdict(details))
 
     def render_DELETE(self, request):
         self.database.deactivate_subscription(subscription_id=self.subscription_id)
@@ -106,24 +113,23 @@ class SubscriptionDatabase(object):
     def _subscription_path(self, subscription_id):
         return self.path.child(b32encode(subscription_id) + u".json")
 
-    def _subscription_state(
-            self,
-            subscription_id, introducer_pem, storage_pem, storage_privkey,
-            introducer_furl, bucket_name,
-            introducer_port, storage_port,
-    ):
+    def _subscription_state(self, subscription_id, details):
         return dict(
             version=1,
             details=dict(
                 active=True,
                 id=subscription_id,
-                introducer_furl=introducer_furl,
-                bucket_name=bucket_name,
-                introducer_pem=introducer_pem,
-                storage_pem=storage_pem,
-                storage_privkey=storage_privkey,
-                introducer_port=introducer_port,
-                storage_port=storage_port,
+
+                bucket_name=details.bucketname,
+                oldsecrets=details.oldsecrets,
+                email=details.customer_email,
+
+                product_id=details.product_id,
+                customer_id=details.customer_id,
+                subscription_id=details.subscription_id,
+                
+                introducer_port_number=details.introducer_port_number,
+                storage_port_number=details.storage_port_number,
             ),
         )
 
@@ -152,26 +158,15 @@ class SubscriptionDatabase(object):
             raise Exception("We ran out of ports to allocate.")
 
         return dict(
-            introducer_port=first_port,
-            storage_port=first_port + 1,
+            introducer_port_number=first_port,
+            storage_port_number=first_port + 1,
         )
 
 
-    def create_subscription(
-            self,
-            subscription_id,
-            introducer_pem,
-            storage_pem,
-            storage_privkey,
-            introducer_furl,
-            bucket_name,
-    ):
+    def create_subscription(self, subscription_id, details):
         path = self._subscription_path(subscription_id)
-        state = self._subscription_state(
-            subscription_id, introducer_pem, storage_pem, storage_privkey,
-            introducer_furl, bucket_name,
-            **self._assign_addresses()
-        )
+        details = attr.assoc(details, **self._assign_addresses())
+        state = self._subscription_state(subscription_id, details)
         self._create(path, dumps(state))
 
     def deactivate_subscription(self, subscription_id):
@@ -182,7 +177,24 @@ class SubscriptionDatabase(object):
 
     def get_subscription(self, subscription_id):
         path = self._subscription_path(subscription_id)
-        return loads(path.getContent())
+        state = loads(path.getContent())
+        return getattr(self, "_load_{}".format(state["version"]))(state)
+
+    def _load_1(self, state):
+        details = state["details"]
+        return SubscriptionDetails(
+            bucketname=details["bucket_name"],
+            oldsecrets=details["oldsecrets"],
+            customer_email=details["email"],
+            customer_pgpinfo=None,
+
+            product_id=details["product_id"],
+            customer_id=details["customer_id"],
+            subscription_id=details["subscription_id"],
+
+            introducer_port_number=details["introducer_port_number"],
+            storage_port_number=details["storage_port_number"],
+        )
 
     def list_subscriptions_identifiers(self):
         return [
@@ -235,16 +247,28 @@ def makeService(options):
 
 @attr.s
 class Client(object):
-    endpoint = attr.ib(validators.instance_of(bytes))
-    agent = attr.ib(validators.provides(IAgent))
-    cooperator = attr.ib(default=theCooperator)
+    endpoint = attr.ib(validator=validators.instance_of(bytes))
+    agent = attr.ib(validator=validators.provides(IAgent))
+    cooperator = attr.ib()
 
     def create(self, subscription_id, details):
+        """
+        Create a new, active subscription.
+
+        :param unicode subscription_id: The unique identifier for this
+        new subscription.
+
+        :param SubscriptionDetails details: The details of the
+        subscription.
+
+        :return: A ``Deferred`` that fires when the subscription has
+        been created.
+        """
         d = self.agent.request(
             b"PUT",
             self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
             bodyProducer=FileBodyProducer(
-                BytesIO(dumps(details)),
+                BytesIO(dumps(attr.asdict(details))),
                 cooperator=self.cooperator,
             ),
         )
@@ -253,6 +277,16 @@ class Client(object):
         return d
 
     def get(self, subscription_id):
+        """
+        Get an existing subscription, either active or inactive.
+
+        :param unicode subscription_id: The unique identifier of the
+        subscription to retrieve.
+
+        :return: A ``Deferred`` that fires with a
+        ``SubscriptionDetails`` instance describing the identified
+        subscription.
+        """
         d = self.agent.request(
             b"GET",
             self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
@@ -260,9 +294,13 @@ class Client(object):
         d.addCallback(require_code(OK))
         d.addCallback(readBody)
         d.addCallback(loads)
+        d.addCallback(lambda fields: SubscriptionDetails(**fields))
         return d
 
     def list(self):
+        """
+        Get all existing active subscriptions.
+        """
         d = self.agent.request(
             b"GET",
             self.endpoint + b"/v1/subscriptions",
@@ -296,7 +334,22 @@ def require_code(required):
     return check
 
 
+def network_client(endpoint, agent, cooperator=None):
+    """
+    Create a subscription manager client which uses the given
+    ``IAgent`` provider to interact with a subscription manager
+    server.
+    """
+    if cooperator is None:
+        cooperator = theCooperator
+    return Client(endpoint=endpoint, agent=agent, cooperator=cooperator)
+
+
 def memory_client(database_path):
+    """
+    Create a subscription manager client which uses in-memory
+    interactions with the database at the given path.
+    """
     root = make_resource(database_path)
     agent = MemoryAgent(root)
     return Client(endpoint=b"", agent=agent, cooperator=Uncooperator())

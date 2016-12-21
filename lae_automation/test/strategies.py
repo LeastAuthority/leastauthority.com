@@ -14,7 +14,7 @@ from hypothesis import strategies
 
 from allmydata.util import keyutil
 
-from lae_automation import signup
+from lae_automation import signup, server
 
 from foolscap.api import Tub
 from foolscap.furl import encode_furl
@@ -265,11 +265,19 @@ def deployment_configuration():
     )
 
 
+def old_secrets():
+    return strategies.fixed_dictionaries({
+        "introducer": introducer_configuration(),
+        "storage": storage_configuration(),
+    }).map(
+        server.secrets_to_legacy_format
+    )
+
 def subscription_details():
     return strategies.builds(
         signup.SubscriptionDetails,
         bucketname=bucket_name(),
-        oldsecrets=strategies.none(),
+        oldsecrets=old_secrets(),
         customer_email=email(),
         customer_pgpinfo=strategies.none(),
         product_id=strategies.just("S4_consumer_iteration_2_beta1_2014-05-27"),
