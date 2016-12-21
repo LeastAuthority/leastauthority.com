@@ -1,8 +1,9 @@
 from json import dumps
 
-from pyrsistent import freeze
+from pyrsistent import freeze, discard
 
 from .server import new_tahoe_configuration, marshal_tahoe_configuration
+from .kubeclient import KubeClient
 
 def provision_subscription(reactor, deploy_config, details):
     """
@@ -35,11 +36,13 @@ def send_confirmation():
     pass
 
 
-def get_service(kube, deploy_config):
-    [service] = pykube.Service.objects(kube).filter(name=deploy_config.private_host)
+def get_service(k8s, deploy_config):
+    [service] = k8s.get_services(name=deploy_config.private_host)
     return freeze(service)
 
 
+MIN_PORT = 3000
+MAX_PORT = 63000
 def assign_ports(service, count):
     used = {port["port"] for port in service["spec"]["ports"]}
     total = set(range(MIN_PORT, MAX_PORT))
@@ -78,7 +81,7 @@ CONFIGMAP_TEMPLATE = freeze({
 
 def subscription_metadata(details):
     return [
-        ["metadata", "labels", "email"], details.email,
+        ["metadata", "labels", "email"], details.customer_email,
         ["metadata", "labels", "customer"], details.customer_id,
         ["metadata", "labels", "subscription"], details.subscription_id,
         ["metadata", "labels", "plan"], details.product_id,
@@ -91,19 +94,17 @@ def configmap_name(subscription_id):
 def configmap_public_host(subscription_id, domain):
     return "{}.{}".format(subscription_id, domain)
 
-def create_configuration(deploy_config, details, kube):
+def create_configuration(deploy_config, details):
     """
     Create the Kubernetes configuration resource necessary to provide
     service to the given subscription.
-
-    @param kube: The Kubernetes client to use to create the configuration.
     """
     name = configmap_name(details.subscription_id)
     metadata = subscription_metadata(details)
     public_host = configmap_public_host(details.subscription_id, deploy_config.domain)
     private_host = deploy_config.private_host
 
-    if deploy_config.oldsecrets is None:
+    if details.oldsecrets is None:
         configuration = new_tahoe_configuration(
             deploy_config=deploy_config,
             publichost=public_host,
@@ -111,13 +112,13 @@ def create_configuration(deploy_config, details, kube):
         )
     else:
         configuration = marshal_tahoe_configuration(
-            introducer_pem=deploy_config.oldsecrets["introducer_node_pem"],
-            storage_pem=deploy_config.oldsecrets["storageserver_node_pem"],
-            storage_privkey=deploy_config.oldsecrets["server_node_privkey"],
-            bucket_name=deploy_config.bucketname,
+            introducer_pem=details.oldsecrets["introducer_node_pem"],
+            storage_pem=details.oldsecrets["server_node_pem"],
+            storage_privkey=details.oldsecrets["server_node_privkey"],
+            bucket_name=details.bucketname,
             publichost=public_host,
             privatehost=private_host,
-            introducer_furl=deploy_config.oldsecrets["internal_introducer_furl"],
+            introducer_furl=details.oldsecrets["internal_introducer_furl"],
             s3_access_key_id=deploy_config.s3_access_key_id,
             s3_secret_key=deploy_config.s3_secret_key,
             log_gatherer_furl=deploy_config.log_gatherer_furl,
@@ -254,10 +255,10 @@ def create_deployment(deploy_config, details):
 
         # Assign it service names and a port numbers.
         ["spec", "template", "spec", "containers", 0, "ports", 0, "name"], intro_name,
-        ["spec", "template", "spec", "containers", 0, "ports", 0, "containerPort"], intro_number,
+        ["spec", "template", "spec", "containers", 0, "ports", 0, "containerPort"], intro_name,
 
         ["spec", "template", "spec", "containers", 1, "ports", 0, "name"], storage_name,
-        ["spec", "template", "spec", "containers", 1, "ports", 0, "containerPort"], storage_number,
+        ["spec", "template", "spec", "containers", 1, "ports", 0, "containerPort"], storage_name,
 
         # And assign it a unique identifier the deployment can use to
         # refer to it.

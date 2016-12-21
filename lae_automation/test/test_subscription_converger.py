@@ -2,29 +2,37 @@
 Tests for ``lae_automation.subscription_converger``.
 """
 
-from hypothesis import given
-from hypothesis.strategies import lists
+from functools import partial
 
+import attr
+from hypothesis import assume, given
+
+from testtools.assertions import assert_that
 from testtools.matchers import Equals
 
 from lae_util.testtools import TestCase
 
+from lae_automation.subscription_manager import (
+    memory_client,
+)
 from lae_automation.subscription_converger import (
-    converge_service,
+    converge,
 )
 from lae_automation.containers import (
-    EMPTY_SERVICE,
     service_ports,
     introducer_port_name,
     storage_port_name,
-    add_subscription_to_service,
+    create_configuration,
+    create_deployment,
+    configmap_name,
+    deployment_name,
 )
 
 from .strategies import subscription_details, deployment_configuration
 
-class ConvergeServiceTests(TestCase):
+class ConvergeHelperTests(TestCase):
     """
-    Tests for ``converge_service`` and helpers.
+    Tests for ``converge`` helpers.
     """
     @given(subscription_details())
     def test_service_ports(self, details):
@@ -50,37 +58,130 @@ class ConvergeServiceTests(TestCase):
             ]),
         )
 
-    def test_empty_no_changes(self):
-        """
-        If there are no subscriptions in either place, nothing happens.
-        """
-        self.assertThat(
-            converge_service(set(), EMPTY_SERVICE),
-            Equals(EMPTY_SERVICE),
+
+from hypothesis.stateful import RuleBasedStateMachine, rule
+
+from twisted.python.filepath import FilePath
+
+from tempfile import mkdtemp
+
+from lae_automation.subscription_manager import SubscriptionDatabase
+
+
+class SubscriptionConvergence(RuleBasedStateMachine):
+    def __init__(self):
+        super(SubscriptionConvergence, self).__init__()
+        self.path = FilePath(mkdtemp().decode("utf-8"))
+        self.database = SubscriptionDatabase.from_directory(self.path)
+        
+    @rule(details=subscription_details())
+    def activate(self, details):
+        assume(
+            details.subscription_id
+            not in self.database.list_subscriptions_identifiers()
+        )
+        self.database.create_subscription(
+            subscription_id=details.subscription_id,
+            details=details,
         )
 
-    @given(details=subscription_details())
-    def test_configured_subscription_missing(self, details):
-        """
-        If there is a subscription present in the desired list but not in
-        the actual state, a configuration change to add that
-        subscription is emitted.
-        """
-        one_subscription = add_subscription_to_service(EMPTY_SERVICE, details)
-        self.assertThat(
-            one_subscription,
-            converge_service({details.subscription_id}, EMPTY_SERVICE),
-        )
+    @rule(config=deployment_configuration())
+    def converge(self, config):
+        client = memory_client(self.database.path)
+        kube = MemoryKube()
+        d = converge(config, client, kube, MemoryAWS())
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        assert d.called
+        assert d.result is None, d.result.getTraceback()
+        self.check_convergence(self.database, config, kube)
 
-    @given(details=subscription_details())
-    def test_unconfigured_subscription_present(self, details):
-        """
-        If there is a subscription present in the actual state that does
-        not exist in the subscription list, a configuration change to
-        remove that subscription is emitted.
-        """
-        one_subscription = add_subscription_to_service(EMPTY_SERVICE, details)
-        self.assertThat(
-            EMPTY_SERVICE,
-            converge_service(set(), one_subscription),
-        )
+    def check_convergence(self, database, config, kube):
+        subscriptions = database.list_subscriptions_identifiers()
+        checks = {
+            self.check_configmaps,
+            self.check_deployments,
+            self.check_service,
+        }
+        for check in checks:
+            check(database, config, subscriptions, kube)
+
+    def check_configmaps(self, database, config, subscriptions, kube):
+        for sid in subscriptions:
+            assert_that(
+                create_configuration(config, database.get_subscription(sid)),
+                Equals(kube.get_configmaps(name=configmap_name(sid))),
+            )
+
+    def check_deployments(self, database, config, subscriptions, kube):
+        for sid in subscriptions:
+            assert_that(
+                create_deployment(config, database.get_subscription(sid)),
+                Equals(kube.get_deployments(name=deployment_name(sid))),
+            )
+
+    def check_service(self, database, config, subscriptions, kube):
+        self.fail("write me")
+
+
+def selectors_match(selectors, resource):
+    missing = object()
+    return {
+        key: resource["metadata"]["labels"].get(key, missing)
+        for key in selectors
+    } == selectors
+    
+@attr.s(frozen=True)
+class MemoryKube(object):
+    resources = attr.ib(default=attr.Factory(dict))
+
+    def _resource(key):
+        return property(lambda self: self.resources.setdefault(key, {}))
+    
+    configmap = _resource("configmap")
+    deployment = _resource("deployment")
+    service = _resource("service")
+
+    def _get(self, xs, name=None, selectors=None):
+        if name is not None:
+            return xs[name]
+        if selectors is not None:
+            return filter(partial(selectors_match, selectors), xs.itervalues())
+        return xs.itervalues()
+
+    def get_configmaps(self, **kwargs):
+        return self._get(self.configmap, **kwargs)
+
+    def get_deployments(self, **kwargs):
+        return self._get(self.deployment, **kwargs)
+
+    def get_services(self, **kwargs):
+        return self._get(self.service, **kwargs)
+
+    def destroy(self, kind, name):
+        xs = getattr(self, kind.lower())
+        del xs[name]
+
+    def create(self, definition):
+        xs = getattr(self, definition["kind"].lower())
+        xs[definition["metadata"]["name"]] = definition
+
+    def apply(self, definition):
+        pass
+
+
+class MemoryAWS(object):
+    creds = object()
+
+    def get_client(self, cls, **kw):
+        return cls(**kw)
+
+
+class SubscriptionConvergenceTests(SubscriptionConvergence.TestCase):
+    def test_convergence(self):
+        self.runTest()

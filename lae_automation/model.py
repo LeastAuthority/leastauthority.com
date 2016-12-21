@@ -1,4 +1,5 @@
 import attr
+from pyrsistent import freeze
 
 from foolscap.furl import decode_furl
 
@@ -52,7 +53,7 @@ class DeploymentConfiguration(object):
 @attr.s(frozen=True)
 class SubscriptionDetails(object):
     bucketname = attr.ib()
-    oldsecrets = attr.ib()
+    oldsecrets = attr.ib(convert=freeze)
     customer_email = attr.ib()
     customer_pgpinfo = attr.ib()
 

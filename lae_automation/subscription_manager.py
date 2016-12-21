@@ -11,6 +11,7 @@ from base64 import b32encode, b32decode
 
 import attr
 from attr import validators
+from pyrsistent import thaw
 
 from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
@@ -58,12 +59,18 @@ class Subscriptions(Resource):
     def render_GET(self, request):
         ids = self.database.list_subscriptions_identifiers()
         subscriptions = list(
-            attr.asdict(self.database.get_subscription(sid))
+            marshal_subscription(self.database.get_subscription(sid))
             for sid
             in ids
         )
         request.responseHeaders.setRawHeaders(u"content-type", [u"application/json"])
         return dumps(dict(subscriptions=subscriptions))
+
+
+def marshal_subscription(details):
+    result = attr.asdict(details)
+    result["oldsecrets"] = thaw(result["oldsecrets"])
+    return result
 
 
 class Subscription(Resource):
@@ -86,7 +93,7 @@ class Subscription(Resource):
             subscription_id=self.subscription_id
         )
         request.setResponseCode(OK)
-        return dumps(attr.asdict(details))
+        return dumps(marshal_subscription(details))
 
     def render_DELETE(self, request):
         self.database.deactivate_subscription(subscription_id=self.subscription_id)
@@ -126,7 +133,7 @@ class SubscriptionDatabase(object):
                 id=subscription_id,
 
                 bucket_name=details.bucketname,
-                oldsecrets=details.oldsecrets,
+                oldsecrets=thaw(details.oldsecrets),
                 email=details.customer_email,
 
                 product_id=details.product_id,
@@ -276,7 +283,7 @@ class Client(object):
             b"PUT",
             self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
             bodyProducer=FileBodyProducer(
-                BytesIO(dumps(attr.asdict(details))),
+                BytesIO(dumps(marshal_subscription(details))),
                 cooperator=self.cooperator,
             ),
         )

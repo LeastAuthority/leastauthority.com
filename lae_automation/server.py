@@ -318,7 +318,6 @@ def make_external_furl(internal_furl, publichost):
     return external_furl
 
 
-
 def secrets_to_legacy_format(secrets):
     def nodeid(pem):
         # XXX < warner> we're moving to non-foolscap ed25519 pubkey

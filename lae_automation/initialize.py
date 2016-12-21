@@ -1,7 +1,7 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
-import subprocess, os, urllib
+import subprocess, os
 
 from twisted.internet import reactor, task, defer
 from twisted.python.filepath import FilePath

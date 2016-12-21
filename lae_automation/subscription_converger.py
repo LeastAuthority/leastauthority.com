@@ -20,8 +20,6 @@ from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options
 from twisted.web.client import Agent
 
-import pykube
-
 from .route53 import get_route53_client
 from .signup import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
@@ -30,6 +28,7 @@ from .containers import (
     create_configuration, create_deployment,
     add_subscription_to_service, remove_subscription_from_service
 )
+from .kubeclient import KubeClient
 
 class Options(_Options):
     optParameters = [
@@ -41,10 +40,10 @@ def makeService(options):
     agent = Agent(reactor)
     subscription_client = SMClient(endpoint=options["endpoint"], agent=agent)
 
-    k8s_client = pykube.HTTPClient.from_service_account()
+    k8s_client = KubeClient.from_service_account()
 
     config = DeploymentConfiguration()
-    
+
     return TimerService(
         1.0,
         divert_errors_to_log(converge), config, subscription_client, k8s_client,
@@ -63,18 +62,18 @@ def divert_errors_to_log(f):
 
 
 def get_customer_grid_service(k8s):
-    return pykube.Service.objects(k8s).filter(
+    return k8s.get_services(selectors=dict(
         provider="LeastAuthority",
         app="s4",
         component="customer-tahoe-lafs"
-    )
+    ))
 
 def get_customer_grid_deployments(k8s):
-    return pykube.Deployment.objects(k8s).filter(
+    return k8s.get_deployments(selectors=dict(
         provider="LeastAuthority",
         app="s4",
         component="customer-tahoe-lafs"
-    )
+    ))
 
 @inlineCallbacks
 def converge(config, subscriptions, k8s, aws):
@@ -84,14 +83,14 @@ def converge(config, subscriptions, k8s, aws):
     # subscription-derived deployments exist.  Also detect port
     # mis-configurations and correct them.
     active_subscriptions = {
-        subscription.id: subscription
+        subscription.subscription_id: subscription
         for subscription
         in (yield subscriptions.list())
     }
     configured_deployments = get_customer_grid_deployments(k8s)
     configured_service = get_customer_grid_service(k8s)
 
-    to_create = set(active_subscriptions)
+    to_create = set(active_subscriptions.itervalues())
     to_delete = set()
 
     for deployment in configured_deployments:
@@ -105,10 +104,10 @@ def converge(config, subscriptions, k8s, aws):
         to_create.remove(subscription)
 
         if deployment["spec"]["template"]["spec"]["containers"][0]["ports"][0]["containerPort"] != subscription.introducer_port_number:
-            to_delete.add(subscription_id)
+            to_delete.add(subscription)
             to_create.add(subscription)
         elif deployment["spec"]["template"]["spec"]["containers"][1]["ports"][0]["containerPort"] != subscription.storage_port_number:
-            to_delete.add(subscription_id)
+            to_delete.add(subscription)
             to_create.add(subscription)
 
     configmaps = list(
@@ -124,13 +123,16 @@ def converge(config, subscriptions, k8s, aws):
     service = apply_service_changes(configured_service, to_delete, to_create)
 
     route53 = get_route53_client(aws)
-    
-    route53.destroy(to_delete)
-    k8s.destroy(list(deployment_name(sid) for sid in to_delete))
-    k8s.destroy(list(configmap_name(sid) for sid in to_delete))
 
-    k8s.create(configmaps)
-    k8s.create(deployments)
+    route53.destroy(to_delete)
+    for details in to_delete:
+        k8s.destroy("deployment", deployment_name(details.subscription_id))
+        k8s.destroy("configmap", configmap_name(details.subscription_id))
+
+    for configmap in configmaps:
+        k8s.create(configmap)
+    for deployment in deployments:
+        k8s.create(deployment)
     k8s.apply(service)
     route53.create(to_create)
 
@@ -143,7 +145,7 @@ def apply_service_changes(service, to_delete, to_create):
         add_subscription_to_service, with_deletions, to_create,
     )
     return with_creations
-    
+
 
 # def converge(subscriptions, k8s, aws):
 #     return serially([
@@ -206,7 +208,7 @@ def get_configured_subscriptions(service):
         in ids(port_names)
         if "i-" + sid in port_names and "s-" + sid in port_names
     }
-    return subscriptions    
+    return subscriptions
 
 
 def converge_service(desired, service):
@@ -222,7 +224,7 @@ class Delete(object):
     subscription = attr.ib()
 
     def enact(self, service):
-        
+
         return remove_subscription_from_service(service, self.subscription)
 
 @attr.s(frozen=True)
