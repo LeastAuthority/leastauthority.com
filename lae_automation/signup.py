@@ -1,13 +1,10 @@
 #!/usr/bin/python
 
 import time
-import attr
 from base64 import b32encode
 
 from twisted.internet import defer, reactor, task
 from twisted.python.filepath import FilePath
-
-from foolscap.furl import decode_furl
 
 from lae_automation.config import Config
 from lae_automation.initialize import create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
@@ -16,9 +13,10 @@ from lae_automation.server import install_server, bounce_server, NotListeningErr
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 from lae_automation.containers import provision_subscription
 
+from .model import DeploymentConfiguration, SubscriptionDetails
+
 from lae_util.servers import append_record
 from lae_util.timestamp import format_iso_time
-from lae_util.validators import all
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
@@ -123,72 +121,10 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
         subscription_id=None,
     )
         
-    d = deploy_server(deploy_config, stdout, stderr, clock)
+    d = deploy_server(deploy_config, subscription, stdout, stderr, clock)
     d.addErrback(lambda f: send_notify_failure(f, customer_email, logfilename, stdout,
                                                stderr))
     return d
-
-
-def _validate_products(instance, attribute, value):
-    if len(value) == 0:
-        raise ValueError("At least one product is required.")
-
-validate_furl = all(
-    attr.validators.instance_of(str),
-    lambda inst, attr, value: decode_furl(value),
-)
-
-@attr.s(frozen=True)
-class DeploymentConfiguration(object):
-    # XXX Would be nice to be able to set this to
-    # staging.leastauthority.com sometimes.
-    domain = "leastauthority.com"
-
-    # XXX Sets up internal DNS, must agree with other bits of the
-    # system
-    private_host = "customer-grid-service"
-
-    products = attr.ib(validator=_validate_products)
-    s3_access_key_id = attr.ib()
-    s3_secret_key = attr.ib(repr=False)
-    amiimageid = attr.ib()
-    instancesize = attr.ib()
-
-    # DevPay configuration.  Just for TLoS3, probably obsolete.
-    usertoken = attr.ib()
-    producttoken = attr.ib()
-
-    ssec2_access_key_id = attr.ib()
-    ssec2_secret_path = attr.ib()
-
-    ssec2admin_keypair_name = attr.ib()
-    ssec2admin_privkey_path = attr.ib()
-
-    monitor_pubkey_path = attr.ib()
-    monitor_privkey_path = attr.ib()
-
-    secretsfile = attr.ib(validator=attr.validators.instance_of(file))
-    serverinfopath = attr.ib(default="../serverinfo.csv")
-
-    log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
-    stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
-
-
-@attr.s(frozen=True)
-class SubscriptionDetails(object):
-    bucketname = attr.ib()
-    oldsecrets = attr.ib()
-    customer_email = attr.ib()
-    customer_pgpinfo = attr.ib()
-
-    product_id = attr.ib()
-
-    # Referencing opaque stripe identifiers
-    customer_id = attr.ib()
-    subscription_id = attr.ib()
-
-    introducer_port_number = attr.ib()
-    storage_port_number = attr.ib()
 
 
 def deploy_server(deploy_config, subscription, stdout, stderr, clock=None):
