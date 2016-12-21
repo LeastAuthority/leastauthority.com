@@ -3,65 +3,33 @@ Tests for ``lae_automation.subscription_manager``.
 """
 
 from tempfile import mkdtemp
-from io import BytesIO
-from json import dumps, loads
 
-from twisted.web.http import OK, CREATED
-from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
-from twisted.internet.defer import succeed
 
-from lae_automation.subscription_manager import Client as SMClient, make_resource
+from lae_automation.subscription_manager import memory_client
 
 from lae_util.testtools import TestCase
 
-from testtools.matchers import AfterPreprocessing, Equals, Is, HasLength
+from testtools.matchers import Equals, Is, HasLength
 
 from hypothesis import given, assume
 
-from .memoryagent import MemoryAgent
 from .strategies import subscription_id, furl, bucket_name
 
-class Uncooperator(object):
-    def cooperate(self, iterator):
-        try:
-            for ignored in iterator:
-                pass
-        except:
-            return Uncooperator(Failure())
-        else:
-            return UncooperativeTask(iterator)
-
-class UncooperativeTask(object):
-    def __init__(self, result):
-        self._result = result
-
-    def whenDone(self):
-        return succeed(self._result)
-
-    def pause(self):
-        raise TaskDone()
-
-    def resume(self):
-        pass
-
-    def stop(self):
-        raise TaskDone()
-
-class SubscriptionManagerTests(TestCase):
+class SubscriptionManagerTestMixin(object):
     """
     Tests for the subscription manager's HTTP interface.
     """
+    def get_client(self):
+        raise NotImplementedError()
+
     @given(subscription_id(), furl(), bucket_name())
     def test_round_trip(self, subscription_id, introducer_furl, bucket_name):
         """
         A subscription created with a PUT to /v1/subscriptions/<id> can be
         retrieved with a GET of /v1/subscriptions.
         """
-        root = make_resource(FilePath(mkdtemp().decode("utf-8")))
-        agent = MemoryAgent(root)
-        client = SMClient(endpoint=b"", agent=agent)
-
+        client = self.get_client()
         details = dict(
             introducer_pem=u"introducer pem",
             storage_pem=u"storage pem",
@@ -69,9 +37,7 @@ class SubscriptionManagerTests(TestCase):
             bucket_name=bucket_name,
             introducer_furl=introducer_furl,
         )
-        kwargs = dict(cooperator=Uncooperator())
-
-        d = client.create(subscription_id, details, kwargs)
+        d = client.create(subscription_id, details)
         self.expectThat(self.successResultOf(d), Is(None))
 
         d = client.list()
@@ -93,11 +59,7 @@ class SubscriptionManagerTests(TestCase):
         An unused port pair is assigned to new subscriptions.
         """
         assume(id_a != id_b)
-
-        root = make_resource(FilePath(mkdtemp().decode("utf-8")))
-        agent = MemoryAgent(root)
-        client = SMClient(endpoint=b"", agent=agent)
-
+        client = self.get_client()
         details = dict(
             introducer_pem=u"introducer pem",
             storage_pem=u"storage pem",
@@ -105,10 +67,8 @@ class SubscriptionManagerTests(TestCase):
             bucket_name=bucket_name,
             introducer_furl=introducer_furl,
         )
-        kwargs = dict(cooperator=Uncooperator())
-
-        self.successResultOf(client.create(id_a, details, kwargs))
-        self.successResultOf(client.create(id_b, details, kwargs))
+        self.successResultOf(client.create(id_a, details))
+        self.successResultOf(client.create(id_b, details))
 
         details_a = self.successResultOf(client.get(id_a))
         details_b = self.successResultOf(client.get(id_b))
@@ -128,10 +88,7 @@ class SubscriptionManagerTests(TestCase):
         deactivated such that it is no longer included in the result
         of a GET to /v1/subscriptions.
         """
-        root = make_resource(FilePath(mkdtemp().decode("utf-8")))
-        agent = MemoryAgent(root)
-        client = SMClient(endpoint=b"", agent=agent)
-
+        client = self.get_client()
         details = dict(
             introducer_pem=u"introducer pem",
             storage_pem=u"storage pem",
@@ -139,10 +96,12 @@ class SubscriptionManagerTests(TestCase):
             bucket_name=bucket_name,
             introducer_furl=introducer_furl,
         )
-        kwargs = dict(cooperator=Uncooperator())
-
-        self.successResultOf(client.create(subscription_id, details, kwargs))
+        self.successResultOf(client.create(subscription_id, details))
         self.successResultOf(client.delete(subscription_id))
 
         subscriptions = self.successResultOf(client.list())
         self.assertThat(subscriptions, Equals([]))
+
+class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
+    def get_client(self):
+        return memory_client(FilePath(mkdtemp().decode("utf-8")))

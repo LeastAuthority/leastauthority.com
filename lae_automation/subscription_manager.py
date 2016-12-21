@@ -16,6 +16,7 @@ from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
 from twisted.web.http import CREATED, NO_CONTENT, OK
 from twisted.web.server import Site
+from twisted.internet import task as theCooperator
 from twisted.web.client import FileBodyProducer, readBody
 from twisted.python.usage import Options as _Options, UsageError
 from twisted.python.filepath import FilePath
@@ -24,6 +25,8 @@ from twisted.internet.endpoints import serverFromString
 
 from lae_util import validators as my_validators
 from lae_util.fileutil import make_dirs
+from lae_util.memoryagent import MemoryAgent
+from lae_util.uncooperator import Uncooperator
 
 def create(path):
     flags = (
@@ -234,14 +237,15 @@ def makeService(options):
 class Client(object):
     endpoint = attr.ib(validators.instance_of(bytes))
     agent = attr.ib(validators.provides(IAgent))
+    cooperator = attr.ib(default=theCooperator)
 
-    def create(self, subscription_id, details, bodyProducerKwargs=None):
+    def create(self, subscription_id, details):
         d = self.agent.request(
             b"PUT",
             self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
             bodyProducer=FileBodyProducer(
                 BytesIO(dumps(details)),
-                **bodyProducerKwargs
+                cooperator=self.cooperator,
             ),
         )
         d.addCallback(require_code(CREATED))
@@ -290,3 +294,10 @@ def require_code(required):
             raise UnexpectedResponseCode(response, required)
         return response
     return check
+
+
+def memory_client(database_path):
+    root = make_resource(database_path)
+    agent = MemoryAgent(root)
+    return Client(endpoint=b"", agent=agent, cooperator=Uncooperator())
+
