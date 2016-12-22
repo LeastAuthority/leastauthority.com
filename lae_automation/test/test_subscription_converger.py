@@ -93,7 +93,8 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def converge(self, config):
         client = memory_client(self.database.path)
         kube = MemoryKube()
-        d = converge(config, client, kube, MemoryAWS())
+        aws = MemoryAWS()
+        d = converge(config, client, kube, aws)
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -103,9 +104,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         assert d.called
         assert d.result is None, d.result.getTraceback()
-        self.check_convergence(self.database, config, kube)
+        self.check_convergence(self.database, config, kube, aws)
 
-    def check_convergence(self, database, config, kube):
+    def check_convergence(self, database, config, kube, aws):
         subscriptions = database.list_subscriptions_identifiers()
         checks = {
             self.check_configmaps,
@@ -113,23 +114,23 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.check_service,
         }
         for check in checks:
-            check(database, config, subscriptions, kube)
+            check(database, config, subscriptions, kube, aws)
 
-    def check_configmaps(self, database, config, subscriptions, kube):
+    def check_configmaps(self, database, config, subscriptions, kube, aws):
         for sid in subscriptions:
             assert_that(
                 create_configuration(config, database.get_subscription(sid)),
                 Equals(kube.get_configmaps(name=configmap_name(sid))),
             )
 
-    def check_deployments(self, database, config, subscriptions, kube):
+    def check_deployments(self, database, config, subscriptions, kube, aws):
         for sid in subscriptions:
             assert_that(
                 create_deployment(config, database.get_subscription(sid)),
                 Equals(kube.get_deployments(name=deployment_name(sid))),
             )
 
-    def check_service(self, database, config, subscriptions, kube):
+    def check_service(self, database, config, subscriptions, kube, aws):
         expected = new_service()
         for sid in subscriptions:
             expected = add_subscription_to_service(
@@ -139,6 +140,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             expected,
             MappingEquals(kube.get_services(name=expected["metadata"]["name"])),
         )
+
+    def check_route53(self, database, config, subscriptions, kube, aws):
+        self.fail("write this")
 
 
 def selectors_match(selectors, resource):
