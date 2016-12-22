@@ -112,8 +112,8 @@ def create_configuration(deploy_config, details):
         )
     else:
         configuration = marshal_tahoe_configuration(
-            introducer_pem=details.oldsecrets["introducer_node_pem"],
-            storage_pem=details.oldsecrets["server_node_pem"],
+            introducer_pem=details.introducer_node_pem,
+            storage_pem=details.server_node_pem,
             storage_privkey=details.oldsecrets["server_node_privkey"],
             bucket_name=details.bucketname,
             publichost=public_host,

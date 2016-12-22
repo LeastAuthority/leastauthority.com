@@ -1,5 +1,6 @@
 import attr
 from pyrsistent import freeze
+from pem import Certificate, parse
 
 from foolscap.furl import decode_furl
 
@@ -50,10 +51,22 @@ class DeploymentConfiguration(object):
     stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
 
 
+def _parse(pem_str):
+    return freeze(sorted(parse(pem_str)))
+
+def _convert_oldsecrets(oldsecrets):
+    converted = freeze(oldsecrets)
+    if converted["introducer_node_pem"] is not None:
+        converted = converted.transform(["introducer_node_pem"], _parse)
+    if converted["server_node_pem"] is not None:
+        converted = converted.transform(["server_node_pem"], _parse)
+    return converted
+
+
 @attr.s(frozen=True)
 class SubscriptionDetails(object):
     bucketname = attr.ib()
-    oldsecrets = attr.ib(convert=freeze)
+    oldsecrets = attr.ib(convert=_convert_oldsecrets)
     customer_email = attr.ib()
     customer_pgpinfo = attr.ib()
 
@@ -65,3 +78,15 @@ class SubscriptionDetails(object):
 
     introducer_port_number = attr.ib()
     storage_port_number = attr.ib()
+
+    @property
+    def introducer_node_pem(self):
+        if self.oldsecrets is None:
+            return None
+        return "".join(map(str, self.oldsecrets["introducer_node_pem"]))
+
+    @property
+    def server_node_pem(self):
+        if self.oldsecrets is None:
+            return None
+        return "".join(map(str, self.oldsecrets["server_node_pem"]))

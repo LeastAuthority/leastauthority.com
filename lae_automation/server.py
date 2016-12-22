@@ -398,8 +398,8 @@ def bounce_server(deploy_config, subscription, publichost, admin_privkey_path, p
         )
     else:
         configuration = marshal_tahoe_configuration(
-            introducer_pem=subscription.oldsecrets["introducer_node_pem"],
-            storage_pem=subscription.oldsecrets["storageserver_node_pem"],
+            introducer_pem=subscription.introducer_node_pem,
+            storage_pem=subscription.server_node_pem,
             storage_privkey=subscription.oldsecrets["server_node_privkey"],
             bucket_name=subscription.bucketname,
             publichost=publichost,
