@@ -26,6 +26,7 @@ from .subscription_manager import Client as SMClient
 from .containers import (
     configmap_name, deployment_name,
     create_configuration, create_deployment,
+    new_service,
     add_subscription_to_service, remove_subscription_from_service
 )
 from .kubeclient import KubeClient
@@ -88,7 +89,7 @@ def converge(config, subscriptions, k8s, aws):
         in (yield subscriptions.list())
     }
     configured_deployments = get_customer_grid_deployments(k8s)
-    configured_service = get_customer_grid_service(k8s)
+    configured_service = get_customer_grid_service(k8s) or new_service()
 
     to_create = set(active_subscriptions.itervalues())
     to_delete = set()
@@ -98,7 +99,6 @@ def converge(config, subscriptions, k8s, aws):
         try:
             subscription = active_subscriptions[subscription_id]
         except KeyError:
-            to_delete.add(subscription_id)
             continue
 
         to_create.remove(subscription)
@@ -139,10 +139,10 @@ def converge(config, subscriptions, k8s, aws):
 
 def apply_service_changes(service, to_delete, to_create):
     with_deletions = reduce(
-        remove_subscription_from_service, service, to_delete,
+        remove_subscription_from_service, to_delete, service,
     )
     with_creations = reduce(
-        add_subscription_to_service, with_deletions, to_create,
+        add_subscription_to_service, to_create, with_deletions,
     )
     return with_creations
 

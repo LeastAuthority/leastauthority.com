@@ -287,6 +287,9 @@ EMPTY_SERVICE = freeze({
     }
 })
 
+def new_service():
+    return EMPTY_SERVICE
+
 def extender(values):
     def f(pvector):
         return pvector.extend(values)
@@ -309,7 +312,11 @@ def service_ports(details):
 
 
 def add_subscription_to_service(old_service, details):
-    return old_service.transform(["spec", "ports"], service_ports(details))
+    return old_service.transform(
+        ["spec", "ports"], extender(service_ports(details)),
+        # Simplifies testing, probably helps in other areas.
+        ["spec", "ports"], lambda v: freeze(sorted(v, key=lambda m: m["port"])),
+    )
 
 def remove_subscription_from_service(old_service, details):
     ports = {

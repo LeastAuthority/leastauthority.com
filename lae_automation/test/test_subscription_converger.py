@@ -12,6 +12,8 @@ from testtools.matchers import Equals
 
 from lae_util.testtools import TestCase
 
+from .matchers import MappingEquals
+
 from lae_automation.subscription_manager import (
     memory_client,
 )
@@ -20,12 +22,14 @@ from lae_automation.subscription_converger import (
 )
 from lae_automation.containers import (
     service_ports,
+    new_service,
     introducer_port_name,
     storage_port_name,
     create_configuration,
     create_deployment,
     configmap_name,
     deployment_name,
+    add_subscription_to_service,
 )
 
 from .strategies import subscription_details, deployment_configuration
@@ -126,7 +130,15 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             )
 
     def check_service(self, database, config, subscriptions, kube):
-        self.fail("write me")
+        expected = new_service()
+        for sid in subscriptions:
+            expected = add_subscription_to_service(
+                expected, database.get_subscription(sid),
+            )
+        assert_that(
+            expected,
+            MappingEquals(kube.get_services(name=expected["metadata"]["name"])),
+        )
 
 
 def selectors_match(selectors, resource):
@@ -171,8 +183,7 @@ class MemoryKube(object):
         xs = getattr(self, definition["kind"].lower())
         xs[definition["metadata"]["name"]] = definition
 
-    def apply(self, definition):
-        pass
+    apply = create
 
 
 class MemoryAWS(object):
