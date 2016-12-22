@@ -14,13 +14,30 @@ def get_route53_client(aws):
     )
 
 class _Route53Client(BaseClient):
-    def __init__(self, **kw):
-        pass
+    def list_resource_record_sets(self, zone_id, identifier, maxitems, name, type):
+        """
+        http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html
+        """
+        args = [
+            ("identifier", identifier),
+            ("maxitems", str(maxitems)),
+            ("name", name),
+            ("type", type),
+        ]
 
-    def destroy(self, *a, **kw):
-        pass
-
-    def create(self, *a, **kw):
-        pass
-
-    
+        query = Query(
+            action="GET",
+            creds=self.creds,
+            endpoint=self.endpoint,
+            zone_id=zone_id,
+            path="/2013-04-01/hostedzone/{zone_id}/rrset",
+            args=args,
+        )
+        d = query.submit()
+        d.addCallback(rrset_from_response)
+        return d
+            
+    def change_resource_record_sets(self):
+        """
+        http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
+        """
