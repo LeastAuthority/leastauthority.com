@@ -92,6 +92,21 @@ class _Route53Client(object):
         self.creds = creds
         self.endpoint = endpoint
 
+    def change_resource_record_sets(self, zone_id, changes):
+        """
+        http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
+        """
+        query = _ChangeRRSets(
+            action="POST",
+            creds=self.creds,
+            endpoint=self.endpoint,
+            zone_id=zone_id,
+            changes=changes,
+            args=(),
+        )
+        return query.submit(self.agent)
+
+
     def list_resource_record_sets(self, zone_id, identifier=None, maxitems=None, name=None, type=None):
         """
         http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListResourceRecordSets.html
@@ -114,11 +129,6 @@ class _Route53Client(object):
             args=args,
         )
         return query.submit(self.agent)
-            
-    def change_resource_record_sets(self):
-        """
-        http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
-        """
 
 
 def require_status(status_codes):
@@ -142,40 +152,61 @@ def annotate_request_uri(uri):
         )
     return annotate
 
-        
+
+@attr.s(frozen=True)
 class _Query(object):
     ok_status = (OK,)
 
-    def __init__(self, action, creds, endpoint, zone_id, args):
-        self.action = action
-        self.creds = creds
-        self.endpoint = endpoint
-        self.zone_id = zone_id
-        self.args = args
+    action = attr.ib()
+    creds = attr.ib()
+    endpoint = attr.ib()
+    zone_id = attr.ib()
+    args = attr.ib()
+
+    def path(self):
+        raise NotImplementedError()
+
+    def body(self):
+        return None
 
     def submit(self, agent):
         base_uri = self.endpoint.get_uri()
-        uri = base_uri + self.path + b"?" + urlencode(self.args)
-        d = agent.request(b"GET", uri, Headers())
+        uri = base_uri + self.path() + b"?" + urlencode(self.args)
+        d = agent.request(b"GET", uri, Headers(), self.body())
         d.addCallback(require_status(self.ok_status))
         d.addCallback(self.parse)
         d.addErrback(annotate_request_uri(uri))
         return d
 
-class _ListRRSets(_Query):
-    @property
+    def parse(self, response):
+        d = readBody(response)
+        d.addCallback(XML)
+        d.addCallback(self._extract_result)
+        return d
+
+
+class _RRSets(_Query):
     def path(self):
         return u"2013-04-01/hostedzone/{zone_id}/rrset".format(
             zone_id=self.zone_id
         ).encode("ascii")
 
-    def parse(self, response):
-        d = readBody(response)
-        d.addCallback(XML)
-        d.addCallback(self._extract_rrsets)
-        return d
 
-    def _extract_rrsets(self, document):
+@attr.s(frozen=True)
+class _ChangeRRSets(_RRSets):
+    changes = attr.ib()
+
+    def body(self):
+        return FileBodyProducer(
+            BytesIO(self._xml_request_body().encode("utf-8"))
+        )
+
+    def _xml_request_body(self):
+        1/0 # TODO
+
+
+class _ListRRSets(_RRSets):
+    def _extract_result(self, document):
         result = {}
         rrsets = document.iterfind("./ResourceRecordSets/ResourceRecordSet")
         for rrset in rrsets:
@@ -188,3 +219,30 @@ class _ListRRSets(_Query):
                 in records
             })
         return result
+
+
+def upsert_rrset(name, type, rrset):
+    pass
+
+def create_rrset(name, type, rrset):
+    return 3
+
+
+def create_alias_rrset(name, type, alias):
+    pass
+
+
+def create_failover_rrset(name, type, failover):
+    pass
+
+
+def create_geolocation_rrset(name, type, geolocation):
+    pass
+
+
+def create_latency_based_rrset(name, type, latency):
+    pass
+
+
+def delete_rrset(name, type, rrset):
+    pass

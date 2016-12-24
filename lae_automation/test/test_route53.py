@@ -9,7 +9,14 @@ from lae_util.memoryagent import MemoryAgent
 
 from lae_automation.route53 import (
     NS, SOA, Name, get_route53_client,
+    create_rrset, delete_rrset, upsert_rrset,
 )
+
+
+class POSTableData(Data):
+    # XXX TODO
+    pass
+
 
 def static_resource(hierarchy):
     root = Resource()
@@ -46,6 +53,24 @@ class sample_list_resource_record_sets_emptyish_result(object):
 """.format(name=name, soa=soa, ns1=ns1, ns2=ns2).encode("utf-8")
 
 
+class sample_change_resource_record_sets_result(object):
+    name = u"example.invalid."
+    create_type = u"NS"
+    create_rrset = object() # XXX TODO
+
+    xml = b"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<ChangeResourceRecordSetsResponse>
+   <ChangeInfo>
+      <Comment>string</Comment>
+      <Id>string</Id>
+      <Status>string</Status>
+      <SubmittedAt>timestamp</SubmittedAt>
+   </ChangeInfo>
+</ChangeResourceRecordSetsResponse>
+"""
+
+
 class ListResourceRecordSetsTestCase(TXAWSTestCase):
     """
     Tests for C{list_resource_record_sets}.
@@ -77,3 +102,45 @@ class ListResourceRecordSetsTestCase(TXAWSTestCase):
             }
         }
         self.assertEquals(rrsets, expected)
+
+
+class ChangeResourceRecordSetsTestCase(TXAWSTestCase):
+    """
+    Tests for C{change_resource_record_sets}.
+    """
+    def test_some_changes(self):
+        zone_id = b"ABCDEF1234"
+        agent = MemoryAgent(static_resource({
+            b"2013-04-01": {
+                b"hostedzone": {
+                    zone_id: {
+                        b"rrset": POSTableData(
+                            sample_change_resource_record_sets_result.xml,
+                            b"text/xml",
+                        ),
+                    }
+                },
+            },
+        }))
+        aws = AWSServiceRegion(access_key="abc", secret_key="def")
+        client = get_route53_client(agent, aws)
+        self.successResultOf(client.change_resource_record_sets(
+            zone_id=zone_id,
+            changes=[
+                create_rrset(
+                    sample_change_resource_record_sets_result.name,
+                    sample_change_resource_record_sets_result.create_type,
+                    sample_change_resource_record_sets_result.create_rrset,
+                ),
+                # delete_rrset(
+                #     sample_change_resource_record_sets_result.name,
+                #     sample_change_resource_record_sets_result.delete_type,
+                #     sample_change_resource_record_sets_result.delete_rrset,
+                # ),
+                # upsert_rrset(
+                #     sample_change_resource_record_sets_result.name,
+                #     sample_change_resource_record_sets_result.upsert_type,
+                #     sample_change_resource_record_sets_result.upsert_rrset,
+                # ),
+            ],
+        ))
