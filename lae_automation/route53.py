@@ -241,10 +241,11 @@ class _ChangeRRSets(_RRSets):
     method = b"POST"
 
     def body(self):
+        xml = b"""<?xml version="1.0" encoding="UTF-8"?>\n"""
         d = flattenString(None, self._xml_request_body())
         d.addCallback(
             lambda body: FileBodyProducer(
-                BytesIO(body),
+                BytesIO(xml + body),
                 cooperator=self.cooperator,
             )
         )

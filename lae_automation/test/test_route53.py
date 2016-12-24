@@ -15,8 +15,10 @@ from lae_automation.route53 import (
 
 
 class POSTableData(Data):
+    posted = ()
+
     def render_POST(self, request):
-        # XXX TODO Record something for a later assertion?
+        self.posted += (request.content.read(),)
         return Data.render_GET(self, request)
 
 
@@ -111,15 +113,16 @@ class ChangeResourceRecordSetsTestCase(TXAWSTestCase):
     Tests for C{change_resource_record_sets}.
     """
     def test_some_changes(self):
+        change_resource = POSTableData(
+            sample_change_resource_record_sets_result.xml,
+            b"text/xml",
+        )
         zone_id = b"ABCDEF1234"
         agent = MemoryAgent(static_resource({
             b"2013-04-01": {
                 b"hostedzone": {
                     zone_id: {
-                        b"rrset": POSTableData(
-                            sample_change_resource_record_sets_result.xml,
-                            b"text/xml",
-                        ),
+                        b"rrset": change_resource,
                     }
                 },
             },
@@ -146,3 +149,8 @@ class ChangeResourceRecordSetsTestCase(TXAWSTestCase):
                 # ),
             ],
         ))
+        # Ack, what a pathetic assertion.
+        expected = b"""\
+<?xml version="1.0" encoding="UTF-8"?>
+<ChangeResourceRecordSetsRequest xmlns="https://route53.amazonaws.com/doc/2013-04-01/"><ChangeBatch><Changes><Change><Action>CREATE</Action><ResourceRecordSet><Name>example.invalid.</Name><Type>NS</Type><TTL>86400</TTL><ResourceRecords><ResourceRecord><Value>ns1.example.invalid.</Value></ResourceRecord><ResourceRecord><Value>ns2.example.invalid.</Value></ResourceRecord></ResourceRecords></ResourceRecordSet></Change></Changes></ChangeBatch></ChangeResourceRecordSetsRequest>"""
+        self.assertEqual((expected,), change_resource.posted)
