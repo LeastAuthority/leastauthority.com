@@ -5,15 +5,19 @@ __all__ = [
     "get_route53_client",
 ]
 
+from io import BytesIO
 from urllib import urlencode
+from functools import partial
 
 import attr
 from attr import validators
 
 from twisted.web.http import OK
 from twisted.web.http_headers import Headers
-from twisted.web.client import readBody
+from twisted.web.client import FileBodyProducer, readBody
 from twisted.python.failure import Failure
+from twisted.web.template import Tag, flattenString
+from twisted.internet.defer import maybeDeferred
 
 from txaws.client.base import BaseClient, BaseQuery
 from txaws.service import AWSServiceEndpoint
@@ -22,15 +26,18 @@ from txaws.util import XML
 _REGISTRATION_ENDPOINT = "https://route53domains.us-east-1.amazonaws.com/"
 _OTHER_ENDPOINT = "https://route53.amazonaws.com/"
 
-def get_route53_client(agent, aws):
+def get_route53_client(agent, aws, cooperator=None):
     """
     Get a non-registration Route53 client.
     """
+    if cooperator is None:
+        from twisted.internet import task as cooperator
     return aws.get_client(
         _Route53Client,
         agent=agent,
         creds=aws.creds,
         endpoint=AWSServiceEndpoint(_OTHER_ENDPOINT),
+        cooperator=cooperator,
     )
 
 
@@ -49,6 +56,9 @@ class NS(object):
     @classmethod
     def from_element(cls, e):
         return cls(Name(et_is_dumb(e.find("Value").text)))
+
+    def to_string(self):
+        return unicode(self.nameserver)
 
 
 def et_is_dumb(bytes_or_text):
@@ -80,17 +90,21 @@ class SOA(object):
             minimum=int(minimum),
         )
 
+    def to_string(self):
+        return u"{mname} {rname} {serial} {refresh} {retry} {expire} {minimum}".format(vars(self))
+
 
 RECORD_TYPES = {
     u"SOA": SOA,
     u"NS": NS,
 }
 
+@attr.s(frozen=True)
 class _Route53Client(object):
-    def __init__(self, agent, creds, endpoint):
-        self.agent = agent
-        self.creds = creds
-        self.endpoint = endpoint
+    agent = attr.ib()
+    creds = attr.ib()
+    endpoint = attr.ib()
+    cooperator = attr.ib()
 
     def change_resource_record_sets(self, zone_id, changes):
         """
@@ -103,6 +117,7 @@ class _Route53Client(object):
             zone_id=zone_id,
             changes=changes,
             args=(),
+            cooperator=self.cooperator,
         )
         return query.submit(self.agent)
 
@@ -157,6 +172,8 @@ def annotate_request_uri(uri):
 class _Query(object):
     ok_status = (OK,)
 
+    method = b"GET"
+
     action = attr.ib()
     creds = attr.ib()
     endpoint = attr.ib()
@@ -172,7 +189,8 @@ class _Query(object):
     def submit(self, agent):
         base_uri = self.endpoint.get_uri()
         uri = base_uri + self.path() + b"?" + urlencode(self.args)
-        d = agent.request(b"GET", uri, Headers(), self.body())
+        d = maybeDeferred(self.body)
+        d.addCallback(partial(agent.request, self.method, uri, Headers()))
         d.addCallback(require_status(self.ok_status))
         d.addCallback(self.parse)
         d.addErrback(annotate_request_uri(uri))
@@ -192,17 +210,59 @@ class _RRSets(_Query):
         ).encode("ascii")
 
 
+
+from twisted.web.template import Tag
+
+class _TagFactory(object):
+    """
+    A factory for L{Tag} objects; the implementation of the L{tags} object.
+
+    This allows for the syntactic convenience of C{from twisted.web.html import
+    tags; tags.a(href="linked-page.html")}, where 'a' can be basically any HTML
+    tag.
+
+    The class is not exposed publicly because you only ever need one of these,
+    and we already made it for you.
+
+    @see: L{tags}
+    """
+    def __getattr__(self, tagName):
+        # allow for E.del as E.del_
+        tagName = tagName.rstrip('_')
+        return Tag(tagName)
+
+tags = _TagFactory()
+
 @attr.s(frozen=True)
 class _ChangeRRSets(_RRSets):
     changes = attr.ib()
+    cooperator = attr.ib()
+
+    method = b"POST"
 
     def body(self):
-        return FileBodyProducer(
-            BytesIO(self._xml_request_body().encode("utf-8"))
+        d = flattenString(None, self._xml_request_body())
+        d.addCallback(
+            lambda body: FileBodyProducer(
+                BytesIO(body),
+                cooperator=self.cooperator,
+            )
         )
+        return d
 
     def _xml_request_body(self):
-        1/0 # TODO
+        ns = "https://route53.amazonaws.com/doc/2013-04-01/"
+        return tags.ChangeResourceRecordSetsRequest(xmlns=ns)(
+            tags.ChangeBatch(
+                tags.Changes(
+                    self.changes,
+                )
+            )
+        )
+
+    def _extract_result(self, document):
+        # XXX Could parse the ChangeInfo and pass some details on
+        return None
 
 
 class _ListRRSets(_RRSets):
@@ -225,7 +285,27 @@ def upsert_rrset(name, type, rrset):
     pass
 
 def create_rrset(name, type, rrset):
-    return 3
+    return tags.Change(
+        tags.Action(
+            "CREATE"
+        ),
+        tags.ResourceRecordSet(
+            tags.Name(
+                str(name),
+            ),
+            tags.Type(
+                type,
+            ),
+            tags.TTL(
+                unicode(60 * 60 * 24),
+            ),
+            tags.ResourceRecords(list(
+                tags.ResourceRecord(tags.Value(rr.to_string()))
+                for rr
+                in rrset
+            ))
+        )
+    )
 
 
 def create_alias_rrset(name, type, alias):

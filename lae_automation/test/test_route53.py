@@ -6,6 +6,7 @@ from txaws.service import AWSServiceRegion
 from txaws.testing.base import TXAWSTestCase
 
 from lae_util.memoryagent import MemoryAgent
+from lae_util.uncooperator import Uncooperator
 
 from lae_automation.route53 import (
     NS, SOA, Name, get_route53_client,
@@ -14,8 +15,9 @@ from lae_automation.route53 import (
 
 
 class POSTableData(Data):
-    # XXX TODO
-    pass
+    def render_POST(self, request):
+        # XXX TODO Record something for a later assertion?
+        return Data.render_GET(self, request)
 
 
 def static_resource(hierarchy):
@@ -56,7 +58,7 @@ class sample_list_resource_record_sets_emptyish_result(object):
 class sample_change_resource_record_sets_result(object):
     name = u"example.invalid."
     create_type = u"NS"
-    create_rrset = object() # XXX TODO
+    create_rrset = [NS(Name(u"ns1.example.invalid.")), NS(Name(u"ns2.example.invalid."))]
 
     xml = b"""\
 <?xml version="1.0" encoding="UTF-8"?>
@@ -123,7 +125,7 @@ class ChangeResourceRecordSetsTestCase(TXAWSTestCase):
             },
         }))
         aws = AWSServiceRegion(access_key="abc", secret_key="def")
-        client = get_route53_client(agent, aws)
+        client = get_route53_client(agent, aws, Uncooperator())
         self.successResultOf(client.change_resource_record_sets(
             zone_id=zone_id,
             changes=[
