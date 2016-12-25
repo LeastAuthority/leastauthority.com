@@ -12,6 +12,8 @@ from functools import partial
 import attr
 from attr import validators
 
+from botocore import SigV4Auth
+
 from twisted.web.http import OK
 from twisted.web.http_headers import Headers
 from twisted.web.client import FileBodyProducer, readBody
@@ -194,11 +196,20 @@ class _Query(object):
         base_uri = self.endpoint.get_uri()
         uri = base_uri + self.path() + b"?" + urlencode(self.args)
         d = maybeDeferred(self.body)
-        d.addCallback(partial(agent.request, self.method, uri, Headers()))
+        d.addCallback(partial(self._request, agent, self.method, uri, Headers()))
         d.addCallback(require_status(self.ok_status))
         d.addCallback(self.parse)
         d.addErrback(annotate_request_uri(uri))
         return d
+
+    def _request(self, agent, method, uri, headers, bodyProducer):
+        auth = SigV4Auth(self.creds, None, None)
+        # It would be nice to use a SigV4Auth method like `add_auth`
+        # but that does some hopelessly terrible stuff.  So, instead,
+        # replicate a lot of its logic while trying to avoid its
+        # mistakes.
+        pass
+
 
     def parse(self, response):
         d = readBody(response)
