@@ -149,9 +149,13 @@ class _Route53Client(object):
 def require_status(status_codes):
     def check_status_code(response):
         if response.code not in status_codes:
-            raise Exception(
-                "Unexpected status code: {} (expected {})".format(
-                    response.code, status_codes
+            return readBody(response).addCallback(
+                lambda body: Failure(
+                    Exception(
+                        "Unexpected status code: {} (expected {})\nBody: {}".format(
+                            response.code, status_codes, body,
+                        )
+                    )
                 )
             )
         return response
