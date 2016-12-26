@@ -27,9 +27,7 @@ from lae_automation.initialize import (
 )
 
 from .strategies import aws_access_key_id, aws_secret_key, bucket_name
-from .s3 import (
-    MemoryS3Client, set_rate_limit_exceeded, clear_rate_limit_exceeded
-)
+from .s3 import MemoryS3
 
 ACTIVATIONKEY= 'MOCKACTIVATONKEY'
 PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
@@ -126,8 +124,11 @@ class CreateUserBucketTests(TestCase):
         retried after a delay.
         """
         reactor = Clock()
-        client = MemoryS3Client(None, None)
-        set_rate_limit_exceeded(client)
+
+        controller = MemoryS3()
+        client, state = controller.client(creds=None, endpoint=None)
+        state.set_rate_limit_exceeded()
+
         d = create_user_bucket(reactor, client, bucket_name)
         # Let several minutes pass (in one second increments) while
         # the rate limit error is in place.
@@ -137,7 +138,7 @@ class CreateUserBucketTests(TestCase):
         self.assertNoResult(d)
 
         # Clear the rate limit error and let it try again.
-        clear_rate_limit_exceeded(client)
+        state.clear_rate_limit_exceeded()
         reactor.pump([1] * 60)
 
         # It should have met with success at this point.
