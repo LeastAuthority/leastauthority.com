@@ -70,7 +70,7 @@ class PathExistsTests(TestCase):
         path.makedirs()
         self.assertThat(path, path_exists())
 
-    @given(paths)
+    @given(paths())
     def test_equivalent_to_standard_path_exists(self, path):
         """
         path_exists is to FilePaths what PathExists is to normal paths.
@@ -109,7 +109,7 @@ class DirExistsTests(TestCase):
         path.makedirs()
         self.assertThat(path, dir_exists())
 
-    @given(paths)
+    @given(paths())
     def test_equivalent_to_standard_dir_exists(self, path):
         """
         dir_exists is to FilePaths what DirExists is to normal paths.
@@ -147,7 +147,7 @@ class FileExistsTests(TestCase):
         path = self.make_temporary_directory()
         self.assertThat(path, Not(file_exists()))
 
-    @given(paths)
+    @given(paths())
     def test_equivalent_to_standard_file_exists(self, path):
         """
         file_exists is to FilePaths what FileExists is to normal paths.
