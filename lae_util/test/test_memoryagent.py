@@ -6,10 +6,12 @@ Tests for ``lae_automation.memoryagent``.
 """
 
 from io import BytesIO
-from urllib import quote
+from urllib import quote, urlencode
 
 from hypothesis import given
-from hypothesis.strategies import none, text, integers, lists, dictionaries, sampled_from
+from hypothesis.strategies import (
+    none, text, integers, lists, dictionaries, sampled_from, one_of,
+)
 
 from testtools.matchers import Equals
 
@@ -42,11 +44,13 @@ class Recorder(Resource):
     dispatched to it.  Tests can then make assertions about the
     recorded state.
     """
+    args = nothing
     method = nothing
     headers = nothing
     body = nothing
 
     def render(self, request):
+        self.args = request.args
         self.method = request.method
         self.headers = request.requestHeaders
         self.body = request.content.read()
@@ -95,6 +99,7 @@ def http_messages():
     """
     return text().map(lambda x: x.encode("utf-8"))
 
+
 def http_headers():
     """
     Strategy for generating ``Headers`` populated with random HTTP
@@ -123,12 +128,24 @@ def http_headers():
         lambda h: Headers({k: [v] for (k, v) in h.items()})
     )
 
+
 def http_bodies():
     """
     Strategy for generating some UTF-8 bytes usable as a request or
     response body.
     """
     return text().map(lambda x: x.encode("utf-8"))
+
+
+def http_query_args():
+    """
+    Strategy for generating some UTF-8 key/value-list pairs usable as
+    query arguments in a request path.
+    """
+    return dictionaries(
+        keys=text().map(lambda x: x.encode("utf-8")),
+        values=lists(text().map(lambda x: x.encode("utf-8")), min_size=1),
+    )
 
 
 class MemoryAgentTests(TestCase):
@@ -145,10 +162,11 @@ class MemoryAgentTests(TestCase):
     @given(
         method=http_methods(),
         path_segments=lists(elements=path_segments(), min_size=1),
-        headers=http_headers(),
+        args=http_query_args(),
+        headers=one_of((none(), http_headers())),
         body=http_bodies(),
     )
-    def test_request(self, method, path_segments, headers, body):
+    def test_request(self, method, path_segments, args, headers, body):
         """
         ``MemoryAgent`` uses the ``IResource`` it is given as the root of
         a resource hierarchy and finds the correct child to which to
@@ -172,13 +190,23 @@ class MemoryAgentTests(TestCase):
         )
 
         path = b"/" + b"/".join(quote(segment, safe=b"") for segment in path_segments)
+        if args:
+            path += b"?" + urlencode(list(
+                (k, v)
+                for k in args
+                for v in args[k]
+            ))
         agent = MemoryAgent(parent)
         response = self.successResultOf(
             agent.request(method, path, headers, producer)
         )
 
+        self.expectThat(recorder.args, Equals(args))
         self.expectThat(recorder.method, Equals(method))
-        self.expectThat(recorder.headers, Equals(headers))
+        if headers is None:
+            self.expectThat(recorder.headers, Equals(Headers()))
+        else:
+            self.expectThat(recorder.headers, Equals(headers))
         self.expectThat(recorder.body, Equals(body))
 
     @given(
