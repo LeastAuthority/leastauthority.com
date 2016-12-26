@@ -239,3 +239,13 @@ class Implements(object):
         if not self.interface.implementedBy(actual):
             return Mismatch("{} does not implement {}".format(actual, self.interface))
         return None
+
+
+@attr.s(frozen=True)
+class Provides(object):
+    interface = attr.ib()
+
+    def match(self, actual):
+        if not self.interface.providedBy(actual):
+            return Mismatch("{} does not provide {}".format(actual, self.interface))
+        return None
