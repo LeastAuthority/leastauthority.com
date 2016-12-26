@@ -24,26 +24,28 @@ from hypothesis.strategies import integers, lists, text
 from twisted.python.filepath import FilePath
 
 
-path_segments = (
-    text().
-    filter(lambda x: '/' not in x).
-    map(lambda x: x.encode('utf8')).
-    filter(lambda x: '\0' not in x))
-"""
-Individual path segments.
+def path_segments(**kw):
+    """
+    Individual path segments.
 
-These are UTF-8 encoded segments that contain neither '/' nor NULL.
+    These are UTF-8 encoded segments that contain neither '/' nor NULL.
 
-e.g. 'foo', 'rc.local'.
-"""
+    e.g. 'foo', 'rc.local'.
+    """
+    return text(min_size=1, **kw
+    ).filter(lambda x: '/' not in x
+    ).map(lambda x: x.encode('utf8')
+    ).filter(lambda x: '\0' not in x
+    )
 
 
-paths = lists(path_segments).map(lambda ps: FilePath('/'.join(ps)))
-"""
-Paths
+def paths(**kw):
+    """
+    Paths
 
-e.g. ``FilePath('/usr/local')``, ``FilePath('foo/bar/bar')``.
-"""
+    e.g. ``FilePath('/usr/local')``, ``FilePath('foo/bar/bar')``.
+    """
+    return lists(path_segments(**kw)).map(lambda ps: FilePath('/'.join(ps)))
 
 
 _identifier_characters = string.ascii_letters + string.digits + '_'
