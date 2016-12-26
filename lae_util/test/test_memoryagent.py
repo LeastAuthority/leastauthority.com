@@ -197,7 +197,7 @@ class MemoryAgentTests(TestCase):
                 for v in args[k]
             ))
         agent = MemoryAgent(parent)
-        response = self.successResultOf(
+        self.successResultOf(
             agent.request(method, path, headers, producer)
         )
 

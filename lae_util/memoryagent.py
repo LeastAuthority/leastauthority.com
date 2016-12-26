@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-In-memory `IAgent` implementation.
+In-memory ``IAgent`` implementation.
 
 Originally from ``flocker/restapi/testtools.py``.
 """
