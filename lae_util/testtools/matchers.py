@@ -19,6 +19,8 @@ Hamcrest-style matchers for testtools-based tests.
 from functools import partial
 import os
 
+import attr
+
 from pyrsistent import PClass, field, pmap_field
 from testtools.content import Content
 from testtools.matchers import (
@@ -27,6 +29,7 @@ from testtools.matchers import (
     FileExists,
     MatchesAll,
     PathExists,
+    Mismatch,
 )
 
 
@@ -226,3 +229,13 @@ with_permissions = partial(
 """
 Match if path has the given permissions.
 """
+
+
+@attr.s(frozen=True)
+class Implements(object):
+    interface = attr.ib()
+
+    def match(self, actual):
+        if not self.interface.implementedBy(actual):
+            return Mismatch("{} does not implement {}".format(actual, self.interface))
+        return None
