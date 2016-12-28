@@ -108,6 +108,20 @@ class _Route53Client(object):
     endpoint = attr.ib()
     cooperator = attr.ib()
 
+    def list_hosted_zones(self):
+        """
+        http://docs.aws.amazon.com/Route53/latest/APIReference/API_ListHostedZones.html
+        """
+        query = _ListHostedZones(
+            action="GET",
+            creds=self.creds,
+            endpoint=self.endpoint,
+            args=(),
+            cooperator=self.cooperator,
+        )
+        return query.submit(self.agent)
+
+
     def change_resource_record_sets(self, zone_id, changes):
         """
         http://docs.aws.amazon.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
@@ -144,6 +158,7 @@ class _Route53Client(object):
             endpoint=self.endpoint,
             zone_id=zone_id,
             args=args,
+            cooperator=self.cooperator,
         )
         return query.submit(self.agent)
 
@@ -183,8 +198,9 @@ class _Query(object):
     action = attr.ib()
     creds = attr.ib()
     endpoint = attr.ib()
-    zone_id = attr.ib()
     args = attr.ib()
+
+    cooperator = attr.ib()
 
     def path(self):
         raise NotImplementedError()
@@ -218,7 +234,28 @@ class _Query(object):
         return d
 
 
+class _ListHostedZones(_Query):
+    def path(self):
+        return b"2013-04-01/hostedzone"
+
+
+    def _extract_result(self, document):
+        result = []
+        hosted_zones = document.iterfind("./HostedZones/HostedZone")
+        for zone in hosted_zones:
+            result.append(dict(
+                name=zone.find("Name").text,
+                identifier=zone.find("Id").text,
+                count=int(zone.find("ResourceRecordSetCount").text),
+                reference=zone.find("CallerReference").text,
+            ))
+        return result
+
+
+@attr.s(frozen=True)
 class _RRSets(_Query):
+    zone_id = attr.ib()
+
     def path(self):
         return u"2013-04-01/hostedzone/{zone_id}/rrset".format(
             zone_id=self.zone_id

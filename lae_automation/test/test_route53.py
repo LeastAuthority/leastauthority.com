@@ -74,6 +74,38 @@ class sample_change_resource_record_sets_result(object):
 </ChangeResourceRecordSetsResponse>
 """
 
+class sample_list_hosted_zones_result(object):
+    details = dict(
+        name=u"example.invalid.",
+        identifier=u"/hostedzone/ABCDEF123456",
+        reference=u"3CCF1549-806D-F91A-906F-A3727E910C87",
+        count=6,
+    )
+    xml = u"""\
+<?xml version="1.0"?>
+<ListHostedZonesResponse xmlns="https://route53.amazonaws.com/doc/2013-04-01/"><HostedZones><HostedZone><Id>{identifier}</Id><Name>{name}</Name><CallerReference>{reference}</CallerReference><Config><PrivateZone>false</PrivateZone></Config><ResourceRecordSetCount>{count}</ResourceRecordSetCount></HostedZone></HostedZones><IsTruncated>false</IsTruncated><MaxItems>100</MaxItems></ListHostedZonesResponse>
+""".format(**details).encode("utf-8")
+    
+
+class ListHostedZonesTestCase(TXAWSTestCase):
+    """
+    Tests for C{list_hosted_zones}.
+    """
+    def test_some_zones(self):
+        agent = MemoryAgent(static_resource({
+            b"2013-04-01": {
+                b"hostedzone": Data(
+                    sample_list_hosted_zones_result.xml,
+                    b"text/xml",
+                ),
+            },
+        }))
+        aws = AWSServiceRegion(access_key="abc", secret_key="def")
+        client = get_route53_client(agent, aws, Uncooperator())
+        zones = self.successResultOf(client.list_hosted_zones())
+        expected = [sample_list_hosted_zones_result.details]
+        self.assertEquals(expected, zones)
+
 
 class ListResourceRecordSetsTestCase(TXAWSTestCase):
     """
@@ -94,7 +126,7 @@ class ListResourceRecordSetsTestCase(TXAWSTestCase):
             }
         }))
         aws = AWSServiceRegion(access_key="abc", secret_key="def")
-        client = get_route53_client(agent, aws)
+        client = get_route53_client(agent, aws, Uncooperator())
         rrsets = self.successResultOf(client.list_resource_record_sets(
             zone_id=zone_id,
         ))
