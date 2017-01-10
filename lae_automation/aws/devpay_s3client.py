@@ -4,8 +4,6 @@
 class DependencyError(Exception):
     pass
 
-REQUIRED_TXAWS_VERSION = "0.2.1.post5"
-REQUIRED_TXAWS_URL = "https://leastauthority.com/static/patches/txAWS-%s.tar.gz" % (REQUIRED_TXAWS_VERSION,)
 REQUIRED_S3_API_VERSION = "2006-03-01"
 
 import txaws
@@ -16,15 +14,6 @@ def compare_to_ascii(a, b):
     if isinstance(a, unicode):
         b = b.decode('ascii')
     return a == b
-
-if not compare_to_ascii(txaws_version.txaws, REQUIRED_TXAWS_VERSION):
-    raise DependencyError("We require version %r of txaws, but we imported version %r from %r.\n"
-                          "Please install the version at %r."
-                          % (REQUIRED_TXAWS_VERSION, txaws_version.txaws, txaws, REQUIRED_TXAWS_URL) )
-if not compare_to_ascii(txaws_version.s3_api, REQUIRED_S3_API_VERSION):
-    raise DependencyError("We require version %r of S3 support in txaws, but we imported txaws version %r from %r, which supports version %r of S3.\n"
-                          "Please install the version at %r."
-                          % (REQUIRED_S3_API_VERSION, txaws_version.txaws, txaws, txaws_version.s3_api, REQUIRED_TXAWS_URL) )
 
 from txaws.s3.client import S3Client, Query
 
