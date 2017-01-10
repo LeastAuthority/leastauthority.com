@@ -20,7 +20,8 @@ from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options
 from twisted.web.client import Agent
 
-from .route53 import get_route53_client
+from txaws.route53.client import Name, CNAME, delete_rrset, create_rrset
+
 from .signup import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
@@ -122,9 +123,10 @@ def converge(config, subscriptions, k8s, aws):
     )
     service = apply_service_changes(configured_service, to_delete, to_create)
 
-    route53 = get_route53_client(aws)
+    route53 = aws.get_route53_client()
+    zone = yield get_hosted_zone(route53, config.domain)
 
-    route53.destroy(to_delete)
+    yield delete_route53_rrsets(route53, zone.identifier, to_delete)
     for details in to_delete:
         k8s.destroy("deployment", deployment_name(details.subscription_id))
         k8s.destroy("configmap", configmap_name(details.subscription_id))
@@ -134,7 +136,38 @@ def converge(config, subscriptions, k8s, aws):
     for deployment in deployments:
         k8s.create(deployment)
     k8s.apply(service)
-    route53.create(to_create)
+    yield create_route53_rrsets(route53, zone.identifier, to_create)
+
+
+def get_hosted_zone(route53, name):
+    d = route53.list_hosted_zones()
+    d.addCallback(
+        lambda zones: next(iter(zone for zone in zones if zone.name == name))
+    )
+    return d
+
+
+def delete_route53_rrsets(route53, zone_id, subscriptions):
+    return route53.change_resource_record_sets(zone_id, list(
+        delete_rrset(
+            name=subscription.subscription_id,
+            type=u"CNAME",
+            rrset=[CNAME(Name("introducer"))],
+        )
+        for subscription
+        in subscriptions
+    ))
+
+def create_route53_rrsets(route53, zone_id, subscriptions):
+    return route53.change_resource_record_sets(zone_id, list(
+        create_rrset(
+            name=subscription.subscription_id,
+            type=u"CNAME",
+            rrset=[CNAME(Name("introducer"))],
+        )
+        for subscription
+        in subscriptions
+    ))
 
 
 def apply_service_changes(service, to_delete, to_create):
