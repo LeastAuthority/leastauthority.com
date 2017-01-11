@@ -12,10 +12,10 @@ them.
 
 import attr
 
-from eliot import startAction
+from eliot import Message, start_action
 from eliot.twisted import DeferredContext
 
-from twisted.internet.defer import inlineCallbacks, maybeDeferred
+from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options
 from twisted.web.client import Agent
@@ -53,10 +53,10 @@ def makeService(options):
 
 def divert_errors_to_log(f):
     def g(*a, **kw):
-        action = startAction("subscription_converger:" + f.__name__)
+        action = start_action("subscription_converger:" + f.__name__)
         with action.context():
             d = DeferredContext(maybeDeferred(f, *a, **kw))
-            d.addFinishAction()
+            d.addActionFinish()
             # The failure was logged by the above.  Now squash it.
             d.addErrback(lambda err: None)
             return d.result
@@ -64,19 +64,54 @@ def divert_errors_to_log(f):
 
 
 def get_customer_grid_service(k8s):
-    return k8s.get_services(selectors=dict(
-        provider="LeastAuthority",
-        app="s4",
-        component="customer-tahoe-lafs"
-    ))
+    with start_action(action_type=u"load-services") as action:
+        services = k8s.get_services(selectors=dict(
+            provider="LeastAuthority",
+            app="s4",
+            component="customer-tahoe-lafs"
+        ))
+        action.add_success_fields(service_count=len(services))
+        return services
+
 
 def get_customer_grid_deployments(k8s):
-    return k8s.get_deployments(selectors=dict(
-        provider="LeastAuthority",
-        app="s4",
-        component="customer-tahoe-lafs"
-    ))
+    with start_action(action_type=u"load-deployments") as action:
+        deployments =  k8s.get_deployments(selectors=dict(
+            provider="LeastAuthority",
+            app="s4",
+            component="customer-tahoe-lafs"
+        ))
+        action.add_success_fields(deployment_count=len(deployments))
+        return deployments
 
+
+def with_action(action_type):
+    def wrapper(f):
+        def g(*args, **kwargs):
+            action = start_action(action_type=action_type)
+            with action.context():
+                result = f(*args, **kwargs)
+                if isinstance(result, Deferred):
+                    d = DeferredContext(result)
+                    d.addActionFinish()
+                return result
+        return g
+    return wrapper
+
+
+@inlineCallbacks
+def get_active_subscriptions(subscriptions):
+    with start_action(action_type=u"load-subscriptions") as action:
+        active_subscriptions = {
+            subscription.subscription_id: subscription
+            for subscription
+            in (yield subscriptions.list())
+        }
+        action.add_success_fields(subscription_count=len(active_subscriptions))
+    returnValue(active_subscriptions)
+
+
+@with_action(action_type=u"converge")
 @inlineCallbacks
 def converge(config, subscriptions, k8s, aws):
     # Create and destroy deployments as necessary.  Use the
@@ -84,13 +119,9 @@ def converge(config, subscriptions, k8s, aws):
     # and use look at the Kubernetes configuration to find out what
     # subscription-derived deployments exist.  Also detect port
     # mis-configurations and correct them.
-    active_subscriptions = {
-        subscription.subscription_id: subscription
-        for subscription
-        in (yield subscriptions.list())
-    }
-    configured_deployments = get_customer_grid_deployments(k8s)
-    configured_service = get_customer_grid_service(k8s) or new_service()
+    active_subscriptions = yield get_active_subscriptions(subscriptions)
+    configured_deployments = yield get_customer_grid_deployments(k8s)
+    configured_service = (yield get_customer_grid_service(k8s)) or new_service()
 
     to_create = set(active_subscriptions.itervalues())
     to_delete = set()
@@ -102,12 +133,21 @@ def converge(config, subscriptions, k8s, aws):
         except KeyError:
             continue
 
+        Message.log(create=subscription_id, reason=u"missing")
         to_create.remove(subscription)
 
-        if deployment["spec"]["template"]["spec"]["containers"][0]["ports"][0]["containerPort"] != subscription.introducer_port_number:
+        introducer_port = (
+            deployment["spec"]["template"]["spec"]["containers"][0]["ports"][0]["containerPort"]
+        )
+        storage_port = (
+            deployment["spec"]["template"]["spec"]["containers"][1]["ports"][0]["containerPort"]
+        )
+        if introducer_port != subscription.introducer_port_number:
+            Message.log(modify=subscription_id, reason=u"introducer port mismatch")
             to_delete.add(subscription)
             to_create.add(subscription)
-        elif deployment["spec"]["template"]["spec"]["containers"][1]["ports"][0]["containerPort"] != subscription.storage_port_number:
+        elif storage_port != subscription.storage_port_number:
+            Message.log(modify=subscription_id, reason=u"storage port mismatch")
             to_delete.add(subscription)
             to_create.add(subscription)
 
