@@ -164,19 +164,23 @@ def converge(config, subscriptions, k8s, aws):
     service = apply_service_changes(configured_service, to_delete, to_create)
 
     route53 = aws.get_route53_client()
-    zone = yield get_hosted_zone(route53, config.domain)
+    try:
+        zone = yield get_hosted_zone_by_name(route53, config.domain)
+    except KeyError:
+        raise ValueError("Configured domain {!r} does not exist in Route53.".format(config.domain))
 
-    yield delete_route53_rrsets(route53, zone.identifier, to_delete)
-    for details in to_delete:
-        k8s.destroy("deployment", deployment_name(details.subscription_id))
-        k8s.destroy("configmap", configmap_name(details.subscription_id))
+    with start_action(action_type=u"enacting"):
+        yield delete_route53_rrsets(route53, zone.identifier, to_delete)
+        for details in to_delete:
+            k8s.destroy("deployment", deployment_name(details.subscription_id))
+            k8s.destroy("configmap", configmap_name(details.subscription_id))
 
-    for configmap in configmaps:
-        k8s.create(configmap)
-    for deployment in deployments:
-        k8s.create(deployment)
-    k8s.apply(service)
-    yield create_route53_rrsets(route53, zone.identifier, to_create)
+        for configmap in configmaps:
+            k8s.create(configmap)
+        for deployment in deployments:
+            k8s.create(deployment)
+        k8s.apply(service)
+        yield create_route53_rrsets(route53, zone.identifier, to_create)
 
 
 @with_action(action_type=u"find-zones")
