@@ -1,4 +1,5 @@
 
+from io import BytesIO
 from base64 import b32encode
 
 import attr
@@ -12,7 +13,10 @@ from lae_util.fileutil import make_dirs
 from lae_util.streams import LoggingStream
 from lae_automation import signup, initialize
 
-from lae_automation.subscription_manager import memory_client
+from lae_automation.subscription_manager import memory_client, broken_client
+from lae_automation.test.strategies import (
+    old_secrets, deployment_configuration, subscription_details,
+)
 
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
 ACCESSKEYID = 'TEST'+'A'*16
@@ -139,7 +143,7 @@ class TestSignupModule(TestCase):
         )
         self.SUBSCRIPTION = signup.SubscriptionDetails(
             bucketname="lae-" + self.MENCODED_IDS,
-            oldsecrets=None,
+            oldsecrets=old_secrets().example(),
             customer_email=self.MEMAIL,
             customer_pgpinfo=self.MKEYINFO,
             product_id=None,
@@ -280,6 +284,10 @@ class TestSignupModule(TestCase):
             return MOCKSERVERSSHFP
         self.patch(queryapi, 'hostpubkeyextractor', call_hostpubkeyextractor)
 
+        database_path = FilePath(self.mktemp().decode("utf-8"))
+        database_path.makedirs()
+        smclient = memory_client(database_path)
+
         config = attr.assoc(
             self.DEPLOYMENT_CONFIGURATION,
             secretsfile=MSSEC2SECRETSFILE,
@@ -290,6 +298,7 @@ class TestSignupModule(TestCase):
             self.SUBSCRIPTION,
             stdout, stderr,
             MLOGFILENAME,
+            smclient=smclient,
         )
 
         def _check(ign):
@@ -346,7 +355,7 @@ class TestSignupModule(TestCase):
         database_path = FilePath(self.mktemp().decode("utf-8"))
         database_path.makedirs()
         smclient = memory_client(database_path)
-        
+
         config = attr.assoc(
             self.DEPLOYMENT_CONFIGURATION,
             secretsfile=MSSEC2_secretsfile,
@@ -374,3 +383,23 @@ class TestSignupModule(TestCase):
 
 
 TestSignupModule.test_activate_subscribed_service.__func__.skip = "mostly obsolete"
+
+# New tests for signup.  Trying to keep a healthy distance from old
+# test implementation.
+class SignupTests(TestCase):
+    def test_subscription_manager_not_listening(self):
+        """
+        If the subscription manager doesn't accept the new subscription,
+        ``activate_subscribed_service`` returns a ``Deferred`` that
+        fails with the details.
+        """
+        deploy_config = deployment_configuration().example()
+        details = subscription_details().example()
+        stdout = BytesIO()
+        stderr = BytesIO()
+        logfilename = self.mktemp()
+        d = signup.just_activate_subscription(
+            deploy_config, details, stdout, stderr, logfilename,
+            clock=None, smclient=broken_client(),
+        )
+        self.failureResultOf(d)
