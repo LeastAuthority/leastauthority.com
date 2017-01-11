@@ -179,11 +179,16 @@ def converge(config, subscriptions, k8s, aws):
     yield create_route53_rrsets(route53, zone.identifier, to_create)
 
 
-def get_hosted_zone(route53, name):
+@with_action(action_type=u"find-zones")
+def get_hosted_zone_by_name(route53, name):
     d = route53.list_hosted_zones()
-    d.addCallback(
-        lambda zones: next(iter(zone for zone in zones if zone.name == name))
-    )
+    def filter_results(zones):
+        Message.log(zone_names=list(zone.name for zone in zones))
+        for zone in zones:
+            if zone.name == name:
+                return zone
+        raise KeyError(name)
+    d.addCallback(filter_results)
     return d
 
 

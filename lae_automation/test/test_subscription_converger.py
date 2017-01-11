@@ -13,6 +13,7 @@ from testtools.matchers import Equals
 
 from txaws.credentials import AWSCredentials
 from txaws.testing.service import FakeAWSServiceRegion
+from txaws.route53.model import HostedZone
 
 from lae_util.testtools import TestCase
 
@@ -22,7 +23,7 @@ from lae_automation.subscription_manager import (
     memory_client,
 )
 from lae_automation.subscription_converger import (
-    converge,
+    converge, get_hosted_zone_by_name,
 )
 from lae_automation.containers import (
     service_ports,
@@ -65,6 +66,34 @@ class ConvergeHelperTests(TestCase):
                 },
             ]),
         )
+
+    def test_get_hosted_zone_by_name_missing(self):
+        region = FakeAWSServiceRegion(
+            access_key="access key id",
+            secret_key="secret access key",
+        )
+        route53 = region.get_route53_client()
+        d = get_hosted_zone_by_name(route53, u"example.invalid")
+        self.failureResultOf(d, KeyError)
+
+    def test_get_hosted_zone_by_name(self):
+        zone = HostedZone(
+            name=u"example.invalid",
+            identifier=u"",
+            rrset_count=0,
+            reference=u"unique string",
+        )
+        region = FakeAWSServiceRegion(
+            access_key="access key id",
+            secret_key="secret access key",
+        )
+        route53 = region.get_route53_client()
+        d = route53.create_hosted_zone(zone.reference, zone.name)
+        self.successResultOf(d)
+        d = get_hosted_zone_by_name(route53, zone.name)
+        retrieved = self.successResultOf(d)
+        self.expectThat(zone.reference, Equals(retrieved.reference))
+        self.expectThat(zone.name, Equals(retrieved.name))
 
 
 from hypothesis.stateful import RuleBasedStateMachine, rule
