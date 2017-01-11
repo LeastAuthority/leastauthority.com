@@ -224,7 +224,7 @@ class NewTahoeConfigurationTests(TestBase):
     Tests for ``new_tahoe_configuration``.
     """
     @given(
-        nickname(), bucket_name(),
+        bucket_name(),
         ipv4_address(), ipv4_address(),
         aws_access_key_id(), aws_secret_key(),
         furl(), furl(),
@@ -234,7 +234,7 @@ class NewTahoeConfigurationTests(TestBase):
     @settings(max_examples=10)
     def test_generated(
             self,
-            nickname, bucket_name,
+            bucket_name,
             publichost, privatehost,
             s3_access_key_id, s3_secret_key,
             log_gatherer_furl, stats_gatherer_furl,
@@ -268,19 +268,8 @@ class NewTahoeConfigurationTests(TestBase):
             log_gatherer_furl=log_gatherer_furl,
             stats_gatherer_furl=stats_gatherer_furl,
         )
-        subscription = SubscriptionDetails(
-            bucketname=bucket_name,
-            oldsecrets=None,
-            customer_email=None,
-            customer_pgpinfo=None,
-            product_id=None,
-            customer_id=None,
-            subscription_id=None,
-            introducer_port_number=12345,
-            storage_port_number=12346,
-        )
         config = server.new_tahoe_configuration(
-            deploy_config, subscription, publichost, privatehost,
+            deploy_config, bucket_name, publichost, privatehost, 54321,
         )
         # It returns an object which can be round-tripped through the
         # JSON format.
@@ -297,5 +286,5 @@ class NewTahoeConfigurationTests(TestBase):
         # public host and the hard-coded introducer port we use.
         self.expectThat(
             config["introducer"]["introducer_furl"],
-            hasLocationHint(config["storage"]["publichost"], subscription.introducer_port_number),
+            hasLocationHint(config["storage"]["publichost"], 54321),
         )
