@@ -8,6 +8,8 @@ import attr
 from hypothesis import assume, given
 from pyrsistent import pvector
 
+from eliot import Message
+
 from testtools.assertions import assert_that
 from testtools.matchers import Equals
 
@@ -111,13 +113,22 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         self.path = FilePath(mkdtemp().decode("utf-8"))
         self.database = SubscriptionDatabase.from_directory(self.path)
 
+        self.deploy_config = deployment_configuration().example()
+
         self.subscription_client = memory_client(self.database.path)
         self.kube_client = MemoryKube()
         self.aws_region = FakeAWSServiceRegion(
             access_key="access_key_id",
             secret_key="secret_access_key",
         )
-        
+        route53 = self.aws_region.get_route53_client()
+        d = route53.create_hosted_zone(
+            caller_reference=u"opaque reference",
+            name=self.deploy_config.domain,
+        )
+        # XXXX
+        assert d.called, d
+
     @rule(details=subscription_details())
     def activate(self, details):
         """
@@ -135,8 +146,8 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             details=details,
         )
 
-    @rule(config=deployment_configuration())
-    def converge(self, config):
+    @rule()
+    def converge(self):
         """
         Converge the cluster (Kubernetes, Route53, etc) configuration on
         the state in the subscription manager.
@@ -145,9 +156,8 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         ``deactivate`` rules as well as state in the cluster resulting
         from previous convergence attempts.
         """
-        agent = object()
         d = converge(
-            config,
+            self.deploy_config,
             self.subscription_client,
             self.kube_client,
             self.aws_region,
@@ -161,7 +171,12 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         assert d.called
         assert d.result is None, d.result.getTraceback()
-        self.check_convergence(self.database, config, kube, aws)
+        self.check_convergence(
+            self.database,
+            self.deploy_config,
+            self.kube_client,
+            self.aws_region,
+        )
 
     def check_convergence(self, database, config, kube, aws):
         subscriptions = database.list_subscriptions_identifiers()
@@ -208,14 +223,14 @@ def selectors_match(selectors, resource):
         key: resource["metadata"]["labels"].get(key, missing)
         for key in selectors
     } == selectors
-    
+
 @attr.s(frozen=True)
 class MemoryKube(object):
     resources = attr.ib(default=attr.Factory(dict))
 
     def _resource(key):
         return property(lambda self: self.resources.setdefault(key, {}))
-    
+
     configmap = _resource("configmap")
     deployment = _resource("deployment")
     service = _resource("service")
@@ -241,6 +256,7 @@ class MemoryKube(object):
         del xs[name]
 
     def create(self, definition):
+        Message.log(memorykube_create=definition)
         xs = getattr(self, definition["kind"].lower())
         xs[definition["metadata"]["name"]] = definition
 
