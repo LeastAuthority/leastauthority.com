@@ -25,6 +25,9 @@ class DeploymentConfiguration(object):
     # system
     private_host = "customer-grid-service"
 
+    # XXX Must agree with the SubscriptionManager service configured in Kubernetes.
+    subscription_manager_hostname = u"subscription-manager"
+
     products = attr.ib(validator=_validate_products)
     s3_access_key_id = attr.ib()
     s3_secret_key = attr.ib(repr=False)

@@ -5,6 +5,7 @@ from base64 import b32encode
 
 from twisted.internet import defer, reactor, task
 from twisted.python.filepath import FilePath
+from twisted.web.client import Agent
 
 from lae_automation.config import Config
 from lae_automation.initialize import create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
@@ -14,6 +15,7 @@ from lae_automation.confirmation import send_signup_confirmation, send_notify_fa
 from lae_automation.containers import provision_subscription
 
 from .model import DeploymentConfiguration, SubscriptionDetails
+from .subscription_manager import network_client
 
 from lae_util.servers import append_record
 from lae_util.timestamp import format_iso_time
@@ -51,7 +53,7 @@ def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
 
-def activate_subscribed_service(deploy_config, subscription, stdout, stderr, logfile, clock=None):
+def activate_subscribed_service(deploy_config, subscription, stdout, stderr, logfile, clock=None, smclient=None):
     print >>stderr, "entering activate_subscribed_service call."
     if clock is None:
         clock = reactor
@@ -69,7 +71,18 @@ def activate_subscribed_service(deploy_config, subscription, stdout, stderr, log
 
     print >>stdout, "After create_stripe_account_user_bucket %s..." % (deploy_config,)
 
-    d.addCallback(lambda ignored: provision_subscription(clock, deploy_config, subscription))
+    if smclient is None:
+        endpoint = u"http://{}/".format(
+            deploy_config.subscription_manager_hostname
+        ).encode("utf-8")
+        agent = Agent(reactor)
+        smclient = network_client(endpoint, agent)
+
+    d.addCallback(
+        lambda ignored: provision_subscription(
+            clock, deploy_config, subscription, smclient,
+        )
+    )
     d.addErrback(lambda f: send_notify_failure(
         f, subscription.customer_email, logfile, stdout, stderr,
     ))
