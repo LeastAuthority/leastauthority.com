@@ -18,6 +18,8 @@ import mock
 
 from testtools.matchers import Is
 
+from txaws.testing.s3 import MemoryS3
+
 from lae_util.testtools import TestCase
 
 import lae_automation.initialize
@@ -27,7 +29,6 @@ from lae_automation.initialize import (
 )
 
 from .strategies import aws_access_key_id, aws_secret_key, bucket_name
-from .s3 import MemoryS3
 
 ACTIVATIONKEY= 'MOCKACTIVATONKEY'
 PRODUCTTOKEN = 'TESTPRODUCTTOKEN'+'A'*295
