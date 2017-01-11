@@ -89,6 +89,7 @@ def create_configuration(deploy_config, details):
     if details.oldsecrets is None:
         configuration = new_tahoe_configuration(
             deploy_config=deploy_config,
+            bucketname=subscription.bucketname,
             publichost=public_host,
             privatehost=private_host,
         )

@@ -392,7 +392,7 @@ def bounce_server(deploy_config, subscription, publichost, admin_privkey_path, p
     if deploy_config.oldsecrets is None:
         configuration = new_tahoe_configuration(
             deploy_config=deploy_config,
-            subscription=subscription,
+            bucketname=subscription.bucketname,
             publichost=publichost,
             privatehost=privatehost,
         )
@@ -501,7 +501,7 @@ def setremoteconfigoption(pathtoremote, section, option, value):
     os.remove('tempconfigfile')
 
 
-def new_tahoe_configuration(deploy_config, subscription, publichost, privatehost):
+def new_tahoe_configuration(deploy_config, bucketname, publichost, privatehost, introducer_port):
     """
     Create brand new secrets and configuration for use by an
     introducer/storage pair.
@@ -509,7 +509,7 @@ def new_tahoe_configuration(deploy_config, subscription, publichost, privatehost
     base_name = dict(
         organizationName=b"Least Authority Enterprises",
         organizationalUnitName=b"S4",
-        emailAddress=subscription.bucketname,
+        emailAddress=bucketname,
     )
 
     keypair = KeyPair.generate(size=2048)
@@ -527,7 +527,7 @@ def new_tahoe_configuration(deploy_config, subscription, publichost, privatehost
         return b"\n".join((key.dump(FILETYPE_PEM), cert.dump(FILETYPE_PEM)))
 
     introducer_tub = Tub(certData=pem(keypair, introducer_certificate))
-    introducer_tub.setLocation("{}:{}".format(publichost, INTRODUCER_PORT))
+    introducer_tub.setLocation("{}:{}".format(publichost, introducer_port))
     storage_tub = Tub(certData=pem(keypair, storage_certificate))
 
     return marshal_tahoe_configuration(
@@ -536,7 +536,7 @@ def new_tahoe_configuration(deploy_config, subscription, publichost, privatehost
         storage_pem=storage_tub.getCertData().strip(),
         storage_privkey=keyutil.make_keypair()[0] + b"\n",
 
-        bucket_name=subscription.bucketname,
+        bucket_name=bucketname,
         publichost=publichost,
         privatehost=privatehost,
         # The object of the reference is irrelevant.  The furl will
