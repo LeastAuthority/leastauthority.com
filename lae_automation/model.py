@@ -1,5 +1,7 @@
 import attr
-from pyrsistent import freeze
+from attr import validators
+
+from pyrsistent import PMap, freeze
 from pem import Certificate, parse
 
 from foolscap.furl import decode_furl
@@ -58,8 +60,6 @@ def _parse(pem_str):
     return freeze(sorted(parse(pem_str)))
 
 def _convert_oldsecrets(oldsecrets):
-    if oldsecrets is None:
-        return oldsecrets
     converted = freeze(oldsecrets)
     if converted["introducer_node_pem"] is not None:
         converted = converted.transform(["introducer_node_pem"], _parse)
@@ -71,7 +71,12 @@ def _convert_oldsecrets(oldsecrets):
 @attr.s(frozen=True)
 class SubscriptionDetails(object):
     bucketname = attr.ib()
-    oldsecrets = attr.ib(convert=_convert_oldsecrets)
+
+    # Like the thing returned by secrets_to_legacy_format.
+    oldsecrets = attr.ib(
+        convert=_convert_oldsecrets,
+        validator=validators.instance_of(PMap),
+    )
     customer_email = attr.ib()
     customer_pgpinfo = attr.ib()
 
@@ -86,12 +91,8 @@ class SubscriptionDetails(object):
 
     @property
     def introducer_node_pem(self):
-        if self.oldsecrets is None:
-            return None
         return "".join(map(str, self.oldsecrets["introducer_node_pem"]))
 
     @property
     def server_node_pem(self):
-        if self.oldsecrets is None:
-            return None
         return "".join(map(str, self.oldsecrets["server_node_pem"]))
