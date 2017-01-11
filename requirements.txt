@@ -24,5 +24,8 @@ hypothesis==3.6.0
 testtools==2.2.0
 fixtures==3.0.0
 
+# It's really convenient to have around.
+eliot-tree
+
 # So we can generate tahoe configuration parameters.
 tahoe-lafs==1.11.0
