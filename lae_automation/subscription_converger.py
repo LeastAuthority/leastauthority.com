@@ -12,6 +12,8 @@ them.
 
 import attr
 
+from pyrsistent import thaw
+
 from eliot import Message, start_action
 from eliot.twisted import DeferredContext
 
@@ -53,7 +55,7 @@ def makeService(options):
 
 def divert_errors_to_log(f):
     def g(*a, **kw):
-        action = start_action("subscription_converger:" + f.__name__)
+        action = start_action(u"subscription_converger:" + f.__name__)
         with action.context():
             d = DeferredContext(maybeDeferred(f, *a, **kw))
             d.addActionFinish()
@@ -176,11 +178,11 @@ def converge(config, subscriptions, k8s, aws):
             k8s.destroy("configmap", configmap_name(details.subscription_id))
 
         for configmap in configmaps:
-            k8s.create(configmap)
+            k8s.create(thaw(configmap))
         for deployment in deployments:
-            k8s.create(deployment)
-        k8s.apply(service)
-        yield create_route53_rrsets(route53, zone.identifier, to_create)
+            k8s.create(thaw(deployment))
+        k8s.apply(thaw(service))
+        yield create_route53_rrsets(route53, zone.name, zone.identifier, to_create)
 
 
 @with_action(action_type=u"find-zones")
@@ -196,23 +198,38 @@ def get_hosted_zone_by_name(route53, name):
     return d
 
 
+def _introducer_name_for_subscription(subscription, domain):
+    return Name(u"{subscription_id}.introducer.{domain}".format(
+        subscription_id=subscription.subscription_id,
+        domain=domain,
+    ))
+
+def _cname_for_subscription(subscription, domain):
+    return CNAME(
+        Name(
+            u"introducer.{domain}".format(
+                domain=domain,
+            )
+        )
+    )
+
 def delete_route53_rrsets(route53, zone_id, subscriptions):
     return route53.change_resource_record_sets(zone_id, list(
         delete_rrset(
-            name=subscription.subscription_id,
+            name=_introducer_name_for_subscription(subscription, domain),
             type=u"CNAME",
-            rrset=[CNAME(Name("introducer"))],
+            rrset=[_cname_for_subscription(subscription, domain)],
         )
         for subscription
         in subscriptions
     ))
 
-def create_route53_rrsets(route53, zone_id, subscriptions):
+def create_route53_rrsets(route53, domain, zone_id, subscriptions):
     return route53.change_resource_record_sets(zone_id, list(
         create_rrset(
-            name=Name(subscription.subscription_id),
+            name=_introducer_name_for_subscription(subscription, domain),
             type=u"CNAME",
-            rrset=[CNAME(Name(u"introducer"))],
+            rrset=[_cname_for_subscription(subscription, domain)],
         )
         for subscription
         in subscriptions

@@ -6,16 +6,18 @@ from functools import partial
 
 import attr
 from hypothesis import assume, given
-from pyrsistent import pvector
+from pyrsistent import thaw, pmap, pset
+
+from json import loads, dumps
 
 from eliot import Message
 
 from testtools.assertions import assert_that
 from testtools.matchers import Equals
 
-from txaws.credentials import AWSCredentials
 from txaws.testing.service import FakeAWSServiceRegion
 from txaws.route53.model import HostedZone
+from txaws.route53.client import Name, CNAME
 
 from lae_util.testtools import TestCase
 
@@ -128,6 +130,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         )
         # XXXX
         assert d.called, d
+        self.zone = d.result
 
     @rule(details=subscription_details())
     def activate(self, details):
@@ -184,6 +187,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.check_configmaps,
             self.check_deployments,
             self.check_service,
+            self.check_route53,
         }
         for check in checks:
             check(database, config, subscriptions, kube, aws)
@@ -212,9 +216,30 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             expected,
             MappingEquals(kube.get_services(name=expected["metadata"]["name"])),
         )
+        Message.log(check_service=thaw(expected))
 
     def check_route53(self, database, config, subscriptions, kube, aws):
-        self.fail("write this")
+        expected_rrsets = pmap({
+            Name(
+                u"{subscription_id}.introducer.{domain}".format(
+                    subscription_id=sid,
+                    domain=config.domain,
+                )
+            ): pset({
+                CNAME(Name(
+                    u"introducer.{domain}".format(domain=config.domain)
+                ))
+            })
+            for sid in subscriptions
+        })
+        route53 = aws.get_route53_client()
+        d = route53.list_resource_record_sets(self.zone.identifier)
+        # XXX
+        actual_rrsets = d.result
+        assert_that(
+            expected_rrsets,
+            MappingEquals(actual_rrsets),
+        )
 
 
 def selectors_match(selectors, resource):
@@ -258,7 +283,8 @@ class MemoryKube(object):
     def create(self, definition):
         Message.log(memorykube_create=definition)
         xs = getattr(self, definition["kind"].lower())
-        xs[definition["metadata"]["name"]] = definition
+        # Round-trip through JSON encoding to prove it is JSON encodable.
+        xs[definition["metadata"]["name"]] = loads(dumps(definition))
 
     apply = create
 
