@@ -2,6 +2,9 @@
 
 import time
 from base64 import b32encode
+from pprint import pformat
+
+import attr
 
 from twisted.internet import defer, reactor, task
 from twisted.python.filepath import FilePath
@@ -54,7 +57,17 @@ def get_bucket_name(subscription_id, customer_id):
 
 
 def activate_subscribed_service(deploy_config, subscription, stdout, stderr, logfile, clock=None, smclient=None):
-    print >>stderr, "entering activate_subscribed_service call."
+    d = just_activate_subscription(
+        deploy_config, subscription, stdout, stderr, logfile, clock, smclient,
+    )
+    d.addErrback(lambda f: send_notify_failure(
+        f, subscription.customer_email, logfile, stdout, stderr,
+    ))
+    return d
+
+
+def just_activate_subscription(deploy_config, subscription, stdout, stderr, logfile, clock, smclient):
+    print >>stderr, "entering just_activate_subscription call."
     if clock is None:
         clock = reactor
 
@@ -69,7 +82,9 @@ def activate_subscribed_service(deploy_config, subscription, stdout, stderr, log
         location,
     )
 
-    print >>stdout, "After create_stripe_account_user_bucket %s..." % (deploy_config,)
+    print >>stdout, "After create_stripe_account_user_bucket:"
+    print >>stdout, pformat(attr.asdict(deploy_config))
+    print >>stdout, pformat(attr.asdict(subscription))
 
     if smclient is None:
         endpoint = u"http://{}/".format(
@@ -83,11 +98,7 @@ def activate_subscribed_service(deploy_config, subscription, stdout, stderr, log
             clock, deploy_config, subscription, smclient,
         )
     )
-    d.addErrback(lambda f: send_notify_failure(
-        f, subscription.customer_email, logfile, stdout, stderr,
-    ))
     return d
-
 
 
 def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
