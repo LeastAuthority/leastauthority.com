@@ -2,44 +2,26 @@ from json import dumps
 
 from pyrsistent import freeze, discard
 
+from twisted.internet.defer import succeed
+
 from .server import new_tahoe_configuration, marshal_tahoe_configuration
-from .kubeclient import KubeClient
 
-def provision_subscription(reactor, deploy_config, details):
+def provision_subscription(reactor, deploy_config, details, smclient):
     """
-    Create the resources necessary to provide service for a new
-    subscription.
+    Create the subscription state in the SubscriptionManager service.
+
+    :param DeploymentConfiguration deploy_config:
+    :param SubscriptionDetails details:
     """
-    kube = KubeClient()
-    old_service = get_service(kube, deploy_config)
-    intro_number, storage_number = assign_ports(old_service, 2)
-
-    configmap = create_configuration(deploy_config, details)
-    deployment = create_deployment(deploy_config, intro_number, storage_number)
-    new_service = add_subscription_to_service(old_service, details)
-
-    dns = create_dns(deploy_config)
-
-    create(kube, configmap, deployment, new_service, dns)
-
-    record_serverinfo(reactor, deploy_config)
-    send_confirmation(reactor, deploy_config)
+    d = smclient.create(details.subscription_id, details)
+    d.addCallback(lambda ignored: _wait_for_service(details.subscription_id))
+    return d
 
 
-def create():
-    pass
-
-def record_serverinfo():
-    pass
-
-def send_confirmation():
-    pass
-
-
-def get_service(k8s, deploy_config):
-    [service] = k8s.get_services(name=deploy_config.private_host)
-    return freeze(service)
-
+def _wait_for_service(subscription_id):
+    # XXX Poll Kubernetes state looking for matching resources.
+    # XXX With a timeout and some error logging.
+    return succeed(None)
 
 MIN_PORT = 3000
 MAX_PORT = 63000
