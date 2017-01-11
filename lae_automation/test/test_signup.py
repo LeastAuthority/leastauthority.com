@@ -12,6 +12,8 @@ from lae_util.fileutil import make_dirs
 from lae_util.streams import LoggingStream
 from lae_automation import signup, initialize
 
+from lae_automation.subscription_manager import memory_client
+
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
 ACCESSKEYID = 'TEST'+'A'*16
 SECRETACCESSKEY = 'TEST'+'A'*36
@@ -352,12 +354,19 @@ class TestSignupModule(TestCase):
             return defer.succeed(None)
         self.patch(queryapi, 'get_EC2_consoleoutput', call_get_EC2_consoleoutput)
 
+        database_path = FilePath(self.mktemp().decode("utf-8"))
+        database_path.makedirs()
+        smclient = memory_client(database_path)
+        
         config = attr.assoc(
             self.DEPLOYMENT_CONFIGURATION,
             secretsfile=MSSEC2_secretsfile,
         )
         attr.validate(config)
-        d = signup.activate_subscribed_service(config, self.SUBSCRIPTION, stdout, stderr, MLOGFILENAME)
+        d = signup.activate_subscribed_service(
+            config, self.SUBSCRIPTION, stdout, stderr, MLOGFILENAME,
+            smclient,
+        )
         def _bad_success(ign):
             self.fail("should have got a failure")
         def _check_failure(f):
