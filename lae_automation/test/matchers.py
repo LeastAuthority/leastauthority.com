@@ -116,11 +116,20 @@ class _MappingLikeMismatch(Mismatch):
 
         mismatched = []
         fields = self._get_fields(self._actual)
-        for field in fields:
+        for field in sorted(fields):
             actual = self._get_field(self._actual, field)
+            try:
+                reference = self._get_field(self._reference, field)
+            except KeyError:
+                mismatched.append((field, actual, "<<missing>>"))
+            else:
+                if actual != reference:
+                    mismatched.append((field, actual, reference))
+
+        extra = set(self._get_fields(self._reference)) - set(fields)
+        for field in sorted(extra):
             reference = self._get_field(self._reference, field)
-            if actual != reference:
-                mismatched.append((field, actual, reference))
+            mismatched.append((field, "<<missing>>", reference))
 
         return "field mismatch:\n" + "".join(
             "field: %s\n"
