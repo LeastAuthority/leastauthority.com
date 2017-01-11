@@ -24,6 +24,8 @@ from twisted.web.client import FileBodyProducer, Agent, readBody
 from twisted.internet import task
 
 from txacme.interfaces import ICertificateStore
+from acme.jose import JWKRSA, RS256
+from txacme.client import Client
 
 @implementer(ICertificateStore)
 @attr.s(frozen=True)
@@ -94,6 +96,30 @@ class KubernetesSecretsCertificateStore(object):
         return d
 
 
+@implementer(ICertificateStore)
+@attr.s(frozen=True)
+class _SNIMapping(object):
+    _certificates = attr.ib()
+    _store = attr.ib(validator=validators.provides(ICertificateStore))
+
+    @classmethod
+    def from_certificate_store(cls, store):
+        d = store.as_dict()
+        d.addCallback(
+            lambda certificates: cls(store=store, certificates=certificates),
+        )
+        return d
+
+    def __getitem__(self, hostname):
+        return self._certificates.get(hostname)
+
+    def get(self, server_name):
+        return self._store.get(server_name)
+
+    def store(self, server_name, pem_objects):
+        pass
+
+
 def require_status(*statuses):
     def check(response):
         if response.code in statuses:
@@ -102,3 +128,40 @@ def require_status(*statuses):
             lambda body: Failure(Exception(response.code, body)),
         )
     return check
+
+
+@implementer(IPlugin, IStreamServerEndpointStringParser)
+@attr.s
+class LEK8SParser(object):
+    prefix = attr.ib()
+    directory = attr.ib()
+
+    namespace = attr.ib()
+    name = attr.ib()
+    kubernetes = attr.ib(default=u"kubernetes")
+    cooperator = attr.ib(default=task)
+
+    def parseStreamServer(self, reactor, *args, **kwargs):
+        return LEK8SEndpoint(
+            
+        )
+
+
+class LEK8SEndpoint(object):
+    def 
+        d = self._acme_key()
+        d.addCallback(
+            lambda acme_key: AutoTLSEndpoint(
+                reactor=reactor,
+                directory=self.directory,
+                client_creator=partial(Client.from_url, key=acme_key, alg=RS256),
+                cert_store=KubernetesSecretsCertificateStore(
+                    agent=Agent(reactor),
+                    namespace=self.namespace,
+                    name=self.name,
+                    kubernetes=self.kubernetes,
+                    cooperator=self.cooperator,
+                ),
+                cert_mapping
+                
+)
