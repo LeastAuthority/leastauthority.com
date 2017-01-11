@@ -84,7 +84,6 @@ class KubernetesSecretsCertificateStore(object):
         d.addCallback(readBody)
         def decode(body):
             secret = loads(body)
-            print(secret)
             certs = secret.get(u"data", {})
             return {
                 name: encoded.decode("base64")
