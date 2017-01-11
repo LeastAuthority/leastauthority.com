@@ -174,21 +174,10 @@ class TestSignupModule(TestCase):
         self.patch(EC2ConsoleClient, 'describe_console_output',
                    call_EC2ConsoleClient_describe_console_output)
 
-        # Because the S3 Client call to S3 is made through txaws, it circumvents make_http_request,
-        # and necessitates a separate patch to isolate the system from remote components.
-        # The patched function is the submit method of the query object in initialize.
-        # This attribute belongs to the Query class object imported by devpay_s3client.
-        from lae_automation.aws.devpay_s3client import Query as S3_Query
-        def call_s3_query_submit(QueryObject):
-            header_dict = QueryObject.get_headers()
-            self.failUnlessEqual(header_dict['Date'], 'Thu, 01 Jan 1970 00:00:00 GMT')
-            self.failUnlessEqual(header_dict['Content-Length'], 0)
-            self.failUnlessEqual(header_dict['Authorization'],
-                                 'AWS TESTS3S3S3S3S3S3S3S3:6k3/9M2RYfjOEcBm6o5p8f9oDMs=')
-            self.failUnlessEqual(header_dict['Content-MD5'], '1B2M2Y8AsgTpgAmY7PhCfg==')
-
+        def query_submit(query, agent, receiver_factory, utcnow):
             return defer.succeed('Completed devpay bucket creation submission.')
-        self.patch(S3_Query, 'submit', call_s3_query_submit)
+        from txaws.client.base import _Query
+        self.patch(_Query, "submit", query_submit)
 
         from lae_automation.initialize import EC2Client
         def call_run_instances(EC2ClientObject, ami_image_id, mininstancecount, maxinstancecount,
