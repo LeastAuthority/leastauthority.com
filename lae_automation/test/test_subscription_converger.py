@@ -6,9 +6,13 @@ from functools import partial
 
 import attr
 from hypothesis import assume, given
+from pyrsistent import pvector
 
 from testtools.assertions import assert_that
 from testtools.matchers import Equals
+
+from txaws.credentials import AWSCredentials
+from txaws.testing.service import FakeAWSServiceRegion
 
 from lae_util.testtools import TestCase
 
@@ -77,9 +81,22 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         super(SubscriptionConvergence, self).__init__()
         self.path = FilePath(mkdtemp().decode("utf-8"))
         self.database = SubscriptionDatabase.from_directory(self.path)
+
+        self.subscription_client = memory_client(self.database.path)
+        self.kube_client = MemoryKube()
+        self.aws_region = FakeAWSServiceRegion(
+            access_key="access_key_id",
+            secret_key="secret_access_key",
+        )
         
     @rule(details=subscription_details())
     def activate(self, details):
+        """
+        Activate a new subscription in the subscription manager.
+
+        This makes new subscription state available to subsequently
+        executed rules.
+        """
         assume(
             details.subscription_id
             not in self.database.list_subscriptions_identifiers()
@@ -91,10 +108,21 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
     @rule(config=deployment_configuration())
     def converge(self, config):
-        client = memory_client(self.database.path)
-        kube = MemoryKube()
-        aws = MemoryAWS()
-        d = converge(config, client, kube, aws)
+        """
+        Converge the cluster (Kubernetes, Route53, etc) configuration on
+        the state in the subscription manager.
+
+        This uses subscription state from previous ``activate`` and
+        ``deactivate`` rules as well as state in the cluster resulting
+        from previous convergence attempts.
+        """
+        agent = object()
+        d = converge(
+            config,
+            self.subscription_client,
+            self.kube_client,
+            self.aws_region,
+        )
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
         # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -188,13 +216,6 @@ class MemoryKube(object):
         xs[definition["metadata"]["name"]] = definition
 
     apply = create
-
-
-class MemoryAWS(object):
-    creds = object()
-
-    def get_client(self, cls, **kw):
-        return cls(**kw)
 
 
 class SubscriptionConvergenceTests(SubscriptionConvergence.TestCase):
