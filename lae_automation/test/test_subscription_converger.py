@@ -6,6 +6,8 @@ from functools import partial
 
 import attr
 from hypothesis import assume, given
+from hypothesis.strategies import choices
+
 from pyrsistent import thaw, pmap, pset
 
 from json import loads, dumps
@@ -148,6 +150,13 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             subscription_id=details.subscription_id,
             details=details,
         )
+
+    @rule(choose=choices())
+    def deactivate(self, choose):
+        identifiers = self.database.list_subscriptions_identifiers()
+        assume(0 < len(identifiers))
+        subscription_id = choose(sorted(identifiers))
+        self.database.deactivate_subscription(subscription_id)
 
     @rule()
     def converge(self):
