@@ -80,7 +80,8 @@ def _marshal_oldsecrets(oldsecrets):
 
 def marshal_subscription(details):
     result = attr.asdict(details)
-    result["oldsecrets"] = _marshal_oldsecrets(result["oldsecrets"])
+    if result["oldsecrets"] is not None:
+        result["oldsecrets"] = _marshal_oldsecrets(result["oldsecrets"])
     return result
 
 

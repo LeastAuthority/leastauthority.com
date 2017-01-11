@@ -276,6 +276,8 @@ class NewTahoeConfigurationTests(TestBase):
             product_id=None,
             customer_id=None,
             subscription_id=None,
+            introducer_port_number=12345,
+            storage_port_number=12346,
         )
         config = server.new_tahoe_configuration(
             deploy_config, subscription, publichost, privatehost,
@@ -295,5 +297,5 @@ class NewTahoeConfigurationTests(TestBase):
         # public host and the hard-coded introducer port we use.
         self.expectThat(
             config["introducer"]["introducer_furl"],
-            hasLocationHint(config["storage"]["publichost"], INTRODUCER_PORT),
+            hasLocationHint(config["storage"]["publichost"], subscription.introducer_port_number),
         )

@@ -58,6 +58,8 @@ def _parse(pem_str):
     return freeze(sorted(parse(pem_str)))
 
 def _convert_oldsecrets(oldsecrets):
+    if oldsecrets is None:
+        return oldsecrets
     converted = freeze(oldsecrets)
     if converted["introducer_node_pem"] is not None:
         converted = converted.transform(["introducer_node_pem"], _parse)

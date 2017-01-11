@@ -141,8 +141,10 @@ class TestSignupModule(TestCase):
             customer_email=self.MEMAIL,
             customer_pgpinfo=self.MKEYINFO,
             product_id=None,
-            customer_id=None,
-            subscription_id=None,
+            customer_id=self.MCUSTOMER_ID,
+            subscription_id=self.MSUBSCRIPTION_ID,
+            introducer_port_number=12345,
+            storage_port_number=12346,
         )
 
         self.patch(signup, 'POLL_TIME', 0.1)
