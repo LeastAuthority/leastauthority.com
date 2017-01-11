@@ -21,7 +21,7 @@ validate_furl = all(
 class DeploymentConfiguration(object):
     # XXX Would be nice to be able to set this to
     # staging.leastauthority.com sometimes.
-    domain = "leastauthority.com"
+    domain = u"leastauthority.com"
 
     # XXX Sets up internal DNS, must agree with other bits of the
     # system

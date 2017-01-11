@@ -161,9 +161,9 @@ def delete_route53_rrsets(route53, zone_id, subscriptions):
 def create_route53_rrsets(route53, zone_id, subscriptions):
     return route53.change_resource_record_sets(zone_id, list(
         create_rrset(
-            name=subscription.subscription_id,
+            name=Name(subscription.subscription_id),
             type=u"CNAME",
-            rrset=[CNAME(Name("introducer"))],
+            rrset=[CNAME(Name(u"introducer"))],
         )
         for subscription
         in subscriptions
@@ -257,7 +257,6 @@ class Delete(object):
     subscription = attr.ib()
 
     def enact(self, service):
-
         return remove_subscription_from_service(service, self.subscription)
 
 @attr.s(frozen=True)
