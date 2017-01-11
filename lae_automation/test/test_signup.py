@@ -317,65 +317,6 @@ class TestSignupModule(TestCase):
             **invalid
         )
 
-    def test_timeout_addressreq(self):
-        stdout, stderr, MLOGFILENAME, MSSEC2_secretsfile = self.initialize_testlocal_state('test_timeout_addressreq')
-        from lae_automation.aws import queryapi
-        def call_get_EC2_properties(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, parser,
-                                    *instance_ids):
-            return defer.succeed(None)
-        self.patch(queryapi, 'get_EC2_properties', call_get_EC2_properties)
-
-        config = attr.assoc(
-            self.DEPLOYMENT_CONFIGURATION,
-            secretsfile=MSSEC2_secretsfile,
-        )
-        attr.validate(config)
-        d = signup.activate_subscribed_service(config, self.SUBSCRIPTION, stdout, stderr, MLOGFILENAME)
-        def _bad_success(ign):
-            self.fail("should have got a failure")
-        def _check_failure(f):
-            f.trap(signup.TimeoutError)
-            stdout.close()
-            logfp = FilePath(MLOGFILENAME)
-            out = logfp.getContent()
-            self.failUnlessIn("Timed out", out)
-        d.addCallbacks(_bad_success, _check_failure)
-        return d
-
-    def test_EC2_not_listening(self):
-        stdout, stderr, MLOGFILENAME, MSSEC2_secretsfile = self.initialize_testlocal_state('test_EC2_not_listening')
-        self.patch(signup, 'VERIFY_POLL_TIME', .1)
-        self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
-
-        from lae_automation.aws import queryapi
-        def call_get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_id):
-            return defer.succeed(None)
-        self.patch(queryapi, 'get_EC2_consoleoutput', call_get_EC2_consoleoutput)
-
-        database_path = FilePath(self.mktemp().decode("utf-8"))
-        database_path.makedirs()
-        smclient = memory_client(database_path)
-
-        config = attr.assoc(
-            self.DEPLOYMENT_CONFIGURATION,
-            secretsfile=MSSEC2_secretsfile,
-        )
-        attr.validate(config)
-        d = signup.activate_subscribed_service(
-            config, self.SUBSCRIPTION, stdout, stderr, MLOGFILENAME,
-            smclient,
-        )
-        def _bad_success(ign):
-            self.fail("should have got a failure")
-        def _check_failure(f):
-            f.trap(signup.TimeoutError)
-            stdout.close()
-            logfp = FilePath(MLOGFILENAME)
-            out = logfp.getContent()
-            self.failUnlessIn("Timed out", out)
-        d.addCallbacks(_bad_success, _check_failure)
-        return d
-
     def test_get_bucket_name(self):
         self.failUnlessEqual(b32encode("abc"), "MFRGG===")
         self.failUnlessEqual(b32encode("def"), "MRSWM===")
