@@ -127,6 +127,11 @@ DEPLOYMENT_TEMPLATE = freeze({
     "apiVersion": "extensions/v1beta1",
     "metadata": {
 	"name": MISSING,
+        "labels": {
+	    "provider": "LeastAuthority",
+	    "app": "s4",
+	    "component": "customer-tahoe-lafs"
+        },
     },
     "spec": {
 	"replicas": 1,
