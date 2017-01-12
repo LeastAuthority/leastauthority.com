@@ -306,10 +306,10 @@ def add_subscription_to_service(old_service, details):
         ["spec", "ports"], lambda v: freeze(sorted(v, key=lambda m: m["port"])),
     )
 
-def remove_subscription_from_service(old_service, details):
+def remove_subscription_from_service(old_service, subscription_id):
     ports = {
-        introducer_port_name(details.subscription_id),
-        storage_port_name(details.subscription_id),
+        introducer_port_name(subscription_id),
+        storage_port_name(subscription_id),
     }
     return old_service.transform(
         ["spec", "ports", lambda p: p["name"] in ports],

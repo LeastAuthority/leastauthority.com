@@ -12,7 +12,7 @@ from pyrsistent import thaw, pmap, pset
 
 from json import loads, dumps
 
-from eliot import Message
+from eliot import Message, start_action
 
 from testtools.assertions import assert_that
 from testtools.matchers import Equals
@@ -133,7 +133,15 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         # XXXX
         assert d.called, d
         self.zone = d.result
+        self.action = start_action(action_type=u"convergence-test")
 
+    def execute_step(self, *a, **kw):
+        with self.action.context():
+            super(SubscriptionConvergence, self).execute_step(*a, **kw)
+
+    def teardown(self):
+        self.action.finish()
+        
     @rule(details=subscription_details())
     def activate(self, details):
         """
@@ -146,6 +154,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             details.subscription_id
             not in self.database.list_subscriptions_identifiers()
         )
+        Message.log(activating=details.subscription_id)
         self.database.create_subscription(
             subscription_id=details.subscription_id,
             details=details,
@@ -156,6 +165,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         identifiers = self.database.list_subscriptions_identifiers()
         assume(0 < len(identifiers))
         subscription_id = choose(sorted(identifiers))
+        Message.log(deactivating=subscription_id)
         self.database.deactivate_subscription(subscription_id)
 
     @rule()
@@ -191,15 +201,17 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         )
 
     def check_convergence(self, database, config, kube, aws):
-        subscriptions = database.list_subscriptions_identifiers()
-        checks = {
-            self.check_configmaps,
-            self.check_deployments,
-            self.check_service,
-            self.check_route53,
-        }
-        for check in checks:
-            check(database, config, subscriptions, kube, aws)
+        with start_action(action_type=u"check-convergence"):
+            subscriptions = sorted(database.list_subscriptions_identifiers())
+            Message.log(active_subscriptions=subscriptions)
+            checks = {
+                self.check_configmaps,
+                self.check_deployments,
+                self.check_service,
+                self.check_route53,
+            }
+            for check in checks:
+                check(database, config, subscriptions, kube, aws)
 
     def check_configmaps(self, database, config, subscriptions, kube, aws):
         for sid in subscriptions:

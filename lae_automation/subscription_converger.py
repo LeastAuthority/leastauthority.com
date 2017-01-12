@@ -65,6 +65,20 @@ def divert_errors_to_log(f):
     return g
 
 
+def with_action(action_type):
+    def wrapper(f):
+        def g(*args, **kwargs):
+            action = start_action(action_type=action_type)
+            with action.context():
+                result = f(*args, **kwargs)
+                if isinstance(result, Deferred):
+                    d = DeferredContext(result)
+                    d.addActionFinish()
+                return result
+        return g
+    return wrapper
+
+
 def get_customer_grid_service(k8s):
     with start_action(action_type=u"load-services") as action:
         services = k8s.get_services(selectors=dict(
@@ -85,20 +99,6 @@ def get_customer_grid_deployments(k8s):
         ))
         action.add_success_fields(deployment_count=len(deployments))
         return deployments
-
-
-def with_action(action_type):
-    def wrapper(f):
-        def g(*args, **kwargs):
-            action = start_action(action_type=action_type)
-            with action.context():
-                result = f(*args, **kwargs)
-                if isinstance(result, Deferred):
-                    d = DeferredContext(result)
-                    d.addActionFinish()
-                return result
-        return g
-    return wrapper
 
 
 @inlineCallbacks
@@ -129,13 +129,13 @@ def converge(config, subscriptions, k8s, aws):
     to_delete = set()
 
     for deployment in configured_deployments:
-        subscription_id = deployment["metadata"]["subscription"]
+        subscription_id = deployment["metadata"]["labels"]["subscription"]
         try:
             subscription = active_subscriptions[subscription_id]
         except KeyError:
+            to_delete.add(subscription_id)
             continue
 
-        Message.log(create=subscription_id, reason=u"missing")
         to_create.remove(subscription)
 
         introducer_port = (
@@ -145,12 +145,12 @@ def converge(config, subscriptions, k8s, aws):
             deployment["spec"]["template"]["spec"]["containers"][1]["ports"][0]["containerPort"]
         )
         if introducer_port != subscription.introducer_port_number:
-            Message.log(modify=subscription_id, reason=u"introducer port mismatch")
-            to_delete.add(subscription)
+            Message.log(modify_deployment=subscription_id, reason=u"introducer port mismatch")
+            to_delete.add(subscription_id)
             to_create.add(subscription)
         elif storage_port != subscription.storage_port_number:
-            Message.log(modify=subscription_id, reason=u"storage port mismatch")
-            to_delete.add(subscription)
+            Message.log(modify_deployment=subscription_id, reason=u"storage port mismatch")
+            to_delete.add(subscription_id)
             to_create.add(subscription)
 
     configmaps = list(
@@ -171,18 +171,23 @@ def converge(config, subscriptions, k8s, aws):
     except KeyError:
         raise ValueError("Configured domain {!r} does not exist in Route53.".format(config.domain))
 
-    with start_action(action_type=u"enacting"):
-        yield delete_route53_rrsets(route53, zone.identifier, to_delete)
-        for details in to_delete:
-            k8s.destroy("deployment", deployment_name(details.subscription_id))
-            k8s.destroy("configmap", configmap_name(details.subscription_id))
+    a = start_action(
+        action_type=u"enacting",
+        to_delete=list(to_delete),
+        to_create=list(s.subscription_id for s in to_create),
+    )
+    with a:
+        yield delete_route53_rrsets(route53, zone, to_delete)
+        for subscription_id in to_delete:
+            k8s.destroy("deployment", deployment_name(subscription_id))
+            k8s.destroy("configmap", configmap_name(subscription_id))
 
         for configmap in configmaps:
             k8s.create(thaw(configmap))
         for deployment in deployments:
             k8s.create(thaw(deployment))
         k8s.apply(thaw(service))
-        yield create_route53_rrsets(route53, zone.name, zone.identifier, to_create)
+        yield create_route53_rrsets(route53, zone, to_create)
 
 
 @with_action(action_type=u"find-zones")
@@ -198,13 +203,13 @@ def get_hosted_zone_by_name(route53, name):
     return d
 
 
-def _introducer_name_for_subscription(subscription, domain):
+def _introducer_name_for_subscription(subscription_id, domain):
     return Name(u"{subscription_id}.introducer.{domain}".format(
-        subscription_id=subscription.subscription_id,
+        subscription_id=subscription_id,
         domain=domain,
     ))
 
-def _cname_for_subscription(subscription, domain):
+def _cname_for_subscription(domain):
     return CNAME(
         Name(
             u"introducer.{domain}".format(
@@ -213,37 +218,48 @@ def _cname_for_subscription(subscription, domain):
         )
     )
 
-def delete_route53_rrsets(route53, zone_id, subscriptions):
-    return route53.change_resource_record_sets(zone_id, list(
-        delete_rrset(
-            name=_introducer_name_for_subscription(subscription, domain),
-            type=u"CNAME",
-            rrset=[_cname_for_subscription(subscription, domain)],
-        )
-        for subscription
-        in subscriptions
-    ))
+def delete_route53_rrsets(route53, zone, subscription_ids):
+    a = start_action(action_type=u"delete-route53", subscription_ids=list(subscription_ids))
+    with a.context():
+        d = route53.change_resource_record_sets(zone.identifier, list(
+            delete_rrset(
+                name=_introducer_name_for_subscription(subscription_id, zone.name),
+                type=u"CNAME",
+                rrset=[_cname_for_subscription(zone.name)],
+            )
+            for subscription_id
+            in subscription_ids
+        ))
+    c = DeferredContext(d)
+    c.addActionFinish()
+    return c.result
 
-def create_route53_rrsets(route53, domain, zone_id, subscriptions):
-    return route53.change_resource_record_sets(zone_id, list(
-        create_rrset(
-            name=_introducer_name_for_subscription(subscription, domain),
-            type=u"CNAME",
-            rrset=[_cname_for_subscription(subscription, domain)],
-        )
-        for subscription
-        in subscriptions
-    ))
+def create_route53_rrsets(route53, zone, subscriptions):
+    a = start_action(action_type=u"create-route53")
+    with a.context():
+        d = route53.change_resource_record_sets(zone.identifier, list(
+            create_rrset(
+                name=_introducer_name_for_subscription(subscription.subscription_id, zone.name),
+                type=u"CNAME",
+                rrset=[_cname_for_subscription(zone.name)],
+            )
+            for subscription
+            in subscriptions
+        ))
+    c = DeferredContext(d)
+    c.addActionFinish()
+    return c.result
 
 
 def apply_service_changes(service, to_delete, to_create):
-    with_deletions = reduce(
-        remove_subscription_from_service, to_delete, service,
-    )
-    with_creations = reduce(
-        add_subscription_to_service, to_create, with_deletions,
-    )
-    return with_creations
+    with start_action(action_type=u"change-service"):
+        with_deletions = reduce(
+            remove_subscription_from_service, to_delete, service,
+        )
+        with_creations = reduce(
+            add_subscription_to_service, to_create, with_deletions,
+        )
+        return with_creations
 
 
 # def converge(subscriptions, k8s, aws):
