@@ -19,6 +19,7 @@ import mock
 from testtools.matchers import Is
 
 from txaws.testing.s3 import MemoryS3
+from txaws.credentials import AWSCredentials
 
 from lae_util.testtools import TestCase
 
@@ -127,7 +128,8 @@ class CreateUserBucketTests(TestCase):
         reactor = Clock()
 
         controller = MemoryS3()
-        client, state = controller.client(creds=None, endpoint=None)
+        creds = AWSCredentials(access_key_id, secret_key)
+        client, state = controller.client(creds=creds, endpoint=None)
         state.set_rate_limit_exceeded()
 
         d = create_user_bucket(reactor, client, bucket_name)
