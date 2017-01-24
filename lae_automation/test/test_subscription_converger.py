@@ -44,6 +44,9 @@ from lae_automation.containers import (
 )
 
 from .strategies import subscription_details, deployment_configuration
+from ..kubeclient import KubeClient
+
+from txkube import memory_kubernetes
 
 class ConvergeHelperTests(TestCase):
     """
@@ -120,7 +123,8 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         self.deploy_config = deployment_configuration().example()
 
         self.subscription_client = memory_client(self.database.path)
-        self.kube_client = MemoryKube()
+        self.kubernetes = memory_kubernetes()
+        self.kube_client = KubeClient(k8s=self.kubernetes.client())
         self.aws_region = FakeAWSServiceRegion(
             access_key="access_key_id",
             secret_key="secret_access_key",
@@ -141,7 +145,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
     def teardown(self):
         self.action.finish()
-        
+
     @rule(details=subscription_details())
     def activate(self, details):
         """
@@ -261,55 +265,6 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             expected_rrsets,
             MappingEquals(actual_rrsets),
         )
-
-
-def selectors_match(selectors, resource):
-    missing = object()
-    return {
-        key: resource["metadata"]["labels"].get(key, missing)
-        for key in selectors
-    } == selectors
-
-@attr.s(frozen=True)
-class MemoryKube(object):
-    resources = attr.ib(default=attr.Factory(dict))
-
-    def _resource(key):
-        return property(lambda self: self.resources.setdefault(key, {}))
-
-    configmap = _resource("configmap")
-    deployment = _resource("deployment")
-    service = _resource("service")
-
-    def _get(self, xs, name=None, selectors=None):
-        if name is not None:
-            return xs[name]
-        if selectors is not None:
-            return filter(partial(selectors_match, selectors), xs.itervalues())
-        return xs.itervalues()
-
-    def get_configmaps(self, **kwargs):
-        return self._get(self.configmap, **kwargs)
-
-    def get_deployments(self, **kwargs):
-        return self._get(self.deployment, **kwargs)
-
-    def get_services(self, **kwargs):
-        return self._get(self.service, **kwargs)
-
-    def destroy(self, kind, name):
-        xs = getattr(self, kind.lower())
-        del xs[name]
-
-    def create(self, definition):
-        Message.log(memorykube_create=definition)
-        xs = getattr(self, definition["kind"].lower())
-        # Round-trip through JSON encoding to prove it is JSON encodable.
-        xs[definition["metadata"]["name"]] = loads(dumps(definition))
-
-    apply = create
-
-
 class SubscriptionConvergenceTests(SubscriptionConvergence.TestCase):
     def test_convergence(self):
         self.runTest()

@@ -20,6 +20,7 @@ from eliot.twisted import DeferredContext
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options
+from twisted.python.url import URL
 from twisted.web.client import Agent
 
 from txaws.route53.model import Name, CNAME, delete_rrset, create_rrset
@@ -32,7 +33,8 @@ from .containers import (
     new_service,
     add_subscription_to_service, remove_subscription_from_service
 )
-from .kubeclient import KubeClient
+
+from txkube import network_kubernetes, authenticate_with_serviceaccount
 
 class Options(_Options):
     optParameters = [
@@ -44,7 +46,10 @@ def makeService(options):
     agent = Agent(reactor)
     subscription_client = SMClient(endpoint=options["endpoint"], agent=agent)
 
-    k8s_client = KubeClient.from_service_account()
+    k8s_client = network_kubernetes(
+        base_url=URL.fromText(u"https://kubernetes/"),
+        agent=authenticate_with_serviceaccount(reactor),
+    )
 
     config = DeploymentConfiguration()
 
@@ -92,7 +97,7 @@ def get_customer_grid_service(k8s):
 
 def get_customer_grid_deployments(k8s):
     with start_action(action_type=u"load-deployments") as action:
-        deployments =  k8s.get_deployments(selectors=dict(
+        deployments = k8s.get_deployments(selectors=dict(
             provider="LeastAuthority",
             app="s4",
             component="customer-tahoe-lafs"
