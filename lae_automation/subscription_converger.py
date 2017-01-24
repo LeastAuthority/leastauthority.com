@@ -22,7 +22,7 @@ from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options
 from twisted.web.client import Agent
 
-from txaws.route53.client import Name, CNAME, delete_rrset, create_rrset
+from txaws.route53.model import Name, CNAME, delete_rrset, create_rrset
 
 from .signup import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
