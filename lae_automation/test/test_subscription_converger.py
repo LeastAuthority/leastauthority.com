@@ -2,15 +2,10 @@
 Tests for ``lae_automation.subscription_converger``.
 """
 
-from functools import partial
-
-import attr
 from hypothesis import assume, given
 from hypothesis.strategies import choices
 
 from pyrsistent import thaw, pmap, pset
-
-from json import loads, dumps
 
 from eliot import Message, start_action
 
@@ -260,7 +255,15 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         route53 = aws.get_route53_client()
         d = route53.list_resource_record_sets(self.zone.identifier)
         # XXX
-        actual_rrsets = d.result
+        result = d.result
+
+        actual_rrsets = pmap({
+            key: rrset
+            for (key, rrset)
+            in result.iteritems()
+            # Don't care about these infrastructure rrsets.
+            if key.type not in (u"SOA", u"NS")
+        })
         assert_that(
             expected_rrsets,
             MappingEquals(actual_rrsets),
