@@ -18,7 +18,7 @@ from txaws.route53.client import Name, CNAME
 
 from lae_util.testtools import TestCase
 
-from .matchers import MappingEquals
+from txkube.testing.matchers import PClassEquals, MappingEquals
 
 from lae_automation.subscription_manager import (
     memory_client,
@@ -209,24 +209,25 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                 self.check_service,
                 self.check_route53,
             }
+            k8s_state = self.kubernetes._state
             for check in checks:
-                check(database, config, subscriptions, kube, aws)
+                check(database, config, subscriptions, k8s_state, aws)
 
-    def check_configmaps(self, database, config, subscriptions, kube, aws):
+    def check_configmaps(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
             assert_that(
                 create_configuration(config, database.get_subscription(sid)),
-                Equals(kube.get_configmaps(name=configmap_name(sid))),
+                Equals(k8s_state.configmaps.item_by_name(configmap_name(sid))),
             )
 
-    def check_deployments(self, database, config, subscriptions, kube, aws):
+    def check_deployments(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
             assert_that(
                 create_deployment(config, database.get_subscription(sid)),
-                Equals(kube.get_deployments(name=deployment_name(sid))),
+                Equals(k8s_state.deployments.item_by_name(deployment_name(sid))),
             )
 
-    def check_service(self, database, config, subscriptions, kube, aws):
+    def check_service(self, database, config, subscriptions, k8s_state, aws):
         expected = new_service()
         for sid in subscriptions:
             expected = add_subscription_to_service(
@@ -234,11 +235,11 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             )
         assert_that(
             expected,
-            MappingEquals(kube.get_services(name=expected["metadata"]["name"])),
+            PClassEquals(k8s_state.services.item_by_name(expected.metadata.name)),
         )
         Message.log(check_service=thaw(expected))
 
-    def check_route53(self, database, config, subscriptions, kube, aws):
+    def check_route53(self, database, config, subscriptions, k8s_state, aws):
         expected_rrsets = pmap({
             Name(
                 u"{subscription_id}.introducer.{domain}".format(
