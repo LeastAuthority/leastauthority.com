@@ -12,8 +12,6 @@ them.
 
 import attr
 
-from pyrsistent import thaw
-
 from eliot import Message, start_action
 from eliot.twisted import DeferredContext
 
@@ -33,6 +31,8 @@ from .containers import (
     new_service,
     add_subscription_to_service, remove_subscription_from_service
 )
+from .kubeclient import KubeClient, LabelSelector
+
 
 from txkube import network_kubernetes, authenticate_with_serviceaccount
 
@@ -50,12 +50,13 @@ def makeService(options):
         base_url=URL.fromText(u"https://kubernetes/"),
         agent=authenticate_with_serviceaccount(reactor),
     )
+    k8s = KubeClient(k8s=k8s_client)
 
     config = DeploymentConfiguration()
 
     return TimerService(
         1.0,
-        divert_errors_to_log(converge), config, subscription_client, k8s_client,
+        divert_errors_to_log(converge), config, subscription_client, k8s,
     )
 
 def divert_errors_to_log(f):
@@ -85,25 +86,35 @@ def with_action(action_type):
 
 
 def get_customer_grid_service(k8s):
-    with start_action(action_type=u"load-services") as action:
-        services = k8s.get_services(selectors=dict(
+    action = start_action(action_type=u"load-services")
+    with action.context():
+        d = DeferredContext(k8s.get_services(LabelSelector(dict(
             provider="LeastAuthority",
             app="s4",
             component="customer-tahoe-lafs"
-        ))
-        action.add_success_fields(service_count=len(services))
-        return services
+        ))))
+        def got_services(services):
+            services = list(services)
+            action.add_success_fields(service_count=len(services))
+            return services
+        d.addCallback(got_services)
+        return d.addActionFinish()
 
 
 def get_customer_grid_deployments(k8s):
-    with start_action(action_type=u"load-deployments") as action:
-        deployments = k8s.get_deployments(selectors=dict(
+    action = start_action(action_type=u"load-deployments")
+    with action.context():
+        d = DeferredContext(k8s.get_deployments(LabelSelector(dict(
             provider="LeastAuthority",
             app="s4",
             component="customer-tahoe-lafs"
-        ))
-        action.add_success_fields(deployment_count=len(deployments))
-        return deployments
+        ))))
+        def got_deployments(deployments):
+            deployments = list(deployments)
+            action.add_success_fields(deployment_count=len(deployments))
+            return deployments
+        d.addCallback(got_deployments)
+        return d.addActionFinish()
 
 
 @inlineCallbacks
@@ -188,10 +199,10 @@ def converge(config, subscriptions, k8s, aws):
             k8s.destroy("configmap", configmap_name(subscription_id))
 
         for configmap in configmaps:
-            k8s.create(thaw(configmap))
+            k8s.create(configmap)
         for deployment in deployments:
-            k8s.create(thaw(deployment))
-        k8s.apply(thaw(service))
+            k8s.create(deployment)
+        k8s.replace(service)
         yield create_route53_rrsets(route53, zone, to_create)
 
 
