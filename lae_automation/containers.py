@@ -6,6 +6,8 @@ from twisted.internet.defer import succeed
 
 from .server import new_tahoe_configuration, marshal_tahoe_configuration
 
+from txkube import v1, v1beta1
+
 def provision_subscription(reactor, deploy_config, details, smclient):
     """
     Create the subscription state in the SubscriptionManager service.
@@ -253,27 +255,24 @@ def create_deployment(deploy_config, details):
         ["metadata", "name"], name
     )
 
-EMPTY_SERVICE = freeze({
-    "kind": "Service",
-    "apiVersion": "v1",
-    "metadata": {
+EMPTY_SERVICE = v1.Service(
+    metadata={
         # XXX ???
-	"name": "s4-customer-grids",
-	"labels": {
-	    "provider": "LeastAuthority"
+	u"name": u"s4-customer-grids",
+	u"labels": {
+	    u"provider": u"LeastAuthority"
 	}
     },
-    "spec": {
-	"type": "LoadBalancer",
-	"selector": {
-	    "provider": "LeastAuthority",
-	    "app": "s4",
-	    "component": "customer-tahoe-lafs"
+    spec={
+	u"type": u"LoadBalancer",
+	u"selector": {
+	    u"provider": u"LeastAuthority",
+	    u"app": u"s4",
+	    u"component": u"customer-tahoe-lafs"
 	},
-	"ports": [
-	]
+	u"ports": [],
     }
-})
+)
 
 def new_service():
     return EMPTY_SERVICE
