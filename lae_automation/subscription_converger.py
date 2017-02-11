@@ -34,7 +34,7 @@ from .containers import (
 from .kubeclient import KubeClient, LabelSelector
 
 
-from txkube import network_kubernetes, authenticate_with_serviceaccount
+from txkube import v1, network_kubernetes, authenticate_with_serviceaccount
 
 class Options(_Options):
     optParameters = [
@@ -96,7 +96,9 @@ def get_customer_grid_service(k8s):
         def got_services(services):
             services = list(services)
             action.add_success_fields(service_count=len(services))
-            return services
+            if services:
+                return services[0]
+            return None
         d.addCallback(got_services)
         return d.addActionFinish()
 
@@ -139,7 +141,10 @@ def converge(config, subscriptions, k8s, aws):
     # mis-configurations and correct them.
     active_subscriptions = yield get_active_subscriptions(subscriptions)
     configured_deployments = yield get_customer_grid_deployments(k8s)
-    configured_service = (yield get_customer_grid_service(k8s)) or new_service()
+    configured_service = (yield get_customer_grid_service(k8s))
+    create_service = (configured_service is None)
+    if create_service:
+        configured_service = new_service()
 
     to_create = set(active_subscriptions.itervalues())
     to_delete = set()
@@ -180,6 +185,7 @@ def converge(config, subscriptions, k8s, aws):
         in to_create
     )
     service = apply_service_changes(configured_service, to_delete, to_create)
+    assert isinstance(service, v1.Service)
 
     route53 = aws.get_route53_client()
     try:
@@ -192,17 +198,24 @@ def converge(config, subscriptions, k8s, aws):
         to_delete=list(to_delete),
         to_create=list(s.subscription_id for s in to_create),
     )
+    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    # the objects have no namespace so they can't be created
+    # also this function is now (I)/O -> logic -> I/(O)
+    # so probably could be refactored now
     with a:
         yield delete_route53_rrsets(route53, zone, to_delete)
         for subscription_id in to_delete:
-            k8s.destroy("deployment", deployment_name(subscription_id))
-            k8s.destroy("configmap", configmap_name(subscription_id))
+            yield k8s.destroy("deployment", deployment_name(subscription_id))
+            yield k8s.destroy("configmap", configmap_name(subscription_id))
 
         for configmap in configmaps:
-            k8s.create(configmap)
+            yield k8s.create(configmap)
         for deployment in deployments:
-            k8s.create(deployment)
-        k8s.replace(service)
+            yield k8s.create(deployment)
+        if create_service:
+            yield k8s.create(service)
+        else:
+            yield k8s.replace(service)
         yield create_route53_rrsets(route53, zone, to_create)
 
 

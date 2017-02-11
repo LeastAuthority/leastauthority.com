@@ -1,6 +1,6 @@
 from json import dumps
 
-from pyrsistent import freeze, discard
+from pyrsistent import freeze, discard, ny
 
 from twisted.internet.defer import succeed
 
@@ -218,11 +218,11 @@ def deployment_name(subscription_id):
 # Length is a factor for service names. :(
 # Keep introducer and storage port names short.
 def introducer_port_name(subscription_id):
-    return "i-" + subscription_id.replace("_", "-")
+    return u"i-" + subscription_id.replace(u"_", u"-")
 
 
 def storage_port_name(subscription_id):
-    return "s-" + subscription_id.replace("_", "-")
+    return u"s-" + subscription_id.replace(u"_", u"-")
 
 
 def create_deployment(deploy_config, details):
@@ -283,18 +283,18 @@ def extender(values):
     return f
 
 def service_ports(details):
-    intro = {
-        "name": introducer_port_name(details.subscription_id),
-        "port": details.introducer_port_number,
-        "targetPort": introducer_port_name(details.subscription_id),
-        "protocol":  "TCP",
-    }
-    storage = {
-        "name": storage_port_name(details.subscription_id),
-        "port": details.storage_port_number,
-        "targetPort": storage_port_name(details.subscription_id),
-        "protocol":  "TCP",
-    }
+    intro = v1.ServicePort(
+        name=introducer_port_name(details.subscription_id),
+        port=details.introducer_port_number,
+        targetPort=introducer_port_name(details.subscription_id),
+        protocol=u"TCP",
+    )
+    storage = v1.ServicePort(
+        name=storage_port_name(details.subscription_id),
+        port=details.storage_port_number,
+        targetPort=storage_port_name(details.subscription_id),
+        protocol=u"TCP",
+    )
     return [intro, storage]
 
 
@@ -302,7 +302,7 @@ def add_subscription_to_service(old_service, details):
     return old_service.transform(
         ["spec", "ports"], extender(service_ports(details)),
         # Simplifies testing, probably helps in other areas.
-        ["spec", "ports"], lambda v: freeze(sorted(v, key=lambda m: m["port"])),
+        ["spec", "ports"], lambda v: freeze(sorted(v, key=lambda m: m.port)),
     )
 
 def remove_subscription_from_service(old_service, subscription_id):
@@ -311,8 +311,9 @@ def remove_subscription_from_service(old_service, subscription_id):
         storage_port_name(subscription_id),
     }
     return old_service.transform(
-        ["spec", "ports", lambda p: p["name"] in ports],
-        discard,
+        # Where are my value-based transforms!
+        ["spec", "ports"],
+        filter(lambda p: p.name not in ports, old_service.spec.ports),
     )
 
 def create_dns():

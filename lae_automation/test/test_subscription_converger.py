@@ -3,7 +3,7 @@ Tests for ``lae_automation.subscription_converger``.
 """
 
 from hypothesis import assume, given
-from hypothesis.strategies import choices
+from hypothesis.strategies import lists, choices, randoms
 
 from pyrsistent import thaw, pmap, pset
 
@@ -24,7 +24,7 @@ from lae_automation.subscription_manager import (
     memory_client,
 )
 from lae_automation.subscription_converger import (
-    converge, get_hosted_zone_by_name,
+    converge, get_hosted_zone_by_name, apply_service_changes,
 )
 from lae_automation.containers import (
     service_ports,
@@ -41,7 +41,7 @@ from lae_automation.containers import (
 from .strategies import subscription_details, deployment_configuration
 from ..kubeclient import KubeClient
 
-from txkube import memory_kubernetes
+from txkube import v1, memory_kubernetes
 
 class ConvergeHelperTests(TestCase):
     """
@@ -56,18 +56,18 @@ class ConvergeHelperTests(TestCase):
         self.assertThat(
             service_ports(details),
             Equals([
-                {
-                    "name": introducer_port_name(details.subscription_id),
-                    "port": details.introducer_port_number,
-                    "targetPort": introducer_port_name(details.subscription_id),
-                    "protocol": "TCP",
-                },
-                {
-                    "name": storage_port_name(details.subscription_id),
-                    "port": details.storage_port_number,
-                    "targetPort": storage_port_name(details.subscription_id),
-                    "protocol": "TCP",
-                },
+                v1.ServicePort(
+                    name=introducer_port_name(details.subscription_id),
+                    port=details.introducer_port_number,
+                    targetPort=introducer_port_name(details.subscription_id),
+                    protocol=u"TCP",
+                ),
+                v1.ServicePort(
+                    name=storage_port_name(details.subscription_id),
+                    port=details.storage_port_number,
+                    targetPort=storage_port_name(details.subscription_id),
+                    protocol=u"TCP",
+                ),
             ]),
         )
 
@@ -107,6 +107,54 @@ from twisted.python.filepath import FilePath
 from tempfile import mkdtemp
 
 from lae_automation.subscription_manager import SubscriptionDatabase
+
+
+class ApplyServiceChangesTests(TestCase):
+    """
+    Tests for ``apply_service_changes``.
+    """
+    @given(lists(subscription_details(), average_size=1))
+    def test_create(self, details):
+        """
+        ``apply_service_changes`` adds entries based on the ``to_create``
+        subscriptions to the service's ``ports``.
+        """
+        service = new_service()
+        changed = apply_service_changes(service, to_delete=set(), to_create=set(details))
+        self.assertThat(
+            set(changed.spec.ports),
+            Equals(
+                set(p for d in details for p in service_ports(d)),
+            ),
+        )
+
+    @given(lists(subscription_details(), min_size=1, average_size=3), randoms())
+    def test_delete(self, details, random):
+        """
+        ``apply_service_changes`` removes entries based on the ``to_delete``
+        subscriptions from the service's ``ports``.
+        """
+        service = new_service().transform(
+            [u"spec", u"ports"],
+            list(p for d in details for p in service_ports(d)),
+        )
+        to_delete = set(
+            d.subscription_id
+            for d
+            in details
+            if random.choice((True, False))
+        )
+        changed = apply_service_changes(service, to_delete=to_delete, to_create=set())
+        self.assertThat(
+            set(changed.spec.ports),
+            Equals(
+                set(
+                    p
+                    for d in details if d.subscription_id not in to_delete
+                    for p in service_ports(d)),
+            ),
+        )
+
 
 
 class SubscriptionConvergence(RuleBasedStateMachine):
