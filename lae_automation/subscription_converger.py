@@ -10,6 +10,8 @@ with no corresponding Kubernetes configuration, such is added for
 them.
 """
 
+from base64 import b32encode
+
 import attr
 
 from eliot import Message, start_action
@@ -21,9 +23,9 @@ from twisted.python.usage import Options as _Options
 from twisted.python.url import URL
 from twisted.web.client import Agent
 
-from txaws.route53.model import Name, CNAME, delete_rrset, create_rrset
+from txaws.route53.model import Name, CNAME, RRSet, delete_rrset, create_rrset
 
-from .signup import DeploymentConfiguration
+from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
     configmap_name, deployment_name,
@@ -31,10 +33,10 @@ from .containers import (
     new_service,
     add_subscription_to_service, remove_subscription_from_service
 )
-from .kubeclient import KubeClient, LabelSelector
+from .kubeclient import KubeClient, And, LabelSelector, NamespaceSelector
 
 
-from txkube import v1, network_kubernetes, authenticate_with_serviceaccount
+from txkube import v1, v1beta1, network_kubernetes, authenticate_with_serviceaccount
 
 class Options(_Options):
     optParameters = [
@@ -85,38 +87,46 @@ def with_action(action_type):
     return wrapper
 
 
-def get_customer_grid_service(k8s):
-    action = start_action(action_type=u"load-services")
-    with action.context():
-        d = DeferredContext(k8s.get_services(LabelSelector(dict(
+def _s4_selector(namespace):
+    return And([
+        LabelSelector(dict(
             provider="LeastAuthority",
             app="s4",
             component="customer-tahoe-lafs"
-        ))))
+        )),
+        # XXX Need to get this from configuration.
+        NamespaceSelector(namespace),
+    ])
+
+
+def get_customer_grid_service(k8s, namespace):
+    action = start_action(action_type=u"load-services")
+    with action.context():
+        d = DeferredContext(k8s.get_services(_s4_selector(namespace)))
         def got_services(services):
             services = list(services)
             action.add_success_fields(service_count=len(services))
             if services:
-                return services[0]
+                # Work around
+                # https://github.com/LeastAuthority/txkube/issues/94
+                return v1.Service.create(services[0].serialize())
             return None
         d.addCallback(got_services)
         return d.addActionFinish()
 
 
-def get_customer_grid_deployments(k8s):
+
+def get_customer_grid_deployments(k8s, namespace):
     action = start_action(action_type=u"load-deployments")
     with action.context():
-        d = DeferredContext(k8s.get_deployments(LabelSelector(dict(
-            provider="LeastAuthority",
-            app="s4",
-            component="customer-tahoe-lafs"
-        ))))
+        d = DeferredContext(k8s.get_deployments(_s4_selector(namespace)))
         def got_deployments(deployments):
             deployments = list(deployments)
             action.add_success_fields(deployment_count=len(deployments))
             return deployments
         d.addCallback(got_deployments)
         return d.addActionFinish()
+
 
 
 @inlineCallbacks
@@ -140,17 +150,17 @@ def converge(config, subscriptions, k8s, aws):
     # subscription-derived deployments exist.  Also detect port
     # mis-configurations and correct them.
     active_subscriptions = yield get_active_subscriptions(subscriptions)
-    configured_deployments = yield get_customer_grid_deployments(k8s)
-    configured_service = (yield get_customer_grid_service(k8s))
+    configured_deployments = yield get_customer_grid_deployments(k8s, config.kubernetes_namespace)
+    configured_service = (yield get_customer_grid_service(k8s, config.kubernetes_namespace))
     create_service = (configured_service is None)
     if create_service:
-        configured_service = new_service()
+        configured_service = new_service(config.kubernetes_namespace)
 
     to_create = set(active_subscriptions.itervalues())
     to_delete = set()
 
     for deployment in configured_deployments:
-        subscription_id = deployment["metadata"]["labels"]["subscription"]
+        subscription_id = deployment.metadata.labels.subscription
         try:
             subscription = active_subscriptions[subscription_id]
         except KeyError:
@@ -160,10 +170,10 @@ def converge(config, subscriptions, k8s, aws):
         to_create.remove(subscription)
 
         introducer_port = (
-            deployment["spec"]["template"]["spec"]["containers"][0]["ports"][0]["containerPort"]
+            deployment.spec.template.spec.containers[0].ports[0].containerPort
         )
         storage_port = (
-            deployment["spec"]["template"]["spec"]["containers"][1]["ports"][0]["containerPort"]
+            deployment.spec.template.spec.containers[1].ports[0].containerPort
         )
         if introducer_port != subscription.introducer_port_number:
             Message.log(modify_deployment=subscription_id, reason=u"introducer port mismatch")
@@ -185,7 +195,6 @@ def converge(config, subscriptions, k8s, aws):
         in to_create
     )
     service = apply_service_changes(configured_service, to_delete, to_create)
-    assert isinstance(service, v1.Service)
 
     route53 = aws.get_route53_client()
     try:
@@ -205,8 +214,18 @@ def converge(config, subscriptions, k8s, aws):
     with a:
         yield delete_route53_rrsets(route53, zone, to_delete)
         for subscription_id in to_delete:
-            yield k8s.destroy("deployment", deployment_name(subscription_id))
-            yield k8s.destroy("configmap", configmap_name(subscription_id))
+            yield k8s.delete(v1beta1.Deployment(
+                metadata=dict(
+                    name=deployment_name(subscription_id),
+                    namespace=config.kubernetes_namespace,
+                ),
+            ))
+            yield k8s.delete(v1.ConfigMap(
+                metadata=dict(
+                    name=configmap_name(subscription_id),
+                    namespace=config.kubernetes_namespace,
+                ),
+            ))
 
         for configmap in configmaps:
             yield k8s.create(configmap)
@@ -234,7 +253,7 @@ def get_hosted_zone_by_name(route53, name):
 
 def _introducer_name_for_subscription(subscription_id, domain):
     return Name(u"{subscription_id}.introducer.{domain}".format(
-        subscription_id=subscription_id,
+        subscription_id=b32encode(subscription_id).lower().strip(u"="),
         domain=domain,
     ))
 
@@ -247,15 +266,20 @@ def _cname_for_subscription(domain):
         )
     )
 
+def _rrset_for_subscription(subscription_id, zone_name):
+    return RRSet(
+        label=_introducer_name_for_subscription(subscription_id, zone_name),
+        type=u"CNAME",
+        ttl=60,
+        records={_cname_for_subscription(zone_name)},
+    )
+
+
 def delete_route53_rrsets(route53, zone, subscription_ids):
     a = start_action(action_type=u"delete-route53", subscription_ids=list(subscription_ids))
     with a.context():
         d = route53.change_resource_record_sets(zone.identifier, list(
-            delete_rrset(
-                name=_introducer_name_for_subscription(subscription_id, zone.name),
-                type=u"CNAME",
-                rrset=[_cname_for_subscription(zone.name)],
-            )
+            delete_rrset(_rrset_for_subscription(subscription_id, zone.name))
             for subscription_id
             in subscription_ids
         ))
@@ -267,11 +291,7 @@ def create_route53_rrsets(route53, zone, subscriptions):
     a = start_action(action_type=u"create-route53")
     with a.context():
         d = route53.change_resource_record_sets(zone.identifier, list(
-            create_rrset(
-                name=_introducer_name_for_subscription(subscription.subscription_id, zone.name),
-                type=u"CNAME",
-                rrset=[_cname_for_subscription(zone.name)],
-            )
+            create_rrset(_rrset_for_subscription(subscription.subscription_id, zone.name))
             for subscription
             in subscriptions
         ))

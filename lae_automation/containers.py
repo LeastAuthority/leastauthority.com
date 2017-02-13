@@ -1,3 +1,4 @@
+from base64 import b32encode
 from json import dumps
 
 from pyrsistent import freeze
@@ -44,39 +45,39 @@ class _NotSerializable(object):
 
 MISSING = _NotSerializable()
 
-
-CONFIGMAP_TEMPLATE = freeze({
-    "kind": "ConfigMap",
-    "apiVersion": "v1",
-    "metadata": {
-	"name": MISSING,
-	"labels": {
-	    "provider": "LeastAuthority",
-	    "app": "s4",
-	    "component": "customer-tahoe-lafs"
-	}
-    },
-    "data": {
-	"storage.json": MISSING,
-	"introducer.json": MISSING,
+_S4_METADATA = v1.ObjectMeta(
+    labels={
+	u"provider": u"LeastAuthority",
+	u"app": u"s4",
+	u"component": u"customer-tahoe-lafs"
     }
-})
+)
+
+CONFIGMAP_TEMPLATE = v1.ConfigMap(
+    metadata=_S4_METADATA,
+)
 
 
 def subscription_metadata(details):
     return [
-        ["metadata", "labels", "email"], details.customer_email,
-        ["metadata", "labels", "customer"], details.customer_id,
-        ["metadata", "labels", "subscription"], details.subscription_id,
-        ["metadata", "labels", "plan"], details.product_id,
+        [u"metadata", u"labels", u"email"], details.customer_email,
+        [u"metadata", u"labels", u"customer"], details.customer_id,
+        [u"metadata", u"labels", u"subscription"], details.subscription_id,
+        [u"metadata", u"labels", u"plan"], details.product_id,
     ]
 
 
+
 def configmap_name(subscription_id):
-    return "customer-config-" + subscription_id
+    return u"customer-config-" + _sanitize(subscription_id)
+
+
 
 def configmap_public_host(subscription_id, domain):
+    # XXX Fishy
     return "{}.{}".format(subscription_id, domain)
+
+
 
 def create_configuration(deploy_config, details):
     """
@@ -111,108 +112,88 @@ def create_configuration(deploy_config, details):
         )
 
     return CONFIGMAP_TEMPLATE.transform(
-        # Add some metadata to make inspecting this stuff a little
-        # easier.
+        [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
+        # Assign it a unique identifier the deployment can use to refer to it.
+        [u"metadata", u"name"], name,
+        # Some other metadata to make inspecting this stuff a little easier.
         *metadata
     ).transform(
         # Dump the actual Tahoe-LAFS configuration into it.
-        ["data", "introducer.json"], dumps(configuration["introducer"]),
-        ["data", "storage.json"], dumps(configuration["storage"]),
-
-        # And assign it a unique identifier the deployment can use to
-        # refer to it.
-        ["metadata", "name"], name
+        [u"data", u"introducer.json"], dumps(configuration["introducer"]).decode("ascii"),
+        [u"data", u"storage.json"], dumps(configuration["storage"]).decode("ascii"),
     )
 
-DEPLOYMENT_TEMPLATE = freeze({
-    "kind": "Deployment",
-    "apiVersion": "extensions/v1beta1",
-    "metadata": {
-	"name": MISSING,
-        "labels": {
-	    "provider": "LeastAuthority",
-	    "app": "s4",
-	    "component": "customer-tahoe-lafs"
-        },
-    },
-    "spec": {
-	"replicas": 1,
-	"template": {
-	    "metadata": {
-		"labels": {
-		    "provider": "LeastAuthority",
-		    "app": "s4",
-		    "component": "customer-tahoe-lafs"
-		}
-	    },
-	    "spec": {
-		"volumes": [
+DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
+    metadata=_S4_METADATA,
+    status=None,
+    spec={
+	u"replicas": 1,
+	u"template": {
+	    u"metadata": _S4_METADATA,
+	    u"spec": {
+		u"volumes": [
 		    {
-			"name": "introducer-config-volume",
-			"configMap": {
-			    "name": MISSING,
-			    "items": [
+			u"name": u"introducer-config-volume",
+			u"configMap": {
+			    u"items": [
 				{
-				    "key": "introducer.json",
-				    "path": "introducer.json"
+				    u"key": u"introducer.json",
+				    u"path": u"introducer.json"
 				}
 			    ]
 			}
 		    },
 		    {
-			"name": "storage-config-volume",
-			"configMap": {
-			    "name": MISSING,
-			    "items": [
+			u"name": u"storage-config-volume",
+			u"configMap": {
+			    u"items": [
 				{
-				    "key": "storage.json",
-				    "path": "storage.json"
+				    u"key": u"storage.json",
+				    u"path": u"storage.json"
 				}
 			    ]
 			}
 		    }
 		],
-		"containers": [
+		u"containers": [
 		    {
-			"name": "introducer",
-			"image": "127.0.0.1:30000/leastauthority/tahoe-introducer:signup",
-			"volumeMounts": [
+			u"name": u"introducer",
+			u"image": u"127.0.0.1:30000/leastauthority/tahoe-introducer:signup",
+			u"volumeMounts": [
 			    {
-				"name": "introducer-config-volume",
-				"mountPath": "/app/config"
+				u"name": u"introducer-config-volume",
+				u"mountPath": u"/app/config"
 			    }
 			],
-			"ports": [
-			    {
-				"name": MISSING,
-				"containerPort": MISSING,
-			    }
-			]
+                        u"ports": [],
 		    },
 		    {
-			"name": "storageserver",
-			"image": "127.0.0.1:30000/leastauthority/tahoe-storage:signup",
-			"volumeMounts": [
+			u"name": u"storageserver",
+			u"image": u"127.0.0.1:30000/leastauthority/tahoe-storage:signup",
+			u"volumeMounts": [
 			    {
-				"name": "storage-config-volume",
-				"mountPath": "/app/config"
+				u"name": u"storage-config-volume",
+				u"mountPath": u"/app/config"
 			    }
 			],
-			"ports": [
-			    {
-				"name": MISSING,
-				"containerPort": MISSING,
-			    }
-			]
+                        u"ports": [],
 		    }
 		]
 	    }
 	}
     }
-})
+)
+
+
+
+def _sanitize(subscription_id):
+    return b32encode(subscription_id).lower().strip(u"=")
+
+
 
 def deployment_name(subscription_id):
-    return "customer-deployment-" + subscription_id
+    return u"customer-deployment-" + _sanitize(subscription_id)
+
 
 
 # Length is a factor for service names. :(
@@ -235,8 +216,8 @@ def create_deployment(deploy_config, details):
     storage_name = storage_port_name(details.subscription_id)
 
     return DEPLOYMENT_TEMPLATE.transform(
-        # Add some metadata to make inspecting this stuff a little
-        # easier.
+        [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
+        # Some other metadata to make inspecting this stuff a little easier.
         *metadata
     ).transform(
         # Point both configuration volumes at this subscriptions configmap.
@@ -244,11 +225,13 @@ def create_deployment(deploy_config, details):
         ["spec", "template", "spec", "volumes", 1, "configMap", "name"], configmap,
 
         # Assign it service names and a port numbers.
-        ["spec", "template", "spec", "containers", 0, "ports", 0, "name"], intro_name,
-        ["spec", "template", "spec", "containers", 0, "ports", 0, "containerPort"], intro_name,
+        ["spec", "template", "spec", "containers", 0, "ports", 0],
+        # XXX Don't really need unique ports here
+        v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
 
-        ["spec", "template", "spec", "containers", 1, "ports", 0, "name"], storage_name,
-        ["spec", "template", "spec", "containers", 1, "ports", 0, "containerPort"], storage_name,
+        ["spec", "template", "spec", "containers", 1, "ports", 0],
+        # XXX Or here
+        v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
 
         # And assign it a unique identifier the deployment can use to
         # refer to it.
@@ -256,26 +239,18 @@ def create_deployment(deploy_config, details):
     )
 
 EMPTY_SERVICE = v1.Service(
-    metadata={
-        # XXX ???
-	u"name": u"s4-customer-grids",
-	u"labels": {
-	    u"provider": u"LeastAuthority"
-	}
-    },
+    metadata=_S4_METADATA.set(u"name", u"s4-customer-grids"),
     spec={
 	u"type": u"LoadBalancer",
-	u"selector": {
-	    u"provider": u"LeastAuthority",
-	    u"app": u"s4",
-	    u"component": u"customer-tahoe-lafs"
-	},
-	u"ports": [],
+	u"selector": _S4_METADATA.labels,
     }
 )
 
-def new_service():
-    return EMPTY_SERVICE
+def new_service(namespace):
+    return EMPTY_SERVICE.transform(
+        [u"metadata", u"namespace"], namespace,
+    )
+
 
 def extender(values):
     def f(pvector):

@@ -4,26 +4,32 @@ Tests for ``lae_automation.subscription_converger``.
 
 from hypothesis import assume, given
 from hypothesis.strategies import lists, choices, randoms
+from hypothesis import Verbosity, settings
 
-from pyrsistent import thaw, pmap, pset
+from pyrsistent import thaw, pmap
 
 from eliot import Message, start_action
 
 from testtools.assertions import assert_that
-from testtools.matchers import Equals
+from testtools.matchers import (
+    AfterPreprocessing, Equals, Is, Not, MatchesPredicate, LessThan,
+    GreaterThan, MatchesAll, MatchesRegex,
+)
 
 from txaws.testing.service import FakeAWSServiceRegion
-from txaws.route53.model import HostedZone
+from txaws.route53.model import RRSetKey, RRSet, HostedZone
 from txaws.route53.client import Name, CNAME
 
 from lae_util.testtools import TestCase
 
-from txkube.testing.matchers import PClassEquals, MappingEquals
+from lae_automation.test.matchers import GoodEquals
 
 from lae_automation.subscription_manager import (
     memory_client,
 )
 from lae_automation.subscription_converger import (
+    _introducer_name_for_subscription,
+    get_customer_grid_service,
     converge, get_hosted_zone_by_name, apply_service_changes,
 )
 from lae_automation.containers import (
@@ -38,15 +44,57 @@ from lae_automation.containers import (
     add_subscription_to_service,
 )
 
-from .strategies import subscription_details, deployment_configuration
+from .strategies import subscription_id, subscription_details, deployment_configuration
 from ..kubeclient import KubeClient
 
 from txkube import v1, memory_kubernetes
+
+
+def is_lower():
+    return MatchesPredicate(
+        lambda text: text.lower() == text,
+        u"%s is not lowercase",
+    )
+
+
+def longer_than(n):
+    return AfterPreprocessing(len, GreaterThan(n))
+
+def shorter_than(n):
+    return AfterPreprocessing(len, LessThan(n))
+
 
 class ConvergeHelperTests(TestCase):
     """
     Tests for ``converge`` helpers.
     """
+    @given(subscription_id())
+    def test_introducer_name_for_subscription(self, sid):
+        """
+        ``_introducer_name_for_subscription`` returns a legal DNS name for the
+        given subscription identifier.
+        """
+        domain = _introducer_name_for_subscription(sid, u"example.com")
+        self.expectThat(
+            domain,
+            AfterPreprocessing(
+                unicode,
+                MatchesAll(
+                    is_lower(),
+                    longer_than(0),
+                    shorter_than(256),
+                    MatchesRegex(ur"^[a-z0-9.-]+$"),
+                    AfterPreprocessing(
+                        lambda domain: domain.split(u"."),
+                        MatchesAll(
+                            longer_than(0),
+                            shorter_than(64),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
     @given(subscription_details())
     def test_service_ports(self, details):
         """
@@ -100,7 +148,27 @@ class ConvergeHelperTests(TestCase):
         self.expectThat(zone.name, Equals(retrieved.name))
 
 
-from hypothesis.stateful import RuleBasedStateMachine, rule
+    def test_customer_grid_service(self):
+        """
+        The ``v1.Service`` for the customer grid can be retrieved using
+        ``get_customer_grid_service``.
+        """
+        kubernetes = memory_kubernetes()
+        client = KubeClient(k8s=kubernetes.client())
+
+        # If it doesn't exist, we should get ``None``.
+        service = self.successResultOf(get_customer_grid_service(client, u"default"))
+        self.expectThat(service, Is(None))
+
+        # If it does exist, we should get it!
+        self.successResultOf(client.create(new_service(u"default")))
+        service = self.successResultOf(get_customer_grid_service(client, u"default"))
+        # A weak assertion working around
+        # https://github.com/LeastAuthority/txkube/issues/94
+        self.expectThat(service, Not(Is(None)))
+
+
+from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
 from twisted.python.filepath import FilePath
 
@@ -119,7 +187,7 @@ class ApplyServiceChangesTests(TestCase):
         ``apply_service_changes`` adds entries based on the ``to_create``
         subscriptions to the service's ``ports``.
         """
-        service = new_service()
+        service = new_service(u"testing")
         changed = apply_service_changes(service, to_delete=set(), to_create=set(details))
         self.assertThat(
             set(changed.spec.ports),
@@ -134,7 +202,7 @@ class ApplyServiceChangesTests(TestCase):
         ``apply_service_changes`` removes entries based on the ``to_delete``
         subscriptions from the service's ``ports``.
         """
-        service = new_service().transform(
+        service = new_service(u"testing").transform(
             [u"spec", u"ports"],
             list(p for d in details for p in service_ports(d)),
         )
@@ -182,9 +250,12 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         self.zone = d.result
         self.action = start_action(action_type=u"convergence-test")
 
-    def execute_step(self, *a, **kw):
+    def execute_step(self, step):
         with self.action.context():
-            super(SubscriptionConvergence, self).execute_step(*a, **kw)
+            rule = step[0]
+            function = rule.function
+            with start_action(action_type=u"step", rule=function.__name__):
+                super(SubscriptionConvergence, self).execute_step(step)
 
     def teardown(self):
         self.action.finish()
@@ -199,7 +270,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         """
         assume(
             details.subscription_id
-            not in self.database.list_subscriptions_identifiers()
+            not in self.database.list_all_subscription_identifiers()
         )
         Message.log(activating=details.subscription_id)
         self.database.create_subscription(
@@ -209,7 +280,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
     @rule(choose=choices())
     def deactivate(self, choose):
-        identifiers = self.database.list_subscriptions_identifiers()
+        identifiers = self.database.list_active_subscription_identifiers()
         assume(0 < len(identifiers))
         subscription_id = choose(sorted(identifiers))
         Message.log(deactivating=subscription_id)
@@ -249,7 +320,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
     def check_convergence(self, database, config, kube, aws):
         with start_action(action_type=u"check-convergence"):
-            subscriptions = sorted(database.list_subscriptions_identifiers())
+            subscriptions = sorted(database.list_active_subscription_identifiers())
             Message.log(active_subscriptions=subscriptions)
             checks = {
                 self.check_configmaps,
@@ -265,42 +336,46 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         for sid in subscriptions:
             assert_that(
                 create_configuration(config, database.get_subscription(sid)),
-                Equals(k8s_state.configmaps.item_by_name(configmap_name(sid))),
+                GoodEquals(k8s_state.configmaps.item_by_name(configmap_name(sid))),
             )
 
     def check_deployments(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
+            actual = k8s_state.deployments.item_by_name(deployment_name(sid))
+            reference = create_deployment(config, database.get_subscription(sid))
+            def drop_transients(deployment):
+                simplified = deployment.transform(
+                    [u"metadata", u"annotations"], {},
+                    [u"metadata", u"resourceVersion"], None,
+                    [u"status"], None,
+                )
+                return simplified
             assert_that(
-                create_deployment(config, database.get_subscription(sid)),
-                Equals(k8s_state.deployments.item_by_name(deployment_name(sid))),
+                actual,
+                AfterPreprocessing(drop_transients, GoodEquals(reference)),
             )
 
     def check_service(self, database, config, subscriptions, k8s_state, aws):
-        expected = new_service()
+        expected = new_service(config.kubernetes_namespace)
         for sid in subscriptions:
             expected = add_subscription_to_service(
                 expected, database.get_subscription(sid),
             )
         assert_that(
             expected,
-            PClassEquals(k8s_state.services.item_by_name(expected.metadata.name)),
+            GoodEquals(k8s_state.services.item_by_name(expected.metadata.name)),
         )
         Message.log(check_service=thaw(expected))
 
     def check_route53(self, database, config, subscriptions, k8s_state, aws):
-        expected_rrsets = pmap({
-            Name(
-                u"{subscription_id}.introducer.{domain}".format(
-                    subscription_id=sid,
-                    domain=config.domain,
-                )
-            ): pset({
-                CNAME(Name(
-                    u"introducer.{domain}".format(domain=config.domain)
-                ))
-            })
-            for sid in subscriptions
-        })
+        expected_rrsets = pmap()
+        for sid in subscriptions:
+            label = _introducer_name_for_subscription(sid, config.domain)
+            key = RRSetKey(label=label, type=u"CNAME")
+            cname = CNAME(Name(u"introducer.{domain}".format(domain=config.domain)))
+            rrset = RRSet(label=label, type=u"CNAME", ttl=60, records={cname})
+            expected_rrsets = expected_rrsets.set(key, rrset)
+
         route53 = aws.get_route53_client()
         d = route53.list_resource_record_sets(self.zone.identifier)
         # XXX
@@ -313,9 +388,11 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             # Don't care about these infrastructure rrsets.
             if key.type not in (u"SOA", u"NS")
         })
+        if actual_rrsets != expected_rrsets:
+            import pdb; pdb.set_trace()
         assert_that(
-            expected_rrsets,
-            MappingEquals(actual_rrsets),
+            actual_rrsets,
+            GoodEquals(expected_rrsets),
         )
 
 class SubscriptionConvergenceTests(TestCase):

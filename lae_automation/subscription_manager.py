@@ -57,7 +57,7 @@ class Subscriptions(Resource):
         return Subscription(self.database, name)
 
     def render_GET(self, request):
-        ids = self.database.list_subscriptions_identifiers()
+        ids = self.database.list_active_subscription_identifiers()
         subscriptions = list(
             marshal_subscription(self.database.get_subscription(sid))
             for sid
@@ -150,7 +150,7 @@ class SubscriptionDatabase(object):
                 product_id=details.product_id,
                 customer_id=details.customer_id,
                 subscription_id=details.subscription_id,
-                
+
                 introducer_port_number=details.introducer_port_number,
                 storage_port_number=details.storage_port_number,
             ),
@@ -219,12 +219,18 @@ class SubscriptionDatabase(object):
             storage_port_number=details["storage_port_number"],
         )
 
-    def list_subscriptions_identifiers(self):
-        return [
+    def list_all_subscription_identifiers(self):
+        return (
+            b32decode(child.basename()[:-len(u".json")])
+            for child in self.path.children()
+        )
+
+    def list_active_subscription_identifiers(self):
+        return list(
             b32decode(child.basename()[:-len(u".json")])
             for child in self.path.children()
             if loads(child.getContent())["details"]["active"]
-        ]
+        )
 
 
 def required(options, key):
@@ -385,4 +391,3 @@ def memory_client(database_path):
 def broken_client():
     agent = MemoryAgent(Resource())
     return Client(endpoint=b"", agent=agent, cooperator=Uncooperator())
-

@@ -1,22 +1,11 @@
 
-from json import loads, dumps
 from twisted.python.url import URL
-from twisted.web.http import OK
-from twisted.web.client import readBody
 
 import attr
 
-from eliot import start_action
-from eliot.twisted import DeferredContext
-
 from txkube import (
     v1, v1beta1, network_kubernetes, authenticate_with_serviceaccount,
-    iobject_to_raw, iobject_from_raw,
 )
-from txkube._network import (
-    _BytesProducer, check_status, object_location, log_response_object,
-)
-
 
 @attr.s(frozen=True)
 class LabelSelector(object):
@@ -25,7 +14,7 @@ class LabelSelector(object):
     def match(self, obj):
         missing = object()
         return {
-            key: obj["metadata"]["labels"].get(key, missing)
+            key: obj.metadata.labels.get(key, missing)
             for key in self.labels
         } == self.labels
 
@@ -37,10 +26,26 @@ class NullSelector(object):
 
 
 
+@attr.s(frozen=True)
+class And(object):
+    selectors = attr.ib()
+
+    def match(self, obj):
+        return all(s.match(obj) for s in self.selectors)
+
+
+
+@attr.s(frozen=True)
+class NamespaceSelector(object):
+    namespace = attr.ib()
+
+    def match(self, obj):
+        return self.namespace == obj.metadata.namespace
+
+
+
 def select(collection, selector):
-    for obj in collection.items:
-        if selector.match(obj):
-            yield obj
+    return filter(selector.match, collection.items)
 
 
 

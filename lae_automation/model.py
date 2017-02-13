@@ -27,6 +27,9 @@ class DeploymentConfiguration(object):
     # system
     private_host = "customer-grid-service"
 
+    # XXX Got to configure this _somehow_.
+    kubernetes_namespace = u"staging"
+
     # XXX Must agree with the SubscriptionManager service configured in Kubernetes.
     subscription_manager_hostname = u"subscription-manager"
 
