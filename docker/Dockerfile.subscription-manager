@@ -1,0 +1,39 @@
+#
+# This builds an image which runs the S4 subscription database.
+# The anticipated name is <leastauthority/subscription-manager>.
+#
+
+FROM leastauthority/base
+
+# This was already set in leastauthority/base but ARG does not cross
+# Dockerfiles.  See Dockerfile.base for explanation.
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Create a user account as whom the subscription manager can run.
+ENV SUBSCRIPTION_MANAGER_USER_NAME="manager"
+RUN adduser --disabled-password --gecos "" "${SUBSCRIPTION_MANAGER_USER_NAME}"
+
+# Run the application with this working directory.
+WORKDIR /app/run
+
+# And give it to the user the application will run as.
+RUN chown "${SUBSCRIPTION_MANAGER_USER_NAME}" /app/run
+
+# Expose persistent storage to the application here.
+VOLUME /app/data
+
+EXPOSE 8000
+
+# Install all of the application's Python library requirements.
+COPY requirements.txt /app/code/requirements.txt
+RUN /app/env/bin/pip install -r /app/code/requirements.txt
+
+# Install the application itself.  This is done as late as possible
+# since it is a major impediment to image/layer caching.
+COPY . /app/code
+
+CMD env && \
+    PYTHONPATH="/app/code" \
+    /app/env/bin/twist s4-subscription-manager \
+    --state-path /app/data/subscriptions \
+    --listen-address tcp:8000
