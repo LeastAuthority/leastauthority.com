@@ -79,7 +79,32 @@ def makeService(options):
     k8s_client = kubernetes.client()
     k8s = KubeClient(k8s=k8s_client)
 
-    config = DeploymentConfiguration()
+    # XXX Nothing used by the static attributes, sigh.
+    config = DeploymentConfiguration(
+        products=[{}],
+        s3_access_key_id=None,
+        s3_secret_key=None,
+        amiimageid=None,
+        instancesize=None,
+
+        usertoken=None,
+        producttoken=None,
+
+        ssec2_access_key_id=None,
+        ssec2_secret_path=None,
+
+        ssec2admin_keypair_name=None,
+        ssec2admin_privkey_path=None,
+
+        monitor_pubkey_path=None,
+        monitor_privkey_path=None,
+
+        secretsfile=open(u"/dev/full", "w"),
+        serverinfopath=None,
+
+        log_gatherer_furl=None,
+        stats_gatherer_furl=None,
+    )
 
     return TimerService(
         1.0,
