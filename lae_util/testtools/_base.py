@@ -124,6 +124,26 @@ class TestCase(_TestCase, _MktempMixin, _DeferredAssertionMixin):
     def setUp(self):
         log.msg("--> Begin: %s <--" % (self.id()))
         super(TestCase, self).setUp()
+        from txkube.testing._eliot import CaptureEliotLogs
+        self._eliot_logs = self.useFixture(CaptureEliotLogs())
+
+    def clear_logs(self):
+        del self._eliot_logs.logs[:]
+
+    # expectThat and Hypothesis don't communicate well about when the
+    # test has failed.  Give them a little help.  These two Hypothesis
+    # hooks will check for a flag that testtools sets when it thinks
+    # the test has failed and turn it into something Hypothesis can
+    # recognize.
+    def setup_example(self):
+        try:
+            del self.force_failure
+        except AttributeError:
+            pass
+
+    def teardown_example(self, ignored):
+        if getattr(self, "force_failure", False):
+            self.fail("expectation failed")
 
 
 

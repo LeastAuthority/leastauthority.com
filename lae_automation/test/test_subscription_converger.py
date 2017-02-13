@@ -317,6 +317,16 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             expected_rrsets,
             MappingEquals(actual_rrsets),
         )
-class SubscriptionConvergenceTests(SubscriptionConvergence.TestCase):
+
+class SubscriptionConvergenceTests(TestCase):
     def test_convergence(self):
-        self.runTest()
+        run_state_machine_as_test(
+            self._machine,
+            settings(verbosity=Verbosity.verbose),
+        )
+
+    def _machine(self):
+        # Clear the Eliot logs at the beginning of every run
+        # Maybe just the last run's logs are good enough?
+        self.clear_logs()
+        return SubscriptionConvergence()
