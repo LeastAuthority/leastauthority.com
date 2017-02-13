@@ -211,9 +211,15 @@ class MakeServiceTests(TestCase):
                 },
             }],
         }))
+        access_key_id_path = FilePath(self.mktemp())
+        access_key_id_path.setContent(b"foo")
+        secret_access_key_path = FilePath(self.mktemp())
+        secret_access_key_path.setContent(b"bar")
         options = Options()
         options.parseOptions([
             b"--endpoint", b"http://localhost:8000/",
+            b"--aws-access-key-id-path", access_key_id_path.path,
+            b"--aws-secret-access-key-path", secret_access_key_path.path,
             b"--k8s-context", u"testing",
             b"--k8s-config", config.path,
         ])

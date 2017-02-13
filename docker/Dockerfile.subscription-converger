@@ -31,12 +31,10 @@ RUN /app/env/bin/twist --help > /dev/null
 
 USER "${SUBSCRIPTION_CONVERGER_USER_NAME}"
 
-# Configure txAWS for Route53 use
-ENV AWS_SECRET_KEY_ID
-ENV AWS_SECRET_ACCESS_KEY
-
 CMD env && \
     PYTHONPATH="/app/code" \
     /app/env/bin/twist s4-subscription-converger \
+    --aws-access-key-id-path /app/k8s_secrets/aws.id \
+    --aws-secret-access-key-path /app/k8s_secrets/aws.key \
     --endpoint http://127.0.0.1:8000/ \
     --k8s-service-account

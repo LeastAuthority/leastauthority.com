@@ -24,6 +24,7 @@ from twisted.python.filepath import FilePath
 from twisted.python.url import URL
 from twisted.web.client import Agent
 
+from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceRegion
 from txaws.route53.model import Name, CNAME, RRSet, delete_rrset, create_rrset
 
@@ -49,6 +50,9 @@ class Options(_Options):
         ("endpoint", None, None, "The root URL of the subscription manager service."),
         ("k8s-context", None, None, "Use a kubectl configuration context to find Kubernetes."),
         ("k8s-config", None, None, "The path of a kubectl configuration file in which to find the context.", FilePath),
+
+        ("aws-access-key-id-path", None, None, "The path of a file containing the AWS key identifier to use."),
+        ("aws-secret-access-key-path", None, None, "The path of a file containing the AWS secret key to use."),
     ]
 
     optFlags = [
@@ -82,9 +86,13 @@ def makeService(options):
     k8s_client = kubernetes.client()
     k8s = KubeClient(k8s=k8s_client)
 
-    aws = AWSServiceRegion()
+    aws = AWSServiceRegion(creds=AWSCredentials(
+        access_key=FilePath(options["aws-access-key-id-path"]).getContent(),
+        secret_key=FilePath(options["aws-secret-access-key-path"]).getContent(),
+    ))
 
-    # XXX Nothing used by the static attributes, sigh.
+    # XXX Exclusive for static attributes at this time ... really need to
+    # break this up.
     config = DeploymentConfiguration(
         products=[{}],
         s3_access_key_id=None,
