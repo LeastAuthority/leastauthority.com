@@ -2,6 +2,10 @@
 Tests for ``lae_automation.subscription_converger``.
 """
 
+from json import dumps
+
+from zope.interface.verify import verifyObject
+
 from hypothesis import assume, given
 from hypothesis.strategies import lists, choices, randoms
 from hypothesis import Verbosity, settings
@@ -16,6 +20,9 @@ from testtools.matchers import (
     GreaterThan, MatchesAll, MatchesRegex,
 )
 
+from twisted.python.filepath import FilePath
+from twisted.application.service import IService
+
 from txaws.testing.service import FakeAWSServiceRegion
 from txaws.route53.model import RRSetKey, RRSet, HostedZone
 from txaws.route53.client import Name, CNAME
@@ -29,6 +36,7 @@ from lae_automation.subscription_manager import (
 )
 from lae_automation.subscription_converger import (
     _introducer_name_for_subscription,
+    Options, makeService,
     get_customer_grid_service,
     converge, get_hosted_zone_by_name, apply_service_changes,
 )
@@ -48,6 +56,9 @@ from .strategies import subscription_id, subscription_details, deployment_config
 from ..kubeclient import KubeClient
 
 from txkube import v1, memory_kubernetes
+
+CERTIFICATE = FilePath(__file__).parent().child("cert.pem")
+KEY = CERTIFICATE.sibling("key.pem")
 
 
 def is_lower():
@@ -168,9 +179,48 @@ class ConvergeHelperTests(TestCase):
         self.expectThat(service, Not(Is(None)))
 
 
-from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
-from twisted.python.filepath import FilePath
+class MakeServiceTests(TestCase):
+    def test_interface(self):
+        """
+        ``makeService`` returns an object that provides ``IService``.
+        """
+        config = FilePath(self.mktemp())
+        config.setContent(dumps({
+            u"apiVersion": u"v1",
+            u"clusters": [{
+                u"name": u"testing",
+                u"cluster": {
+                    u"certificate-authority": CERTIFICATE.path,
+                    u"server": u"https://bar/",
+                },
+            }],
+            u"users": [{
+                u"name": u"testing",
+                u"user": {
+                    u"client-certificate": CERTIFICATE.path,
+                    u"client-key": KEY.path,
+                },
+            }],
+            u"contexts": [{
+                u"name": u"testing",
+                u"context": {
+                    u"cluster": u"testing",
+                    u"user": u"testing",
+                    u"namespace": u"testing",
+                },
+            }],
+        }))
+        options = Options()
+        options.parseOptions([
+            b"--endpoint", b"http://localhost:8000/",
+            b"--k8s-context", u"testing",
+            b"--k8s-config", config.path,
+        ])
+        verifyObject(IService, makeService(options))
+
+
+from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
 from tempfile import mkdtemp
 

@@ -19,7 +19,8 @@ from eliot.twisted import DeferredContext
 
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred
 from twisted.application.internet import TimerService
-from twisted.python.usage import Options as _Options
+from twisted.python.usage import Options as _Options, UsageError
+from twisted.python.filepath import FilePath
 from twisted.python.url import URL
 from twisted.web.client import Agent
 
@@ -35,23 +36,47 @@ from .containers import (
 )
 from .kubeclient import KubeClient, And, LabelSelector, NamespaceSelector
 
+from txkube import (
+    v1, v1beta1,
+    network_kubernetes, authenticate_with_serviceaccount,
+    network_kubernetes_from_context,
+)
 
-from txkube import v1, v1beta1, network_kubernetes, authenticate_with_serviceaccount
 
 class Options(_Options):
     optParameters = [
-        ("endpoint", "e", None, "The root URL of the subscription manager service."),
+        ("endpoint", None, None, "The root URL of the subscription manager service."),
+        ("k8s-context", None, None, "Use a kubectl configuration context to find Kubernetes."),
+        ("k8s-config", None, None, "The path of a kubectl configuration file in which to find the context.", FilePath),
     ]
+
+    optFlags = [
+        ("k8s-service-account", None, "Use a Kubernetes service account to authenticate to Kubernetes."),
+    ]
+
+    def postOptions(self):
+        if self["endpoint"] is None:
+            raise UsageError("--endpoint is required")
+
+        if (self["k8s-context"] is None) != (self["k8s-service-account"] is None):
+            raise UsageError("Exactly one of --k8s-context or --k8s-service-account is required")
+
 
 def makeService(options):
     from twisted.internet import reactor
     agent = Agent(reactor)
-    subscription_client = SMClient(endpoint=options["endpoint"], agent=agent)
+    from twisted.internet import task
+    subscription_client = SMClient(endpoint=options["endpoint"], agent=agent, cooperator=task)
 
-    k8s_client = network_kubernetes(
-        base_url=URL.fromText(u"https://kubernetes/"),
-        agent=authenticate_with_serviceaccount(reactor),
-    )
+    if options["k8s-service-account"]:
+        kubernetes = network_kubernetes(
+            base_url=URL.fromText(u"https://kubernetes/"),
+            agent=authenticate_with_serviceaccount(reactor),
+        )
+    else:
+        kubernetes = network_kubernetes_from_context(reactor, options["k8s-context"], options["k8s-config"])
+
+    k8s_client = kubernetes.client()
     k8s = KubeClient(k8s=k8s_client)
 
     config = DeploymentConfiguration()
