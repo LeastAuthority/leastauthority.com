@@ -115,6 +115,9 @@ spec:
         component: 'Infrastructure'
     spec:
       volumes:
+      - name: 'subscription-manager-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-subscription-manager-pvc'
       - name: 'log-gatherer-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-foolscap-logs-pvc'
@@ -132,11 +135,38 @@ spec:
       - name: 'flapp-secrets'
         secret:
           secretName: 'signup-secrets'
+     - name: 'convergence-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          items:
+          # XXX Should allocate some Route53-only keys for this.
+          - key: 'aws-s4.key'
+            path: 'aws.key'
+            mode: 0400
+          - key: 'aws-s4.id'
+            path: 'aws.id'
+            mode: 0400
 
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
+
+      # Here is the subscription manager.  It contains the canonical (local)
+      # state for our subscriptions (Stripe is _really_ canonical... TODO!)
+      - name: 'subscription-manager'
+        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        volumeMounts:
+          - mountPath: '/app/data'
+            name: 'subscription-manager-data'
+
+      # Here is the subscription converger.  It talks to the subscription
+      # manager and Kubernetes and keeps them synchronized.
+      - name: 'subscription-converger'
+        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        volumeMounts:
+          - mountPath: '/app/k8s_secrets'
+            name: 'convergence-secrets'
 
       # Here is the Foolscap log gatherer.
       - name: 'foolscap-log-gatherer'
@@ -258,6 +288,27 @@ spec:
   resources:
     requests:
       storage: '10G'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-subscription-manager-pvc'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+  annotations:
+    # This enables dynamic provisioning of the volume.  See
+    # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
+    volume.beta.kubernetes.io/storage-class: 'normal'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '1G'
 ---
 # Read about PersistentVolumeClaims at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
