@@ -5,10 +5,6 @@
 
 FROM leastauthority/base
 
-# This was already set in leastauthority/base but ARG does not cross
-# Dockerfiles.  See Dockerfile.base for explanation.
-ARG DEBIAN_FRONTEND=noninteractive
-
 # Create a user account as whom the subscription manager can run.
 ENV SUBSCRIPTION_MANAGER_USER_NAME="manager"
 RUN adduser --disabled-password --gecos "" "${SUBSCRIPTION_MANAGER_USER_NAME}"
@@ -18,6 +14,8 @@ WORKDIR /app/run
 
 # And give it to the user the application will run as.
 RUN chown "${SUBSCRIPTION_MANAGER_USER_NAME}" /app/run
+
+RUN mkdir /app/data && chown "${SUBSCRIPTION_MANAGER_USER_NAME}":"${SUBSCRIPTION_MANAGER_USER_NAME}" /app/data
 
 # Expose persistent storage to the application here.
 VOLUME /app/data
@@ -31,6 +29,11 @@ RUN /app/env/bin/pip install -r /app/code/requirements.txt
 # Install the application itself.  This is done as late as possible
 # since it is a major impediment to image/layer caching.
 COPY . /app/code
+
+# Generate the twisted plugins system cache files
+RUN /app/env/bin/twist --help > /dev/null
+
+USER "${SUBSCRIPTION_MANAGER_USER_NAME}"
 
 CMD env && \
     PYTHONPATH="/app/code" \
