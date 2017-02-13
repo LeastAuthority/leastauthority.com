@@ -65,7 +65,7 @@ class Options(_Options):
         if self["endpoint"].endswith("/"):
             self["endpoint"] = self["endpoint"][:-1]
 
-        if (self["k8s-context"] is None) != (self["k8s-service-account"] is None):
+        if (self["k8s-context"] is None) == (not self["k8s-service-account"]):
             raise UsageError("Exactly one of --k8s-context or --k8s-service-account is required")
 
 
