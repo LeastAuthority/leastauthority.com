@@ -2,7 +2,7 @@ import attr
 from attr import validators
 
 from pyrsistent import PMap, freeze
-from pem import Certificate, parse
+from pem import parse
 
 from foolscap.furl import decode_furl
 

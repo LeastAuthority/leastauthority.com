@@ -1,6 +1,6 @@
 from json import dumps
 
-from pyrsistent import freeze, discard, ny
+from pyrsistent import freeze
 
 from twisted.internet.defer import succeed
 
