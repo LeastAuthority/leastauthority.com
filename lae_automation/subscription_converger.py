@@ -24,6 +24,7 @@ from twisted.python.filepath import FilePath
 from twisted.python.url import URL
 from twisted.web.client import Agent
 
+from txaws.service import AWSServiceRegion
 from txaws.route53.model import Name, CNAME, RRSet, delete_rrset, create_rrset
 
 from .model import DeploymentConfiguration
@@ -57,6 +58,8 @@ class Options(_Options):
     def postOptions(self):
         if self["endpoint"] is None:
             raise UsageError("--endpoint is required")
+        if self["endpoint"].endswith("/"):
+            self["endpoint"] = self["endpoint"][:-1]
 
         if (self["k8s-context"] is None) != (self["k8s-service-account"] is None):
             raise UsageError("Exactly one of --k8s-context or --k8s-service-account is required")
@@ -78,6 +81,8 @@ def makeService(options):
 
     k8s_client = kubernetes.client()
     k8s = KubeClient(k8s=k8s_client)
+
+    aws = AWSServiceRegion()
 
     # XXX Nothing used by the static attributes, sigh.
     config = DeploymentConfiguration(
@@ -108,18 +113,18 @@ def makeService(options):
 
     return TimerService(
         1.0,
-        divert_errors_to_log(converge), config, subscription_client, k8s,
+        divert_errors_to_log(converge), config, subscription_client, k8s, aws,
     )
 
 def divert_errors_to_log(f):
     def g(*a, **kw):
-        action = start_action(u"subscription_converger:" + f.__name__)
+        action = start_action(action_type=u"subscription_converger:" + f.__name__)
         with action.context():
             d = DeferredContext(maybeDeferred(f, *a, **kw))
-            d.addActionFinish()
+            d = d.addActionFinish()
             # The failure was logged by the above.  Now squash it.
             d.addErrback(lambda err: None)
-            return d.result
+            return d
     return g
 
 
