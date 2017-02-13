@@ -56,6 +56,33 @@ def hasConfiguration(fields):
     return AfterPreprocessing(_readConfig, Equals(expected_fields))
 
 
+
+@attr.s(frozen=True)
+class GoodEquals(object):
+    expected = attr.ib()
+
+    def match(self, other):
+        if other == self.expected:
+            return None
+        return _DiffMismatch(other, u"!=", self.expected)
+
+
+@attr.s(frozen=True)
+class _DiffMismatch(object):
+    actual = attr.ib()
+    mismatch_string = attr.ib()
+    reference = attr.ib()
+
+    def describe(self):
+        from deepdiff import DeepDiff
+        from pprint import pformat
+        return u"(actual = old; reference = new)\n" + pformat(
+            DeepDiff(self.actual, self.reference, view="text")
+        )
+
+
+
+
 @attr.s(frozen=True)
 class MappingLikeEquals(object):
     expected = attr.ib()
