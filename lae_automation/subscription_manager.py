@@ -308,9 +308,13 @@ class Client(object):
         :return: A ``Deferred`` that fires when the subscription has
         been created.
         """
+        url = (
+            self.endpoint +
+            b"/v1/subscriptions/" +
+            quote(subscription_id.encode("ascii"), safe=b"")
+        )
         d = self.agent.request(
-            b"PUT",
-            self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
+            b"PUT", url,
             bodyProducer=FileBodyProducer(
                 BytesIO(dumps(marshal_subscription(details))),
                 cooperator=self.cooperator,
