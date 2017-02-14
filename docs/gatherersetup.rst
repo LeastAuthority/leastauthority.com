@@ -29,27 +29,6 @@ HOWTO Set One Up:
   (7) On all monitored tahoe nodes set "``tahoe.cfg``" to contain: "``log_gatherer.furl = <FURL>``"
 
 
-Config Tahoe Nodes to be Gathered:
-==================================
-
-.. _The source code for the above described script: ../registergatherer.py
-
-To set storageservers to be gathered by an incident gatherer (step 7 above),
-write a script (the original suffered an early demise) in the
-``leastauthority.com`` directory.
-
-This script should:
-
-   (1) obtain pub IPs of the hosting machines, from ``customerinfo.csv``
-   (2) be able to ssh into the storageserver hosting machines, using ``EC2adminkeys2.pem``
-   (3) use the ``setremoteconfigoption`` function of the ``lae_automation.server`` module. (This function is idempotent.)
-   (4) the configuration to set is in the ``node`` section of ``tahoe.cfg`` it is "``log_gatherer.furl``".
-   (5) a helper function in ``lae_automation/server.py`` named ``setremoteconfigoption`` is designed to set arbitrary (section, option, value) tuples in .ini style config files and is quite handy for this task!
-   (6) the above function will restart the host, if you don't use it, you'll have to restart the server some other way!
-
-`The source code for the above described script`_.
-
-
 Testing That The Incident Gatherer is Working:
 ==============================================
 
@@ -68,7 +47,7 @@ tahoe-node is working follow this recipe:
 What's a Stats Gatherer?
 ========================
 
-The stats gatherer (in contrast to the incident gatherer) *is* a tahoe node. 
+The stats gatherer (in contrast to the incident gatherer) *is* a tahoe node.
 
 HOWTO SetUp A Stats Gatherer:
 =============================

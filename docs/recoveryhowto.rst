@@ -46,20 +46,6 @@ deploy_EC2_instance:
 
 * *instancename*: customer_email found in signup_logs.
 
-install_server:
-~~~~~~~~~~~~~~~
-
-  This list is for the install server function.
-
-* *publichost*: found only in signup_logs, among other places on lines with
-   the pattern "public address"
-
-* *admin_privkey_path*: ../lae_automation_config.json
-
-* *monitor_pubkey*: ../lae_automation_config.json
-
-* *monitor_privkey_path*: ../lae_automation_config.json
-
 append_record:
 ~~~~~~~~~~~~~~
 

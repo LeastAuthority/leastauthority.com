@@ -128,68 +128,6 @@ class TestServerModule(TestCase):
     def tearDown(self):
         FilePath(self.CONFIGFILEPATH).remove()
 
-    def test_install_server(self):
-        self.WHOAMI_FIFO = fifo(['ubuntu', 'ubuntu', 'monitor', 'customer'])
-        self.RUNARGS_FIFO = fifo([
-            ('whoami', False, {}),
-            ('whoami', False, {}),
-            ('whoami', False, {}),
-            ('whoami', False, {}),
-            ('rm -rf /home/customer/LAFS_source', False, {}),
-            ('git clone -b 2237-cloud-backend-s4 https://github.com/tahoe-lafs/tahoe-lafs.git LAFS_source', False, {}),
-            ('virtualenv venv', False, {}),
-            ('venv/bin/pip install --find-links=https://tahoe-lafs.org/deps -e LAFS_source[test]', False, {}),
-            ('venv/bin/tahoe create-introducer /home/customer/introducer || echo Assuming that introducer already exists.', False, {}),
-            ('venv/bin/tahoe create-node /home/customer/storageserver || echo Assuming that storage server already exists.', False, {})
-        ])
-        self.SUDOARGS_FIFO = fifo([
-            ('apt-get update', False, {}),
-            ('apt-get -y install python-dev', False, {}),
-            ('apt-get -y install python-pip', False, {}),
-            ('apt-get -y install git-core', False, {}),
-            ('apt-get -y install libffi-dev', False, {}),
-            ('apt-get -y install openssl', False, {}),
-            ('apt-get -y install libssl-dev', False, {}),
-            ('apt-get -y install python-nevow', False, {}),
-            ('apt-get -y install python-crypto', False, {}),
-            ('apt-get -y install python-dateutil', False, {}),
-            ('apt-get -y install python-foolscap', False, {}),
-            ('apt-get -y install python-six', False, {}),
-            ('apt-get -y install python-pycparser', False, {}),
-            ('apt-get -y install python-unidecode', False, {}),
-            ('apt-get -y install python-zfec', False, {}),
-            ('apt-get -y install python-simplejson', False, {}),
-            ('apt-get -y remove --purge whoopsie', False, {}),
-            ('pip install virtualenv', False, {}),
-            ('adduser --disabled-password --gecos "" customer || echo Assuming that customer already exists.', False, {}),
-            ('mkdir -p /home/customer/.ssh/', False, {}),
-            ('chown customer:customer /home/customer/.ssh', False, {}),
-            ('chmod -f u+w /home/customer/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
-            ('cp /home/ubuntu/.ssh/authorized_keys /home/customer/.ssh/authorized_keys', False, {}),
-            ('chown customer:customer /home/customer/.ssh/authorized_keys', False, {}),
-            ('chmod -f 400 /home/customer/.ssh/authorized_keys', False, {}),
-            ('chmod -f 700 /home/customer/.ssh/', False, {}),
-            ('adduser --disabled-password --gecos "" monitor || echo Assuming that monitor already exists.', False, {}),
-            ('mkdir -p /home/monitor/.ssh/', False, {}),
-            ('chown monitor:monitor /home/monitor/.ssh', False, {}),
-            ('chmod -f u+w /home/monitor/.ssh/authorized_keys || echo Assuming there is no existing authorized_keys file.', False, {}),
-            ('chown monitor:monitor /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod -f 400 /home/monitor/.ssh/authorized_keys', False, {}),
-            ('chmod -f 700 /home/monitor/.ssh/', False, {})
-        ])
-        self.WRITEARGS_FIFO = fifo([('THIS IS A MOCK PUBLIC KEY', '/home/monitor/.ssh/authorized_keys', True, None)])
-
-        MHOSTNAME = '0.0.0.0'
-        ADMINPRIVKEYPATH = 'mockEC2adminkeys.pem'
-        MONITORPUBKEY = 'THIS IS A MOCK PUBLIC KEY'
-        MONITORPRIVKEYPATH = 'mockEC2monitorkeys.pem'
-        STDOUT = StringIO()
-        STDERR = StringIO()
-
-        server.install_server(MHOSTNAME, ADMINPRIVKEYPATH, MONITORPUBKEY, MONITORPRIVKEYPATH, STDOUT, STDERR)
-        self._check_all_done()
-
-
     def test_create_account(self):
         ACCOUNT_NAMES_AND_KEYS = [('customer', None),
                                   ('monitor', 'MONSSHPUBKEY')]

@@ -177,29 +177,6 @@ def create_intro_and_storage_nodes(stdout):
         )
     )
 
-def install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path, stdout,
-                   stderr):
-    set_host_and_key(publichost, admin_privkey_path)
-    update_packages(publichost, admin_privkey_path, stdout, stderr)
-    apt_install_dependencies(stdout, TAHOE_LAFS_PACKAGE_DEPENDENCIES)
-
-    sudo_apt_get('-y remove --purge whoopsie')
-    sudo('pip install virtualenv')
-    create_and_check_accounts(stdout, stderr, monitor_pubkey, monitor_privkey_path,
-                              admin_privkey_path, publichost)
-
-    get_and_install_tahoe(stdout)
-
-    create_intro_and_storage_nodes(stdout)
-
-    print >>stdout, "Finished server installation."
-
-GIT_DEPLOY_POST_UPDATE_HOOK_TEMPLATE = """#!/bin/bash
-cd %s || exit
-unset GIT_DIR
-exec git update-server-info
-"""
-
 def run_git(command):
     return run('/usr/bin/git %s' % (command,))
 
@@ -280,35 +257,6 @@ venv/bin/tahoe restart storageserver
 """
 
 
-def register_gatherer(publichost, admin_privkey_path, stdout, stderr, gatherer_type, furl):
-    set_host_and_key(publichost, admin_privkey_path, username="customer")
-    if gatherer_type == 'incident':
-        print >>stdout, "Registering storageserver with %s gatherer." % (gatherer_type,)
-        setremoteconfigoption('/home/customer/storageserver/tahoe.cfg', 'node', 'log_gatherer.furl', furl)
-        print >>stdout, "Registering introducer with %s gatherer." % (gatherer_type,)
-        setremoteconfigoption('/home/customer/introducer/tahoe.cfg', 'node', 'log_gatherer.furl', furl)
-    elif gatherer_type == 'stats':
-        print >>stdout, "Registering storageserver with %s gatherer." % (gatherer_type,)
-        setremoteconfigoption('/home/customer/storageserver/tahoe.cfg', 'client', 'stats_gatherer.furl', furl)
-
-    print >>stdout, "Restarting..."
-    run('/home/customer/restart.sh')
-
-
-def update_packages(publichost, admin_privkey_path, stdout, stderr):
-    set_host_and_key(publichost, admin_privkey_path)
-    sudo_apt_get('update')
-
-def set_up_reboot(stdout, stderr):
-    print >>stdout, "Setting up introducer and storage server to run on reboot..."
-    write(RESTART_SCRIPT, '/home/customer/restart.sh', mode=0750)
-    set_up_crontab(SSEC2_CRONTAB, '/home/customer/ctab')
-
-def set_up_crontab(crontab, tmp_path):
-    write(crontab, tmp_path)
-    run('crontab %s' % (tmp_path,))
-
-
 def make_external_furl(internal_furl, publichost):
     (prefix, atsign, suffix) = internal_furl.partition('@')
     assert atsign, internal_furl
@@ -384,121 +332,6 @@ def marshal_tahoe_configuration(
             stats_gatherer_furl=stats_gatherer_furl,
         ),
     )
-
-def bounce_server(deploy_config, subscription, publichost, admin_privkey_path, privatehost, stdout, stderr,
-                  configpath=None):
-    set_host_and_key(publichost, admin_privkey_path, username="customer")
-
-    if deploy_config.oldsecrets is None:
-        configuration = new_tahoe_configuration(
-            deploy_config=deploy_config,
-            bucketname=subscription.bucketname,
-            publichost=publichost,
-            privatehost=privatehost,
-        )
-    else:
-        configuration = marshal_tahoe_configuration(
-            introducer_pem=subscription.introducer_node_pem,
-            storage_pem=subscription.server_node_pem,
-            storage_privkey=subscription.oldsecrets["server_node_privkey"],
-            bucket_name=subscription.bucketname,
-            publichost=publichost,
-            privatehost=privatehost,
-            introducer_furl=subscription.oldsecrets["internal_introducer_furl"],
-            s3_access_key_id=deploy_config.s3_access_key_id,
-            s3_secret_key=deploy_config.s3_secret_key,
-            log_gatherer_furl=deploy_config.log_gatherer_furl,
-            stats_gatherer_furl=deploy_config.stats_gatherer_furl,
-        )
-
-    api.put(
-        local_path=CONFIGURE_TAHOE_PATH.path,
-        remote_path="/tmp/configure-tahoe",
-        mode=0500,
-    )
-    api.put(
-        local_path=StringIO(simplejson.dumps(configuration)),
-        remote_path="/tmp/tahoe-config.json",
-        mode=0400,
-    )
-    print >>stdout, "Configuring Tahoe-LAFS..."
-    api.run("/tmp/configure-tahoe < /tmp/tahoe-config.json")
-
-    print >>stdout, "Restarting introducer..."
-    run('venv/bin/tahoe restart introducer && sleep 5')
-
-    print >>stdout, "Restarting storage server..."
-    run('venv/bin/tahoe restart storageserver && sleep 5')
-
-    set_up_reboot(stdout, stderr)
-
-    external_introducer_furl = make_external_furl(
-        configuration["storage"]["introducer_furl"],
-        publichost,
-    )
-
-    print >>stdout, "The introducer and storage server are running."
-
-    # The webserver will HTML-escape the FURL in its output, so no need to escape here.
-    print >>stdout, """
-The settings for your gateway's tahoe.cfg are:
-
-[client]
-introducer.furl = %s
-
-shares.needed = 1
-shares.happy = 1
-shares.total = 1
-
-""" % (external_introducer_furl,)
-
-    print >>deploy_config.secretsfile, simplejson.dumps(secrets_to_legacy_format(configuration))
-    deploy_config.secretsfile.flush()
-
-    return external_introducer_furl
-
-
-def restore_secrets(secrets, nodetype, stdout, stderr):
-    node_pem = secrets.get(nodetype + '_node_pem', '')
-    nodeid   = secrets.get(nodetype + '_nodeid', '')
-    dirname  = nodetype
-
-    print >>stdout, "Attempting to restore %s identity..." % (nodetype,)
-    run('mkdir -p --mode=700 /home/customer/%s/private' % (dirname,))
-
-    if node_pem and nodeid:
-        run('chmod -f u+w /home/customer/%s/private/node.pem || echo No existing node.pem.' % (dirname,))
-        write(node_pem, '/home/customer/%s/private/node.pem' % (dirname,), mode=0640)
-        write(nodeid,   '/home/customer/%s/my_nodeid' % (dirname,))
-    else:
-        print >>stderr, "Warning: missing field(s) for %s identity." % (nodetype,)
-
-    if nodetype == 'storageserver':
-        # This is used by versions of Tahoe-LAFS that support signed introductions.
-        server_node_privkey = secrets.get('server_node_privkey', '')
-        if server_node_privkey:
-            write(server_node_privkey, '/home/customer/%s/private/node.privkey' % (dirname,), mode=0640)
-        else:
-            print >>stderr, "Warning: not restoring server's node.privkey."
-
-
-def setremoteconfigoption(pathtoremote, section, option, value):
-    """This function expects set_host_and_key to have already been run!"""
-    # api.get does not appear to actually use StringIO instances yet, so this uses a temp file.
-    tempfhandle = open('tempconfigfile','w')
-    api.get(pathtoremote, tempfhandle)
-    configparser = SafeConfigParser()
-    tempfhandle.close()
-    tempfhandle = open('tempconfigfile','r')
-    configparser.readfp(tempfhandle)
-    configparser.set(section, option, value)
-    outgoingconfig = StringIO()
-    configparser.write(outgoingconfig)
-    temppath = pathtoremote+'temp'
-    outgoingconfig.seek(0)
-    write(outgoingconfig.read(), temppath)
-    run('mv '+temppath+' '+pathtoremote)
-    os.remove('tempconfigfile')
 
 
 def new_tahoe_configuration(deploy_config, bucketname, publichost, privatehost, introducer_port):

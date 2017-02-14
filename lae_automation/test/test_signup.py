@@ -208,32 +208,6 @@ class TestSignupModule(TestCase):
         self.patch(initialize, 'get_and_store_pubkeyfp_from_keyscan',
                    call_get_and_store_pubkeyfp_from_keyscan)
 
-        from lae_automation.server import NotListeningError
-        self.first = True
-        def call_install_server(publichost, admin_privkey_path, monitor_pubkey, monitor_privkey_path,
-                                stdout, stderr):
-            self.failUnlessEqual(publichost, '0.0.0.0')
-            self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
-            if self.first:
-                self.first = False
-                raise NotListeningError()
-        self.patch(signup, 'install_server', call_install_server)
-
-        def call_bounce_server(deploy_config, subscription, publichost, admin_privkey_path, privatehost,
-                               stdout, stderr):
-            self.failUnlessEqual(publichost, '0.0.0.0')
-            self.failUnlessEqual(admin_privkey_path, 'ADMINKEYS.pem')
-            self.failUnlessEqual(privatehost, '0.0.0.1')
-            self.failUnlessEqual(deploy_config.s3_access_key_id, 'TEST'+'S3'*8)
-            self.failUnlessEqual(deploy_config.s3_secret_key, 'S3'*20)
-            self.failUnlessEqual(deploy_config.bucketname, "lae-" + self.MENCODED_IDS)
-            self.failUnlessEqual(deploy_config.oldsecrets, None)
-            expected_suffix = 'secrets/XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX/1970-01-01T000000Z-%s/SSEC2' % (self.MENCODED_IDS,)
-            self.assertTrue(
-                deploy_config.secretsfile.name.endswith(expected_suffix),
-                deploy_config.secretsfile.name)
-        self.patch(signup, 'bounce_server', call_bounce_server)
-
         def call_send_signup_confirmation(publichost, customer_email, furl, customer_keyinfo, stdout,
                                           stderr):
             self.failUnlessEqual(publichost, '0.0.0.0')
