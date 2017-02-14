@@ -14,7 +14,7 @@ from twisted.python.filepath import FilePath
 from twisted.internet import defer
 
 from lae_automation.config import Config
-from lae_automation.signup import DeploymentConfiguration
+from lae_automation.model import DeploymentConfiguration, SubscriptionDetails
 from lae_automation.signup import create_log_filepaths
 from lae_automation.signup import lookup_product
 from lae_automation.signup import get_bucket_name
@@ -68,7 +68,6 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         products=config.products,
         s3_access_key_id=config.other["s3_access_key_id"],
         s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip(),
-        bucketname=get_bucket_name(subscription_id, customer_id),
         amiimageid=product['ami_image_id'],
         instancesize=product['instance_size'],
 
@@ -78,9 +77,6 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         usertoken=None,
         producttoken=None,
 
-        oldsecrets=None,
-        customer_email=customer_email,
-        customer_pgpinfo=customer_pgpinfo,
         secretsfile=SSEC2_secretsfile,
         serverinfopath=server_info_path.path,
 
@@ -93,9 +89,16 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         monitor_pubkey_path=config.other["monitor_pubkey_path"],
         monitor_privkey_path=config.other["monitor_privkey_path"],
     )
+    subscription = SubscriptionDetails(
+        bucketname=get_bucket_name(subscription_id, customer_id),
+        oldsecrets=None,
+        customer_email=customer_email,
+        customer_pgpinfo=customer_pgpinfo,
+        product_id=plan_id,
+    )
     d = defer.succeed(None)
     d.addCallback(lambda ign: activate_subscribed_service(
-        deploy_config, signup_stdout, signup_stderr, signup_log_fp.path,
+        deploy_config, subscription, signup_stdout, signup_stderr, signup_log_fp.path,
     ))
     d.addErrback(errhandler)
     d.addBoth(lambda ign: signup_logfile.close())
