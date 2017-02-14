@@ -21,29 +21,13 @@ def provision_subscription(reactor, deploy_config, details, smclient):
     return d
 
 
+
 def _wait_for_service(subscription_id):
     # XXX Poll Kubernetes state looking for matching resources.
     # XXX With a timeout and some error logging.
     return succeed(None)
 
-MIN_PORT = 3000
-MAX_PORT = 63000
-def assign_ports(service, count):
-    used = {port["port"] for port in service["spec"]["ports"]}
-    total = set(range(MIN_PORT, MAX_PORT))
-    avail = total - used
-    i = iter(avail)
-    return next(i), next(i)
 
-
-class _NotSerializable(object):
-    """
-    A class which cannot be serialized.  Used as a placeholder for
-    missing values in templates so that the template cannot be
-    serialized if no value is provided.
-    """
-
-MISSING = _NotSerializable()
 
 _S4_METADATA = v1.ObjectMeta(
     labels={
@@ -53,9 +37,12 @@ _S4_METADATA = v1.ObjectMeta(
     }
 )
 
+
+
 CONFIGMAP_TEMPLATE = v1.ConfigMap(
     metadata=_S4_METADATA,
 )
+
 
 
 def subscription_metadata(details):
@@ -92,7 +79,7 @@ def create_configuration(deploy_config, details):
     if details.oldsecrets is None:
         configuration = new_tahoe_configuration(
             deploy_config=deploy_config,
-            bucketname=subscription.bucketname,
+            bucketname=details.bucketname,
             publichost=public_host,
             privatehost=private_host,
         )
@@ -122,6 +109,8 @@ def create_configuration(deploy_config, details):
         [u"data", u"introducer.json"], dumps(configuration["introducer"]).decode("ascii"),
         [u"data", u"storage.json"], dumps(configuration["storage"]).decode("ascii"),
     )
+
+
 
 DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
     metadata=_S4_METADATA,
@@ -257,6 +246,8 @@ def extender(values):
         return pvector.extend(values)
     return f
 
+
+
 def service_ports(details):
     intro = v1.ServicePort(
         name=introducer_port_name(details.subscription_id),
@@ -273,12 +264,15 @@ def service_ports(details):
     return [intro, storage]
 
 
+
 def add_subscription_to_service(old_service, details):
     return old_service.transform(
         ["spec", "ports"], extender(service_ports(details)),
         # Simplifies testing, probably helps in other areas.
         ["spec", "ports"], lambda v: freeze(sorted(v, key=lambda m: m.port)),
     )
+
+
 
 def remove_subscription_from_service(old_service, subscription_id):
     ports = {
@@ -290,6 +284,3 @@ def remove_subscription_from_service(old_service, subscription_id):
         ["spec", "ports"],
         filter(lambda p: p.name not in ports, old_service.spec.ports),
     )
-
-def create_dns():
-    pass
