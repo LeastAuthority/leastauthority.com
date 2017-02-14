@@ -15,13 +15,13 @@ from datetime import datetime
 from testtools.matchers import Equals
 
 from lae_automation import server
-from lae_automation.signup import DeploymentConfiguration, SubscriptionDetails
+from lae_automation.model import DeploymentConfiguration
 from lae_automation.server import api
 
 from .testcase import TestBase
 from .matchers import hasLocationHint
 from .strategies import (
-    nickname, bucket_name, ipv4_address, aws_access_key_id, aws_secret_key,
+    bucket_name, ipv4_address, aws_access_key_id, aws_secret_key,
     furl,
 )
 

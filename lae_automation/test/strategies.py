@@ -14,7 +14,7 @@ from hypothesis import strategies
 
 from allmydata.util import keyutil
 
-from lae_automation import signup, server
+from lae_automation import model, signup, server
 
 from foolscap.api import Tub
 from foolscap.furl import encode_furl
@@ -243,7 +243,7 @@ def aws_keypair_name():
 
 def deployment_configuration():
     return strategies.builds(
-        signup.DeploymentConfiguration,
+        model.DeploymentConfiguration,
         products=strategies.just([{"foo": "bar"}]),
         s3_access_key_id=aws_access_key_id(),
         s3_secret_key=aws_secret_key(),
@@ -275,7 +275,7 @@ def old_secrets():
 
 def subscription_details():
     return strategies.builds(
-        signup.SubscriptionDetails,
+        model.SubscriptionDetails,
         bucketname=bucket_name(),
         oldsecrets=old_secrets(),
         customer_email=email(),

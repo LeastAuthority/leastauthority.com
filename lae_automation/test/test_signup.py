@@ -11,7 +11,7 @@ from twisted.python.failure import Failure
 
 from lae_util.fileutil import make_dirs
 from lae_util.streams import LoggingStream
-from lae_automation import signup, initialize
+from lae_automation import model, signup, initialize
 
 from lae_automation.subscription_manager import memory_client, broken_client
 from lae_automation.test.strategies import (
@@ -119,7 +119,7 @@ class TestSignupModule(TestCase):
         FilePath(self.S3SECRETPATH).setContent(MOCKS3SECRETCONTENTS)
         FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
 
-        self.DEPLOYMENT_CONFIGURATION = signup.DeploymentConfiguration(
+        self.DEPLOYMENT_CONFIGURATION = model.DeploymentConfiguration(
             products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
@@ -141,7 +141,7 @@ class TestSignupModule(TestCase):
             secretsfile=open(self.MSECRETSFILE, "a+b"),
             serverinfopath=self.SERVERINFOPATH,
         )
-        self.SUBSCRIPTION = signup.SubscriptionDetails(
+        self.SUBSCRIPTION = model.SubscriptionDetails(
             bucketname="lae-" + self.MENCODED_IDS,
             oldsecrets=old_secrets().example(),
             customer_email=self.MEMAIL,
@@ -287,7 +287,7 @@ class TestSignupModule(TestCase):
         invalid["products"] = []
         self.assertRaises(
             ValueError,
-            signup.DeploymentConfiguration,
+            model.DeploymentConfiguration,
             **invalid
         )
 
