@@ -52,6 +52,7 @@ def lookup_product(config, plan_ID):
 def encode_id(ident):
     return b32encode(ident).rstrip("=").lower()
 
+
 def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
@@ -144,7 +145,7 @@ def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout,
         customer_id=None,
         subscription_id=None,
     )
-        
+
     d = deploy_server(deploy_config, subscription, stdout, stderr, clock)
     d.addErrback(lambda f: send_notify_failure(f, customer_email, logfilename, stdout,
                                                stderr))
