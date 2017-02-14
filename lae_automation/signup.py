@@ -1,17 +1,25 @@
 #!/usr/bin/python
 
-import time
+import sys, time
 from base64 import b32encode
 from pprint import pformat
+import json
 
 import attr
 
 from twisted.internet import reactor
 from twisted.web.client import Agent
+from twisted.python.filepath import FilePath
+from twisted.internet.defer import succeed
 
 from lae_automation.initialize import create_stripe_user_bucket
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 from lae_automation.containers import provision_subscription
+
+from lae_automation.config import Config
+from lae_automation.model import DeploymentConfiguration, SubscriptionDetails
+from lae_util.streams import LoggingStream
+from lae_util.servers import append_record
 
 from .subscription_manager import network_client
 
@@ -49,6 +57,93 @@ def encode_id(ident):
 
 def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
+
+
+def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout_path, flapp_stderr_path):
+    append_record(flapp_stdout_path, "Automation script started.")
+    parameters_json = stdin.read()
+    (customer_email,
+     customer_pgpinfo,
+     customer_id,
+     plan_id,
+     subscription_id) = json.loads(parameters_json)
+
+    (abslogdir_fp,
+    stripesecrets_log_fp,
+    SSEC2secrets_log_fp,
+    signup_log_fp) = create_log_filepaths(
+        secrets_dir, plan_id, customer_id, subscription_id,
+    )
+
+    append_record(flapp_stdout_path, "Writing logs to %r." % (abslogdir_fp.path,))
+
+    stripesecrets_log_fp.setContent(parameters_json)
+
+    SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
+    signup_logfile = signup_log_fp.open('a+')
+    signup_stdout = LoggingStream(signup_logfile, '>')
+    signup_stderr = LoggingStream(signup_logfile, '')
+    sys.stdout = signup_stderr
+
+    def errhandler(err):
+        with flapp_stderr_path.open("a") as fh:
+            err.printTraceback(fh)
+        return err
+
+    with flapp_stderr_path.open("a") as stderr:
+        print >>stderr, "plan_id is %s" % plan_id
+
+    config = Config(automation_config_path.path)
+    product = lookup_product(config, plan_id)
+    fullname = product['plan_name']
+
+    with flapp_stdout_path.open("a") as stdout:
+        print >>stdout, "Signing up customer for %s..." % (fullname,)
+
+    deploy_config = DeploymentConfiguration(
+        products=config.products,
+        s3_access_key_id=config.other["s3_access_key_id"],
+        s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip(),
+        amiimageid=product['ami_image_id'],
+        instancesize=product['instance_size'],
+
+        log_gatherer_furl=config.other.get("log_gatherer_furl") or None,
+        stats_gatherer_furl=config.other.get("stats_gatherer_furl") or None,
+
+        usertoken=None,
+        producttoken=None,
+
+        secretsfile=SSEC2_secretsfile,
+        serverinfopath=server_info_path.path,
+
+        ssec2_access_key_id=config.other["ssec2_access_key_id"],
+        ssec2_secret_path=config.other["ssec2_secret_path"],
+
+        ssec2admin_keypair_name=config.other["ssec2admin_keypair_name"],
+        ssec2admin_privkey_path=config.other["ssec2admin_privkey_path"],
+
+        monitor_pubkey_path=config.other["monitor_pubkey_path"],
+        monitor_privkey_path=config.other["monitor_privkey_path"],
+    )
+    subscription = SubscriptionDetails(
+        bucketname=get_bucket_name(subscription_id, customer_id),
+        oldsecrets=None,
+        customer_email=customer_email,
+        customer_pgpinfo=customer_pgpinfo,
+        product_id=plan_id,
+        customer_id=customer_id,
+        subscription_id=subscription_id,
+
+        introducer_port_number=None,
+        storage_port_number=None,
+    )
+    d = succeed(None)
+    d.addCallback(lambda ign: activate_subscribed_service(
+        deploy_config, subscription, signup_stdout, signup_stderr, signup_log_fp.path,
+    ))
+    d.addErrback(errhandler)
+    d.addBoth(lambda ign: signup_logfile.close())
+    return d
 
 
 def activate_subscribed_service(deploy_config, subscription, stdout, stderr, logfile, clock=None, smclient=None):
