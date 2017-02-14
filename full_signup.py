@@ -95,6 +95,11 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         customer_email=customer_email,
         customer_pgpinfo=customer_pgpinfo,
         product_id=plan_id,
+        customer_id=customer_id,
+        subscription_id=subscription_id,
+
+        introducer_port_number=None,
+        storage_port_number=None,
     )
     d = defer.succeed(None)
     d.addCallback(lambda ign: activate_subscribed_service(
