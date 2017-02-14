@@ -92,19 +92,18 @@ class NullDeploymentConfiguration(object):
 
 
 def _parse(pem_str):
-    return freeze(sorted(parse(pem_str)))
+    return tuple(sorted(parse(pem_str)))
 
 
 
 def _convert_oldsecrets(oldsecrets):
-    if oldsecrets is None:
-        return freeze({})
-    converted = freeze(oldsecrets)
-    if converted["introducer_node_pem"] is not None:
-        converted = converted.transform(["introducer_node_pem"], _parse)
-    if converted["server_node_pem"] is not None:
-        converted = converted.transform(["server_node_pem"], _parse)
-    return converted
+    if oldsecrets:
+        if oldsecrets["introducer_node_pem"] is not None:
+            oldsecrets["introducer_node_pem"] = parse(oldsecrets["introducer_node_pem"])
+        if oldsecrets["server_node_pem"] is not None:
+            oldsecrets["server_node_pem"] = parse(oldsecrets["server_node_pem"])
+        return oldsecrets
+    return {}
 
 
 
@@ -115,7 +114,7 @@ class SubscriptionDetails(object):
     # Like the thing returned by secrets_to_legacy_format.
     oldsecrets = attr.ib(
         convert=_convert_oldsecrets,
-        validator=validators.instance_of(PMap),
+        validator=validators.instance_of(dict),
     )
     customer_email = attr.ib()
     customer_pgpinfo = attr.ib()

@@ -69,20 +69,14 @@ class Subscriptions(Resource):
 
 
 def _marshal_oldsecrets(oldsecrets):
-    oldsecrets = freeze(oldsecrets)
-    if oldsecrets["introducer_node_pem"] is not None:
-        oldsecrets = oldsecrets.transform(
-            ["introducer_node_pem"], lambda certs: "".join(map(str, certs))
-        )
-    if oldsecrets["server_node_pem"] is not None:
-        oldsecrets = oldsecrets.transform(
-            ["server_node_pem"], lambda certs: "".join(map(str, certs))
-        )
-    return thaw(oldsecrets)
+    oldsecrets["introducer_node_pem"] = "".join(map(str, oldsecrets["introducer_node_pem"]))
+    oldsecrets["server_node_pem"] = "".join(map(str, oldsecrets["server_node_pem"]))
+    return oldsecrets
+
 
 def marshal_subscription(details):
     result = attr.asdict(details)
-    if result["oldsecrets"] is not None:
+    if result["oldsecrets"]:
         result["oldsecrets"] = _marshal_oldsecrets(result["oldsecrets"])
     return result
 
