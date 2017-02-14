@@ -153,11 +153,6 @@ class TestSignupModule(TestCase):
             storage_port_number=12346,
         )
 
-        self.patch(signup, 'POLL_TIME', 0.1)
-        self.patch(signup, 'CC_VERIFICATION_TIME', 0.3)
-        self.patch(signup, 'ADDRESS_DELAY_TIME', 0.1)
-        self.patch(signup, 'ADDRESS_WAIT_TIME', 0.3)
-        self.patch(signup, 'LISTEN_POLL_TIME', 0.1)
         self.patch(initialize, 'SET_TAGS_DELAY_TIME', 0.1)
 
         from lae_automation.aws.queryapi import time
@@ -250,8 +245,6 @@ class TestSignupModule(TestCase):
 
     def test_activate_subscribed_service(self):
         stdout, stderr, MLOGFILENAME, MSSEC2SECRETSFILE = self.initialize_testlocal_state('test_activate_subscribed_service')
-        self.patch(signup, 'VERIFY_POLL_TIME', .1)
-        self.patch(signup, 'VERIFY_TOTAL_WAIT', .2)
 
         from lae_automation.aws import queryapi
         def call_hostpubkeyextractor(consoletext, instanceId):

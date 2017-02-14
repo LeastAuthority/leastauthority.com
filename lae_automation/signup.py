@@ -10,7 +10,7 @@ import attr
 from twisted.internet import reactor
 from twisted.web.client import Agent
 from twisted.python.filepath import FilePath
-from twisted.internet.defer import succeed
+from twisted.internet.defer import maybeDeferred
 
 from lae_automation.initialize import create_stripe_user_bucket
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
@@ -27,20 +27,6 @@ from lae_util.timestamp import format_iso_time
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
-
-POLL_TIME = 30
-
-# credit card verification might take 15 minutes, so wait 20.
-CC_VERIFICATION_TIME = 20 * 60
-
-# wait 75 seconds before the first poll, then up to 5 minutes for the addresses.
-ADDRESS_DELAY_TIME = 75
-ADDRESS_WAIT_TIME = 5 * 60
-
-LISTEN_RETRIES = 5
-LISTEN_POLL_TIME = 15
-VERIFY_POLL_TIME = 5
-VERIFY_TOTAL_WAIT = 600
 
 
 def lookup_product(config, plan_ID):
@@ -137,10 +123,10 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         introducer_port_number=None,
         storage_port_number=None,
     )
-    d = succeed(None)
-    d.addCallback(lambda ign: activate_subscribed_service(
+    d = maybeDeferred(
+        activate_subscribed_service,
         deploy_config, subscription, signup_stdout, signup_stderr, signup_log_fp.path,
-    ))
+    )
     d.addErrback(errhandler)
     d.addBoth(lambda ign: signup_logfile.close())
     return d
