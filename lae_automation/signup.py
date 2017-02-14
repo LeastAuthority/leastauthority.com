@@ -6,21 +6,15 @@ from pprint import pformat
 
 import attr
 
-from twisted.internet import defer, reactor, task
-from twisted.python.filepath import FilePath
+from twisted.internet import reactor
 from twisted.web.client import Agent
 
-from lae_automation.config import Config
-from lae_automation.initialize import create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
-from lae_automation.aws.queryapi import TimeoutError, wait_for_EC2_addresses
-from lae_automation.server import install_server, bounce_server, NotListeningError
+from lae_automation.initialize import create_stripe_user_bucket
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 from lae_automation.containers import provision_subscription
 
-from .model import DeploymentConfiguration, SubscriptionDetails
 from .subscription_manager import network_client
 
-from lae_util.servers import append_record
 from lae_util.timestamp import format_iso_time
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
