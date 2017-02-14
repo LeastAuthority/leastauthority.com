@@ -11,11 +11,11 @@ from base64 import b32encode, b32decode
 
 import attr
 from attr import validators
-from pyrsistent import thaw
+from pyrsistent import freeze, thaw
 
 from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
-from twisted.web.http import CREATED, NO_CONTENT, OK
+from twisted.web.http import CREATED, NO_CONTENT, OK, BAD_REQUEST
 from twisted.web.server import Site
 from twisted.internet import task as theCooperator
 from twisted.web.client import FileBodyProducer, readBody
@@ -24,7 +24,8 @@ from twisted.python.filepath import FilePath
 from twisted.application.internet import StreamServerEndpointService
 from twisted.internet.endpoints import serverFromString
 
-from .model import SubscriptionDetails
+from .model import NullDeploymentConfiguration, SubscriptionDetails
+from .server import new_tahoe_configuration, secrets_to_legacy_format
 
 from lae_util import validators as my_validators
 from lae_util.fileutil import make_dirs
@@ -68,6 +69,7 @@ class Subscriptions(Resource):
 
 
 def _marshal_oldsecrets(oldsecrets):
+    oldsecrets = freeze(oldsecrets)
     if oldsecrets["introducer_node_pem"] is not None:
         oldsecrets = oldsecrets.transform(
             ["introducer_node_pem"], lambda certs: "".join(map(str, certs))
@@ -80,7 +82,8 @@ def _marshal_oldsecrets(oldsecrets):
 
 def marshal_subscription(details):
     result = attr.asdict(details)
-    result["oldsecrets"] = _marshal_oldsecrets(result["oldsecrets"])
+    if result["oldsecrets"] is not None:
+        result["oldsecrets"] = _marshal_oldsecrets(result["oldsecrets"])
     return result
 
 
@@ -92,12 +95,12 @@ class Subscription(Resource):
 
     def render_PUT(self, request):
         payload = loads(request.content.read())
-        self.database.create_subscription(
+        details = self.database.create_subscription(
             subscription_id=self.subscription_id,
             details=SubscriptionDetails(**payload),
         )
         request.setResponseCode(CREATED)
-        return b""
+        return dumps(attr.asdict(details))
 
     def render_GET(self, request):
         details = self.database.get_subscription(
@@ -189,8 +192,23 @@ class SubscriptionDatabase(object):
     def create_subscription(self, subscription_id, details):
         path = self._subscription_path(subscription_id)
         details = attr.assoc(details, **self._assign_addresses())
+        if details.oldsecrets:
+            raise Exception("You supplied secrets (%r) but that's nonsense!" % (details.oldsecrets,))
+        deploy_config = NullDeploymentConfiguration()
+        from .subscription_converger import _introducer_name_for_subscription
+        config = new_tahoe_configuration(
+            deploy_config,
+            details.bucketname,
+            unicode(_introducer_name_for_subscription(details.subscription_id, u"leastauthority.com.")),
+            u"127.0.0.1",
+            details.introducer_port_number,
+        )
+        legacy = secrets_to_legacy_format(config)
+        details = attr.assoc(details, oldsecrets=legacy)
         state = self._subscription_state(subscription_id, details)
         self._create(path, dumps(state))
+        return details
+
 
     def deactivate_subscription(self, subscription_id):
         path = self._subscription_path(subscription_id)
@@ -305,7 +323,8 @@ class Client(object):
             ),
         )
         d.addCallback(require_code(CREATED))
-        d.addCallback(lambda ignored: None)
+        d.addCallback(readBody)
+        d.addCallback(lambda body: SubscriptionDetails(**loads(body)))
         return d
 
     def get(self, subscription_id):

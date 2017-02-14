@@ -316,11 +316,14 @@ def get_hosted_zone_by_name(route53, name):
     return d
 
 
+
 def _introducer_name_for_subscription(subscription_id, domain):
     return Name(u"{subscription_id}.introducer.{domain}".format(
         subscription_id=b32encode(subscription_id).lower().strip(u"="),
         domain=domain,
     ))
+
+
 
 def _cname_for_subscription(domain):
     return CNAME(

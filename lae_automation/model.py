@@ -17,6 +17,7 @@ validate_furl = all(
     lambda inst, attr, value: decode_furl(value),
 )
 
+
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
     # XXX Would be nice to be able to set this to
@@ -59,6 +60,37 @@ class DeploymentConfiguration(object):
     stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
 
 
+class NullDeploymentConfiguration(object):
+    domain = None
+    private_host = None
+    kubernetes_namespace = None
+    subscription_manager_hostname = None
+    products = ()
+    s3_access_key_id = None
+    s3_secret_key = None
+    amiimageid = None
+    instancesize = None
+
+    usertoken = None
+    producttoken = None
+
+    ssec2_access_key_id = None
+    ssec2_secret_path = None
+
+    ssec2admin_keypair_name = None
+    ssec2admin_privkey_path = None
+
+    monitor_pubkey_path = None
+    monitor_privkey_path = None
+
+    secretsfile = open("/dev/full", "a")
+    serverinfopath = "/dev/full"
+
+    log_gatherer_furl = None
+    stats_gatherer_furl = None
+
+
+
 def _parse(pem_str):
     return freeze(sorted(parse(pem_str)))
 
@@ -96,6 +128,18 @@ class SubscriptionDetails(object):
 
     introducer_port_number = attr.ib()
     storage_port_number = attr.ib()
+
+    @property
+    def publichost(self):
+        return self.oldsecrets["publichost"]
+
+    @property
+    def privatehost(self):
+        return self.oldsecrets["privatehost"]
+
+    @property
+    def external_introducer_furl(self):
+        return self.oldsecrets["external_introducer_furl"]
 
     @property
     def introducer_node_pem(self):
