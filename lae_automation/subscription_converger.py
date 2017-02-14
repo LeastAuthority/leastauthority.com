@@ -53,6 +53,8 @@ class Options(_Options):
 
         ("aws-access-key-id-path", None, None, "The path of a file containing the AWS key identifier to use."),
         ("aws-secret-access-key-path", None, None, "The path of a file containing the AWS secret key to use."),
+
+        ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
     ]
 
     optFlags = [
@@ -120,7 +122,7 @@ def makeService(options):
     )
 
     return TimerService(
-        1.0,
+        options["interval"],
         divert_errors_to_log(converge), config, subscription_client, k8s, aws,
     )
 
