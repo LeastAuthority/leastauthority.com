@@ -157,16 +157,16 @@ spec:
       - name: 'subscription-manager'
         image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
         volumeMounts:
-          - mountPath: '/app/data'
-            name: 'subscription-manager-data'
+        - mountPath: '/app/data'
+          name: 'subscription-manager-data'
 
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
         image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
         volumeMounts:
-          - mountPath: '/app/k8s_secrets'
-            name: 'convergence-secrets'
+        - mountPath: '/app/k8s_secrets'
+          name: 'convergence-secrets'
 
       # Here is the Foolscap log gatherer.
       - name: 'foolscap-log-gatherer'
