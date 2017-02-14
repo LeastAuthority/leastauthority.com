@@ -138,14 +138,13 @@ spec:
       - name: 'convergence-secrets'
         secret:
           secretName: 'signup-secrets'
+          defaultMode: 0444
           items:
           # XXX Should allocate some Route53-only keys for this.
           - key: 'aws-s4.key'
             path: 'aws.key'
-            mode: 0400
           - key: 'aws-s4.id'
             path: 'aws.id'
-            mode: 0400
 
 
       # Read about containers at
