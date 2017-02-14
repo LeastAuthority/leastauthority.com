@@ -166,6 +166,7 @@ spec:
         volumeMounts:
         - mountPath: '/app/k8s_secrets'
           name: 'convergence-secrets'
+          readOnly: true
 
       # Here is the Foolscap log gatherer.
       - name: 'foolscap-log-gatherer'
