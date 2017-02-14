@@ -1,7 +1,6 @@
 #!/bin/bash -ex
 
 # K8S_POD tells us which k8s pod in which to build.
-# GIT_BRANCH tells us which leastauthority.com branch to build.
 
 [[ -v K8S_POD ]] || {
     # Find it.
@@ -11,7 +10,7 @@
 REPO="$(dirname $0)/../.git"
 
 # A helper to run commands inside a container in the pod.
-EXEC="kubectl --namespace default exec -i ${K8S_POD} --"
+EXEC="kubectl exec  --context prod -i ${K8S_POD} --"
 
 ${EXEC} bash -e -x -c '
     # Dependencies for the build.
@@ -30,9 +29,15 @@ DOCKER_TAG=$(git --git-dir "${REPO}" rev-parse --short HEAD)
 ${EXEC} bash -ex -c '
     DOCKER_TAG="'"${DOCKER_TAG}"'"
 
-    # Get to our temporary working directory.
     # Get a fresh, clean space to work in.
-    WORKDIR=$(${EXEC} bash -c "mktemp -d")
+    WORKDIR=$(mktemp -d)
+
+    SERVER_PORT=30000
+    SERVER="127.0.0.1:${SERVER_PORT}"
+
+    microservices="web flapp tahoe-introducer tahoe-storage foolscap-gatherer magicwormhole subscription-manager subscription-converger"
+
+    # Get back to our temporary working directory.
     pushd "${WORKDIR}"
 
     # Get a new source checkout.
@@ -47,15 +52,10 @@ ${EXEC} bash -ex -c '
 
     # Tag them in the way expected by the deployment configuration and
     # with the tag given in the environment.
-    docker tag leastauthority/web 127.0.0.1:30000/leastauthority/web:"${DOCKER_TAG}"
-    docker tag leastauthority/flapp 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
-
-    docker tag leastauthority/tahoe-introducer 127.0.0.1:30000/leastauthority/tahoe-introducer:"${DOCKER_TAG}"
-    docker tag leastauthority/tahoe-storage 127.0.0.1:30000/leastauthority/tahoe-storage:"${DOCKER_TAG}"
-
-    docker tag leastauthority/foolscap-gatherer 127.0.0.1:30000/leastauthority/foolscap-gatherer:"${DOCKER_TAG}"
-
-    docker tag leastauthority/magicwormhole 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
+    for microservice in ${microservices}; do
+        repo="leastauthority/${microservice}"
+        docker tag ${repo} "${SERVER}/${repo}:${DOCKER_TAG}"
+    done
 
     # Clean up the last portforwarder, if necessary.
     [ -e /tmp/portforward.pid ] && kill $(cat /tmp/portforward.pid) || /bin/true
@@ -66,15 +66,13 @@ ${EXEC} bash -ex -c '
         portforward \
             --port 30000 \
             --host private-registry.leastauthority-tweaks \
-            --dest_port 30000
+            --dest_port ${SERVER_PORT}
 
     # And push them.
-    docker push 127.0.0.1:30000/leastauthority/web:"${DOCKER_TAG}"
-    docker push 127.0.0.1:30000/leastauthority/flapp:"${DOCKER_TAG}"
-    docker push 127.0.0.1:30000/leastauthority/tahoe-introducer:"${DOCKER_TAG}"
-    docker push 127.0.0.1:30000/leastauthority/tahoe-storage:"${DOCKER_TAG}"
-    docker push 127.0.0.1:30000/leastauthority/foolscap-gatherer:"${DOCKER_TAG}"
-    docker push 127.0.0.1:30000/leastauthority/magicwormhole:"${DOCKER_TAG}"
+    for microservice in ${microservices}; do
+        repo="leastauthority/${microservice}"
+        docker push "${SERVER}/${repo}:${DOCKER_TAG}"
+    done
 
     echo "Tagged images with ${DOCKER_TAG}"
 '
