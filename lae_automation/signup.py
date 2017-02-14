@@ -10,11 +10,10 @@ import attr
 from twisted.internet import reactor
 from twisted.web.client import Agent
 from twisted.python.filepath import FilePath
-from twisted.internet.defer import maybeDeferred
+from twisted.internet.defer import maybeDeferred, succeed
 
 from lae_automation.initialize import create_stripe_user_bucket
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
-from lae_automation.containers import provision_subscription
 
 from lae_automation.config import Config
 from lae_automation.model import DeploymentConfiguration, SubscriptionDetails
@@ -136,9 +135,16 @@ def activate_subscribed_service(deploy_config, subscription, stdout, stderr, log
     d = just_activate_subscription(
         deploy_config, subscription, stdout, stderr, logfile, clock, smclient,
     )
-    d.addErrback(lambda f: send_notify_failure(
-        f, subscription.customer_email, logfile, stdout, stderr,
-    ))
+    d.addCallback(
+        lambda details: send_signup_confirmation(
+            details.customer_email, details.external_introducer_furl, None, stdout, stderr,
+        ),
+    )
+    d.addErrback(
+        lambda error: send_notify_failure(
+            error, subscription.customer_email, logfile, stdout, stderr,
+        ),
+    )
     return d
 
 
@@ -175,6 +181,30 @@ def just_activate_subscription(deploy_config, subscription, stdout, stderr, logf
         )
     )
     return d
+
+
+def provision_subscription(reactor, deploy_config, details, smclient):
+    """
+    Create the subscription state in the SubscriptionManager service.
+
+    :param DeploymentConfiguration deploy_config:
+    :param SubscriptionDetails details:
+    """
+    d = smclient.create(details.subscription_id, details)
+    def created(details):
+        d = _wait_for_service(details.subscription_id)
+        d.addCallback(lambda ignored: details)
+        return d
+    d.addCallback(created)
+    return d
+
+
+
+def _wait_for_service(subscription_id):
+    # XXX Poll Kubernetes or DNS or something looking for matching resources.
+    # XXX With a timeout and some error logging.
+    return succeed(None)
+
 
 
 def create_log_filepaths(parent_dir, stripe_plan_id, stripe_customer_id, stripe_subscription_id):

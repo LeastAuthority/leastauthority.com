@@ -3,31 +3,9 @@ from json import dumps
 
 from pyrsistent import freeze
 
-from twisted.internet.defer import succeed
-
 from .server import new_tahoe_configuration, marshal_tahoe_configuration
 
 from txkube import v1, v1beta1
-
-def provision_subscription(reactor, deploy_config, details, smclient):
-    """
-    Create the subscription state in the SubscriptionManager service.
-
-    :param DeploymentConfiguration deploy_config:
-    :param SubscriptionDetails details:
-    """
-    d = smclient.create(details.subscription_id, details)
-    d.addCallback(lambda ignored: _wait_for_service(details.subscription_id))
-    return d
-
-
-
-def _wait_for_service(subscription_id):
-    # XXX Poll Kubernetes state looking for matching resources.
-    # XXX With a timeout and some error logging.
-    return succeed(None)
-
-
 
 _S4_METADATA = v1.ObjectMeta(
     labels={
@@ -76,27 +54,19 @@ def create_configuration(deploy_config, details):
     public_host = configmap_public_host(details.subscription_id, deploy_config.domain)
     private_host = deploy_config.private_host
 
-    if details.oldsecrets is None:
-        configuration = new_tahoe_configuration(
-            deploy_config=deploy_config,
-            bucketname=details.bucketname,
-            publichost=public_host,
-            privatehost=private_host,
-        )
-    else:
-        configuration = marshal_tahoe_configuration(
-            introducer_pem=details.introducer_node_pem,
-            storage_pem=details.server_node_pem,
-            storage_privkey=details.oldsecrets["server_node_privkey"],
-            bucket_name=details.bucketname,
-            publichost=public_host,
-            privatehost=private_host,
-            introducer_furl=details.oldsecrets["internal_introducer_furl"],
-            s3_access_key_id=deploy_config.s3_access_key_id,
-            s3_secret_key=deploy_config.s3_secret_key,
-            log_gatherer_furl=deploy_config.log_gatherer_furl,
-            stats_gatherer_furl=deploy_config.stats_gatherer_furl,
-        )
+    configuration = marshal_tahoe_configuration(
+        introducer_pem=details.introducer_node_pem,
+        storage_pem=details.server_node_pem,
+        storage_privkey=details.oldsecrets["server_node_privkey"],
+        bucket_name=details.bucketname,
+        publichost=public_host,
+        privatehost=private_host,
+        introducer_furl=details.oldsecrets["internal_introducer_furl"],
+        s3_access_key_id=deploy_config.s3_access_key_id,
+        s3_secret_key=deploy_config.s3_secret_key,
+        log_gatherer_furl=deploy_config.log_gatherer_furl,
+        stats_gatherer_furl=deploy_config.stats_gatherer_furl,
+    )
 
     return CONFIGMAP_TEMPLATE.transform(
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
