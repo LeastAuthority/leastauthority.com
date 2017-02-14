@@ -135,7 +135,7 @@ spec:
       - name: 'flapp-secrets'
         secret:
           secretName: 'signup-secrets'
-     - name: 'convergence-secrets'
+      - name: 'convergence-secrets'
         secret:
           secretName: 'signup-secrets'
           items:
