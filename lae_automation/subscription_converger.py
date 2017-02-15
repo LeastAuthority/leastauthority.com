@@ -79,7 +79,8 @@ def makeService(options):
 
     if options["k8s-service-account"]:
         kubernetes = network_kubernetes(
-            base_url=URL.fromText(u"https://kubernetes/"),
+            # XXX is this really the url to use?
+            base_url=URL.fromText(u"https://kubernetes.default/"),
             agent=authenticate_with_serviceaccount(reactor),
         )
     else:
