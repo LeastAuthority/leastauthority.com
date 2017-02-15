@@ -9,9 +9,15 @@ from txkube import v1, v1beta1
 
 _S4_METADATA = v1.ObjectMeta(
     labels={
+        # Some labels that help us identify stuff belonging to
+        # customer-specific pieces (deployments, configmaps, etc) of the
+        # service.
 	u"provider": u"LeastAuthority",
 	u"app": u"s4",
-	u"component": u"customer-tahoe-lafs"
+	u"component": u"customer-tahoe-lafs",
+        # And version this thing so we know how to interpret whatever else we
+        # find in it.
+        u"version": u"1",
     }
 )
 
@@ -25,10 +31,12 @@ CONFIGMAP_TEMPLATE = v1.ConfigMap(
 
 def subscription_metadata(details):
     return [
-        [u"metadata", u"labels", u"email"], details.customer_email,
-        [u"metadata", u"labels", u"customer"], details.customer_id,
-        [u"metadata", u"labels", u"subscription"], details.subscription_id,
-        [u"metadata", u"labels", u"plan"], details.product_id,
+        # Some information about the customer/subscription to be attached to
+        # objects that exist specifically for that customer/subscription.
+        [u"metadata", u"annotations", u"email"], details.customer_email,
+        [u"metadata", u"annotations", u"customer"], details.customer_id,
+        [u"metadata", u"annotations", u"subscription"], details.subscription_id,
+        [u"metadata", u"annotations", u"plan"], details.product_id,
     ]
 
 
