@@ -6,12 +6,12 @@ provides persistence of S4 subscriptions.
 from io import BytesIO
 from json import loads, dumps
 from os import O_CREAT, O_EXCL, O_WRONLY, open as os_open, fdopen
-from urllib import quote
 from base64 import b32encode, b32decode
 
 import attr
 from attr import validators
 
+from twisted.python.url import URL
 from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
 from twisted.web.http import CREATED, NO_CONTENT, OK
@@ -294,6 +294,10 @@ class Client(object):
     agent = attr.ib(validator=validators.provides(IAgent))
     cooperator = attr.ib()
 
+    def _url(self, *segments):
+        return URL.fromText(self.endpoint).child(*segments).asURI().asText().encode("ascii")
+
+
     def create(self, subscription_id, details):
         """
         Create a new, active subscription.
@@ -307,13 +311,8 @@ class Client(object):
         :return: A ``Deferred`` that fires when the subscription has
         been created.
         """
-        url = (
-            self.endpoint +
-            b"/v1/subscriptions/" +
-            quote(subscription_id.encode("ascii"), safe=b"")
-        )
         d = self.agent.request(
-            b"PUT", url,
+            b"PUT", self._url(u"v1", u"subscriptions", subscription_id),
             bodyProducer=FileBodyProducer(
                 BytesIO(dumps(marshal_subscription(details))),
                 cooperator=self.cooperator,
@@ -336,8 +335,7 @@ class Client(object):
         subscription.
         """
         d = self.agent.request(
-            b"GET",
-            self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
+            b"GET", self._url(u"v1", u"subscriptions", subscription_id),
         )
         d.addCallback(require_code(OK))
         d.addCallback(readBody)
@@ -350,8 +348,7 @@ class Client(object):
         Get all existing active subscriptions.
         """
         d = self.agent.request(
-            b"GET",
-            self.endpoint + b"/v1/subscriptions",
+            b"GET", self._url(u"v1", u"subscriptions"),
         )
         d.addCallback(require_code(OK))
         d.addCallback(readBody)
@@ -362,8 +359,7 @@ class Client(object):
 
     def delete(self, subscription_id):
         d = self.agent.request(
-            b"DELETE",
-            self.endpoint + b"/v1/subscriptions/" + quote(subscription_id, safe=b""),
+            b"DELETE", self._url(u"v1", u"subscriptions", subscription_id),
         )
         d.addCallback(require_code(NO_CONTENT))
         d.addCallback(lambda ignored: None)
