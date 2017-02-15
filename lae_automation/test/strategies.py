@@ -29,11 +29,15 @@ def nickname():
 def subscription_id():
     return strategies.binary(min_size=10, max_size=10).map(
         lambda b: b'sub_' + b.encode('base64').strip('=\n')
+    ).map(
+        lambda s: s.decode("ascii")
     )
 
 def customer_id():
     return strategies.binary(min_size=10, max_size=10).map(
         lambda b: b'cus_' + b.encode('base64').strip('=\n')
+    ).map(
+        lambda s: s.decode("ascii")
     )
 
 def bucket_name():
@@ -49,7 +53,7 @@ def ipv4_address():
         elements=strategies.integers(min_value=0, max_value=255),
         min_size=4, max_size=4,
     ).map(
-        lambda parts: "{}.{}.{}.{}".format(*parts)
+        lambda parts: u"{}.{}.{}.{}".format(*parts)
     )
 
 def aws_access_key_id():

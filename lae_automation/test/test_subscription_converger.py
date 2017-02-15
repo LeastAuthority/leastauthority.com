@@ -6,6 +6,8 @@ from json import dumps
 
 from zope.interface.verify import verifyObject
 
+import attr
+
 from hypothesis import assume, given
 from hypothesis.strategies import lists, choices, randoms
 from hypothesis import Verbosity, settings
@@ -220,6 +222,7 @@ class MakeServiceTests(TestCase):
             b"--endpoint", b"http://localhost:8000/",
             b"--aws-access-key-id-path", access_key_id_path.path,
             b"--aws-secret-access-key-path", secret_access_key_path.path,
+            b"--kubernetes", b"kubernetes",
             b"--k8s-context", u"testing",
             b"--k8s-config", config.path,
         ])
@@ -244,7 +247,7 @@ class ApplyServiceChangesTests(TestCase):
         subscriptions to the service's ``ports``.
         """
         service = new_service(u"testing")
-        changed = apply_service_changes(service, to_delete=set(), to_create=set(details))
+        changed = apply_service_changes(service, to_delete=set(), to_create=details)
         self.assertThat(
             set(changed.spec.ports),
             Equals(
@@ -268,7 +271,7 @@ class ApplyServiceChangesTests(TestCase):
             in details
             if random.choice((True, False))
         )
-        changed = apply_service_changes(service, to_delete=to_delete, to_create=set())
+        changed = apply_service_changes(service, to_delete=to_delete, to_create=[])
         self.assertThat(
             set(changed.spec.ports),
             Equals(
@@ -316,7 +319,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def teardown(self):
         self.action.finish()
 
-    @rule(details=subscription_details())
+    @rule(details=subscription_details().map(lambda d: attr.assoc(d, oldsecrets=None)))
     def activate(self, details):
         """
         Activate a new subscription in the subscription manager.

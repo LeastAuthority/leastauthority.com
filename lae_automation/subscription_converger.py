@@ -226,7 +226,6 @@ def get_active_subscriptions(subscriptions):
     returnValue(active_subscriptions)
 
 
-@with_action(action_type=u"converge")
 @inlineCallbacks
 def converge(config, subscriptions, k8s, aws):
     # Create and destroy deployments as necessary.  Use the
@@ -234,14 +233,16 @@ def converge(config, subscriptions, k8s, aws):
     # and use look at the Kubernetes configuration to find out what
     # subscription-derived deployments exist.  Also detect port
     # mis-configurations and correct them.
+
     active_subscriptions = yield get_active_subscriptions(subscriptions)
     configured_deployments = yield get_customer_grid_deployments(k8s, config.kubernetes_namespace)
     configured_service = (yield get_customer_grid_service(k8s, config.kubernetes_namespace))
+
     create_service = (configured_service is None)
     if create_service:
         configured_service = new_service(config.kubernetes_namespace)
 
-    to_create = set(active_subscriptions.itervalues())
+    to_create = set(active_subscriptions.iterkeys())
     to_delete = set()
 
     for deployment in configured_deployments:
@@ -252,7 +253,7 @@ def converge(config, subscriptions, k8s, aws):
             to_delete.add(subscription_id)
             continue
 
-        to_create.remove(subscription)
+        to_create.remove(subscription_id)
 
         introducer_port = (
             deployment.spec.template.spec.containers[0].ports[0].containerPort
@@ -263,23 +264,24 @@ def converge(config, subscriptions, k8s, aws):
         if introducer_port != subscription.introducer_port_number:
             Message.log(modify_deployment=subscription_id, reason=u"introducer port mismatch")
             to_delete.add(subscription_id)
-            to_create.add(subscription)
+            to_create.add(subscription_id)
         elif storage_port != subscription.storage_port_number:
             Message.log(modify_deployment=subscription_id, reason=u"storage port mismatch")
             to_delete.add(subscription_id)
-            to_create.add(subscription)
+            to_create.add(subscription_id)
 
+    to_create_subscriptions = list(active_subscriptions[sid] for sid in to_create)
     configmaps = list(
         create_configuration(config, details)
         for details
-        in to_create
+        in to_create_subscriptions
     )
     deployments = list(
         create_deployment(config, details)
         for details
-        in to_create
+        in to_create_subscriptions
     )
-    service = apply_service_changes(configured_service, to_delete, to_create)
+    service = apply_service_changes(configured_service, to_delete, to_create_subscriptions)
 
     route53 = aws.get_route53_client()
     try:
@@ -290,7 +292,7 @@ def converge(config, subscriptions, k8s, aws):
     a = start_action(
         action_type=u"enacting",
         to_delete=list(to_delete),
-        to_create=list(s.subscription_id for s in to_create),
+        to_create=list(to_create),
     )
     # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
     # the objects have no namespace so they can't be created
@@ -320,7 +322,7 @@ def converge(config, subscriptions, k8s, aws):
             yield k8s.create(service)
         else:
             yield k8s.replace(service)
-        yield create_route53_rrsets(route53, zone, to_create)
+        yield create_route53_rrsets(route53, zone, to_create_subscriptions)
 
 
 @with_action(action_type=u"find-zones")

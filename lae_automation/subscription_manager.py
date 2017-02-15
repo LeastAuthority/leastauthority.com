@@ -397,7 +397,7 @@ def memory_client(database_path):
     """
     root = make_resource(database_path)
     agent = MemoryAgent(root)
-    return Client(endpoint=b"", agent=agent, cooperator=Uncooperator())
+    return Client(endpoint=b"/", agent=agent, cooperator=Uncooperator())
 
 
 def broken_client():
