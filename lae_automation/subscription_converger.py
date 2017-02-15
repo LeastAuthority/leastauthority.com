@@ -11,6 +11,7 @@ them.
 """
 
 from base64 import b32encode
+from os import environ
 
 import attr
 
@@ -45,6 +46,15 @@ from txkube import (
 )
 
 
+def _kubernetes_from_environ(environ):
+    try:
+        host = environ[u"KUBERNETES_SERVICE_HOST"]
+        port = int(environ[u"KUBERNETES_SERVICE_PORT"])
+    except (KeyError, ValueError):
+        return None
+    return u"https://{}:{}/".format(host, port).encode("ascii")
+
+
 class Options(_Options):
     optParameters = [
         ("endpoint", None, None, "The root URL of the subscription manager service."),
@@ -55,6 +65,8 @@ class Options(_Options):
         ("aws-secret-access-key-path", None, None, "The path of a file containing the AWS secret key to use."),
 
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
+
+        ("kubernetes", None, _kubernetes_from_environ(environ), "The root URL of the Kubernetes API server."),
     ]
 
     optFlags = [
@@ -66,6 +78,8 @@ class Options(_Options):
             raise UsageError("--endpoint is required")
         if self["endpoint"].endswith("/"):
             self["endpoint"] = self["endpoint"][:-1]
+        if self["kubernetes"] is None:
+            raise UsageError("--kubernetes is required")
 
         if (self["k8s-context"] is None) == (not self["k8s-service-account"]):
             raise UsageError("Exactly one of --k8s-context or --k8s-service-account is required")
@@ -80,7 +94,7 @@ def makeService(options):
     if options["k8s-service-account"]:
         kubernetes = network_kubernetes(
             # XXX is this really the url to use?
-            base_url=URL.fromText(u"https://kubernetes.default/"),
+            base_url=URL.fromText(options["kubernetes"].decode("ascii")),
             agent=authenticate_with_serviceaccount(reactor),
         )
     else:
