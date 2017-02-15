@@ -295,7 +295,7 @@ class Client(object):
     cooperator = attr.ib()
 
     def _url(self, *segments):
-        return URL.fromText(self.endpoint).child(*segments).asURI().asText().encode("ascii")
+        return URL.fromText(self.endpoint.decode("utf-8")).child(*segments).asURI().asText().encode("ascii")
 
 
     def create(self, subscription_id, details):
