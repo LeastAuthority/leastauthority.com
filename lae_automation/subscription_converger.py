@@ -105,8 +105,8 @@ def makeService(options):
     k8s = KubeClient(k8s=k8s_client)
 
     aws = AWSServiceRegion(creds=AWSCredentials(
-        access_key=FilePath(options["aws-access-key-id-path"]).getContent(),
-        secret_key=FilePath(options["aws-secret-access-key-path"]).getContent(),
+        access_key=FilePath(options["aws-access-key-id-path"]).getContent().strip(),
+        secret_key=FilePath(options["aws-secret-access-key-path"]).getContent().strip(),
     ))
 
     # XXX Exclusive for static attributes at this time ... really need to
