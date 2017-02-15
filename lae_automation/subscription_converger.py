@@ -12,13 +12,14 @@ them.
 
 from base64 import b32encode
 from os import environ
+from functools import partial
 
 import attr
 
 from eliot import Message, start_action
 from eliot.twisted import DeferredContext
 
-from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred
+from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred, gatherResults
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options, UsageError
 from twisted.python.filepath import FilePath
@@ -226,17 +227,17 @@ def get_active_subscriptions(subscriptions):
     returnValue(active_subscriptions)
 
 
-@inlineCallbacks
-def converge(config, subscriptions, k8s, aws):
-    # Create and destroy deployments as necessary.  Use the
-    # subscription manager to find out what subscriptions are active
-    # and use look at the Kubernetes configuration to find out what
-    # subscription-derived deployments exist.  Also detect port
-    # mis-configurations and correct them.
+def _get_converge_inputs(config, subscriptions, k8s, route53):
+    return gatherResults([
+        get_active_subscriptions(subscriptions),
+        get_customer_grid_deployments(k8s, config.kubernetes_namespace),
+        get_customer_grid_service(k8s, config.kubernetes_namespace),
+        get_hosted_zone_by_name(route53, config.domain)
+    ])
 
-    active_subscriptions = yield get_active_subscriptions(subscriptions)
-    configured_deployments = yield get_customer_grid_deployments(k8s, config.kubernetes_namespace)
-    configured_service = (yield get_customer_grid_service(k8s, config.kubernetes_namespace))
+
+def _converge_logic(state, config, subscriptions, k8s, route53):
+    (active_subscriptions, configured_deployments, configured_service, zone) = state
 
     create_service = (configured_service is None)
     if create_service:
@@ -271,6 +272,7 @@ def converge(config, subscriptions, k8s, aws):
             to_create.add(subscription_id)
 
     to_create_subscriptions = list(active_subscriptions[sid] for sid in to_create)
+
     configmaps = list(
         create_configuration(config, details)
         for details
@@ -283,46 +285,62 @@ def converge(config, subscriptions, k8s, aws):
     )
     service = apply_service_changes(configured_service, to_delete, to_create_subscriptions)
 
-    route53 = aws.get_route53_client()
-    try:
-        zone = yield get_hosted_zone_by_name(route53, config.domain)
-    except KeyError:
-        raise ValueError("Configured domain {!r} does not exist in Route53.".format(config.domain))
+    jobs = []
 
-    a = start_action(
-        action_type=u"enacting",
-        to_delete=list(to_delete),
-        to_create=list(to_create),
-    )
-    # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    # the objects have no namespace so they can't be created
-    # also this function is now (I)/O -> logic -> I/(O)
-    # so probably could be refactored now
-    with a:
-        yield delete_route53_rrsets(route53, zone, to_delete)
-        for subscription_id in to_delete:
-            yield k8s.delete(v1beta1.Deployment(
-                metadata=dict(
-                    name=deployment_name(subscription_id),
-                    namespace=config.kubernetes_namespace,
-                ),
-            ))
-            yield k8s.delete(v1.ConfigMap(
-                metadata=dict(
-                    name=configmap_name(subscription_id),
-                    namespace=config.kubernetes_namespace,
-                ),
-            ))
+    jobs.append(lambda: delete_route53_rrsets(route53, zone, to_delete))
+    for sid in to_delete:
+        jobs.append(lambda sid=sid: k8s.delete(v1beta1.Deployment(
+            metadata=dict(
+                name=deployment_name(sid),
+                namespace=config.kubernetes_namespace,
+            ),
+        )))
+        jobs.append(lambda sid=sid: k8s.delete(v1.ConfigMap(
+            metadata=dict(
+                name=configmap_name(sid),
+                namespace=config.kubernetes_namespace,
+            ),
+        )))
 
-        for configmap in configmaps:
-            yield k8s.create(configmap)
-        for deployment in deployments:
-            yield k8s.create(deployment)
-        if create_service:
-            yield k8s.create(service)
-        else:
-            yield k8s.replace(service)
-        yield create_route53_rrsets(route53, zone, to_create_subscriptions)
+    for configmap in configmaps:
+        jobs.append(partial(k8s.create, configmap))
+    for deployment in deployments:
+        jobs.append(partial(k8s.create, deployment))
+    if create_service:
+        jobs.append(partial(k8s.create, service))
+    else:
+        jobs.append(partial(k8s.replace, service))
+    jobs.append(lambda: create_route53_rrsets(route53, zone, to_create_subscriptions))
+    return jobs
+
+
+
+def _execute_converge_outputs(jobs):
+    if not jobs:
+        return
+
+    job = jobs.pop(0)
+    d = job()
+    if jobs:
+        d.addCallback(lambda ignored: _execute_converge_outputs(jobs))
+    return d
+
+
+
+def converge(config, subscriptions, k8s, aws):
+    # Create and destroy deployments as necessary.  Use the
+    # subscription manager to find out what subscriptions are active
+    # and use look at the Kubernetes configuration to find out what
+    # subscription-derived deployments exist.  Also detect port
+    # mis-configurations and correct them.
+    a = start_action(action_type=u"converge")
+    with a.context():
+        route53 = aws.get_route53_client()
+        d = DeferredContext(_get_converge_inputs(config, subscriptions, k8s, route53))
+        d.addCallback(_converge_logic, config, subscriptions, k8s, route53)
+        d.addCallback(_execute_converge_outputs)
+        return d.addActionFinish()
+
 
 
 @with_action(action_type=u"find-zones")

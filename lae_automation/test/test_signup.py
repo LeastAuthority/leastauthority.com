@@ -106,8 +106,8 @@ class TestSignupModule(TestCase):
 
         self.MEMAIL = 'MEMAIL'
         self.MKEYINFO = 'MKEYINFO'
-        self.MCUSTOMER_ID = 'cus_x14Charactersx'
-        self.MSUBSCRIPTION_ID = 'sub_x14Characterx'
+        self.MCUSTOMER_ID = u'cus_x14Charactersx'
+        self.MSUBSCRIPTION_ID = u'sub_x14Characterx'
         self.MPLAN_ID = 'XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX'
         self.MSECRETSFILE = 'MSECRETSFILE'
         self.MENCODED_IDS = 'on2wex3yge2eg2dbojqwg5dfoj4a-mn2xgx3yge2eg2dbojqwg5dfojzxq'
@@ -203,9 +203,8 @@ class TestSignupModule(TestCase):
         self.patch(initialize, 'get_and_store_pubkeyfp_from_keyscan',
                    call_get_and_store_pubkeyfp_from_keyscan)
 
-        def call_send_signup_confirmation(publichost, customer_email, furl, customer_keyinfo, stdout,
+        def call_send_signup_confirmation(customer_email, furl, customer_keyinfo, stdout,
                                           stderr):
-            self.failUnlessEqual(publichost, '0.0.0.0')
             self.failUnlessEqual(customer_email, 'MEMAIL')
             self.failUnlessEqual(furl, None)
             self.failUnlessEqual(customer_keyinfo, 'MKEYINFO')
@@ -262,7 +261,7 @@ class TestSignupModule(TestCase):
         attr.validate(config)
         d = signup.activate_subscribed_service(
             config,
-            self.SUBSCRIPTION,
+            attr.assoc(self.SUBSCRIPTION, oldsecrets=None),
             stdout, stderr,
             MLOGFILENAME,
             smclient=smclient,
