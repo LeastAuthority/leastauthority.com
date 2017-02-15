@@ -232,7 +232,7 @@ def _get_converge_inputs(config, subscriptions, k8s, route53):
         get_active_subscriptions(subscriptions),
         get_customer_grid_deployments(k8s, config.kubernetes_namespace),
         get_customer_grid_service(k8s, config.kubernetes_namespace),
-        get_hosted_zone_by_name(route53, config.domain)
+        get_hosted_zone_by_name(route53, Name(config.domain))
     ])
 
 
@@ -349,7 +349,7 @@ def get_hosted_zone_by_name(route53, name):
     def filter_results(zones):
         Message.log(zone_names=list(zone.name for zone in zones))
         for zone in zones:
-            if zone.name == name:
+            if zone == name:
                 return zone
         raise KeyError(name)
     d.addCallback(filter_results)
