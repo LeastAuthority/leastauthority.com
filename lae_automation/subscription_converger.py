@@ -349,7 +349,8 @@ def get_hosted_zone_by_name(route53, name):
     def filter_results(zones):
         Message.log(zone_names=list(zone.name for zone in zones))
         for zone in zones:
-            if zone == name:
+            # XXX Bleuch zone.name should be a Name!
+            if Name(zone.name) == name:
                 return zone
         raise KeyError(name)
     d.addCallback(filter_results)
