@@ -121,6 +121,11 @@ def makeService(options):
         stats_gatherer_furl=None,
     )
 
+    # XXX not exactly the right place for this
+    from eliot import to_file
+    from sys import stdout
+    to_file(stdout)
+
     return TimerService(
         options["interval"],
         divert_errors_to_log(converge), config, subscription_client, k8s, aws,
