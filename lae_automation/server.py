@@ -4,13 +4,12 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-import os, simplejson, subprocess
+import os, subprocess
 from datetime import datetime
 utcnow = datetime.utcnow
 
 from pipes import quote as shell_quote
 from cStringIO import StringIO
-from ConfigParser import SafeConfigParser
 
 from OpenSSL.crypto import FILETYPE_PEM
 

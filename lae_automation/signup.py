@@ -169,9 +169,7 @@ def just_activate_subscription(deploy_config, subscription, stdout, stderr, logf
     print >>stdout, pformat(attr.asdict(subscription))
 
     if smclient is None:
-        endpoint = u"http://{}/".format(
-            deploy_config.subscription_manager_hostname
-        ).encode("utf-8")
+        endpoint = deploy_config.subscription_manager_hostname.asText().encode("utf-8")
         agent = Agent(reactor)
         smclient = network_client(endpoint, agent)
 

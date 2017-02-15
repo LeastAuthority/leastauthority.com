@@ -1,8 +1,9 @@
 import attr
 from attr import validators
 
-from pyrsistent import PMap, freeze
 from pem import parse
+
+from twisted.python.url import URL
 
 from foolscap.furl import decode_furl
 
@@ -32,7 +33,7 @@ class DeploymentConfiguration(object):
     kubernetes_namespace = u"staging"
 
     # XXX Must agree with the SubscriptionManager service configured in Kubernetes.
-    subscription_manager_hostname = u"subscription-manager"
+    subscription_manager_endpoint = URL.fromText(u"http://127.0.0.1:8000/")
 
     products = attr.ib(validator=_validate_products)
     s3_access_key_id = attr.ib()
@@ -64,7 +65,7 @@ class NullDeploymentConfiguration(object):
     domain = None
     private_host = None
     kubernetes_namespace = None
-    subscription_manager_hostname = None
+    subscription_manager_endpoint = None
     products = ()
     s3_access_key_id = None
     s3_secret_key = None

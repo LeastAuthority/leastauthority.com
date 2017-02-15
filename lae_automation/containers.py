@@ -3,7 +3,7 @@ from json import dumps
 
 from pyrsistent import freeze
 
-from .server import new_tahoe_configuration, marshal_tahoe_configuration
+from .server import marshal_tahoe_configuration
 
 from txkube import v1, v1beta1
 

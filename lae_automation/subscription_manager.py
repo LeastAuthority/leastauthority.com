@@ -11,11 +11,10 @@ from base64 import b32encode, b32decode
 
 import attr
 from attr import validators
-from pyrsistent import freeze, thaw
 
 from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
-from twisted.web.http import CREATED, NO_CONTENT, OK, BAD_REQUEST
+from twisted.web.http import CREATED, NO_CONTENT, OK
 from twisted.web.server import Site
 from twisted.internet import task as theCooperator
 from twisted.web.client import FileBodyProducer, readBody
