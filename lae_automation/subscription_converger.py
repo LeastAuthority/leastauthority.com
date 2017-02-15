@@ -16,7 +16,7 @@ from functools import partial
 
 import attr
 
-from eliot import Message, start_action
+from eliot import Message, start_action, write_failure
 from eliot.twisted import DeferredContext
 
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred, gatherResults
@@ -176,9 +176,10 @@ def with_action(action_type):
 def _s4_selector(namespace):
     return And([
         LabelSelector(dict(
-            provider="LeastAuthority",
-            app="s4",
-            component="customer-tahoe-lafs"
+            provider=u"LeastAuthority",
+            app=u"s4",
+            component=u"customer-tahoe-lafs",
+            version=u"1",
         )),
         # XXX Need to get this from configuration.
         NamespaceSelector(namespace),
@@ -236,6 +237,7 @@ def _get_converge_inputs(config, subscriptions, k8s, route53):
     ])
 
 
+@with_action(action_type=u"converge-logic")
 def _converge_logic(state, config, subscriptions, k8s, route53):
     (active_subscriptions, configured_deployments, configured_service, zone) = state
 
@@ -247,7 +249,7 @@ def _converge_logic(state, config, subscriptions, k8s, route53):
     to_delete = set()
 
     for deployment in configured_deployments:
-        subscription_id = deployment.metadata.labels.subscription
+        subscription_id = deployment.metadata.annotations[u"subscription"]
         try:
             subscription = active_subscriptions[subscription_id]
         except KeyError:
@@ -287,7 +289,8 @@ def _converge_logic(state, config, subscriptions, k8s, route53):
 
     jobs = []
 
-    jobs.append(lambda: delete_route53_rrsets(route53, zone, to_delete))
+    if to_delete:
+        jobs.append(lambda: delete_route53_rrsets(route53, zone, to_delete))
     for sid in to_delete:
         jobs.append(lambda sid=sid: k8s.delete(v1beta1.Deployment(
             metadata=dict(
@@ -307,10 +310,15 @@ def _converge_logic(state, config, subscriptions, k8s, route53):
     for deployment in deployments:
         jobs.append(partial(k8s.create, deployment))
     if create_service:
+        # Always create it if it was missing, even if there are no
+        # subscriptions.
         jobs.append(partial(k8s.create, service))
     else:
-        jobs.append(partial(k8s.replace, service))
-    jobs.append(lambda: create_route53_rrsets(route53, zone, to_create_subscriptions))
+        if to_create or to_delete:
+            # Only replace it if there were changes made.
+            jobs.append(partial(k8s.replace, service))
+    if to_create_subscriptions:
+        jobs.append(lambda: create_route53_rrsets(route53, zone, to_create_subscriptions))
     return jobs
 
 
@@ -320,10 +328,11 @@ def _execute_converge_outputs(jobs):
         return
 
     job = jobs.pop(0)
-    d = job()
+    d = DeferredContext(job())
+    d.addErrback(write_failure)
     if jobs:
         d.addCallback(lambda ignored: _execute_converge_outputs(jobs))
-    return d
+    return d.result
 
 
 
@@ -339,12 +348,24 @@ def converge(config, subscriptions, k8s, aws):
         d = DeferredContext(_get_converge_inputs(config, subscriptions, k8s, route53))
         d.addCallback(_converge_logic, config, subscriptions, k8s, route53)
         d.addCallback(_execute_converge_outputs)
+        d.addCallback(lambda result: None)
         return d.addActionFinish()
 
 
 
 @with_action(action_type=u"find-zones")
 def get_hosted_zone_by_name(route53, name):
+    """
+    Get a ``HostedZone`` with a zone name matching ``name``.
+
+    :param route53: A txaws Route53 client.
+
+    :param txaws.route53.model.Name name: The zone name to look for.
+
+    :raise KeyError: If no matching hosted zone is found.
+
+    :return Deferred(HostedZone): The hosted zone with a matching name.
+    """
     d = route53.list_hosted_zones()
     def filter_results(zones):
         Message.log(zone_names=list(zone.name for zone in zones))
@@ -459,10 +480,11 @@ def apply_service_changes(service, to_delete, to_create):
 #     return converge_service(desired, service)
 
 def get_ports(service):
-    return service["spec"]["ports"]
+    return service.spec.ports
+
 
 def get_configured_subscriptions(service):
-    # Every pair of i-... s-... ports is a configured subscription.
+    # Every pair of i... s... ports is a configured subscription.
 
     def names(ports):
         return (port["name"] for port in ports)
@@ -470,16 +492,16 @@ def get_configured_subscriptions(service):
         name
         for name
         in names(get_ports(service))
-        if name.startswith("i-") or name.startswith("s-")
+        if name.startswith(u"i") or name.startswith(u"s")
     }
 
     def ids(names):
-        return (name[2:] for name in names)
+        return (name[len(u"i"):] for name in names)
     subscriptions = {
         sid
         for sid
         in ids(port_names)
-        if "i-" + sid in port_names and "s-" + sid in port_names
+        if "i" + sid in port_names and "s" + sid in port_names
     }
     return subscriptions
 

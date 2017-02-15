@@ -1,7 +1,8 @@
+from itertools import count
 from base64 import b32encode
 from json import dumps
 
-from pyrsistent import freeze
+from pyrsistent import freeze, discard
 
 from .server import marshal_tahoe_configuration
 
@@ -163,27 +164,25 @@ def deployment_name(subscription_id):
 
 
 
-# Length is a factor for service names. :(
-# Keep introducer and storage port names short.
-def introducer_port_name(subscription_id):
-    return u"i-" + subscription_id.replace(u"_", u"-")
-
-
-def storage_port_name(subscription_id):
-    return u"s-" + subscription_id.replace(u"_", u"-")
-
-
 def create_deployment(deploy_config, details):
     name = deployment_name(details.subscription_id)
     configmap = configmap_name(details.subscription_id)
     metadata = subscription_metadata(details)
 
-    # Length is a factor for these fields. :(
-    intro_name = introducer_port_name(details.subscription_id)
-    storage_name = storage_port_name(details.subscription_id)
+    # The names don't really matter.  They need to be unique within the scope
+    # of the Deployment, I think.  Hey look they are.
+    intro_name = u"introducer"
+    storage_name = u"storage"
 
     return DEPLOYMENT_TEMPLATE.transform(
+        # Make sure it ends up in our namespace.
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
+
+        # We need to make this Deployment distinct from the similar
+        # deployments that exist for all other subscriptions.
+        [u"metadata", u"labels", u"subscription"],
+        b32encode(details.subscription_id).lower().strip("="),
+
         # Some other metadata to make inspecting this stuff a little easier.
         *metadata
     ).transform(
@@ -226,17 +225,42 @@ def extender(values):
 
 
 
-def service_ports(details):
+def distinct_port_name(service, kind, seed):
+    """
+    Compute name, not already used in ``service``, for a new subscription.
+    """
+    existing_names = set(port.name for port in service.spec.ports)
+    for i in count():
+        name = u"{}{}{}".format(i, kind, seed)[:15].lower()
+        if name not in existing_names:
+            return name
+
+
+def service_ports(old_service, details):
+    # We need to be able to easily identify which subscription owns which
+    # ports later on.  It probably _would_ be possible for the deletion
+    # codepath to find these values from the subscription manager
+    # database... And avoiding duplication might even be a really good thing.
+    # However, some cases might require particular attention.  For example,
+    # what if a subscription is deactivated and then another one is activated
+    # and assigned the same ports, and _then_ the convergence loop runs.
+    # Based solely on port numbers, will we delete the right ones?
+    introducer_name = distinct_port_name(
+        old_service, u"i", details.subscription_id,
+    )
+    storage_name = distinct_port_name(
+        old_service, u"s", details.subscription_id,
+    )
     intro = v1.ServicePort(
-        name=introducer_port_name(details.subscription_id),
+        name=introducer_name,
         port=details.introducer_port_number,
-        targetPort=introducer_port_name(details.subscription_id),
+        targetPort=details.introducer_port_number,
         protocol=u"TCP",
     )
     storage = v1.ServicePort(
-        name=storage_port_name(details.subscription_id),
+        name=storage_name,
         port=details.storage_port_number,
-        targetPort=storage_port_name(details.subscription_id),
+        targetPort=details.storage_port_number,
         protocol=u"TCP",
     )
     return [intro, storage]
@@ -244,21 +268,59 @@ def service_ports(details):
 
 
 def add_subscription_to_service(old_service, details):
+    """
+    Update a ``txkube.v1.Service`` to include details necessary to provide
+    service to the given subscription.
+
+    :param txkube.v1.Service old_service: An existing service object to
+        update.
+
+    :param SubscriptionDetails details: The details of the subscription to add
+        to the service.
+
+    :return txkube.v1.Service: A modified version of ``old_service`` that
+        accounts for ``details``.
+    """
+    ports = service_ports(old_service, details)
+
     return old_service.transform(
-        ["spec", "ports"], extender(service_ports(details)),
-        # Simplifies testing, probably helps in other areas.
-        ["spec", "ports"], lambda v: freeze(sorted(v, key=lambda m: m.port)),
+        # Put the identifiers into the metadata area of the service.
+        [u"metadata", u"annotations", details.subscription_id],
+        u"v1 {} {}".format(ports[0].name, ports[1].name),
+
+        # Each subscription has been allocated two public-facing port (one
+        # embedded in the introducer furl for that subscription, one reachable
+        # with information retrieved from the introducer).  The service needs
+        # to be updated to route those port into the right pods.  For now, the
+        # internal and external ports match.  That means we just add two
+        # entries to the service's ports list with port / targetPort set to
+        # the subscriptions values.
+        [u"spec", u"ports"], extender(ports),
+
+        # Also keep the entries in port number-sorted order.  This simplifies
+        # testing and maybe probably helps in other areas (by reducing the
+        # possible number of states the service can be in, I guess).
+        [u"spec", u"ports"], lambda v: freeze(sorted(v, key=lambda m: m.port)),
+
     )
 
 
 
 def remove_subscription_from_service(old_service, subscription_id):
-    ports = {
-        introducer_port_name(subscription_id),
-        storage_port_name(subscription_id),
-    }
+    port_names = old_service.metadata.annotations[subscription_id]
+    version = port_names.split()[0]
+    if version != u"v1":
+        raise ValueError("Cannot interpret port name metadata version " + version)
+    _, introducer_name, storage_name =  port_names.split()
+
+    ports = {introducer_name, storage_name}
     return old_service.transform(
+        # Take the annotation out of the service.
+        [u"metadata", u"annotations", subscription_id],
+        discard,
+
+        # Take the port out of the service.
+        [u"spec", u"ports"],
         # Where are my value-based transforms!
-        ["spec", "ports"],
         filter(lambda p: p.name not in ports, old_service.spec.ports),
     )

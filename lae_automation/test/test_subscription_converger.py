@@ -9,10 +9,10 @@ from zope.interface.verify import verifyObject
 import attr
 
 from hypothesis import assume, given
-from hypothesis.strategies import lists, choices, randoms
+from hypothesis.strategies import lists, choices
 from hypothesis import Verbosity, settings
 
-from pyrsistent import thaw, pmap
+from pyrsistent import thaw, pmap, discard
 
 from eliot import Message, start_action
 
@@ -45,8 +45,6 @@ from lae_automation.subscription_converger import (
 from lae_automation.containers import (
     service_ports,
     new_service,
-    introducer_port_name,
-    storage_port_name,
     create_configuration,
     create_deployment,
     configmap_name,
@@ -114,19 +112,20 @@ class ConvergeHelperTests(TestCase):
         ``service_ports`` returns a two-element list containing mappings
         which expose the subscription's introducer and storage ports.
         """
+        service = new_service(u"testing")
         self.assertThat(
-            service_ports(details),
+            service_ports(service, details),
             Equals([
                 v1.ServicePort(
-                    name=introducer_port_name(details.subscription_id),
+                    name=u"0i" + details.subscription_id[:13].lower(),
                     port=details.introducer_port_number,
-                    targetPort=introducer_port_name(details.subscription_id),
+                    targetPort=details.introducer_port_number,
                     protocol=u"TCP",
                 ),
                 v1.ServicePort(
-                    name=storage_port_name(details.subscription_id),
+                    name=u"0s" + details.subscription_id[:13].lower(),
                     port=details.storage_port_number,
-                    targetPort=storage_port_name(details.subscription_id),
+                    targetPort=details.storage_port_number,
                     protocol=u"TCP",
                 ),
             ]),
@@ -155,7 +154,7 @@ class ConvergeHelperTests(TestCase):
         route53 = region.get_route53_client()
         d = route53.create_hosted_zone(zone.reference, zone.name)
         self.successResultOf(d)
-        d = get_hosted_zone_by_name(route53, zone.name)
+        d = get_hosted_zone_by_name(route53, Name(zone.name))
         retrieved = self.successResultOf(d)
         self.expectThat(zone.reference, Equals(retrieved.reference))
         self.expectThat(zone.name, Equals(retrieved.name))
@@ -251,36 +250,37 @@ class ApplyServiceChangesTests(TestCase):
         self.assertThat(
             set(changed.spec.ports),
             Equals(
-                set(p for d in details for p in service_ports(d)),
+                set(p for d in details for p in service_ports(service, d)),
             ),
         )
 
-    @given(lists(subscription_details(), min_size=1, average_size=3), randoms())
-    def test_delete(self, details, random):
+    @given(lists(subscription_details(), min_size=1, average_size=3), choices())
+    def test_delete(self, details, choose):
         """
         ``apply_service_changes`` removes entries based on the ``to_delete``
         subscriptions from the service's ``ports``.
         """
-        service = new_service(u"testing").transform(
-            [u"spec", u"ports"],
-            list(p for d in details for p in service_ports(d)),
+        to_delete = []
+        to_create = []
+        for d in details:
+            choose((to_delete, to_create)).append(d)
+        empty = new_service(u"testing")
+        expected = apply_service_changes(
+            empty,
+            to_create=to_create,
+            to_delete=[],
         )
-        to_delete = set(
-            d.subscription_id
-            for d
-            in details
-            if random.choice((True, False))
+        complete = apply_service_changes(
+            empty,
+            to_create=to_create + to_delete,
+            to_delete=[],
         )
-        changed = apply_service_changes(service, to_delete=to_delete, to_create=[])
-        self.assertThat(
-            set(changed.spec.ports),
-            Equals(
-                set(
-                    p
-                    for d in details if d.subscription_id not in to_delete
-                    for p in service_ports(d)),
-            ),
+        actual = apply_service_changes(
+            complete,
+            to_create=[],
+            to_delete=list(d.subscription_id for d in to_delete),
         )
+        self.assertThat(expected, Equals(actual))
 
 
 
@@ -404,7 +404,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             reference = create_deployment(config, database.get_subscription(sid))
             def drop_transients(deployment):
                 simplified = deployment.transform(
-                    [u"metadata", u"annotations"], {},
+                    [u"metadata", u"annotations", u"deployment.kubernetes.io/revision"], discard,
                     [u"metadata", u"resourceVersion"], None,
                     [u"status"], None,
                 )
