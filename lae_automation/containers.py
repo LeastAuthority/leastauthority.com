@@ -99,6 +99,8 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 	u"template": {
 	    u"metadata": _S4_METADATA,
 	    u"spec": {
+                # Don't keep an arbitrarily large amount of history around.
+                u"revisionHistoryLimit": 2,
 		u"volumes": [
 		    {
 			u"name": u"introducer-config-volume",
