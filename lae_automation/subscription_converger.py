@@ -248,6 +248,9 @@ def _converge_logic(state, config, subscriptions, k8s, route53):
     to_create = set(active_subscriptions.iterkeys())
     to_delete = set()
 
+    # XXX If the way we construct a Deployment changes, we may need to
+    # regenerate everything that exists, not just do create/delete for
+    # missing/extra.
     for deployment in configured_deployments:
         subscription_id = deployment.metadata.annotations[u"subscription"]
         try:
