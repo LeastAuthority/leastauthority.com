@@ -234,7 +234,7 @@ def distinct_port_name(service, kind, seed):
     """
     existing_names = set(port.name for port in service.spec.ports)
     for i in count():
-        name = u"{}{}{}".format(i, kind, seed)[:15].lower()
+        name = u"{}{}{}".format(i, kind, seed)[:15].lower().replace(u"_", u"-")
         if name not in existing_names:
             return name
 
