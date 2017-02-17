@@ -340,6 +340,25 @@ def _execute_converge_outputs(jobs):
 
 
 def converge(config, subscriptions, k8s, aws):
+    """
+    Bring provisioned resources in line with active subscriptions.
+
+    :param DeploymentConfig config: S4-global configuration necessary for
+        provisioning resources.
+
+    :param subscription_manager.Client subscription_manager: A client for
+        interrogating the subscriptions database.
+
+    :param txkube.IKubernetesClient k8s: A client for interacting with
+        Kubernetes.
+
+    :param AWSServiceRegion aws: A client for interacting with AWS.
+
+    :return Deferred(NoneType): The returned ``Deferred`` fires after one
+        attempt has been made to bring the actual state of provisioned
+        resources in line with the desired state of provisioned resources
+        based on the currently active subscriptions.
+    """
     # Create and destroy deployments as necessary.  Use the
     # subscription manager to find out what subscriptions are active
     # and use look at the Kubernetes configuration to find out what
