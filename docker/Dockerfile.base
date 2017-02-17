@@ -20,7 +20,7 @@ FROM library/ubuntu:14.04.5
 # build cache and force installation of the new packages.  Otherwise,
 # Docker's image/layer cache may prevent the security update from
 # being retrieved.
-ENV SECURITY_UPDATES="2016-10-28"
+ENV SECURITY_UPDATES="2017-02-17"
 
 # Set a build-only environment variable to suppress warnings from apt
 # and other package management tools caused by the lack of a tty.
