@@ -16,6 +16,9 @@ from functools import partial
 
 import attr
 
+from pyrsistent import PClass, field
+
+
 from eliot import Message, start_action, write_failure
 from eliot.twisted import DeferredContext
 
@@ -228,79 +231,239 @@ def get_active_subscriptions(subscriptions):
     returnValue(active_subscriptions)
 
 
+class _State(PClass):
+    subscriptions = field()
+    configmaps = field()
+    deployments = field()
+    service = field()
+    zone = field()
+
+
 def _get_converge_inputs(config, subscriptions, k8s, route53):
     return gatherResults([
         get_active_subscriptions(subscriptions),
+        get_customer_grid_configmaps(k8s, config.kubernetes_namespace),
         get_customer_grid_deployments(k8s, config.kubernetes_namespace),
         get_customer_grid_service(k8s, config.kubernetes_namespace),
         get_hosted_zone_by_name(route53, Name(config.domain))
-    ])
+    ]).addCallback(
+        lambda state: _State(**dict(
+            zip([
+                u"subscriptions",
+                u"configmaps",
+                u"deployments",
+                u"service",
+                u"zone",
+            ], state,
+            ),
+        ))
+    )
 
 
 @with_action(action_type=u"converge-logic")
-def _converge_logic(state, config, subscriptions, k8s, route53):
-    (active_subscriptions, configured_deployments, configured_service, zone) = state
+def _converge_logic(actual, config, subscriptions, k8s, route53):
+    convergers = [
+        _converge_global,
+        _converge_service,
+        _converge_deployments,
+    ]
 
-    create_service = (configured_service is None)
+    jobs = []
+    for converger in convergers:
+        jobs.extend(converger(actual))
+
+    return jobs
+
+
+
+class _Changes(PClass):
+    create = field()
+    delete = field()
+
+
+
+def _compute_changes(desired, actual):
+    """
+    Determine what changes to ``actual`` are necessary to agree with
+    ``desired``.
+    """
+    # Start with the assumption that everything will need to be created.
+    to_create = set(sorted(desired.subscriptions.iterkeys()))
+    to_delete = set()
+
+    # Visit everything in the actual state and determine if it needs to be
+    # changed somehow.  Since we started with the assumption that everything
+    # will need to be created (`to_create` initial value), anything that's
+    # completely missing from the actual state will automatically get created.
+    for sid in actual.itersubscription_ids():
+        # Check to see if it is desired.
+        try:
+            subscription = desired[sid]
+        except KeyError:
+            # If it was missing, we don't want it.  Please delete it.  We
+            # don't need to remove it from to_create because if it wasn't
+            # desired, it won't have been there to begin with.
+            to_delete.add(sid)
+            continue
+
+        if actual.needs_update(subscription):
+            # Something about the actual state disagrees with the subscription
+            # state.  Delete the current state and re-create the new state.
+            to_delete.add(sid)
+        else:
+            # It appears to be fine as-is.  Don't delete it and don't create
+            # it.
+            to_create.remove(sid)
+
+    return _Changes(create=to_create, delete=to_delete)
+
+
+
+class _ChangeableService(PClass):
+    service = field()
+
+    def itersubscription_ids(self):
+        prefix = u"leastauthority.com/subscription/"
+        annotations = self.service.metadata.annotations
+        for annotation, value in annotations.iteritems():
+            if annotation.startswith(prefix):
+                sid = annotation[len(prefix):]
+                yield sid
+
+
+    def needs_update(self, subscription):
+        sid = subscription.subscription_id
+        # Just compare the annotation.  Assume we always atomically update the
+        # annotation with the ports in the spec.
+        key = u"leastauthority.com/subscription/" + sid
+        value = self.service.metadata.annotations[key]
+        version, rest = value.split(None, 1)
+        if version != u"v1":
+            raise Exception("Zoops")
+        intro, storage = rest.split()
+        intro = int(intro)
+        storage = int(storage)
+
+        return (
+            subscription.introducer_port_number != intro or
+            subscription.storage_port_number != storage
+        )
+
+
+
+def _converge_service(actual, config, subscriptions, k8s, route53):
+    create_service = (actual.service is None)
     if create_service:
         configured_service = new_service(config.kubernetes_namespace)
+    else:
+        configured_service = actual.service
 
-    to_create = set(active_subscriptions.iterkeys())
+    changes = _compute_changes(
+        actual.subscriptions,
+        _ChangeableService(service=configured_service),
+    )
+
+    service = apply_service_changes(
+        configured_service,
+        to_delete=changes.delete,
+        to_create=changes.create,
+    )
+
+    if create_service:
+        # Always create it if it was missing, even if there are no
+        # subscriptions.
+        return [lambda: k8s.create(service)]
+    else:
+        if changes.create or changes.delete:
+            # Only replace it if there were changes made.
+            return [lambda: k8s.replace(service)]
+
+
+
+class _ChangeableDeployments(PClass):
+    deployments = field(
+        factory=lambda deployments: {
+            d.metadata.annotations[u"subscription"]: d
+            for d in deployments
+        },
+    )
+
+    def itersubscription_ids(self):
+        return sorted(self.deployments.iterkeys())
+
+
+    def needs_update(self, subscription):
+        deployment = self.deployments[subscription.subscription_id]
+        intro = (
+            deployment.spec.template.spec.containers[0].ports[0].containerPort
+        )
+        storage = (
+            deployment.spec.template.spec.containers[1].ports[0].containerPort
+        )
+
+        return (
+            subscription.introducer_port_number != intro or
+            subscription.storage_port_number != storage
+        )
+
+
+
+def _converge_deployments(actual, config, subscriptions, k8s, route53):
+    changes = _compute_changes(
+        actual.subscriptions,
+        _ChangeableDeployments(deployments=actual.deployments),
+    )
+    deletes = list(
+        lambda sid=sid: k8s.delete(v1beta1.Deployment(
+            metadata=dict(
+                namespace=config.kubernetes_namespace,
+                name=deployment_name(sid),
+            ),
+        ))
+        for sid
+        in changes.delete
+    )
+    creates = list(
+        lambda sid=sid: k8s.create(
+            create_deployment(config, actual.subscriptions[sid]),
+        )
+        for sid
+        in changes.create
+    )
+    return deletes + creates
+
+
+
+def _converge_global(actual, config, subscriptions, k8s, route53):
+    to_create = set(actual.subscriptions.iterkeys())
     to_delete = set()
 
     # XXX If the way we construct a Deployment changes, we may need to
     # regenerate everything that exists, not just do create/delete for
     # missing/extra.
-    for deployment in configured_deployments:
+    for deployment in actual.deployments:
         subscription_id = deployment.metadata.annotations[u"subscription"]
         try:
-            subscription = active_subscriptions[subscription_id]
+            actual.subscriptions[subscription_id]
         except KeyError:
             to_delete.add(subscription_id)
             continue
 
         to_create.remove(subscription_id)
 
-        introducer_port = (
-            deployment.spec.template.spec.containers[0].ports[0].containerPort
-        )
-        storage_port = (
-            deployment.spec.template.spec.containers[1].ports[0].containerPort
-        )
-        if introducer_port != subscription.introducer_port_number:
-            Message.log(modify_deployment=subscription_id, reason=u"introducer port mismatch")
-            to_delete.add(subscription_id)
-            to_create.add(subscription_id)
-        elif storage_port != subscription.storage_port_number:
-            Message.log(modify_deployment=subscription_id, reason=u"storage port mismatch")
-            to_delete.add(subscription_id)
-            to_create.add(subscription_id)
-
-    to_create_subscriptions = list(active_subscriptions[sid] for sid in to_create)
+    to_create_subscriptions = list(actual.subscriptions[sid] for sid in to_create)
 
     configmaps = list(
         create_configuration(config, details)
         for details
         in to_create_subscriptions
     )
-    deployments = list(
-        create_deployment(config, details)
-        for details
-        in to_create_subscriptions
-    )
-    service = apply_service_changes(configured_service, to_delete, to_create_subscriptions)
 
     jobs = []
 
     if to_delete:
-        jobs.append(lambda: delete_route53_rrsets(route53, zone, to_delete))
+        jobs.append(lambda: delete_route53_rrsets(route53, actual.zone, to_delete))
     for sid in to_delete:
-        jobs.append(lambda sid=sid: k8s.delete(v1beta1.Deployment(
-            metadata=dict(
-                name=deployment_name(sid),
-                namespace=config.kubernetes_namespace,
-            ),
-        )))
         jobs.append(lambda sid=sid: k8s.delete(v1.ConfigMap(
             metadata=dict(
                 name=configmap_name(sid),
@@ -310,18 +473,8 @@ def _converge_logic(state, config, subscriptions, k8s, route53):
 
     for configmap in configmaps:
         jobs.append(partial(k8s.create, configmap))
-    for deployment in deployments:
-        jobs.append(partial(k8s.create, deployment))
-    if create_service:
-        # Always create it if it was missing, even if there are no
-        # subscriptions.
-        jobs.append(partial(k8s.create, service))
-    else:
-        if to_create or to_delete:
-            # Only replace it if there were changes made.
-            jobs.append(partial(k8s.replace, service))
     if to_create_subscriptions:
-        jobs.append(lambda: create_route53_rrsets(route53, zone, to_create_subscriptions))
+        jobs.append(lambda: create_route53_rrsets(route53, actual.zone, to_create_subscriptions))
     return jobs
 
 

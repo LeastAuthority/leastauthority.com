@@ -290,7 +290,7 @@ def add_subscription_to_service(old_service, details):
 
     return old_service.transform(
         # Put the identifiers into the metadata area of the service.
-        [u"metadata", u"annotations", details.subscription_id],
+        [u"metadata", u"annotations", u"leastauthority.com/subscription/" + details.subscription_id],
         u"v1 {} {}".format(ports[0].name, ports[1].name),
 
         # Each subscription has been allocated two public-facing port (one
