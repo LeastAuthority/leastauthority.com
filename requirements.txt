@@ -17,7 +17,7 @@ bitmath==1.3.1.2
 pyrsistent==0.11.13
 
 -e git://github.com/twisted/txaws.git@master#egg=txAWS
--e git://github.com/LeastAuthority/txkube.git@76.avoid-namespace-collision#egg=txkube[dev]
+-e git://github.com/LeastAuthority/txkube.git@99505d5f53867c8cf2b12dc9ce4e9e5ff1ff9cd8#egg=txkube[dev]
 
 # For the test suite.
 hypothesis==3.6.0
