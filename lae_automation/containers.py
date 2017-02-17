@@ -2,7 +2,7 @@ from itertools import count
 from base64 import b32encode
 from json import dumps
 
-from pyrsistent import freeze, discard
+from pyrsistent import freeze, discard, ny
 
 from .server import marshal_tahoe_configuration
 
@@ -167,7 +167,10 @@ def deployment_name(subscription_id):
 def create_deployment(deploy_config, details):
     name = deployment_name(details.subscription_id)
     configmap = configmap_name(details.subscription_id)
-    metadata = subscription_metadata(details)
+
+    # We need to make this Deployment distinct from the similar
+    # deployments that exist for all other subscriptions.
+    subscription_annotation = b32encode(details.subscription_id).lower().strip(u"=")
 
     # The names don't really matter.  They need to be unique within the scope
     # of the Deployment, I think.  Hey look they are.
@@ -178,30 +181,30 @@ def create_deployment(deploy_config, details):
         # Make sure it ends up in our namespace.
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
 
-        # We need to make this Deployment distinct from the similar
-        # deployments that exist for all other subscriptions.
-        [u"metadata", u"labels", u"subscription"],
-        b32encode(details.subscription_id).lower().strip("="),
+        # Assign it a unique identifier the deployment can use to refer to it.
+        [u"metadata", u"name"], name,
 
-        # Some other metadata to make inspecting this stuff a little easier.
-        *metadata
-    ).transform(
-        # Point both configuration volumes at this subscriptions configmap.
-        ["spec", "template", "spec", "volumes", 0, "configMap", "name"], configmap,
-        ["spec", "template", "spec", "volumes", 1, "configMap", "name"], configmap,
+        # Also make it easy to find by subscription.
+        [u"metadata", u"labels", u"subscription"], subscription_annotation,
+
+        # Make the pod for this subscription's deployment distinct from the
+        # pods for all the other subscriptions' deployments.
+        [u"spec", u"template", u"metadata", u"labels", u"subscription"],
+        subscription_annotation,
+
+        # Point both configuration volumes at this subscription's configmap.
+        ["spec", "template", "spec", "volumes", ny, "configMap", "name"], configmap,
 
         # Assign it service names and a port numbers.
         ["spec", "template", "spec", "containers", 0, "ports", 0],
         # XXX Don't really need unique ports here
         v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
-
         ["spec", "template", "spec", "containers", 1, "ports", 0],
         # XXX Or here
         v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
 
-        # And assign it a unique identifier the deployment can use to
-        # refer to it.
-        ["metadata", "name"], name
+        # Some other metadata to make inspecting this stuff a little easier.
+        *subscription_metadata(details)
     )
 
 EMPTY_SERVICE = v1.Service(
