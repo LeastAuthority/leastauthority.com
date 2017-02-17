@@ -93,6 +93,9 @@ apiVersion: 'extensions/v1beta1'
 metadata:
   name: 's4-infrastructure'
 spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
 
   # The containers both write directly to the filesystem.  It's not
   # safe to have more than one instance running at a time.  So limit
