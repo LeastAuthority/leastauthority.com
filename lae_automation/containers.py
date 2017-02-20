@@ -131,7 +131,7 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 		u"containers": [
 		    {
 			u"name": u"introducer",
-			u"image": u"127.0.0.1:30000/leastauthority/tahoe-introducer:57133b8",
+			u"image": u"127.0.0.1:30000/leastauthority/tahoe-introducer:19561a8",
 			u"volumeMounts": [
 			    {
 				u"name": u"introducer-config-volume",
@@ -142,7 +142,7 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 		    },
 		    {
 			u"name": u"storageserver",
-			u"image": u"127.0.0.1:30000/leastauthority/tahoe-storage:57133b8",
+			u"image": u"127.0.0.1:30000/leastauthority/tahoe-storage:19561a8",
 			u"volumeMounts": [
 			    {
 				u"name": u"storage-config-volume",
