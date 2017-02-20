@@ -34,6 +34,10 @@ from txaws.route53.model import Name, CNAME, RRSet, delete_rrset, create_rrset
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
+    SUBSCRIPTION_ANNOTATION_PREFIX,
+    autopad_b32decode,
+    annotation_key_for_sid,
+    sid_for_annotation_key,
     configmap_name, deployment_name,
     create_configuration, create_deployment,
     new_service,
@@ -338,11 +342,10 @@ class _ChangeableService(PClass):
     service = field()
 
     def itersubscription_ids(self):
-        prefix = u"leastauthority.com/subscription/"
         annotations = self.service.metadata.annotations
         for annotation, value in annotations.iteritems():
-            if annotation.startswith(prefix):
-                sid = annotation[len(prefix):]
+            if annotation.startswith(SUBSCRIPTION_ANNOTATION_PREFIX):
+                sid = sid_for_annotation_key(annotation)
                 yield sid
 
 
@@ -350,7 +353,7 @@ class _ChangeableService(PClass):
         sid = subscription.subscription_id
         # Just compare the annotation.  Assume we always atomically update the
         # annotation with the ports in the spec.
-        key = u"leastauthority.com/subscription/" + sid
+        key = annotation_key_for_sid(sid)
         value = self.service.metadata.annotations[key]
         version, rest = value.split(None, 1)
         if version != u"v1":
@@ -503,9 +506,7 @@ class _ChangeableZone(PClass):
             subscription_part, rest = unicode(key.label).split(u".", 1)
             if rest != u"introducer.leastauthority.com.":
                 continue
-            padding = 8 - (len(subscription_part) % 8)
-            subscription_part += u"=" * padding
-            subscription_id = b32decode(subscription_part.upper())
+            subscription_id = autopad_b32decode(subscription_part)
             yield subscription_id
 
 

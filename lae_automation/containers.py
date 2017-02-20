@@ -1,5 +1,5 @@
 from itertools import count
-from base64 import b32encode
+from base64 import b32encode, b32decode
 from json import dumps
 
 from pyrsistent import freeze, discard, ny
@@ -172,7 +172,7 @@ def create_deployment(deploy_config, details):
 
     # We need to make this Deployment distinct from the similar
     # deployments that exist for all other subscriptions.
-    subscription_annotation = b32encode(details.subscription_id).lower().strip(u"=")
+    subscription_label = b32encode(details.subscription_id).lower().strip(u"=")
 
     # The names don't really matter.  They need to be unique within the scope
     # of the Deployment, I think.  Hey look they are.
@@ -187,12 +187,12 @@ def create_deployment(deploy_config, details):
         [u"metadata", u"name"], name,
 
         # Also make it easy to find by subscription.
-        [u"metadata", u"labels", u"subscription"], subscription_annotation,
+        [u"metadata", u"labels", u"subscription"], subscription_label,
 
         # Make the pod for this subscription's deployment distinct from the
         # pods for all the other subscriptions' deployments.
         [u"spec", u"template", u"metadata", u"labels", u"subscription"],
-        subscription_annotation,
+        subscription_label,
 
         # Point both configuration volumes at this subscription's configmap.
         ["spec", "template", "spec", "volumes", ny, "configMap", "name"], configmap,
@@ -272,8 +272,22 @@ def service_ports(old_service, details):
 
 
 
+SUBSCRIPTION_ANNOTATION_PREFIX = u"leastauthority.com/subscription."
+
+
+def autopad_b32decode(s):
+    padding = 8 - (len(s) % 8)
+    s += u"=" * padding
+    v = b32decode(s.upper())
+    return v
+
+
 def annotation_key_for_sid(sid):
-    return u"leastauthority.com/subscription." + sid
+    return SUBSCRIPTION_ANNOTATION_PREFIX + b32encode(sid).strip(u"=")
+
+
+def sid_for_annotation_key(key):
+    return autopad_b32decode(key[len(SUBSCRIPTION_ANNOTATION_PREFIX):])
 
 
 def add_subscription_to_service(old_service, details):
