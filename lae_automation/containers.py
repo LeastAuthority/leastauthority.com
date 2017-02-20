@@ -272,6 +272,10 @@ def service_ports(old_service, details):
 
 
 
+def annotation_key_for_sid(sid):
+    return u"leastauthority.com/subscription/" + sid
+
+
 def add_subscription_to_service(old_service, details):
     """
     Update a ``txkube.v1.Service`` to include details necessary to provide
@@ -290,7 +294,7 @@ def add_subscription_to_service(old_service, details):
 
     return old_service.transform(
         # Put the identifiers into the metadata area of the service.
-        [u"metadata", u"annotations", u"leastauthority.com/subscription/" + details.subscription_id],
+        [u"metadata", u"annotations", annotation_key_for_sid(details.subscription_id)],
         u"v1 {} {}".format(ports[0].name, ports[1].name),
 
         # Each subscription has been allocated two public-facing port (one
@@ -312,7 +316,8 @@ def add_subscription_to_service(old_service, details):
 
 
 def remove_subscription_from_service(old_service, subscription_id):
-    port_names = old_service.metadata.annotations[subscription_id]
+    annotation_key = annotation_key_for_sid(subscription_id)
+    port_names = old_service.metadata.annotations[annotation_key]
     version = port_names.split()[0]
     if version != u"v1":
         raise ValueError("Cannot interpret port name metadata version " + version)
@@ -321,7 +326,7 @@ def remove_subscription_from_service(old_service, subscription_id):
     ports = {introducer_name, storage_name}
     return old_service.transform(
         # Take the annotation out of the service.
-        [u"metadata", u"annotations", subscription_id],
+        [u"metadata", u"annotations", annotation_key],
         discard,
 
         # Take the port out of the service.

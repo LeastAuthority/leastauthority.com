@@ -117,13 +117,13 @@ class ConvergeHelperTests(TestCase):
             service_ports(service, details),
             Equals([
                 v1.ServicePort(
-                    name=u"0i" + details.subscription_id[:13].lower(),
+                    name=u"0i" + details.subscription_id[:13].lower().replace(u"_", u"-"),
                     port=details.introducer_port_number,
                     targetPort=details.introducer_port_number,
                     protocol=u"TCP",
                 ),
                 v1.ServicePort(
-                    name=u"0s" + details.subscription_id[:13].lower(),
+                    name=u"0s" + details.subscription_id[:13].lower().replace(u"_", u"-"),
                     port=details.storage_port_number,
                     targetPort=details.storage_port_number,
                     protocol=u"TCP",
