@@ -68,7 +68,7 @@ class GoodEquals(object):
 
 
 @attr.s(frozen=True)
-class _DiffMismatch(object):
+class _DiffMismatch(Mismatch):
     actual = attr.ib()
     mismatch_string = attr.ib()
     reference = attr.ib()
