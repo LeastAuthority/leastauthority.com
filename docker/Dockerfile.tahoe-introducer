@@ -3,5 +3,5 @@ FROM leastauthority/tahoe-base
 RUN /app/env/bin/tahoe create-introducer /var/run/introducer
 
 CMD \
-    /app/env/bin/python /app/configure-tahoe < /app/config/introducer.json \
+    /app/env/bin/python /app/configure-tahoe /var/run/introducer < /app/config/introducer.json \
     && /app/env/bin/tahoe start /var/run/introducer --nodaemon
