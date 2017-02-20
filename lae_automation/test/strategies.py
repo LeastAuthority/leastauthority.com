@@ -236,7 +236,7 @@ def storage_configuration(keypair=keyutil.make_keypair()):
     )
 
 def aws_keypair_name():
-    # So far as I can tell, based on ``1aws ec2 create-key-pair help``
+    # So far as I can tell, based on ``aws ec2 create-key-pair help``
     return strategies.lists(
         strategies.characters(
             min_codepoint=0,
