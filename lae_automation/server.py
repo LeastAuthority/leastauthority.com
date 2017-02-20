@@ -23,6 +23,8 @@ from foolscap.api import Tub
 
 from allmydata.util import keyutil
 
+from .model import make_external_furl
+
 class PathFormatError(Exception):
     pass
 
@@ -256,15 +258,6 @@ venv/bin/tahoe restart storageserver
 """
 
 
-def make_external_furl(internal_furl, publichost):
-    (prefix, atsign, suffix) = internal_furl.partition('@')
-    assert atsign, internal_furl
-    (location, slash, swissnum) = suffix.partition('/')
-    assert slash, internal_furl
-    external_furl = "%s@%s:%s/%s" % (prefix, publichost, INTRODUCER_PORT, swissnum)
-    return external_furl
-
-
 def secrets_to_legacy_format(secrets):
     def nodeid(pem):
         # XXX < warner> we're moving to non-foolscap ed25519 pubkey
@@ -280,9 +273,13 @@ def secrets_to_legacy_format(secrets):
         publichost=secrets["storage"]["publichost"],
         privatehost=secrets["storage"]["privatehost"],
 
+        # This gets rewritten here but it's probably still garbage.  If you
+        # really want the external introducer furl, look at
+        # SubscriptionDetails.external_introducer_furl instead.
         external_introducer_furl=make_external_furl(
             secrets["storage"]["introducer_furl"],
             secrets["storage"]["publichost"],
+            INTRODUCER_PORT,
         ),
         internal_introducer_furl=secrets["storage"]["introducer_furl"],
 

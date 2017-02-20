@@ -5,7 +5,7 @@ from pem import parse
 
 from twisted.python.url import URL
 
-from foolscap.furl import decode_furl
+from foolscap.furl import decode_furl, encode_furl
 
 from lae_util.validators import all
 
@@ -108,6 +108,13 @@ def _convert_oldsecrets(oldsecrets):
 
 
 
+def make_external_furl(internal_furl, publichost, port):
+    tub_id, location_hints, name = decode_furl(internal_furl)
+    location_hints[:] = [u"{}:{}".format(publichost, port).encode("ascii")]
+    return encode_furl(tub_id, location_hints, name)
+
+
+
 @attr.s(frozen=True)
 class SubscriptionDetails(object):
     bucketname = attr.ib()
@@ -139,7 +146,11 @@ class SubscriptionDetails(object):
 
     @property
     def external_introducer_furl(self):
-        return self.oldsecrets["external_introducer_furl"]
+        return make_external_furl(
+            self.oldsecrets["internal_introducer_furl"],
+            self.publichost,
+            self.introducer_port_number,
+        )
 
     @property
     def introducer_node_pem(self):
