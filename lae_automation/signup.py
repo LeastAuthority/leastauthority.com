@@ -140,13 +140,15 @@ def activate_ex(
         subscription=attr.asdict(subscription),
     )
     with a.context():
-
         d = DeferredContext(just_activate_subscription(
             deploy_config, subscription, signup_stdout, signup_stderr,
             signup_log_fp.path, None, None,
         ))
         def activate_success(details):
-            a = start_action(action_type=u"signup:send-confirmation")
+            a = start_action(
+                action_type=u"signup:send-confirmation",
+                subscription=attr.asdict(details),
+            )
             with a.context():
                 d = DeferredContext(send_signup_confirmation(
                     details.customer_email, details.external_introducer_furl,
@@ -156,6 +158,7 @@ def activate_ex(
         d.addCallback(activate_success)
 
         def activate_failure(reason):
+            # XXX Eliot log reason here too
             a = start_action(action_type=u"signup:send-failure")
             with a.context():
                 d = DeferredContext(send_notify_failure(
