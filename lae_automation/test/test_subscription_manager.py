@@ -11,6 +11,7 @@ from twisted.python.filepath import FilePath
 from testtools.matchers import Equals, Is, Not, HasLength
 
 from hypothesis import given, assume
+from hypothesis.strategies import lists
 
 from lae_automation.subscription_manager import memory_client
 
@@ -67,6 +68,31 @@ class SubscriptionManagerTestMixin(object):
         )
         self.expectThat(expected, AttrsEquals(subscription))
         self.expectThat(expected, AttrsEquals(created))
+
+
+    @given(
+        lists(
+            partial_subscription_details(),
+            min_size=2,
+            average_size=3,
+            unique_by=lambda d: d.subscription_id,
+        ),
+    )
+    def test_unused_ports_assigned(self, subscriptions):
+        """
+        Each subscription created is assigned port numbers not in use by any other
+        active subscription.
+        """
+        client = self.get_client()
+        for s in subscriptions:
+            self.successResultOf(client.create(s.subscription_id, s))
+        created = self.successResultOf(client.list())
+        ports = {
+            p
+            for s in created
+            for p in (s.introducer_port_number, s.storage_port_number)
+        }
+        self.assertThat(len(ports), Equals(2 * len(subscriptions)))
 
 
     @given(
