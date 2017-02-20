@@ -45,54 +45,21 @@ class SubscriptionManagerTestMixin(object):
         d = client.create(details.subscription_id, details)
         created = self.successResultOf(d)
 
-        [subscription] = self.successResultOf(client.list())
-        # Ports and secrets are randomly assigned, don't bother comparing
-        # them.
+        # Ports and secrets are randomly assigned but we can scrape them out
+        # of the created object.
         expected = attr.assoc(
             details,
-            oldsecrets=subscription.oldsecrets,
-            introducer_port_number=subscription.introducer_port_number,
-            storage_port_number=subscription.storage_port_number,
+            oldsecrets=created.oldsecrets,
+            introducer_port_number=created.introducer_port_number,
+            storage_port_number=created.storage_port_number,
         )
-        self.expectThat(expected, AttrsEquals(subscription))
         self.expectThat(expected, AttrsEquals(created))
 
-        subscription = self.successResultOf(client.get(details.subscription_id))
+        [listed] = self.successResultOf(client.list())
+        self.expectThat(expected, AttrsEquals(listed))
 
-        # Ports are randomly assigned, don't bother comparing them.
-        expected = attr.assoc(
-            details,
-            oldsecrets=subscription.oldsecrets,
-            introducer_port_number=subscription.introducer_port_number,
-            storage_port_number=subscription.storage_port_number,
-        )
-        self.expectThat(expected, AttrsEquals(subscription))
-        self.expectThat(expected, AttrsEquals(created))
-
-
-    @given(
-        lists(
-            partial_subscription_details(),
-            min_size=2,
-            average_size=3,
-            unique_by=lambda d: d.subscription_id,
-        ),
-    )
-    def test_unused_ports_assigned(self, subscriptions):
-        """
-        Each subscription created is assigned port numbers not in use by any other
-        active subscription.
-        """
-        client = self.get_client()
-        for s in subscriptions:
-            self.successResultOf(client.create(s.subscription_id, s))
-        created = self.successResultOf(client.list())
-        ports = {
-            p
-            for s in created
-            for p in (s.introducer_port_number, s.storage_port_number)
-        }
-        self.assertThat(len(ports), Equals(2 * len(subscriptions)))
+        retrieved = self.successResultOf(client.get(details.subscription_id))
+        self.expectThat(expected, AttrsEquals(retrieved))
 
 
     @given(
