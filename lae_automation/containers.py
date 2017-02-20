@@ -273,7 +273,7 @@ def service_ports(old_service, details):
 
 
 def annotation_key_for_sid(sid):
-    return u"leastauthority.com/subscription/" + sid
+    return u"leastauthority.com/subscription." + sid
 
 
 def add_subscription_to_service(old_service, details):
