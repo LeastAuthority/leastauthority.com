@@ -206,8 +206,8 @@ class TestSignupModule(TestCase):
         def call_send_signup_confirmation(customer_email, furl, customer_keyinfo, stdout,
                                           stderr):
             self.failUnlessEqual(customer_email, 'MEMAIL')
-            self.failUnlessEqual(furl, None)
-            self.failUnlessEqual(customer_keyinfo, 'MKEYINFO')
+            self.failIfEqual(furl, None)
+            self.failUnlessEqual(customer_keyinfo, None)
             return defer.succeed("Tested send confirmation email call!")
         self.patch(signup, 'send_signup_confirmation', call_send_signup_confirmation)
 
