@@ -85,8 +85,11 @@ def create_configuration(deploy_config, details):
         *metadata
     ).transform(
         # Dump the actual Tahoe-LAFS configuration into it.
-        [u"data", u"introducer.json"], dumps(configuration["introducer"]).decode("ascii"),
-        [u"data", u"storage.json"], dumps(configuration["storage"]).decode("ascii"),
+        [u"data", u"introducer.json"],
+        dumps({"introducer": configuration["introducer"]}).decode("ascii"),
+
+        [u"data", u"storage.json"],
+        dumps({"storage": configuration["storage"]}).decode("ascii"),
     )
 
 
