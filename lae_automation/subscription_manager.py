@@ -11,6 +11,8 @@ from base64 import b32encode, b32decode
 import attr
 from attr import validators
 
+from eliot import start_action
+
 from twisted.python.url import URL
 from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
@@ -166,41 +168,56 @@ class SubscriptionDatabase(object):
 
 
     def _assign_addresses(self):
-        subscription_count = len(self.path.listdir())
+        with start_action(action_type=u"subscription-database:assign-addresses") as a:
+            subscription_count = len(self.path.listdir())
 
-        start_port = 10000
-        end_port = 65535
+            start_port = 10000
+            end_port = 65535
 
-        first_port = start_port + 2 * subscription_count
-        if first_port > end_port:
-            # We ran out of ports to allocate.
-            raise Exception("We ran out of ports to allocate.")
+            first_port = start_port + 2 * subscription_count
+            if first_port > end_port:
+                # We ran out of ports to allocate.
+                raise Exception("We ran out of ports to allocate.")
 
-        return dict(
-            introducer_port_number=first_port,
-            storage_port_number=first_port + 1,
-        )
+            result = dict(
+                introducer_port_number=first_port,
+                storage_port_number=first_port + 1,
+            )
+            a.add_success_fields(**result)
+            return result
 
 
     def create_subscription(self, subscription_id, details):
-        path = self._subscription_path(subscription_id)
-        details = attr.assoc(details, **self._assign_addresses())
-        if details.oldsecrets:
-            raise Exception("You supplied secrets (%r) but that's nonsense!" % (details.oldsecrets,))
-        deploy_config = NullDeploymentConfiguration()
-        from .subscription_converger import _introducer_name_for_subscription
-        config = new_tahoe_configuration(
-            deploy_config,
-            details.bucketname,
-            unicode(_introducer_name_for_subscription(details.subscription_id, u"leastauthority.com.")),
-            u"127.0.0.1",
-            details.introducer_port_number,
+        a = start_action(
+            action_type=u"subscription-database:create-subscription",
+            id=subscription_id,
+            details=attr.asdict(details),
         )
-        legacy = secrets_to_legacy_format(config)
-        details = attr.assoc(details, oldsecrets=legacy)
-        state = self._subscription_state(subscription_id, details)
-        self._create(path, dumps(state))
-        return details
+        with a:
+            path = self._subscription_path(subscription_id)
+            details = attr.assoc(details, **self._assign_addresses())
+            if details.oldsecrets:
+                raise Exception(
+                    "You supplied secrets (%r) but that's nonsense!" % (
+                        details.oldsecrets,
+                    ),
+                )
+            deploy_config = NullDeploymentConfiguration()
+            from .subscription_converger import _introducer_name_for_subscription
+            config = new_tahoe_configuration(
+                deploy_config,
+                details.bucketname,
+                unicode(_introducer_name_for_subscription(
+                    details.subscription_id, u"leastauthority.com.",
+                )),
+                u"127.0.0.1",
+                details.introducer_port_number,
+            )
+            legacy = secrets_to_legacy_format(config)
+            details = attr.assoc(details, oldsecrets=legacy)
+            state = self._subscription_state(subscription_id, details)
+            self._create(path, dumps(state))
+            return details
 
 
     def deactivate_subscription(self, subscription_id):
