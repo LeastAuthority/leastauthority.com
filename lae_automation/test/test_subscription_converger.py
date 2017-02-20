@@ -270,8 +270,14 @@ class ApplyServiceChangesTests(TestCase):
         """
         to_delete = []
         to_create = []
+        # Creating this dict and choosing from the keys makes Hypothesis
+        # failure reports more meaningful.
+        subscriptions = {
+            "not delete": to_create,
+            "delete": to_delete,
+        }
         for d in details:
-            choose((to_delete, to_create)).append(d)
+            subscriptions[choose(("not delete", "delete"))].append(d)
         empty = new_service(u"testing")
         expected = apply_service_changes(
             empty,
@@ -279,8 +285,8 @@ class ApplyServiceChangesTests(TestCase):
             to_delete=[],
         )
         complete = apply_service_changes(
-            empty,
-            to_create=to_create + to_delete,
+            expected,
+            to_create=to_delete,
             to_delete=[],
         )
         actual = apply_service_changes(
@@ -288,7 +294,7 @@ class ApplyServiceChangesTests(TestCase):
             to_create=[],
             to_delete=list(d.subscription_id for d in to_delete),
         )
-        self.assertThat(expected, Equals(actual))
+        self.expectThat(actual, GoodEquals(expected))
 
 
 
