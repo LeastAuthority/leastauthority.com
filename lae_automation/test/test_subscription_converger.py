@@ -254,7 +254,15 @@ class ApplyServiceChangesTests(TestCase):
             ),
         )
 
-    @given(lists(subscription_details(), min_size=1, average_size=3), choices())
+    @given(
+        lists(
+            subscription_details(),
+            min_size=1,
+            average_size=3,
+            unique_by=lambda d: d.subscription_id,
+        ),
+        choices(),
+    )
     def test_delete(self, details, choose):
         """
         ``apply_service_changes`` removes entries based on the ``to_delete``
