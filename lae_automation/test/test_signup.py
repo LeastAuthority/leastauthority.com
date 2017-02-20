@@ -1,21 +1,31 @@
 
 from io import BytesIO
 from base64 import b32encode
+from json import dumps
 
 import attr
 
+from hypothesis import given, assume
+
+from testtools.matchers import Equals, AfterPreprocessing
+
 from twisted.internet import defer
+from twisted.internet.defer import succeed
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
+
+from foolscap.furl import decode_furl
 
 from lae_util.testtools import TestCase
 from lae_util.fileutil import make_dirs
 from lae_util.streams import LoggingStream
 from lae_automation import model, signup, initialize
+from lae_automation.signup import activate_ex
 
 from lae_automation.subscription_manager import memory_client, broken_client
 from lae_automation.test.strategies import (
-    old_secrets, deployment_configuration, subscription_details,
+    port_numbers, emails, old_secrets, deployment_configuration, subscription_details,
+    customer_id, subscription_id,
 )
 
 # Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
@@ -312,3 +322,118 @@ class SignupTests(TestCase):
             clock=None, smclient=broken_client(),
         )
         self.failureResultOf(d)
+
+
+
+class ActivateTests(TestCase):
+    @given(
+        emails(), customer_id(), subscription_id(), old_secrets(),
+        port_numbers(), port_numbers(),
+    )
+    def test_emailed_introducer_furl(
+            self,
+            customer_email,
+            customer_id,
+            subscription_id,
+            old_secrets,
+            introducer_port_number,
+            storage_port_number,
+    ):
+        """
+        The introducer furl included in the activation email points at the server
+        and port identified by the activated subscription detail object.
+        """
+        assume(introducer_port_number != storage_port_number)
+
+        emails = []
+
+        def just_activate_subscription(
+                deploy_config, subscription, stdout, stderr, logfile, clock, smclient,
+        ):
+            return succeed(
+                attr.assoc(
+                    subscription,
+                    introducer_port_number=introducer_port_number,
+                    storage_port_number=storage_port_number,
+                    oldsecrets=old_secrets,
+                ),
+            )
+
+        def send_signup_confirmation(
+                customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr,
+        ):
+            emails.append((customer_email, "success", external_introducer_furl))
+            return succeed(None)
+
+        def send_notify_failure(
+                reason, customer_email, logfilename, stdout, stderr,
+        ):
+            emails.append((customer_email, "failure", reason))
+            return succeed(None)
+
+        root = FilePath(self.mktemp())
+        root.makedirs()
+
+        secrets_path = root.child(u"secrets_path")
+        secrets_path.makedirs()
+
+        s3_key_path = root.child(u"s3.key")
+        s3_key_path.setContent(b"efgh")
+
+        plan_name = u"foo"
+        plan_identifier = u"foobar"
+
+        automation_config_path = root.child(u"automation.json")
+        automation_config_path.setContent(dumps({
+            u"products": [{
+                u"amount": 123,
+                u"interval": 321,
+                u"currency": u"USD",
+                u"plan_name": plan_name,
+                u"plan_ID": plan_identifier,
+                u"plan_trial_period_days": 12,
+                u"ami_image_id": u"ami-123",
+                u"instance_size": u"medium",
+                u"statement_description": u"no comment",
+            }],
+            u"s3_access_key_id": u"abcd",
+            u"s3_secret_path": s3_key_path.path,
+        }))
+
+        server_info_path = root.child(u"server-info.csv")
+
+        stdin = BytesIO(dumps([
+            customer_email, None, customer_id, plan_identifier, subscription_id,
+        ]))
+        flapp_stdout_path = root.child(u"flapp.stdout")
+        flapp_stderr_path = root.child(u"flapp.stderr")
+
+        d = activate_ex(
+            just_activate_subscription,
+            send_signup_confirmation,
+            send_notify_failure,
+            secrets_path,
+            automation_config_path,
+            server_info_path,
+            stdin,
+            flapp_stdout_path,
+            flapp_stderr_path,
+        )
+        self.successResultOf(d)
+
+        [(recipient, result, rest)] = emails
+        self.expectThat(recipient, Equals(customer_email))
+        self.expectThat(result, Equals("success"))
+
+        def get_hint_port(furl):
+            tub_id, location_hints, name = decode_furl(furl)
+            host, port = location_hints[0].split(u":")
+            return int(port)
+
+        self.expectThat(
+            rest,
+            AfterPreprocessing(
+                get_hint_port,
+                Equals(introducer_port_number),
+            ),
+        )

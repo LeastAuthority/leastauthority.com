@@ -7,10 +7,13 @@ import json
 
 import attr
 
+from eliot import start_action
+from eliot.twisted import DeferredContext
+
 from twisted.internet import reactor
 from twisted.web.client import Agent
 from twisted.python.filepath import FilePath
-from twisted.internet.defer import maybeDeferred, succeed
+from twisted.internet.defer import succeed
 
 from lae_automation.initialize import create_stripe_user_bucket
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
@@ -44,7 +47,18 @@ def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
 
-def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout_path, flapp_stderr_path):
+# TODO Replace activate with this
+def activate_ex(
+        just_activate_subscription,
+        send_signup_confirmation,
+        send_notify_failure,
+        secrets_dir,
+        automation_config_path,
+        server_info_path,
+        stdin,
+        flapp_stdout_path,
+        flapp_stderr_path,
+):
     append_record(flapp_stdout_path, "Automation script started.")
     parameters_json = stdin.read()
     (customer_email,
@@ -68,7 +82,6 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
     signup_logfile = signup_log_fp.open('a+')
     signup_stdout = LoggingStream(signup_logfile, '>')
     signup_stderr = LoggingStream(signup_logfile, '')
-    sys.stdout = signup_stderr
 
     def errhandler(err):
         with flapp_stderr_path.open("a") as fh:
@@ -101,14 +114,14 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         secretsfile=SSEC2_secretsfile,
         serverinfopath=server_info_path.path,
 
-        ssec2_access_key_id=config.other["ssec2_access_key_id"],
-        ssec2_secret_path=config.other["ssec2_secret_path"],
+        ssec2_access_key_id=config.other.get("ssec2_access_key_id", None),
+        ssec2_secret_path=config.other.get("ssec2_secret_path", None),
 
-        ssec2admin_keypair_name=config.other["ssec2admin_keypair_name"],
-        ssec2admin_privkey_path=config.other["ssec2admin_privkey_path"],
+        ssec2admin_keypair_name=config.other.get("ssec2admin_keypair_name", None),
+        ssec2admin_privkey_path=config.other.get("ssec2admin_privkey_path", None),
 
-        monitor_pubkey_path=config.other["monitor_pubkey_path"],
-        monitor_privkey_path=config.other["monitor_privkey_path"],
+        monitor_pubkey_path=config.other.get("monitor_pubkey_path", None),
+        monitor_privkey_path=config.other.get("monitor_privkey_path", None),
     )
     subscription = SubscriptionDetails(
         bucketname=get_bucket_name(subscription_id, customer_id),
@@ -122,30 +135,54 @@ def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp
         introducer_port_number=None,
         storage_port_number=None,
     )
-    d = maybeDeferred(
-        activate_subscribed_service,
-        deploy_config, subscription, signup_stdout, signup_stderr, signup_log_fp.path,
+    a = start_action(
+        action_type=u"signup:activate",
+        subscription=attr.asdict(subscription),
     )
-    d.addErrback(errhandler)
-    d.addBoth(lambda ign: signup_logfile.close())
-    return d
+    with a.context():
+
+        d = DeferredContext(just_activate_subscription(
+            deploy_config, subscription, signup_stdout, signup_stderr,
+            signup_log_fp.path, None, None,
+        ))
+        def activate_success(details):
+            a = start_action(action_type=u"signup:send-confirmation")
+            with a.context():
+                d = DeferredContext(send_signup_confirmation(
+                    details.customer_email, details.external_introducer_furl,
+                    None, signup_stdout, signup_stderr,
+                ))
+                return d.addActionFinish()
+        d.addCallback(activate_success)
+
+        def activate_failure(reason):
+            a = start_action(action_type=u"signup:send-failure")
+            with a.context():
+                d = DeferredContext(send_notify_failure(
+                    reason, subscription.customer_email, signup_log_fp.path,
+                    signup_stdout, signup_stderr,
+                ))
+                return d.addActionFinish()
+        d.addErrback(activate_failure)
+
+        d.addErrback(errhandler)
+        d.addBoth(lambda ign: signup_logfile.close())
+        return d.addActionFinish()
 
 
-def activate_subscribed_service(deploy_config, subscription, stdout, stderr, logfile, clock=None, smclient=None):
-    d = just_activate_subscription(
-        deploy_config, subscription, stdout, stderr, logfile, clock, smclient,
+
+def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout_path, flapp_stderr_path):
+    return activate_ex(
+        just_activate_subscription,
+        send_signup_confirmation,
+        send_notify_failure,
+        secrets_dir,
+        automation_config_path,
+        server_info_path,
+        stdin,
+        flapp_stdout_path,
+        flapp_stderr_path,
     )
-    d.addCallback(
-        lambda details: send_signup_confirmation(
-            details.customer_email, details.external_introducer_furl, None, stdout, stderr,
-        ),
-    )
-    d.addErrback(
-        lambda error: send_notify_failure(
-            error, subscription.customer_email, logfile, stdout, stderr,
-        ),
-    )
-    return d
 
 
 def just_activate_subscription(deploy_config, subscription, stdout, stderr, logfile, clock, smclient):

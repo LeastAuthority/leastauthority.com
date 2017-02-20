@@ -106,7 +106,7 @@ def domain():
     )
 
 
-def email():
+def emails():
     # Not capable of generating the full range of legal email
     # addresses (RFC 5321 ``Mailbox`` productions).  Might be worth
     # expanding someday.  Or might not.
@@ -116,6 +116,8 @@ def email():
         domain=domain(),
     )
 
+email = emails
+
 def swissnum():
     return strategies.binary(
         min_size=Tub.NAMEBITS / 8,
@@ -124,10 +126,12 @@ def swissnum():
         lambda b: b32encode(b).rstrip("=").lower()
     )
 
-def port_number():
+def port_numbers():
     return strategies.integers(
         min_value=0, max_value=2 ** 16 - 1
     )
+
+port_number = port_numbers
 
 def furl():
     # XXX Not well factored probably.
