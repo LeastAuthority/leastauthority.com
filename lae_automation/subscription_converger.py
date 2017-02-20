@@ -10,7 +10,7 @@ with no corresponding Kubernetes configuration, such is added for
 them.
 """
 
-from base64 import b32encode
+from base64 import b32encode, b32decode
 from os import environ
 from functools import partial
 
@@ -206,6 +206,19 @@ def get_customer_grid_service(k8s, namespace):
 
 
 
+def get_customer_grid_configmaps(k8s, namespace):
+    action = start_action(action_type=u"load-configmaps")
+    with action.context():
+        d = DeferredContext(k8s.get_configmaps(_s4_selector(namespace)))
+        def got_configmaps(configmaps):
+            configmaps = list(configmaps)
+            action.add_success_fields(configmap_count=len(configmaps))
+            return configmaps
+        d.addCallback(got_configmaps)
+        return d.addActionFinish()
+
+
+
 def get_customer_grid_deployments(k8s, namespace):
     action = start_action(action_type=u"load-deployments")
     with action.context():
@@ -263,14 +276,15 @@ def _get_converge_inputs(config, subscriptions, k8s, route53):
 @with_action(action_type=u"converge-logic")
 def _converge_logic(actual, config, subscriptions, k8s, route53):
     convergers = [
-        _converge_global,
         _converge_service,
+        _converge_configmaps,
         _converge_deployments,
+        _converge_route53,
     ]
 
     jobs = []
     for converger in convergers:
-        jobs.extend(converger(actual))
+        jobs.extend(converger(actual, config, subscriptions, k8s, route53))
 
     return jobs
 
@@ -288,7 +302,7 @@ def _compute_changes(desired, actual):
     ``desired``.
     """
     # Start with the assumption that everything will need to be created.
-    to_create = set(sorted(desired.subscriptions.iterkeys()))
+    to_create = set(sorted(desired.iterkeys()))
     to_delete = set()
 
     # Visit everything in the actual state and determine if it needs to be
@@ -315,7 +329,10 @@ def _compute_changes(desired, actual):
             # it.
             to_create.remove(sid)
 
-    return _Changes(create=to_create, delete=to_delete)
+    return _Changes(
+        create=list(desired[sid] for sid in to_create),
+        delete=to_delete,
+    )
 
 
 
@@ -340,12 +357,22 @@ class _ChangeableService(PClass):
         version, rest = value.split(None, 1)
         if version != u"v1":
             raise Exception("Zoops")
-        intro, storage = rest.split()
-        intro = int(intro)
-        storage = int(storage)
+        names = rest.split()
+
+        # Get the result to have introducer then storage to simplify code
+        # below.
+        ports = sorted(
+            (port for port in self.service.spec.ports if port.name in names),
+            key=lambda p: names.index(p.name),
+        )
+
+        assert len(ports) == 2
+
+        introducer = ports[0].port
+        storage = ports[1].port
 
         return (
-            subscription.introducer_port_number != intro or
+            subscription.introducer_port_number != introducer or
             subscription.storage_port_number != storage
         )
 
@@ -377,6 +404,8 @@ def _converge_service(actual, config, subscriptions, k8s, route53):
         if changes.create or changes.delete:
             # Only replace it if there were changes made.
             return [lambda: k8s.replace(service)]
+    # Neither replacement nor creation needed, no jobs to execute.
+    return []
 
 
 
@@ -413,69 +442,96 @@ def _converge_deployments(actual, config, subscriptions, k8s, route53):
         actual.subscriptions,
         _ChangeableDeployments(deployments=actual.deployments),
     )
-    deletes = list(
-        lambda sid=sid: k8s.delete(v1beta1.Deployment(
+    def delete(sid):
+        return k8s.delete(v1beta1.Deployment(
             metadata=dict(
                 namespace=config.kubernetes_namespace,
                 name=deployment_name(sid),
             ),
         ))
-        for sid
-        in changes.delete
-    )
-    creates = list(
-        lambda sid=sid: k8s.create(
-            create_deployment(config, actual.subscriptions[sid]),
-        )
-        for sid
-        in changes.create
-    )
+    def create(subscription):
+        return k8s.create(create_deployment(config, subscription))
+
+    deletes = list(partial(delete, sid) for sid in changes.delete)
+    creates = list(partial(create, s) for s in changes.create)
     return deletes + creates
 
 
 
-def _converge_global(actual, config, subscriptions, k8s, route53):
-    to_create = set(actual.subscriptions.iterkeys())
-    to_delete = set()
-
-    # XXX If the way we construct a Deployment changes, we may need to
-    # regenerate everything that exists, not just do create/delete for
-    # missing/extra.
-    for deployment in actual.deployments:
-        subscription_id = deployment.metadata.annotations[u"subscription"]
-        try:
-            actual.subscriptions[subscription_id]
-        except KeyError:
-            to_delete.add(subscription_id)
-            continue
-
-        to_create.remove(subscription_id)
-
-    to_create_subscriptions = list(actual.subscriptions[sid] for sid in to_create)
-
-    configmaps = list(
-        create_configuration(config, details)
-        for details
-        in to_create_subscriptions
+class _ChangeableConfigMaps(PClass):
+    configmaps = field(
+        factory=lambda configmaps: {
+            c.metadata.annotations[u"subscription"]: c
+            for c in configmaps
+        },
     )
 
-    jobs = []
+    def itersubscription_ids(self):
+        return sorted(self.configmaps.iterkeys())
 
-    if to_delete:
-        jobs.append(lambda: delete_route53_rrsets(route53, actual.zone, to_delete))
-    for sid in to_delete:
-        jobs.append(lambda sid=sid: k8s.delete(v1.ConfigMap(
+
+    def needs_update(self, subscription):
+        # TODO
+        return False
+
+
+
+def _converge_configmaps(actual, config, subscriptions, k8s, route53):
+    changes = _compute_changes(
+        actual.subscriptions,
+        _ChangeableConfigMaps(configmaps=actual.configmaps),
+    )
+    def delete(sid):
+        return k8s.delete(v1.ConfigMap(
             metadata=dict(
-                name=configmap_name(sid),
                 namespace=config.kubernetes_namespace,
+                name=configmap_name(sid),
             ),
-        )))
+        ))
+    def create(subscription):
+        return k8s.create(create_configuration(config, subscription))
+    deletes = list(partial(delete, sid) for sid in changes.delete)
+    creates = list(partial(create, s) for s in changes.create)
+    return deletes + creates
 
-    for configmap in configmaps:
-        jobs.append(partial(k8s.create, configmap))
-    if to_create_subscriptions:
-        jobs.append(lambda: create_route53_rrsets(route53, actual.zone, to_create_subscriptions))
-    return jobs
+
+
+class _ChangeableZone(PClass):
+    zone = field()
+    rrsets = field()
+
+    def itersubscription_ids(self):
+        for key in self.rrsets:
+            subscription_part, rest = unicode(key.label).split(u".", 1)
+            if rest != u"introducer.leastauthority.com.":
+                continue
+            padding = 8 - (len(subscription_part) % 8)
+            subscription_part += u"=" * padding
+            subscription_id = b32decode(subscription_part.upper())
+            yield subscription_id
+
+
+    def needs_update(self, subscription):
+        # They all point to the same thing right now.  If it exists at all it
+        # must be right.
+        return False
+
+
+
+def _converge_route53(actual, config, subscriptions, k8s, route53):
+    changes = _compute_changes(
+        actual.subscriptions,
+        _ChangeableZone(zone=actual.zone[0], rrsets=actual.zone[1]),
+    )
+    # XXX Probably would be nice to group changes.  Also, issue changes insert
+    # of delete/create.  Some structured objects would make that easier.
+    def delete(sid):
+        return delete_route53_rrsets(route53, actual.zone[0], [sid])
+    def create(subscription):
+        return create_route53_rrsets(route53, actual.zone[0], [subscription])
+    deletes = list(partial(delete, sid) for sid in changes.delete)
+    creates = list(partial(create, s) for s in changes.create)
+    return deletes + creates
 
 
 
@@ -547,7 +603,9 @@ def get_hosted_zone_by_name(route53, name):
         for zone in zones:
             # XXX Bleuch zone.name should be a Name!
             if Name(zone.name) == name:
-                return zone
+                d = route53.list_resource_record_sets(zone_id=zone.identifier)
+                d.addCallback(lambda rrsets: (zone, rrsets))
+                return d
         raise KeyError(name)
     d.addCallback(filter_results)
     return d

@@ -115,7 +115,7 @@ class ConvergeHelperTests(TestCase):
         service = new_service(u"testing")
         self.assertThat(
             service_ports(service, details),
-            Equals([
+            GoodEquals([
                 v1.ServicePort(
                     name=u"0i" + details.subscription_id[:13].lower().replace(u"_", u"-"),
                     port=details.introducer_port_number,
@@ -155,9 +155,9 @@ class ConvergeHelperTests(TestCase):
         d = route53.create_hosted_zone(zone.reference, zone.name)
         self.successResultOf(d)
         d = get_hosted_zone_by_name(route53, Name(zone.name))
-        retrieved = self.successResultOf(d)
-        self.expectThat(zone.reference, Equals(retrieved.reference))
-        self.expectThat(zone.name, Equals(retrieved.name))
+        retrieved_zone, retrieved_rrsets = self.successResultOf(d)
+        self.expectThat(zone.reference, Equals(retrieved_zone.reference))
+        self.expectThat(zone.name, Equals(retrieved_zone.name))
 
 
     def test_customer_grid_service(self):
@@ -435,8 +435,8 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                 expected, database.get_subscription(sid),
             )
         assert_that(
-            expected,
-            GoodEquals(k8s_state.services.item_by_name(expected.metadata.name)),
+            k8s_state.services.item_by_name(expected.metadata.name),
+            GoodEquals(expected),
         )
         Message.log(check_service=thaw(expected))
 
