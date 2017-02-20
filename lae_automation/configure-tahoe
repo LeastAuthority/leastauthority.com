@@ -153,8 +153,8 @@ def configure_storage(
 ):
     configure_secrets(storage, node_pem)
     if node_privkey is not None:
-        storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
-    storage.descendant((b"private", "s3secret")).setContent(s3_secret_key)
+        storage.descendant((b"private", b"node.privkey")).setContent(node_privkey)
+    storage.descendant((b"private", b"s3secret")).setContent(s3_secret_key)
 
     tahoe_cfg = STORAGE_CFG_TEMPLATE % dict(
         nickname=bucket_name,
