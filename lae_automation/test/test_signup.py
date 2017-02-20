@@ -4,11 +4,11 @@ from base64 import b32encode
 
 import attr
 
-from twisted.trial.unittest import TestCase
 from twisted.internet import defer
 from twisted.python.filepath import FilePath
 from twisted.python.failure import Failure
 
+from lae_util.testtools import TestCase
 from lae_util.fileutil import make_dirs
 from lae_util.streams import LoggingStream
 from lae_automation import model, signup, initialize
@@ -95,6 +95,7 @@ MONITORPUBKEY = 'MONITOR PUBLIC KEY'
 
 class TestSignupModule(TestCase):
     def setUp(self):
+        super(TestSignupModule, self).setUp()
         self.mockconfigdir = FilePath('./test_signup').child('TestSignupModule')
         make_dirs(self.mockconfigdir.path)
         self.SIGNUPSPATH = 'mock_signups.csv'
@@ -224,6 +225,7 @@ class TestSignupModule(TestCase):
         self.patch(EC2_Query, 'submit', call_ec2_query_submit)
 
     def tearDown(self):
+        super(TestSignupModule, self).tearDown()
         FilePath(self.SIGNUPSPATH).remove()
         FilePath(self.CONFIGFILEPATH).remove()
         FilePath(self.SERVERINFOPATH).remove()
@@ -269,8 +271,8 @@ class TestSignupModule(TestCase):
 
         def _check(ign):
             content = FilePath(MLOGFILENAME).getContent()
-            self.failUnlessIn('MEMAIL', content)
-            self.failUnlessIn('MKEYINFO', content)
+            self.assertIn('MEMAIL', content)
+            self.assertIn('MKEYINFO', content)
         d.addCallback(_check)
         return d
 
