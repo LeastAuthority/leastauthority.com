@@ -35,14 +35,14 @@ class SubscriptionManagerTestMixin(object):
         raise NotImplementedError()
 
 
-    @given(subscription_id(), partial_subscription_details())
-    def test_round_trip(self, subscription_id, details):
+    @given(partial_subscription_details())
+    def test_round_trip(self, details):
         """
         A subscription created with a PUT to /v1/subscriptions/<id> can be
         retrieved with a GET of /v1/subscriptions.
         """
         client = self.get_client()
-        d = client.create(subscription_id, details)
+        d = client.create(details.subscription_id, details)
         created = self.successResultOf(d)
 
         [subscription] = self.successResultOf(client.list())
@@ -57,7 +57,7 @@ class SubscriptionManagerTestMixin(object):
         self.expectThat(expected, AttrsEquals(subscription))
         self.expectThat(expected, AttrsEquals(created))
 
-        subscription = self.successResultOf(client.get(subscription_id))
+        subscription = self.successResultOf(client.get(details.subscription_id))
 
         # Ports are randomly assigned, don't bother comparing them.
         expected = attr.assoc(
