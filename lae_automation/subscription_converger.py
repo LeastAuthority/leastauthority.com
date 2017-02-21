@@ -22,6 +22,7 @@ from eliot import Message, start_action, write_failure
 from eliot.twisted import DeferredContext
 
 from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred, gatherResults
+from twisted.internet import task
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options, UsageError
 from twisted.python.filepath import FilePath
@@ -95,7 +96,6 @@ class Options(_Options):
 def makeService(options):
     from twisted.internet import reactor
     agent = Agent(reactor)
-    from twisted.internet import task
     subscription_client = SMClient(endpoint=options["endpoint"], agent=agent, cooperator=task)
 
     if options["k8s-service-account"]:
