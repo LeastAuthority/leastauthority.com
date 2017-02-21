@@ -10,9 +10,10 @@ with no corresponding Kubernetes configuration, such is added for
 them.
 """
 
-from base64 import b32encode, b32decode
+from base64 import b32encode
 from os import environ
 from functools import partial
+from hashlib import sha256
 
 from pyrsistent import PClass, field
 
@@ -116,6 +117,12 @@ def makeService(options):
         access_key=access_key_id,
         secret_key=secret_access_key,
     ))
+
+    Message.log(
+        action_type=u"convergence-service:key-notification",
+        key_id=access_key_id.decode("ascii"),
+        secret_key_hash=sha256(secret_access_key).hexdigest().decode("ascii"),
+    )
 
     # XXX Exclusive for static attributes at this time ... really need to
     # break this up.

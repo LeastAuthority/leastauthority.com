@@ -2,6 +2,9 @@ from itertools import count
 from base64 import b32encode, b32decode
 from json import dumps
 from os import environ
+from hashlib import sha256
+
+from eliot import Message
 
 from pyrsistent import freeze, discard, ny
 
@@ -63,6 +66,12 @@ def create_configuration(deploy_config, details):
     metadata = subscription_metadata(details)
     public_host = configmap_public_host(details.subscription_id, deploy_config.domain)
     private_host = deploy_config.private_host
+
+    Message.log(
+        action_type=u"convergence-service:key-notification",
+        key_id=deploy_config.s3_access_key_id,
+        secret_key_hash=sha256(deploy_config.s3_secret_key).hexdigest().decode("ascii"),
+    )
 
     configuration = marshal_tahoe_configuration(
         introducer_pem=details.introducer_node_pem,
