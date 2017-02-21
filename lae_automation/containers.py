@@ -236,8 +236,9 @@ def create_deployment(deploy_config, details):
         *subscription_metadata(details)
     )
 
+S4_CUSTOMER_GRID_NAME = u"s4-customer-grids"
 EMPTY_SERVICE = v1.Service(
-    metadata=_S4_METADATA.set(u"name", u"s4-customer-grids"),
+    metadata=_S4_METADATA.set(u"name", S4_CUSTOMER_GRID_NAME),
     spec={
 	u"type": u"LoadBalancer",
 	u"selector": _S4_METADATA.labels,

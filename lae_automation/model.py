@@ -19,15 +19,17 @@ validate_furl = all(
 )
 
 
+
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
     # XXX Would be nice to be able to set this to
     # staging.leastauthority.com sometimes.
     domain = u"leastauthority.com"
 
-    # XXX Sets up internal DNS, must agree with other bits of the
-    # system
-    private_host = "customer-grid-service"
+    # This supposes the storage server and introducer run in the same pod.
+    # Which is how they run for now.  And I'm not sure why it would ever be
+    # different.
+    private_host = u"127.0.0.1"
 
     # XXX Got to configure this _somehow_.
     kubernetes_namespace = u"staging"
