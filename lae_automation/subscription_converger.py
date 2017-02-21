@@ -119,7 +119,7 @@ def makeService(options):
     ))
 
     Message.log(
-        action_type=u"convergence-service:key-notification",
+        event=u"convergence-service:key-notification",
         key_id=access_key_id.decode("ascii"),
         secret_key_hash=sha256(secret_access_key).hexdigest().decode("ascii"),
     )

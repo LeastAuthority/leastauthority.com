@@ -68,7 +68,7 @@ def create_configuration(deploy_config, details):
     private_host = deploy_config.private_host
 
     Message.log(
-        action_type=u"convergence-service:key-notification",
+        event=u"convergence-service:key-notification",
         key_id=deploy_config.s3_access_key_id,
         secret_key_hash=sha256(deploy_config.s3_secret_key).hexdigest().decode("ascii"),
     )
