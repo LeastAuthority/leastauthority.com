@@ -519,14 +519,14 @@ def _converge_configmaps(actual, config, subscriptions, k8s, route53):
 class _ChangeableZone(PClass):
     zone = field()
     rrsets = field()
+    domain = field()
 
     def itersubscription_ids(self):
         for key in self.rrsets:
             subscription_part, rest = unicode(key.label).split(u".", 1)
-            if rest != u"introducer.leastauthority.com.":
-                continue
-            subscription_id = autopad_b32decode(subscription_part)
-            yield subscription_id
+            if rest == u"introducer.{}".format(self.domain):
+                subscription_id = autopad_b32decode(subscription_part)
+                yield subscription_id
 
 
     def needs_update(self, subscription):
@@ -539,7 +539,11 @@ class _ChangeableZone(PClass):
 def _converge_route53(actual, config, subscriptions, k8s, route53):
     changes = _compute_changes(
         actual.subscriptions,
-        _ChangeableZone(zone=actual.zone[0], rrsets=actual.zone[1]),
+        _ChangeableZone(
+            zone=actual.zone[0],
+            rrsets=actual.zone[1],
+            domain=config.domain,
+        ),
     )
     # XXX Probably would be nice to group changes.  Also, issue changes insert
     # of delete/create.  Some structured objects would make that easier.

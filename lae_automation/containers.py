@@ -51,8 +51,7 @@ def configmap_name(subscription_id):
 
 
 def configmap_public_host(subscription_id, domain):
-    # XXX Fishy
-    return "{}.{}".format(subscription_id, domain)
+    return domain
 
 
 
