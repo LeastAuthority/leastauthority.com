@@ -36,8 +36,8 @@ class DeploymentConfiguration(object):
     subscription_manager_endpoint = URL.fromText(u"http://127.0.0.1:8000/")
 
     products = attr.ib(validator=_validate_products)
-    s3_access_key_id = attr.ib()
-    s3_secret_key = attr.ib(repr=False)
+    s3_access_key_id = attr.ib(validator=attr.validators.instance_of(unicode))
+    s3_secret_key = attr.ib(repr=False, validator=attr.validators.instance_of(unicode))
     amiimageid = attr.ib()
     instancesize = attr.ib()
 

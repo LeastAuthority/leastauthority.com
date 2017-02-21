@@ -90,7 +90,7 @@ ZEROPRODUCT = {
   "products": [],
   "ec2_access_key_id":    "TESTEC2EC2EC2EC2EC2E",
   "ec2_secret_path":      "mock_ec2_secret",
-  "s3_access_key_id":     "TESTS3S3S3S3S3S3S3S3",
+  "s3_access_key_id":     u"TESTS3S3S3S3S3S3S3S3",
   "s3_secret_path":       "mock_s3_secret",
   "admin_keypair_name":   "ADMINKEYS",
   "admin_privkey_path":   "ADMINKEYS.pem",
@@ -99,7 +99,7 @@ ZEROPRODUCT = {
 }
 
 MOCKEC2SECRETCONTENTS = 'EC2'*13+'E'
-MOCKS3SECRETCONTENTS = 'S3'*20
+MOCKS3SECRETCONTENTS = u'S3' * 20
 MONITORPUBKEY = 'MONITOR PUBLIC KEY'
 
 

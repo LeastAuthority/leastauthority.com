@@ -100,8 +100,8 @@ def activate_ex(
 
     deploy_config = DeploymentConfiguration(
         products=config.products,
-        s3_access_key_id=config.other["s3_access_key_id"],
-        s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip(),
+        s3_access_key_id=config.other["s3_access_key_id"].decode("ascii"),
+        s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip().decode("ascii"),
         amiimageid=product['ami_image_id'],
         instancesize=product['instance_size'],
 

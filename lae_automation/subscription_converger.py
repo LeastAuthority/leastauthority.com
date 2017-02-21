@@ -109,17 +109,20 @@ def makeService(options):
     k8s_client = kubernetes.client()
     k8s = KubeClient(k8s=k8s_client)
 
+    access_key_id = FilePath(options["aws-access-key-id-path"]).getContent().strip()
+    secret_access_key = FilePath(options["aws-secret-access-key-path"]).getContent().strip()
+
     aws = AWSServiceRegion(creds=AWSCredentials(
-        access_key=FilePath(options["aws-access-key-id-path"]).getContent().strip(),
-        secret_key=FilePath(options["aws-secret-access-key-path"]).getContent().strip(),
+        access_key=access_key_id,
+        secret_key=secret_access_key,
     ))
 
     # XXX Exclusive for static attributes at this time ... really need to
     # break this up.
     config = DeploymentConfiguration(
         products=[{}],
-        s3_access_key_id=None,
-        s3_secret_key=None,
+        s3_access_key_id=access_key_id.decode("ascii"),
+        s3_secret_key=secret_access_key.decode("ascii"),
         amiimageid=None,
         instancesize=None,
 
