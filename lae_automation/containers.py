@@ -1,6 +1,7 @@
 from itertools import count
 from base64 import b32encode, b32decode
 from json import dumps
+from os import environ
 
 from pyrsistent import freeze, discard, ny
 
@@ -93,6 +94,10 @@ def create_configuration(deploy_config, details):
     )
 
 
+# XXX Don't take the tag from the environment here!  That's awful.  Make some
+# functions that take arguments.
+INTRODUCER_IMAGE = environ.get(u"LAE_S4_TAHOE_INTRODUCER_IMAGE", u"tahoe-introducer")
+STORAGE_IMAGE = environ.get(u"LAE_S4_TAHOE_INTRODUCER_IMAGE", u"tahoe-storage")
 
 DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
     metadata=_S4_METADATA,
@@ -131,7 +136,8 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 		u"containers": [
 		    {
 			u"name": u"introducer",
-			u"image": u"127.0.0.1:30000/leastauthority/tahoe-introducer:latest",
+                        # XXX Don't take this from a global.  Put it in the config somewhere.
+			u"image": INTRODUCER_IMAGE,
 			u"volumeMounts": [
 			    {
 				u"name": u"introducer-config-volume",
@@ -142,7 +148,8 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 		    },
 		    {
 			u"name": u"storageserver",
-			u"image": u"127.0.0.1:30000/leastauthority/tahoe-storage:latest",
+                        # XXX Don't take this from a global.  Put it in the config somewhere.
+			u"image": STORAGE_IMAGE,
 			u"volumeMounts": [
 			    {
 				u"name": u"storage-config-volume",
