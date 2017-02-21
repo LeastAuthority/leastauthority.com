@@ -105,8 +105,8 @@ def create_configuration(deploy_config, details):
 
 # XXX Don't take the tag from the environment here!  That's awful.  Make some
 # functions that take arguments.
-INTRODUCER_IMAGE = environ.get(u"LAE_S4_TAHOE_INTRODUCER_IMAGE", u"tahoe-introducer")
-STORAGE_IMAGE = environ.get(u"LAE_S4_TAHOE_INTRODUCER_IMAGE", u"tahoe-storage")
+INTRODUCER_IMAGE = environ.get(u"LAE_S4_TAHOE_INTRODUCER_IMAGE", "tahoe-introducer").decode("ascii")
+STORAGE_IMAGE = environ.get(u"LAE_S4_TAHOE_INTRODUCER_IMAGE", "tahoe-storage").decode("ascii")
 
 DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
     metadata=_S4_METADATA,
