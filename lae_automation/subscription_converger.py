@@ -10,7 +10,6 @@ with no corresponding Kubernetes configuration, such is added for
 them.
 """
 
-from base64 import b32encode
 from os import environ
 from functools import partial
 from hashlib import sha256
@@ -41,6 +40,7 @@ from .containers import (
     annotation_key_for_sid,
     sid_for_annotation_key,
     configmap_name, deployment_name,
+    configmap_public_host,
     create_configuration, create_deployment,
     new_service,
     add_subscription_to_service, remove_subscription_from_service
@@ -635,10 +635,7 @@ def get_hosted_zone_by_name(route53, name):
 
 
 def _introducer_name_for_subscription(subscription_id, domain):
-    return Name(u"{subscription_id}.introducer.{domain}".format(
-        subscription_id=b32encode(subscription_id).lower().strip(u"="),
-        domain=domain,
-    ))
+    return Name(configmap_public_host(subscription_id, domain))
 
 
 
