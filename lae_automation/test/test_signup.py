@@ -9,20 +9,17 @@ from hypothesis import given, assume
 
 from testtools.matchers import Equals, AfterPreprocessing
 
-from twisted.internet import defer
 from twisted.internet.defer import succeed
 from twisted.python.filepath import FilePath
-from twisted.python.failure import Failure
 
 from foolscap.furl import decode_furl
 
 from lae_util.testtools import TestCase
 from lae_util.fileutil import make_dirs
-from lae_util.streams import LoggingStream
-from lae_automation import model, signup, initialize
+from lae_automation import model, signup
 from lae_automation.signup import activate_ex
 
-from lae_automation.subscription_manager import memory_client, broken_client
+from lae_automation.subscription_manager import broken_client
 from lae_automation.test.strategies import (
     port_numbers, emails, old_secrets, deployment_configuration, subscription_details,
     customer_id, subscription_id,
@@ -131,6 +128,7 @@ class TestSignupModule(TestCase):
         FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
 
         self.DEPLOYMENT_CONFIGURATION = model.DeploymentConfiguration(
+            domain=u"s4.example.com",
             products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
@@ -291,6 +289,7 @@ class ActivateTests(TestCase):
             just_activate_subscription,
             send_signup_confirmation,
             send_notify_failure,
+            u"s4.example.com",
             secrets_path,
             automation_config_path,
             server_info_path,

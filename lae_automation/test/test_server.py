@@ -38,6 +38,7 @@ def fifo(xs):
 
 class CommonTestFixture(TestCase):
     def setUp(self):
+        super(CommonTestFixture, self).setUp()
         self.TEST_SHA1_STRING = 'deadbeef'*5
         self.TEST_IPv4_STRING = '0.0.0.0'
         self.TEST_LOCAL_HOST_STRING = self.TEST_IPv4_STRING
@@ -93,6 +94,7 @@ class TestLocalGitOperations(CommonTestFixture):
 
 class TestServerModule(TestCase):
     def setUp(self):
+        super(TestServerModule, self).setUp()
         self.WHOAMI_FIFO = []
         self.RUNARGS_FIFO = []
         self.SUDOARGS_FIFO = []
@@ -126,6 +128,7 @@ class TestServerModule(TestCase):
         self.failUnlessEqual(self.WRITEARGS_FIFO, [])
 
     def tearDown(self):
+        super(TestServerModule, self).tearDown()
         FilePath(self.CONFIGFILEPATH).remove()
 
     def test_create_account(self):
@@ -182,6 +185,7 @@ class NewTahoeConfigurationTests(TestCase):
         ``new_tahoe_configuration``.
         """
         deploy_config = DeploymentConfiguration(
+            domain=u"testing.com",
             products=[{}],
             s3_access_key_id=s3_access_key_id,
             s3_secret_key=s3_secret_key,

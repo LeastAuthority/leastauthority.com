@@ -25,6 +25,7 @@ from twisted.python.filepath import FilePath
 from twisted.application.internet import StreamServerEndpointService
 from twisted.internet.endpoints import serverFromString
 
+from .containers import configmap_public_host
 from .model import NullDeploymentConfiguration, SubscriptionDetails
 from .server import new_tahoe_configuration, secrets_to_legacy_format
 
@@ -115,6 +116,8 @@ class Subscription(Resource):
 # real database here.
 @attr.s(frozen=True)
 class SubscriptionDatabase(object):
+    domain = attr.ib(validator=validators.instance_of(unicode))
+
     path = attr.ib(validator=my_validators.all(
         validators.instance_of(FilePath),
         my_validators.after(
@@ -124,12 +127,12 @@ class SubscriptionDatabase(object):
     ))
 
     @classmethod
-    def from_directory(cls, path):
+    def from_directory(cls, path, domain):
         if not path.exists():
             raise ValueError("State directory ({}) does not exist.".format(path.path))
         if not path.isdir():
             raise ValueError("State path ({}) is not a directory.".format(path.path))
-        return SubscriptionDatabase(path=path)
+        return SubscriptionDatabase(path=path, domain=domain)
 
     def _subscription_path(self, subscription_id):
         return self.path.child(b32encode(subscription_id) + u".json")
@@ -210,13 +213,11 @@ class SubscriptionDatabase(object):
             # global configuration persisted alongside each subscription,
             # anyway
             deploy_config = NullDeploymentConfiguration()
-            from .subscription_converger import _introducer_name_for_subscription
+            deploy_config.domain = self.domain
             config = new_tahoe_configuration(
                 deploy_config,
                 details.bucketname,
-                unicode(_introducer_name_for_subscription(
-                    details.subscription_id, u"leastauthority.com.",
-                )),
+                configmap_public_host(details.subscription_id, self.domain),
                 u"127.0.0.1",
                 details.introducer_port_number,
                 details.storage_port_number,
@@ -274,9 +275,10 @@ def required(options, key):
         raise UsageError("--{} is required.".format(key))
 
 
-def make_resource(path):
+def make_resource(path, domain):
+    database = SubscriptionDatabase.from_directory(path, domain=domain)
     v1 = Resource()
-    v1.putChild("subscriptions", Subscriptions(SubscriptionDatabase.from_directory(path)))
+    v1.putChild("subscriptions", Subscriptions(database))
 
     root = Resource()
     root.putChild("v1", v1)
@@ -286,6 +288,10 @@ def make_resource(path):
 
 class Options(_Options):
     optParameters = [
+        ("domain", None, None,
+         "The domain on which the service is running "
+         "(useful for alternate staging deployments).",
+        ),
         ("state-path", "p", None, "Path to the subscription state directory."),
         ("listen-address", "l", None, "Endpoint on which the server should listen."),
     ]
@@ -295,6 +301,7 @@ class Options(_Options):
         required(self, "listen-address")
         self["state-path"] = FilePath(self["state-path"].decode("utf-8"))
 
+
 def makeService(options):
     """
     Make a new subscription manager ``IService``.
@@ -302,7 +309,10 @@ def makeService(options):
     from twisted.internet import reactor
 
     make_dirs(options["state-path"].path)
-    site = Site(make_resource(options["state-path"]))
+    site = Site(make_resource(
+        options["state-path"],
+        options["domain"].decode("ascii"),
+    ))
 
     return StreamServerEndpointService(
         serverFromString(reactor, options["listen-address"]),
@@ -312,6 +322,7 @@ def makeService(options):
 
 def decode_subscription(fields):
     return SubscriptionDetails(**fields)
+
 
 @attr.s
 class Client(object):
@@ -415,12 +426,12 @@ def network_client(endpoint, agent, cooperator=None):
     return Client(endpoint=endpoint, agent=agent, cooperator=cooperator)
 
 
-def memory_client(database_path):
+def memory_client(database_path, domain):
     """
     Create a subscription manager client which uses in-memory
     interactions with the database at the given path.
     """
-    root = make_resource(database_path)
+    root = make_resource(database_path, domain)
     agent = MemoryAgent(root)
     return Client(endpoint=b"/", agent=agent, cooperator=Uncooperator())
 

@@ -143,6 +143,9 @@ spec:
           secretName: 'signup-secrets'
           defaultMode: 0444
           items:
+          - key: 'domain'
+            path: 'domain'
+
           # XXX Should allocate some Route53-only keys for this.
           # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
           # XXX Maybe I should create _two_ sets of keys...

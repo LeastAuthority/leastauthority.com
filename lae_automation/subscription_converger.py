@@ -65,6 +65,11 @@ def _kubernetes_from_environ(environ):
 
 class Options(_Options):
     optParameters = [
+        ("domain", None, None,
+         "The domain on which the service is running "
+         "(useful for alternate staging deployments).",
+        ),
+
         ("endpoint", None, None, "The root URL of the subscription manager service."),
         ("k8s-context", None, None, "Use a kubectl configuration context to find Kubernetes."),
         ("k8s-config", None, None, "The path of a kubectl configuration file in which to find the context.", FilePath),
@@ -86,6 +91,8 @@ class Options(_Options):
     ]
 
     def postOptions(self):
+        if self["domain"] is None:
+            raise UsageError("--domain is required")
         if self["endpoint"] is None:
             raise UsageError("--endpoint is required")
         if self["endpoint"].endswith("/"):
@@ -131,6 +138,7 @@ def makeService(options):
     # XXX Exclusive for static attributes at this time ... really need to
     # break this up.
     config = DeploymentConfiguration(
+        domain=options["domain"].decode("ascii"),
         products=[{}],
         s3_access_key_id=access_key_id.decode("ascii"),
         s3_secret_key=secret_access_key.decode("ascii"),
@@ -523,10 +531,12 @@ class _ChangeableZone(PClass):
 
     def itersubscription_ids(self):
         for key in self.rrsets:
-            subscription_part, rest = unicode(key.label).split(u".", 1)
-            if rest == u"introducer.{}".format(self.domain):
-                subscription_id = autopad_b32decode(subscription_part)
-                yield subscription_id
+            if key.type == u"CNAME":
+                subscription_part, rest = key.label.text.split(u".", 1)
+                # XXX Ugh strings
+                if rest.rstrip(u".") == u"introducer.{}".format(self.domain).rstrip(u"."):
+                    subscription_id = autopad_b32decode(subscription_part)
+                    yield subscription_id
 
 
     def needs_update(self, subscription):

@@ -22,9 +22,7 @@ validate_furl = all(
 
 @attr.s(frozen=True)
 class DeploymentConfiguration(object):
-    # XXX Would be nice to be able to set this to
-    # staging.leastauthority.com sometimes.
-    domain = u"leastauthority.com"
+    domain = attr.ib(validator=attr.validators.instance_of(unicode))
 
     # This supposes the storage server and introducer run in the same pod.
     # Which is how they run for now.  And I'm not sure why it would ever be

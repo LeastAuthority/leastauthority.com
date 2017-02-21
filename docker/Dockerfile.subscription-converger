@@ -34,6 +34,7 @@ USER "${SUBSCRIPTION_CONVERGER_USER_NAME}"
 CMD env && \
     PYTHONPATH="/app/code" \
     /app/env/bin/twist s4-subscription-converger \
+    --domain "$(cat /app/k8s_secrets/domain)" \
     --aws-access-key-id-path /app/k8s_secrets/aws.id \
     --aws-secret-access-key-path /app/k8s_secrets/aws.key \
     --introducer-image "${LAE_S4_TAHOE_INTRODUCER_IMAGE}" \

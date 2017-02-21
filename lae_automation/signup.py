@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, time
+import time
 from base64 import b32encode
 from pprint import pformat
 import json
@@ -52,6 +52,7 @@ def activate_ex(
         just_activate_subscription,
         send_signup_confirmation,
         send_notify_failure,
+        domain,
         secrets_dir,
         automation_config_path,
         server_info_path,
@@ -99,6 +100,7 @@ def activate_ex(
         print >>stdout, "Signing up customer for %s..." % (fullname,)
 
     deploy_config = DeploymentConfiguration(
+        domain=domain,
         products=config.products,
         s3_access_key_id=config.other["s3_access_key_id"].decode("ascii"),
         s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip().decode("ascii"),
@@ -179,11 +181,12 @@ def activate_ex(
 
 
 
-def activate(secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout_path, flapp_stderr_path):
+def activate(domain, secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout_path, flapp_stderr_path):
     return activate_ex(
         just_activate_subscription,
         send_signup_confirmation,
         send_notify_failure,
+        domain,
         secrets_dir,
         automation_config_path,
         server_info_path,

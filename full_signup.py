@@ -24,6 +24,11 @@ class SignupOptions(Options):
 
         ("automation-config-path", None, None, "Path to an lae_automation_config.json file.", FilePath),
         ("server-info-path", None, None, "Path to a file to write new server details to.", FilePath),
+
+        ("domain", None, None,
+         "The domain on which the service is running "
+         "(useful for alternate staging deployments).",
+        ),
     ]
 
 
@@ -49,7 +54,7 @@ def main(reactor, *argv):
     startLogging(flapp_stdout_path.open("a"), setStdout=False)
 
     return activate(
-        secrets_dir,
+        o["domain"].decode("ascii"), secrets_dir,
         o["automation-config-path"], o["server-info-path"],
         sys.stdin, flapp_stdout_path, flapp_stderr_path,
     )

@@ -218,6 +218,7 @@ class MakeServiceTests(TestCase):
         secret_access_key_path.setContent(b"bar")
         options = Options()
         options.parseOptions([
+            b"--domain", b"s4.example.com",
             b"--endpoint", b"http://localhost:8000/",
             b"--aws-access-key-id-path", access_key_id_path.path,
             b"--aws-secret-access-key-path", secret_access_key_path.path,
@@ -304,11 +305,14 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def __init__(self):
         super(SubscriptionConvergence, self).__init__()
         self.path = FilePath(mkdtemp().decode("utf-8"))
-        self.database = SubscriptionDatabase.from_directory(self.path)
+        self.domain = u"s4.example.com"
+        self.database = SubscriptionDatabase.from_directory(
+            self.path, self.domain,
+        )
 
         self.deploy_config = deployment_configuration().example()
 
-        self.subscription_client = memory_client(self.database.path)
+        self.subscription_client = memory_client(self.database.path, self.domain)
         self.kubernetes = memory_kubernetes()
         self.kube_client = KubeClient(k8s=self.kubernetes.client())
         self.aws_region = FakeAWSServiceRegion(
@@ -463,8 +467,6 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             # Don't care about these infrastructure rrsets.
             if key.type not in (u"SOA", u"NS")
         })
-        if actual_rrsets != expected_rrsets:
-            import pdb; pdb.set_trace()
         assert_that(
             actual_rrsets,
             GoodEquals(expected_rrsets),

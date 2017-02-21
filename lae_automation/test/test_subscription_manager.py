@@ -6,14 +6,18 @@ from tempfile import mkdtemp
 
 import attr
 
+from zope.interface.verify import verifyObject
+
 from twisted.python.filepath import FilePath
+from twisted.application.service import IService
 
 from testtools.matchers import Equals, Is, Not, HasLength
 
 from hypothesis import given, assume
-from hypothesis.strategies import lists
 
-from lae_automation.subscription_manager import memory_client
+from lae_automation.subscription_manager import (
+    Options, makeService, memory_client,
+)
 
 from lae_util.testtools import TestCase
 
@@ -109,4 +113,23 @@ class SubscriptionManagerTestMixin(object):
 
 class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
     def get_client(self):
-        return memory_client(FilePath(mkdtemp().decode("utf-8")))
+        return memory_client(
+            FilePath(mkdtemp().decode("utf-8")),
+            u"s4.example.com"
+        )
+
+
+
+class MakeServiceTests(TestCase):
+    def test_interface(self):
+        """
+        ``makeService`` returns an ``IService`` provider.
+        """
+        options = Options()
+        options.parseOptions([
+            b"--domain", b"s4.example.com",
+            b"--state-path", self.mktemp(),
+            b"--listen-address", b"tcp:12345",
+        ])
+        service = makeService(options)
+        verifyObject(IService, service)

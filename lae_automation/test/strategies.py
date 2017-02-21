@@ -95,16 +95,27 @@ def _local_part():
     )
 
 
-def domain():
+def _valid_for_idna(domain):
+    try:
+        domain.encode("idna")
+    except UnicodeError:
+        return False
+    return True
+
+
+def domains():
     return strategies.lists(
         strategies.text(min_size=1, average_size=8, max_size=255),
         min_size=1, average_size=2
     ).map(
         lambda parts: u".".join(parts)
     ).filter(
+        lambda domain: _valid_for_idna(domain)
+    ).filter(
         lambda domain: len(domain) <= 255,
     )
 
+domain = domains
 
 def emails():
     # Not capable of generating the full range of legal email
@@ -252,6 +263,7 @@ def aws_keypair_name():
 def deployment_configuration():
     return strategies.builds(
         model.DeploymentConfiguration,
+        domain=domains(),
         products=strategies.just([{"foo": "bar"}]),
         s3_access_key_id=aws_access_key_id(),
         s3_secret_key=aws_secret_key(),
