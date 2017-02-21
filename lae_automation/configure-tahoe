@@ -19,6 +19,8 @@ from json import load
 
 from twisted.python.filepath import FilePath
 
+from foolscap.furl import decode_furl, encode_furl
+
 INTRODUCER_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
 # This file controls the configuration of the Tahoe node that
@@ -145,6 +147,13 @@ def configure_introducer(
     introducer.child(b"tahoe.cfg").setContent(tahoe_cfg)
 
 
+def add_preferred_address(host, furl):
+    tub_id, location_hints, name = decode_furl(furl)
+    port = location_hints[0].split(":")[1]
+    location_hints.insert(0, host + ":" + port)
+    return encode_furl(tub_id, location_hints, name)
+
+
 def configure_storage(
         storage, port, node_pem, node_privkey,
         bucket_name, publichost, privatehost, introducer_furl,
@@ -161,7 +170,7 @@ def configure_storage(
         publichost=publichost,
         privatehost=privatehost,
         tub_port_number=port,
-        introducer_furl=introducer_furl,
+        introducer_furl=add_preferred_address(privatehost, introducer_furl),
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
         log_gatherer_furl=log_gatherer_furl,

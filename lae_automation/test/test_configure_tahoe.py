@@ -11,6 +11,8 @@ from fixtures import Fixture
 
 from twisted.python.filepath import FilePath
 
+from foolscap.furl import decode_furl, encode_furl
+
 from .testcase import TestBase
 from .matchers import hasContents, hasConfiguration
 from .strategies import introducer_configuration, storage_configuration
@@ -141,10 +143,14 @@ class ConfigureTahoeTests(TestBase):
             self.nodes.introducer.descendant([b"private", b"introducer.furl"]),
             hasContents(introducer_furl),
         )
+        tub_id, location_hints, name = decode_furl(introducer_furl)
+        port = location_hints[0].split(":")[1]
+        location_hints[:0] = [storage_config["privatehost"] + ":" + port]
+        internal_introducer_furl = encode_furl(tub_id, location_hints, name)
         self.expectThat(
             storage_config_path,
             hasConfiguration({
-                ("client", "introducer.furl", introducer_furl),
+                ("client", "introducer.furl", internal_introducer_furl),
             }),
         )
 
