@@ -239,7 +239,7 @@ class ApplyServiceChangesTests(TestCase):
     """
     Tests for ``apply_service_changes``.
     """
-    @given(lists(subscription_details(), average_size=1))
+    @given(lists(subscription_details(), average_size=1, unique_by=lambda d: d.subscription_id))
     def test_create(self, details):
         """
         ``apply_service_changes`` adds entries based on the ``to_create``
