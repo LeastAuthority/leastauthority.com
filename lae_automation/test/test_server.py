@@ -7,18 +7,18 @@ from json import loads, dumps
 from cStringIO import StringIO
 from tempfile import mkstemp
 
-from twisted.trial.unittest import TestCase
 from twisted.python.filepath import FilePath
 
 from datetime import datetime
 
 from testtools.matchers import Equals
 
+from lae_util.testtools import TestCase
+
 from lae_automation import server
 from lae_automation.model import DeploymentConfiguration
 from lae_automation.server import api
 
-from .testcase import TestBase
 from .matchers import hasLocationHint
 from .strategies import (
     bucket_name, ipv4_address, aws_access_key_id, aws_secret_key,
@@ -157,7 +157,7 @@ class TestServerModule(TestCase):
         self._check_all_done()
 
 
-class NewTahoeConfigurationTests(TestBase):
+class NewTahoeConfigurationTests(TestCase):
     """
     Tests for ``new_tahoe_configuration``.
     """
@@ -208,7 +208,7 @@ class NewTahoeConfigurationTests(TestBase):
             stats_gatherer_furl=stats_gatherer_furl,
         )
         config = server.new_tahoe_configuration(
-            deploy_config, bucket_name, publichost, privatehost, 54321,
+            deploy_config, bucket_name, publichost, privatehost, 4321, 1234,
         )
         # It returns an object which can be round-tripped through the
         # JSON format.
@@ -221,9 +221,13 @@ class NewTahoeConfigurationTests(TestBase):
             Equals(config["storage"]["introducer_furl"]),
         )
 
+        # And ports are what we said.
+        self.expectThat(config["introducer"]["port"], Equals(4321))
+        self.expectThat(config["storage"]["port"], Equals(1234))
+
         # The introducer furl is contains a location hint of the
         # public host and the hard-coded introducer port we use.
         self.expectThat(
             config["introducer"]["introducer_furl"],
-            hasLocationHint(config["storage"]["publichost"], 54321),
+            hasLocationHint(config["storage"]["publichost"], 4321),
         )

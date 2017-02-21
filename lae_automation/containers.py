@@ -1,7 +1,6 @@
 from itertools import count
 from base64 import b32encode, b32decode
 from json import dumps
-from os import environ
 from hashlib import sha256
 
 from eliot import Message
@@ -77,6 +76,8 @@ def create_configuration(deploy_config, details):
         introducer_pem=details.introducer_node_pem,
         storage_pem=details.server_node_pem,
         storage_privkey=details.oldsecrets["server_node_privkey"],
+        introducer_port=details.introducer_port_number,
+        storageserver_port=details.storage_port_number,
         bucket_name=details.bucketname,
         publichost=public_host,
         privatehost=private_host,

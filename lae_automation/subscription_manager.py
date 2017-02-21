@@ -219,6 +219,7 @@ class SubscriptionDatabase(object):
                 )),
                 u"127.0.0.1",
                 details.introducer_port_number,
+                details.storage_port_number,
             )
             legacy = secrets_to_legacy_format(config)
             details = attr.assoc(details, oldsecrets=legacy)

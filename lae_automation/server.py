@@ -295,6 +295,7 @@ def secrets_to_legacy_format(secrets):
 def marshal_tahoe_configuration(
         introducer_pem,
         storage_pem, storage_privkey,
+        introducer_port, storageserver_port,
         bucket_name, publichost, privatehost, introducer_furl,
         s3_access_key_id, s3_secret_key,
         log_gatherer_furl=None,
@@ -307,7 +308,7 @@ def marshal_tahoe_configuration(
     return dict(
         introducer=dict(
             root=INTRODUCER_ROOT,
-            port=INTRODUCER_PORT,
+            port=introducer_port,
             node_pem=introducer_pem,
             introducer_furl=introducer_furl,
             log_gatherer_furl=log_gatherer_furl,
@@ -315,7 +316,7 @@ def marshal_tahoe_configuration(
         ),
         storage=dict(
             root=STORAGE_ROOT,
-            port=SERVER_PORT,
+            port=storageserver_port,
             node_pem=storage_pem,
             node_privkey=storage_privkey,
             bucket_name=bucket_name,
@@ -330,7 +331,7 @@ def marshal_tahoe_configuration(
     )
 
 
-def new_tahoe_configuration(deploy_config, bucketname, publichost, privatehost, introducer_port):
+def new_tahoe_configuration(deploy_config, bucketname, publichost, privatehost, introducer_port, storageserver_port):
     """
     Create brand new secrets and configuration for use by an
     introducer/storage pair.
@@ -364,6 +365,9 @@ def new_tahoe_configuration(deploy_config, bucketname, publichost, privatehost, 
 
         storage_pem=storage_tub.getCertData().strip(),
         storage_privkey=keyutil.make_keypair()[0] + b"\n",
+
+        introducer_port=introducer_port,
+        storageserver_port=storageserver_port,
 
         bucket_name=bucketname,
         publichost=publichost,
