@@ -38,8 +38,10 @@ class DeploymentConfiguration(object):
     products = attr.ib(validator=_validate_products)
     s3_access_key_id = attr.ib(validator=attr.validators.instance_of(unicode))
     s3_secret_key = attr.ib(repr=False, validator=attr.validators.instance_of(unicode))
-    amiimageid = attr.ib()
-    instancesize = attr.ib()
+
+    # Docker images to run per-subscription containers.
+    introducer_image = attr.ib(validator=attr.validators.instance_of(unicode))
+    storageserver_image = attr.ib(validator=attr.validators.instance_of(unicode))
 
     # DevPay configuration.  Just for TLoS3, probably obsolete.
     usertoken = attr.ib()
@@ -57,6 +59,7 @@ class DeploymentConfiguration(object):
     secretsfile = attr.ib(validator=attr.validators.instance_of(file))
     serverinfopath = attr.ib(default="../serverinfo.csv")
 
+
     log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
     stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
 
@@ -69,8 +72,8 @@ class NullDeploymentConfiguration(object):
     products = ()
     s3_access_key_id = None
     s3_secret_key = None
-    amiimageid = None
-    instancesize = None
+    introducer_image = None
+    storageserver_image = None
 
     usertoken = None
     producttoken = None

@@ -255,8 +255,10 @@ def deployment_configuration():
         products=strategies.just([{"foo": "bar"}]),
         s3_access_key_id=aws_access_key_id(),
         s3_secret_key=aws_secret_key(),
-        amiimageid=strategies.just("ami-018c9568"),
-        instancesize=strategies.just("t1.micro"),
+
+        introducer_image=strategies.just(u"tahoe-introducer:latest"),
+        storageserver_image=strategies.just(u"tahoe-storageserver:latest"),
+
         usertoken=strategies.none(),
         producttoken=strategies.none(),
 

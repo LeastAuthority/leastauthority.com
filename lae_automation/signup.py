@@ -102,8 +102,13 @@ def activate_ex(
         products=config.products,
         s3_access_key_id=config.other["s3_access_key_id"].decode("ascii"),
         s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip().decode("ascii"),
-        amiimageid=product['ami_image_id'],
-        instancesize=product['instance_size'],
+
+        # Confusingly, this isn't used in the signup codepath. :/
+        # Instead, the subscription converger has the value passed to it.
+        # This is mostly because updating the product configuration is a pain in the ass.
+        # Fix that and then fix this.
+        introducer_image=u"",
+        storageserver_image=u"",
 
         log_gatherer_furl=config.other.get("log_gatherer_furl") or None,
         stats_gatherer_furl=config.other.get("stats_gatherer_furl") or None,

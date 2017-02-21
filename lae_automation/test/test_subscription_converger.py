@@ -221,6 +221,8 @@ class MakeServiceTests(TestCase):
             b"--endpoint", b"http://localhost:8000/",
             b"--aws-access-key-id-path", access_key_id_path.path,
             b"--aws-secret-access-key-path", secret_access_key_path.path,
+            b"--introducer-image", b"introducer",
+            b"--storageserver-image", b"storageserver",
             b"--kubernetes", b"kubernetes",
             b"--k8s-context", u"testing",
             b"--k8s-config", config.path,

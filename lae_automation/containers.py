@@ -81,6 +81,11 @@ def create_configuration(deploy_config, details):
         publichost=public_host,
         privatehost=private_host,
         introducer_furl=details.oldsecrets["internal_introducer_furl"],
+        # Note we get the keys from the deployment configuration passed to us.
+        # oldsecrets has this junk in it, too, but it's unreliable and we want
+        # to get rid of that storage location for the information.  Our
+        # deployment configuration is more reliable anyway and lets us change
+        # values more easily (in one place instead of N).
         s3_access_key_id=deploy_config.s3_access_key_id,
         s3_secret_key=deploy_config.s3_secret_key,
         log_gatherer_furl=deploy_config.log_gatherer_furl,
@@ -102,11 +107,6 @@ def create_configuration(deploy_config, details):
         dumps({"storage": configuration["storage"]}).decode("ascii"),
     )
 
-
-# XXX Don't take the tag from the environment here!  That's awful.  Make some
-# functions that take arguments.
-INTRODUCER_IMAGE = environ.get(u"LAE_S4_TAHOE_INTRODUCER_IMAGE", "tahoe-introducer").decode("ascii")
-STORAGE_IMAGE = environ.get(u"LAE_S4_TAHOE_STORAGE_IMAGE", "tahoe-storage").decode("ascii")
 
 DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
     metadata=_S4_METADATA,
@@ -144,9 +144,8 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 		],
 		u"containers": [
 		    {
+                        # The image is filled in at instantiation time.
 			u"name": u"introducer",
-                        # XXX Don't take this from a global.  Put it in the config somewhere.
-			u"image": INTRODUCER_IMAGE,
 			u"volumeMounts": [
 			    {
 				u"name": u"introducer-config-volume",
@@ -156,9 +155,8 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
                         u"ports": [],
 		    },
 		    {
+                        # The image is filled in at instantiation time.
 			u"name": u"storageserver",
-                        # XXX Don't take this from a global.  Put it in the config somewhere.
-			u"image": STORAGE_IMAGE,
 			u"volumeMounts": [
 			    {
 				u"name": u"storage-config-volume",
@@ -182,7 +180,6 @@ def _sanitize(subscription_id):
 
 def deployment_name(subscription_id):
     return u"customer-deployment-" + _sanitize(subscription_id)
-
 
 
 def create_deployment(deploy_config, details):
@@ -215,6 +212,16 @@ def create_deployment(deploy_config, details):
 
         # Point both configuration volumes at this subscription's configmap.
         ["spec", "template", "spec", "volumes", ny, "configMap", "name"], configmap,
+
+        # The deployment configuration tells us what images we're supposed to
+        # be using at the moment.
+        [u"spec", u"template", u"spec", u"containers", 0, u"image"],
+        deploy_config.introducer_image,
+
+        # The deployment configuration tells us what images we're supposed to
+        # be using at the moment.
+        [u"spec", u"template", u"spec", u"containers", 1, u"image"],
+        deploy_config.storageserver_image,
 
         # Assign it service names and a port numbers.
         ["spec", "template", "spec", "containers", 0, "ports", 0],

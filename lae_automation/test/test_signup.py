@@ -134,8 +134,9 @@ class TestSignupModule(TestCase):
             products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
-            amiimageid="ami-deadbeef", # XXX Where does this come from?  Who knows.
-            instancesize="fake instance size",
+
+            introducer_image=u"tahoe-introducer",
+            storageserver_image=u"tahoe-storageserver",
 
             usertoken=None,
             producttoken=None,

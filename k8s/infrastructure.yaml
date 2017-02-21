@@ -144,6 +144,9 @@ spec:
           defaultMode: 0444
           items:
           # XXX Should allocate some Route53-only keys for this.
+          # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
+          # XXX Maybe I should create _two_ sets of keys...
+          # XXX OTOH There's also IAM roles which might be even better?
           - key: 'aws-s4.key'
             path: 'aws.key'
           - key: 'aws-s4.id'
@@ -166,6 +169,11 @@ spec:
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
         image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        env:
+        - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
+          value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
+        - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
+          value: '127.0.0.1:30000/leastauthority/tahoe-storage:1d72b09'
         volumeMounts:
         - mountPath: '/app/k8s_secrets'
           name: 'convergence-secrets'

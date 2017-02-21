@@ -72,6 +72,10 @@ class Options(_Options):
         ("aws-access-key-id-path", None, None, "The path of a file containing the AWS key identifier to use."),
         ("aws-secret-access-key-path", None, None, "The path of a file containing the AWS secret key to use."),
 
+        # XXX This should be part of the product description.
+        ("introducer-image", None, None, "The Docker image to run a Tahoe-LAFS introducer."),
+        ("storageserver-image", None, None, "The Docker image to run a Tahoe-LAFS storage server."),
+
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
 
         ("kubernetes", None, _kubernetes_from_environ(environ), "The root URL of the Kubernetes API server."),
@@ -130,8 +134,9 @@ def makeService(options):
         products=[{}],
         s3_access_key_id=access_key_id.decode("ascii"),
         s3_secret_key=secret_access_key.decode("ascii"),
-        amiimageid=None,
-        instancesize=None,
+
+        introducer_image=options["introducer-image"].decode("ascii"),
+        storageserver_image=options["storageserver-image"].decode("ascii"),
 
         usertoken=None,
         producttoken=None,

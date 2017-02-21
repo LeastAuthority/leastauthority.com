@@ -185,8 +185,9 @@ class NewTahoeConfigurationTests(TestBase):
             products=[{}],
             s3_access_key_id=s3_access_key_id,
             s3_secret_key=s3_secret_key,
-            amiimageid=None,
-            instancesize=None,
+
+            introducer_image=u"tahoe-introducer",
+            storageserver_image=u"tahoe-storageserver",
 
             usertoken=None,
             producttoken=None,

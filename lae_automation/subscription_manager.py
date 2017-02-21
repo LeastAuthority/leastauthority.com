@@ -202,6 +202,13 @@ class SubscriptionDatabase(object):
                         details.oldsecrets,
                     ),
                 )
+            # XXX new_tahoe_configuration still pulls some secrets off this
+            # object.  That's fine for now but it's just another example of
+            # how screwed up our secret/config management is.  Someone else
+            # will fix up the fact that we're getting bogus values off the
+            # NullDeploymentConfiguration here.  We don't really *want* this
+            # global configuration persisted alongside each subscription,
+            # anyway
             deploy_config = NullDeploymentConfiguration()
             from .subscription_converger import _introducer_name_for_subscription
             config = new_tahoe_configuration(
