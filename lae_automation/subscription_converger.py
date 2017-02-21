@@ -129,6 +129,11 @@ def makeService(options):
         secret_key=secret_access_key,
     ))
 
+    # XXX not exactly the right place for this
+    from eliot import to_file
+    from sys import stdout
+    to_file(stdout)
+
     Message.log(
         event=u"convergence-service:key-notification",
         key_id=access_key_id.decode("ascii"),
@@ -164,11 +169,6 @@ def makeService(options):
         log_gatherer_furl=None,
         stats_gatherer_furl=None,
     )
-
-    # XXX not exactly the right place for this
-    from eliot import to_file
-    from sys import stdout
-    to_file(stdout)
 
     return TimerService(
         options["interval"],

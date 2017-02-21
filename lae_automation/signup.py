@@ -4,6 +4,7 @@ import time
 from base64 import b32encode
 from pprint import pformat
 import json
+from hashlib import sha256
 
 import attr
 
@@ -203,30 +204,37 @@ def just_activate_subscription(deploy_config, subscription, stdout, stderr, logf
 
     location = None  # default S3 location for now
 
-    d = create_stripe_user_bucket(
-        deploy_config.s3_access_key_id,
-        deploy_config.s3_secret_key,
-        subscription.bucketname,
-        stdout,
-        stderr,
-        location,
+    a = start_action(
+        action_type=u"signup:bucket-creation",
+        key_id=deploy_config.s3_access_key_id,
+        secret_key_hash=sha256(deploy_config.s3_secret_key).hexdigest().decode("ascii"),
     )
-
-    print >>stdout, "After create_stripe_account_user_bucket:"
-    print >>stdout, pformat(attr.asdict(deploy_config))
-    print >>stdout, pformat(attr.asdict(subscription))
-
-    if smclient is None:
-        endpoint = deploy_config.subscription_manager_endpoint.asText().encode("utf-8")
-        agent = Agent(reactor)
-        smclient = network_client(endpoint, agent)
-
-    d.addCallback(
-        lambda ignored: provision_subscription(
-            clock, deploy_config, subscription, smclient,
+    with a.context():
+        d = create_stripe_user_bucket(
+            deploy_config.s3_access_key_id,
+            deploy_config.s3_secret_key,
+            subscription.bucketname,
+            stdout,
+            stderr,
+            location,
         )
-    )
-    return d
+        d = DeferredContext(d)
+
+        print >>stdout, "After create_stripe_account_user_bucket:"
+        print >>stdout, pformat(attr.asdict(deploy_config))
+        print >>stdout, pformat(attr.asdict(subscription))
+
+        if smclient is None:
+            endpoint = deploy_config.subscription_manager_endpoint.asText().encode("utf-8")
+            agent = Agent(reactor)
+            smclient = network_client(endpoint, agent)
+
+        d.addCallback(
+            lambda ignored: provision_subscription(
+                clock, deploy_config, subscription, smclient,
+            )
+        )
+        return d.addActionFinish()
 
 
 def provision_subscription(reactor, deploy_config, details, smclient):

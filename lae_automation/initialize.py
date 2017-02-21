@@ -14,11 +14,10 @@ from lae_util import retry_failure, backoff
 
 from lae_automation.aws.license_service_client import LicenseServiceClient
 from lae_automation.aws.devpay_s3client import DevPayS3Client
-from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError, \
-     wait_for_EC2_addresses
+from lae_automation.aws.queryapi import xml_parse, xml_find, wait_for_EC2_sshfp, TimeoutError
+
 
 from txaws.s3.exception import S3Error
-from txaws.s3.client import S3Client, URLContext
 from txaws.ec2.client import EC2Client
 from txaws.ec2.model import Instance
 from txaws.service import AWSServiceEndpoint, AWSServiceRegion
@@ -214,8 +213,7 @@ def create_user_bucket(reactor, client, bucketname):
                 steps=backoff(),
             ),
         )
-        d.addActionFinish()
-        return d.result
+        return d.addActionFinish()
 
 
 def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr, location, reactor=None):
@@ -231,7 +229,10 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
                      'secretkey = %r\n'
                      % (None, bucketname, location, accesskeyid, secretkey))
 
-    region = AWSServiceRegion(creds=AWSCredentials(accesskeyid, secretkey))
+    region = AWSServiceRegion(creds=AWSCredentials(
+        accesskeyid.encode("ascii"),
+        secretkey.encode("ascii"),
+    ))
     client = region.get_s3_client()
     print >>stderr, "client is %s" % (client,)
 
@@ -246,6 +247,9 @@ def create_stripe_user_bucket(accesskeyid, secretkey, bucketname, stdout, stderr
         print >>stderr, repr(res)
         print >>stderr, repr(res.value)
         print >>stderr, repr(res.printTraceback())
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXx
+        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+        # exception swallowed, so bucket creation failure is never ever noticed
     d.addCallbacks(bucket_created, bucket_creation_failed)
     return d
 
