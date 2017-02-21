@@ -138,6 +138,13 @@ spec:
       - name: 'flapp-secrets'
         secret:
           secretName: 'signup-secrets'
+      - name: 'subscription-manager-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          defaultMode: 0444
+          items:
+          - key: 'domain'
+            path: 'domain'
       - name: 'convergence-secrets'
         secret:
           secretName: 'signup-secrets'
@@ -167,6 +174,8 @@ spec:
         volumeMounts:
         - mountPath: '/app/data'
           name: 'subscription-manager-data'
+        - mountPath: '/app/k8s_secrets'
+          name: 'subscription-manager-secrets'
 
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.

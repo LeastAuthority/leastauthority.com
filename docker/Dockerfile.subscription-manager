@@ -38,5 +38,6 @@ USER "${SUBSCRIPTION_MANAGER_USER_NAME}"
 CMD env && \
     PYTHONPATH="/app/code" \
     /app/env/bin/twist s4-subscription-manager \
+    --domain "$(cat /app/k8s_secrets/domain)" \
     --state-path /app/data/subscriptions \
     --listen-address tcp:8000
