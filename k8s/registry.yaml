@@ -76,7 +76,8 @@ spec:
           protocol: 'TCP'
       volumes:
       - name: 'image-store'
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: 'private-registry-pvc'
 ---
 # Read about PersistentVolumeClaims at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
