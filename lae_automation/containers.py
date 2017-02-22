@@ -241,6 +241,9 @@ def create_deployment(deploy_config, details):
         *subscription_metadata(details)
     )
 
+# This service exposes all the customer introducers and storage servers to the public internet.
+# Some background on performance of many-ports Services:
+# http://blog.kubernetes.io/2016/09/high-performance-network-policies-kubernetes.html
 S4_CUSTOMER_GRID_NAME = u"s4-customer-grids"
 EMPTY_SERVICE = v1.Service(
     metadata=_S4_METADATA.set(u"name", S4_CUSTOMER_GRID_NAME),
