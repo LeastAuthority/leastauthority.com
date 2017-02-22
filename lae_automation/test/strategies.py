@@ -289,9 +289,6 @@ def deployment_configuration():
         introducer_image=strategies.just(u"tahoe-introducer:latest"),
         storageserver_image=strategies.just(u"tahoe-storageserver:latest"),
 
-        usertoken=strategies.none(),
-        producttoken=strategies.none(),
-
         ssec2_access_key_id=aws_access_key_id(),
         ssec2_secret_path=absolute_path(),
 

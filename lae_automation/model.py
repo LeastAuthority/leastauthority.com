@@ -49,10 +49,6 @@ class DeploymentConfiguration(object):
     introducer_image = attr.ib(validator=attr.validators.instance_of(unicode))
     storageserver_image = attr.ib(validator=attr.validators.instance_of(unicode))
 
-    # DevPay configuration.  Just for TLoS3, probably obsolete.
-    usertoken = attr.ib()
-    producttoken = attr.ib()
-
     ssec2_access_key_id = attr.ib()
     ssec2_secret_path = attr.ib()
 
@@ -80,9 +76,6 @@ class NullDeploymentConfiguration(object):
     s3_secret_key = None
     introducer_image = None
     storageserver_image = None
-
-    usertoken = None
-    producttoken = None
 
     ssec2_access_key_id = None
     ssec2_secret_path = None

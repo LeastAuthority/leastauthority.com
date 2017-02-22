@@ -87,9 +87,6 @@ class NewTahoeConfigurationTests(TestCase):
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
 
-            usertoken=None,
-            producttoken=None,
-
             secretsfile=fdopen(mkstemp()[0], "w"),
             serverinfopath=None,
 

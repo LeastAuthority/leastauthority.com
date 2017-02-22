@@ -139,9 +139,6 @@ class TestSignupModule(TestCase):
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
 
-            usertoken=None,
-            producttoken=None,
-
             ssec2_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             ssec2_secret_path=self.S3SECRETPATH,
 

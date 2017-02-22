@@ -17,7 +17,10 @@ from twisted.web.client import Agent
 from twisted.python.filepath import FilePath
 from twisted.internet.defer import succeed
 
-from lae_automation.initialize import create_stripe_user_bucket
+from txaws.service import AWSServiceRegion
+from txaws.credentials import AWSCredentials
+
+from lae_automation.initialize import create_user_bucket
 from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 
 from lae_automation.config import Config
@@ -120,9 +123,6 @@ def activate_ex(
         log_gatherer_furl=config.other.get("log_gatherer_furl") or None,
         stats_gatherer_furl=config.other.get("stats_gatherer_furl") or None,
 
-        usertoken=None,
-        producttoken=None,
-
         secretsfile=SSEC2_secretsfile,
         serverinfopath=server_info_path.path,
 
@@ -186,12 +186,11 @@ def activate_ex(
 
 
 
+# TODO: Bucket should be managed by subscription-converger.
 def just_activate_subscription(deploy_config, subscription, stdout, stderr, logfile, clock, smclient):
     print >>stderr, "entering just_activate_subscription call."
     if clock is None:
         clock = reactor
-
-    location = None  # default S3 location for now
 
     a = start_action(
         action_type=u"signup:bucket-creation",
@@ -199,25 +198,22 @@ def just_activate_subscription(deploy_config, subscription, stdout, stderr, logf
         secret_key_hash=sha256(deploy_config.s3_secret_key).hexdigest().decode("ascii"),
     )
     with a.context():
-        d = create_stripe_user_bucket(
-            deploy_config.s3_access_key_id,
-            deploy_config.s3_secret_key,
-            subscription.bucketname,
-            stdout,
-            stderr,
-            location,
-        )
-        d = DeferredContext(d)
-
-        print >>stdout, "After create_stripe_account_user_bucket:"
-        print >>stdout, pformat(attr.asdict(deploy_config))
-        print >>stdout, pformat(attr.asdict(subscription))
-
+        region = AWSServiceRegion(creds=AWSCredentials(
+            deploy_config.s3_access_key_id.encode("ascii"),
+            deploy_config.s3_secret_key.encode("ascii"),
+        ))
         if smclient is None:
             endpoint = deploy_config.subscription_manager_endpoint.asText().encode("utf-8")
             agent = Agent(reactor)
             smclient = network_client(endpoint, agent)
 
+        d = DeferredContext(
+            create_user_bucket(
+                clock,
+                region.get_s3_client(),
+                subscription.bucketname,
+            ),
+        )
         d.addCallback(
             lambda ignored: provision_subscription(
                 clock, deploy_config, subscription, smclient,

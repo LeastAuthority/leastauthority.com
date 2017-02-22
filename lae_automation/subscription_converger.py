@@ -161,9 +161,6 @@ def makeService(options):
         introducer_image=options["introducer-image"].decode("ascii"),
         storageserver_image=options["storageserver-image"].decode("ascii"),
 
-        usertoken=None,
-        producttoken=None,
-
         ssec2_access_key_id=None,
         ssec2_secret_path=None,
 
