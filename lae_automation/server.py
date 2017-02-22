@@ -31,6 +31,9 @@ def write(value, remote_path, use_sudo=False, mode=None):
     # mode is not None.
     return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
+# These are legacy junk that can be cleaned up after the
+# external_introducer_furl in oldsecrets get removed.  Nothing actually _uses_
+# these values anymore.
 INTRODUCER_PORT = '12345'
 SERVER_PORT = '12346'
 
