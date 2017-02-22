@@ -227,11 +227,14 @@ def create_deployment(deploy_config, details):
         deploy_config.storageserver_image,
 
         # Assign it service names and a port numbers.
+        # Though the only hard constraint Kubernetes implies on the port is
+        # that it be unique within the pod, since we want to expose these via
+        # a v1.Service, we need to make them unique across all pods the
+        # service is going to select.  That's all pods for customer grids.
         ["spec", "template", "spec", "containers", 0, "ports", 0],
-        # XXX Don't really need unique ports here
         v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
+
         ["spec", "template", "spec", "containers", 1, "ports", 0],
-        # XXX Or here
         v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
 
         # Some other metadata to make inspecting this stuff a little easier.
