@@ -303,8 +303,9 @@ class ApplyServiceChangesTests(TestCase):
 
 
 class SubscriptionConvergence(RuleBasedStateMachine):
-    def __init__(self):
+    def __init__(self, case):
         super(SubscriptionConvergence, self).__init__()
+        self.case = case
         self.path = FilePath(mkdtemp().decode("utf-8"))
         self.domain = u"s4.example.com"
         self.database = SubscriptionDatabase.from_directory(
@@ -325,9 +326,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             caller_reference=u"opaque reference",
             name=self.deploy_config.domain,
         )
-        # XXXX
-        assert d.called, d
-        self.zone = d.result
+        self.zone = self.case.successResultOf(d)
         self.action = start_action(action_type=u"convergence-test")
 
     def execute_step(self, step):
@@ -382,15 +381,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.kube_client,
             self.aws_region,
         )
-        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        # XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-        assert d.called
-        assert d.result is None, d.result.getTraceback()
+        self.case.successResultOf(d)
         self.check_convergence(
             self.database,
             self.deploy_config,
@@ -458,8 +449,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
         route53 = aws.get_route53_client()
         d = route53.list_resource_record_sets(self.zone.identifier)
-        # XXX
-        result = d.result
+        result = self.case.successResultOf(d)
 
         actual_rrsets = pmap({
             key: rrset
@@ -484,4 +474,4 @@ class SubscriptionConvergenceTests(TestCase):
         # Clear the Eliot logs at the beginning of every run
         # Maybe just the last run's logs are good enough?
         self.clear_logs()
-        return SubscriptionConvergence()
+        return SubscriptionConvergence(self)
