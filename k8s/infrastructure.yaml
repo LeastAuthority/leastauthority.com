@@ -92,6 +92,9 @@ kind: 'Deployment'
 apiVersion: 'extensions/v1beta1'
 metadata:
   name: 's4-infrastructure'
+  labels:
+    forceupdate: 'x'
+
 spec:
   # Keep some old ReplicaSets for older versions of the Deployment around -
   # but not all of them (as is the default).
@@ -119,17 +122,13 @@ spec:
     spec:
       volumes:
       - name: 'subscription-manager-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-subscription-manager-pvc'
+        emptyDir: {}
       - name: 'log-gatherer-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-foolscap-logs-pvc'
+        emptyDir: {}
       - name: 'web-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-web-pvc'
+        emptyDir: {}
       - name: 'flapp-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-flapp-pvc'
+        emptyDir: {}
       # Kubernetes manages some of the secrets we require.  Mount
       # them into the container.
       - name: 'web-secrets'
@@ -170,7 +169,7 @@ spec:
       # Here is the subscription manager.  It contains the canonical (local)
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
       - name: 'subscription-manager'
-        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        image: '127.0.0.1:30000/leastauthority/subscription-manager:f917772'
         volumeMounts:
         - mountPath: '/app/data'
           name: 'subscription-manager-data'
@@ -180,12 +179,13 @@ spec:
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
-        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        image: '127.0.0.1:30000/leastauthority/subscription-converger:f917772'
         env:
         - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
-          value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
+          value: '127.0.0.1:30000/leastauthority/tahoe-introducer:f917772'
         - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
-          value: '127.0.0.1:30000/leastauthority/tahoe-storage:1d72b09'
+          value: '127.0.0.1:30000/leastauthority/tahoe-storage:f917772'
+
         volumeMounts:
         - mountPath: '/app/k8s_secrets'
           name: 'convergence-secrets'
