@@ -70,6 +70,10 @@ class Options(_Options):
          "(useful for alternate staging deployments).",
         ),
 
+        ("kubernetes-namespace", None, None,
+         "The Kubernetes namespace in which to perform convergence.",
+        ),
+
         ("endpoint", None, None, "The root URL of the subscription manager service."),
         ("k8s-context", None, None, "Use a kubectl configuration context to find Kubernetes."),
         ("k8s-config", None, None, "The path of a kubectl configuration file in which to find the context.", FilePath),
@@ -93,6 +97,8 @@ class Options(_Options):
     def postOptions(self):
         if self["domain"] is None:
             raise UsageError("--domain is required")
+        if self["kubernetes-namespace"] is None:
+            raise UsageError("--kubernetes-namespace is required")
         if self["endpoint"] is None:
             raise UsageError("--endpoint is required")
         if self["endpoint"].endswith("/"):
@@ -140,10 +146,13 @@ def makeService(options):
         secret_key_hash=sha256(secret_access_key).hexdigest().decode("ascii"),
     )
 
-    # XXX Exclusive for static attributes at this time ... really need to
-    # break this up.
+    # XXX I get to leave a ton of fields empty because I happen to know
+    # they're not used in this codepath. :/ Maybe this suggests something has
+    # gone wrong ...
     config = DeploymentConfiguration(
         domain=options["domain"].decode("ascii"),
+        kubernetes_namespace=options["kubernetes-namespace"].decode("ascii"),
+
         products=[{}],
         s3_access_key_id=access_key_id.decode("ascii"),
         s3_secret_key=secret_access_key.decode("ascii"),

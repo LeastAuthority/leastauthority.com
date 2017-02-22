@@ -102,6 +102,7 @@ def activate_ex(
 
     deploy_config = DeploymentConfiguration(
         domain=domain,
+        kubernetes_namespace=None,
         products=config.products,
         s3_access_key_id=config.other["s3_access_key_id"].decode("ascii"),
         s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip().decode("ascii"),

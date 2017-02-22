@@ -186,6 +186,7 @@ class NewTahoeConfigurationTests(TestCase):
         """
         deploy_config = DeploymentConfiguration(
             domain=u"testing.com",
+            kubernetes_namespace=u"testing",
             products=[{}],
             s3_access_key_id=s3_access_key_id,
             s3_secret_key=s3_secret_key,

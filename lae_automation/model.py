@@ -29,8 +29,12 @@ class DeploymentConfiguration(object):
     # different.
     private_host = u"127.0.0.1"
 
-    # XXX Got to configure this _somehow_.
-    kubernetes_namespace = u"staging"
+    # It is optional because DeploymentConfiguration is used basically
+    # everywhere but only the subscription-converger needs to know a
+    # Kubernetes namespace. :/
+    kubernetes_namespace = attr.ib(
+        validator=attr.validators.optional(attr.validators.instance_of(unicode)),
+    )
 
     # XXX Must agree with the SubscriptionManager service configured in Kubernetes.
     subscription_manager_endpoint = URL.fromText(u"http://127.0.0.1:8000/")

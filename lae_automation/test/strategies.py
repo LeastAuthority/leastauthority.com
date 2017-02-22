@@ -260,10 +260,18 @@ def aws_keypair_name():
         u"".join
     )
 
+
+
+def kubernetes_namespaces():
+    return strategies.sampled_from([u"default", u"staging"])
+
+
+
 def deployment_configuration():
     return strategies.builds(
         model.DeploymentConfiguration,
         domain=domains(),
+        kubernetes_namespace=kubernetes_namespaces(),
         products=strategies.just([{"foo": "bar"}]),
         s3_access_key_id=aws_access_key_id(),
         s3_secret_key=aws_secret_key(),

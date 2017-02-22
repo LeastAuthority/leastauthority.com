@@ -219,6 +219,7 @@ class MakeServiceTests(TestCase):
         options = Options()
         options.parseOptions([
             b"--domain", b"s4.example.com",
+            b"--kubernetes-namespace", b"testing",
             b"--endpoint", b"http://localhost:8000/",
             b"--aws-access-key-id-path", access_key_id_path.path,
             b"--aws-secret-access-key-path", secret_access_key_path.path,

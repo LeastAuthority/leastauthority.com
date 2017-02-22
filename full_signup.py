@@ -29,6 +29,7 @@ class SignupOptions(Options):
          "The domain on which the service is running "
          "(useful for alternate staging deployments).",
         ),
+
     ]
 
 
@@ -54,7 +55,9 @@ def main(reactor, *argv):
     startLogging(flapp_stdout_path.open("a"), setStdout=False)
 
     return activate(
-        o["domain"].decode("ascii"), secrets_dir,
+        o["domain"].decode("ascii"),
+        o["kubernetes-namespace"].decode("ascii"),
+        secrets_dir,
         o["automation-config-path"], o["server-info-path"],
         sys.stdin, flapp_stdout_path, flapp_stderr_path,
     )

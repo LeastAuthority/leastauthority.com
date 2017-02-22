@@ -129,6 +129,7 @@ class TestSignupModule(TestCase):
 
         self.DEPLOYMENT_CONFIGURATION = model.DeploymentConfiguration(
             domain=u"s4.example.com",
+            kubernetes_namespace=u"testing",
             products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
