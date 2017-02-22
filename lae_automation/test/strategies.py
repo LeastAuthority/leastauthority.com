@@ -208,7 +208,6 @@ OzEHlEY+wXPu5R9v3tt2Ktfvfm2Mpfr9Gn+6CUXYn/+P
 
 def introducer_configuration():
     return strategies.fixed_dictionaries({
-        "root": absolute_path(),
         "port": port_number(),
         "node_pem": node_pem(),
 
@@ -225,7 +224,6 @@ def introducer_configuration():
 
 def storage_configuration(keypair=keyutil.make_keypair()):
     return strategies.fixed_dictionaries({
-        "root": absolute_path(),
         "port": port_number(),
         "node_pem": node_pem(),
         # Uses real randomness.  Should parameterize the prng.

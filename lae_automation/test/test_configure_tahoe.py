@@ -25,13 +25,13 @@ CONFIGURE_TAHOE = FilePath(__file__).parent().parent().child(b"configure-tahoe")
 # of successful examples to be considered a success.
 simple = settings(max_examples=5)
 
-def configure_tahoe(configuration):
+def configure_tahoe(configuration, root):
     fd, name = mkstemp()
     with fdopen(fd, "w+") as fObj:
         fObj.write(dumps(configuration))
         fObj.seek(0)
         # Assume it is executable and has a sane interpreter.
-        check_call([CONFIGURE_TAHOE.path], stdin=fObj)
+        check_call([CONFIGURE_TAHOE.path, root], stdin=fObj)
 
 
 class TahoeNodes(Fixture):
@@ -78,9 +78,8 @@ class ConfigureTahoeTests(TestBase):
             log_gatherer_furl=None,
             stats_gatherer_furl=None,
         )
-        config["introducer"]["root"] = self.nodes.introducer.path
-        config["storage"]["root"] = self.nodes.storage.path
-        configure_tahoe(config)
+        configure_tahoe({"introducer": config["introducer"]}, self.nodes.introducer.path)
+        configure_tahoe({"storage": config["storage"]}, self.nodes.storage.path)
 
         config_files = [
             self.nodes.introducer.child(b"tahoe.cfg"),
@@ -116,9 +115,8 @@ class ConfigureTahoeTests(TestBase):
             log_gatherer_furl=introducer_config["log_gatherer_furl"],
             stats_gatherer_furl=introducer_config["stats_gatherer_furl"],
         )
-        config["introducer"]["root"] = self.nodes.introducer.path
-        config["storage"]["root"] = self.nodes.storage.path
-        configure_tahoe(config)
+        configure_tahoe({"introducer": config["introducer"]}, self.nodes.introducer.path)
+        configure_tahoe({"storage": config["storage"]}, self.nodes.storage.path)
 
         intro_config_path = self.nodes.introducer.child(b"tahoe.cfg")
         storage_config_path = self.nodes.storage.child(b"tahoe.cfg")

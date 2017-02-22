@@ -25,12 +25,6 @@ from allmydata.util import keyutil
 
 from .model import make_external_furl
 
-class PathFormatError(Exception):
-    pass
-
-STORAGE_ROOT = "/home/customer/storageserver"
-INTRODUCER_ROOT = "/home/customer/introducer"
-
 CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
 
 UNATTENDED_UPGRADE_REBOOT_SECONDS = 300
@@ -163,21 +157,6 @@ def get_and_install_tahoe(stdout):
         print >>stdout, "Building Tahoe-LAFS..."
         run('venv/bin/pip install --find-links=https://tahoe-lafs.org/deps -e LAFS_source[test]')
 
-def create_intro_and_storage_nodes(stdout):
-    print >>stdout, "Creating introducer and storage server..."
-    run(
-        'venv/bin/tahoe create-introducer {} || '
-        'echo Assuming that introducer already exists.'.format(
-            INTRODUCER_ROOT
-        )
-    )
-    run(
-        'venv/bin/tahoe create-node {} || '
-        'echo Assuming that storage server already exists.'.format(
-            STORAGE_ROOT
-        )
-    )
-
 def run_git(command):
     return run('/usr/bin/git %s' % (command,))
 
@@ -307,7 +286,6 @@ def marshal_tahoe_configuration(
         stats_gatherer_furl = ""
     return dict(
         introducer=dict(
-            root=INTRODUCER_ROOT,
             port=introducer_port,
             node_pem=introducer_pem,
             introducer_furl=introducer_furl,
@@ -315,7 +293,6 @@ def marshal_tahoe_configuration(
             stats_gatherer_furl=stats_gatherer_furl,
         ),
         storage=dict(
-            root=STORAGE_ROOT,
             port=storageserver_port,
             node_pem=storage_pem,
             node_privkey=storage_privkey,

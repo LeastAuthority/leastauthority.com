@@ -97,12 +97,12 @@ enabled = false
 local.directory =
 """
 
-def main(root=None):
+def main(root):
     config = load(stdin)
     if "introducer" in config:
         section = config["introducer"]
         configure_introducer(
-            introducer=FilePath(root or section["root"]),
+            introducer=FilePath(root),
             port=section["port"],
             node_pem=section["node_pem"],
             introducer_furl=section["introducer_furl"],
@@ -112,7 +112,7 @@ def main(root=None):
     if "storage" in config:
         section = config["storage"]
         configure_storage(
-            storage=FilePath(root or section["root"]),
+            storage=FilePath(root),
             port=section["port"],
             node_pem=section["node_pem"],
             node_privkey=section["node_privkey"],
