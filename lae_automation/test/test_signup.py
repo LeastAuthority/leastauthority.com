@@ -191,11 +191,8 @@ class SignupTests(TestCase):
         """
         deploy_config = deployment_configuration().example()
         details = subscription_details().example()
-        stdout = BytesIO()
-        stderr = BytesIO()
-        logfilename = self.mktemp()
         d = signup.just_activate_subscription(
-            deploy_config, details, stdout, stderr, logfilename,
+            deploy_config, details,
             clock=None, smclient=broken_client(),
         )
         self.failureResultOf(d)
@@ -225,7 +222,7 @@ class ActivateTests(TestCase):
         emails = []
 
         def just_activate_subscription(
-                deploy_config, subscription, stdout, stderr, logfile, clock, smclient,
+                deploy_config, subscription, clock, smclient,
         ):
             return succeed(
                 attr.assoc(

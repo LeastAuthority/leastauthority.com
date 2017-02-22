@@ -45,6 +45,8 @@ from .containers import (
     new_service,
     add_subscription_to_service, remove_subscription_from_service
 )
+from .initialize import create_user_bucket
+from .signup import get_bucket_name
 from .kubeclient import KubeClient, And, LabelSelector, NamespaceSelector
 
 from txkube import (
@@ -276,21 +278,30 @@ def get_active_subscriptions(subscriptions):
     returnValue(active_subscriptions)
 
 
+
+def get_s3_buckets(s3):
+    return s3.list_buckets()
+
+
+
 class _State(PClass):
     subscriptions = field()
     configmaps = field()
     deployments = field()
     service = field()
     zone = field()
+    buckets = field()
 
 
-def _get_converge_inputs(config, subscriptions, k8s, route53):
+
+def _get_converge_inputs(config, subscriptions, k8s, aws):
     return gatherResults([
         get_active_subscriptions(subscriptions),
         get_customer_grid_configmaps(k8s, config.kubernetes_namespace),
         get_customer_grid_deployments(k8s, config.kubernetes_namespace),
         get_customer_grid_service(k8s, config.kubernetes_namespace),
-        get_hosted_zone_by_name(route53, Name(config.domain))
+        get_hosted_zone_by_name(aws.get_route53_client(), Name(config.domain)),
+        get_s3_buckets(aws.get_s3_client()),
     ]).addCallback(
         lambda state: _State(**dict(
             zip([
@@ -299,6 +310,7 @@ def _get_converge_inputs(config, subscriptions, k8s, route53):
                 u"deployments",
                 u"service",
                 u"zone",
+                u"buckets",
             ], state,
             ),
         ))
@@ -306,8 +318,9 @@ def _get_converge_inputs(config, subscriptions, k8s, route53):
 
 
 @with_action(action_type=u"converge-logic")
-def _converge_logic(actual, config, subscriptions, k8s, route53):
+def _converge_logic(actual, config, subscriptions, k8s, aws):
     convergers = [
+        _converge_s3,
         _converge_service,
         _converge_configmaps,
         _converge_deployments,
@@ -316,7 +329,7 @@ def _converge_logic(actual, config, subscriptions, k8s, route53):
 
     jobs = []
     for converger in convergers:
-        jobs.extend(converger(actual, config, subscriptions, k8s, route53))
+        jobs.extend(converger(actual, config, subscriptions, k8s, aws))
 
     return jobs
 
@@ -409,7 +422,27 @@ class _ChangeableService(PClass):
 
 
 
-def _converge_service(actual, config, subscriptions, k8s, route53):
+def _converge_s3(actual, config, subscription, k8s, aws):
+    buckets = []
+    for subscription in actual.subscriptions.itervalues():
+        bucket_name = get_bucket_name(
+            subscription.subscription_id, subscription.customer_id,
+        )
+        if bucket_name not in actual.buckets:
+            buckets.append(bucket_name)
+
+    s3 = aws.get_s3_client()
+    from twisted.internet import reactor
+
+    return list(
+        lambda n=n: create_user_bucket(reactor, s3, n)
+        for n
+        in buckets
+    )
+
+
+
+def _converge_service(actual, config, subscriptions, k8s, aws):
     create_service = (actual.service is None)
     if create_service:
         configured_service = new_service(config.kubernetes_namespace)
@@ -468,7 +501,7 @@ class _ChangeableDeployments(PClass):
 
 
 
-def _converge_deployments(actual, config, subscriptions, k8s, route53):
+def _converge_deployments(actual, config, subscriptions, k8s, aws):
     # XXX Oh boy there's two more deployment states to deal with. :/ Merely
     # deleting a deployment doesn't clean up its replicaset (nor its pod,
     # therefore).  So instead we need to update the deployment with replicas =
@@ -511,7 +544,7 @@ class _ChangeableConfigMaps(PClass):
 
 
 
-def _converge_configmaps(actual, config, subscriptions, k8s, route53):
+def _converge_configmaps(actual, config, subscriptions, k8s, aws):
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableConfigMaps(configmaps=actual.configmaps),
@@ -553,7 +586,7 @@ class _ChangeableZone(PClass):
 
 
 
-def _converge_route53(actual, config, subscriptions, k8s, route53):
+def _converge_route53(actual, config, subscriptions, k8s, aws):
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableZone(
@@ -564,6 +597,7 @@ def _converge_route53(actual, config, subscriptions, k8s, route53):
     )
     # XXX Probably would be nice to group changes.  Also, issue changes insert
     # of delete/create.  Some structured objects would make that easier.
+    route53 = aws.get_route53_client()
     def delete(sid):
         return delete_route53_rrsets(route53, actual.zone[0], [sid])
     def create(subscription):
@@ -614,9 +648,8 @@ def converge(config, subscriptions, k8s, aws):
     # mis-configurations and correct them.
     a = start_action(action_type=u"converge")
     with a.context():
-        route53 = aws.get_route53_client()
-        d = DeferredContext(_get_converge_inputs(config, subscriptions, k8s, route53))
-        d.addCallback(_converge_logic, config, subscriptions, k8s, route53)
+        d = DeferredContext(_get_converge_inputs(config, subscriptions, k8s, aws))
+        d.addCallback(_converge_logic, config, subscriptions, k8s, aws)
         d.addCallback(_execute_converge_outputs)
         d.addCallback(lambda result: None)
         return d.addActionFinish()
