@@ -11,6 +11,7 @@ from testtools.matchers import Equals, AfterPreprocessing
 
 from twisted.internet.defer import succeed
 from twisted.python.filepath import FilePath
+from twisted.python.url import URL
 
 from foolscap.furl import decode_furl
 
@@ -130,6 +131,7 @@ class TestSignupModule(TestCase):
         self.DEPLOYMENT_CONFIGURATION = model.DeploymentConfiguration(
             domain=u"s4.example.com",
             kubernetes_namespace=u"testing",
+            subscription_manager_endpoint=URL.fromText(u"http://localhost/"),
             products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
@@ -291,6 +293,7 @@ class ActivateTests(TestCase):
             send_signup_confirmation,
             send_notify_failure,
             u"s4.example.com",
+            URL.fromText(u"http://localhost/"),
             secrets_path,
             automation_config_path,
             server_info_path,

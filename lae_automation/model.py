@@ -36,8 +36,10 @@ class DeploymentConfiguration(object):
         validator=attr.validators.optional(attr.validators.instance_of(unicode)),
     )
 
-    # XXX Must agree with the SubscriptionManager service configured in Kubernetes.
-    subscription_manager_endpoint = URL.fromText(u"http://127.0.0.1:8000/")
+    # It is optional for the same reason as above.
+    subscription_manager_endpoint = attr.ib(
+        validator=attr.validators.optional(attr.validators.instance_of(URL)),
+    )
 
     products = attr.ib(validator=_validate_products)
     s3_access_key_id = attr.ib(validator=attr.validators.instance_of(unicode))

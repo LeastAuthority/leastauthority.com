@@ -5,6 +5,7 @@ from base64 import b32encode
 from pprint import pformat
 import json
 from hashlib import sha256
+from functools import partial
 
 import attr
 
@@ -54,6 +55,7 @@ def activate_ex(
         send_signup_confirmation,
         send_notify_failure,
         domain,
+        subscription_manager_endpoint,
         secrets_dir,
         automation_config_path,
         server_info_path,
@@ -103,6 +105,7 @@ def activate_ex(
     deploy_config = DeploymentConfiguration(
         domain=domain,
         kubernetes_namespace=None,
+        subscription_manager_endpoint=subscription_manager_endpoint,
         products=config.products,
         s3_access_key_id=config.other["s3_access_key_id"].decode("ascii"),
         s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip().decode("ascii"),
@@ -183,21 +186,6 @@ def activate_ex(
 
 
 
-def activate(domain, secrets_dir, automation_config_path, server_info_path, stdin, flapp_stdout_path, flapp_stderr_path):
-    return activate_ex(
-        just_activate_subscription,
-        send_signup_confirmation,
-        send_notify_failure,
-        domain,
-        secrets_dir,
-        automation_config_path,
-        server_info_path,
-        stdin,
-        flapp_stdout_path,
-        flapp_stderr_path,
-    )
-
-
 def just_activate_subscription(deploy_config, subscription, stdout, stderr, logfile, clock, smclient):
     print >>stderr, "entering just_activate_subscription call."
     if clock is None:
@@ -272,3 +260,11 @@ def create_log_filepaths(parent_dir, stripe_plan_id, stripe_customer_id, stripe_
     SSEC2log_fp = abslogdir_fp.child('SSEC2')
     signuplog_fp = abslogdir_fp.child('signup_logs')
     return abslogdir_fp, stripelog_fp, SSEC2log_fp, signuplog_fp
+
+
+activate = partial(
+    activate_ex,
+    just_activate_subscription,
+    send_signup_confirmation,
+    send_notify_failure,
+)

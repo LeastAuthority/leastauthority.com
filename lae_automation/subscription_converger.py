@@ -152,6 +152,7 @@ def makeService(options):
     config = DeploymentConfiguration(
         domain=options["domain"].decode("ascii"),
         kubernetes_namespace=options["kubernetes-namespace"].decode("ascii"),
+        subscription_manager_endpoint=URL.fromText(options["endpoint"].decode("ascii")),
 
         products=[{}],
         s3_access_key_id=access_key_id.decode("ascii"),

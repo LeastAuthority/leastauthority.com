@@ -8,6 +8,7 @@ if __name__ == '__main__':
 
 import sys
 
+from twisted.python.url import URL
 from twisted.python.log import startLogging
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
@@ -29,7 +30,9 @@ class SignupOptions(Options):
          "The domain on which the service is running "
          "(useful for alternate staging deployments).",
         ),
-
+        ("subscription-manager-endpoint", None, None,
+         "The URL of the root of the subscription manager HTTP API.",
+        ),
     ]
 
 
@@ -56,7 +59,7 @@ def main(reactor, *argv):
 
     return activate(
         o["domain"].decode("ascii"),
-        o["kubernetes-namespace"].decode("ascii"),
+        URL.fromText(o["subscription-mananger-endpoint"].decode("ascii")),
         secrets_dir,
         o["automation-config-path"], o["server-info-path"],
         sys.stdin, flapp_stdout_path, flapp_stderr_path,

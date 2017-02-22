@@ -8,6 +8,7 @@ from cStringIO import StringIO
 from tempfile import mkstemp
 
 from twisted.python.filepath import FilePath
+from twisted.python.url import URL
 
 from datetime import datetime
 
@@ -187,6 +188,7 @@ class NewTahoeConfigurationTests(TestCase):
         deploy_config = DeploymentConfiguration(
             domain=u"testing.com",
             kubernetes_namespace=u"testing",
+            subscription_manager_endpoint=URL.fromText(u"http://localhost/"),
             products=[{}],
             s3_access_key_id=s3_access_key_id,
             s3_secret_key=s3_secret_key,
