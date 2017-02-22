@@ -59,7 +59,7 @@ def main(reactor, *argv):
 
     return activate(
         o["domain"].decode("ascii"),
-        URL.fromText(o["subscription-mananger-endpoint"].decode("ascii")),
+        URL.fromText(o["subscription-manager-endpoint"].decode("ascii")),
         secrets_dir,
         o["automation-config-path"], o["server-info-path"],
         sys.stdin, flapp_stdout_path, flapp_stderr_path,
