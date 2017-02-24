@@ -18,7 +18,10 @@ ${EXEC} bash -e -x -c '
 
     # If any of them are not installed, install them.
     # This lets us skip the slightly slow "apt-get update" on subsequent runs.
-    dpkg --status ${DEPS} >/dev/null 2>&1 || apt-get update && apt-get install -y ${DEPS};
+    if ! dpkg --status ${DEPS} >/dev/null 2>&1; then
+        apt-get update
+        apt-get install -y ${pkg}
+    fi
 '
 
 # Find the git revision hash that we're on right now.  Use it as the Docker
