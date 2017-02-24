@@ -1,5 +1,5 @@
 --find-links https://tahoe-lafs.org/deps/
---find-links https://com.leastauthority.wheelhouse.s3-website-us-east-1.amazonaws.com/
+--find-links http://com.leastauthority.wheelhouse.s3-website-us-east-1.amazonaws.com/
 
 python-dateutil
 stripe==1.41.1
