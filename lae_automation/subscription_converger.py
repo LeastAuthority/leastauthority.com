@@ -264,6 +264,32 @@ def get_customer_grid_deployments(k8s, namespace):
 
 
 
+def get_customer_grid_replicasets(k8s, namespace):
+    action = start_action(action_type=u"load-replicasets")
+    with action.context():
+        d = DeferredContext(k8s.get_replicasets(_s4_selector(namespace)))
+        def got_replicasets(replicasets):
+            replicasets = list(replicasets)
+            action.add_success_fields(replicaset_count=len(replicasets))
+            return replicasets
+        d.addCallback(got_replicasets)
+        return d.addActionFinish()
+
+
+
+def get_customer_grid_pods(k8s, namespace):
+    action = start_action(action_type=u"load-pods")
+    with action.context():
+        d = DeferredContext(k8s.get_pods(_s4_selector(namespace)))
+        def got_pods(pods):
+            pods = list(pods)
+            action.add_success_fields(pod_count=len(pods))
+            return pods
+        d.addCallback(got_pods)
+        return d.addActionFinish()
+
+
+
 @inlineCallbacks
 def get_active_subscriptions(subscriptions):
     with start_action(action_type=u"load-subscriptions") as action:
@@ -286,6 +312,8 @@ class _State(PClass):
     subscriptions = field()
     configmaps = field()
     deployments = field()
+    # replicasets = field()
+    # pods = field()
     service = field()
     zone = field()
     buckets = field()
@@ -297,6 +325,8 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
         get_active_subscriptions(subscriptions),
         get_customer_grid_configmaps(k8s, config.kubernetes_namespace),
         get_customer_grid_deployments(k8s, config.kubernetes_namespace),
+        # get_customer_grid_replicasets(k8s, config.kubernetes_namespace),
+        # get_customer_grid_pods(k8s, config.kubernetes_namespace),
         get_customer_grid_service(k8s, config.kubernetes_namespace),
         get_hosted_zone_by_name(aws.get_route53_client(), Name(config.domain)),
         get_s3_buckets(aws.get_s3_client()),
@@ -306,6 +336,8 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
                 u"subscriptions",
                 u"configmaps",
                 u"deployments",
+                # u"replicasets",
+                # u"pods",
                 u"service",
                 u"zone",
                 u"buckets",
@@ -322,6 +354,8 @@ def _converge_logic(actual, config, subscriptions, k8s, aws):
         _converge_service,
         _converge_configmaps,
         _converge_deployments,
+        # _converge_replicasets,
+        # _converge_pods,
         _converge_route53,
     ]
 
@@ -522,6 +556,36 @@ def _converge_deployments(actual, config, subscriptions, k8s, aws):
     creates = list(partial(create, s) for s in changes.create)
     return deletes + creates
 
+
+# XXX Untested
+def _converge_replicasets(actual, config, subscriptions, k8s, aws):
+    # We don't ever have to create a ReplicaSet.  We'll just delete the ones
+    # we don't need anymore.
+    deletes = []
+    for replicaset in actual.replicasets:
+        if replicaset.metadata.labels[u"subscription"] not in actual.subscriptions:
+            deletes.append(replicaset.metadata)
+
+    def delete(metadata):
+        return k8s.delete(v1beta1.ReplicaSet(metadata=metadata))
+
+    return list(partial(delete, metadata) for metadata in deletes)
+
+
+# XXX Untested
+def _converge_pods(actual, config, subscriptions, k8s, aws):
+    # We don't ever have to create a Pod.  We'll just delete the ones we don't
+    # need anymore.
+
+    deletes = []
+    for pod in actual.pods:
+        if pod.metadata.labels[u"subscription"] not in actual.subscriptions:
+            deletes.append(pod.metadata)
+
+    def delete(metadata):
+        return k8s.delete(v1.Pod(metadata=metadata))
+
+    return list(partial(delete, metadata) for metadata in deletes)
 
 
 class _ChangeableConfigMaps(PClass):
