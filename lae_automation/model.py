@@ -129,7 +129,9 @@ class SubscriptionDetails(object):
     customer_email = attr.ib()
     customer_pgpinfo = attr.ib()
 
-    product_id = attr.ib()
+    product_id = attr.ib(
+        validator=validators.instance_of(unicode),
+    )
 
     # Referencing opaque stripe identifiers
     customer_id = attr.ib()

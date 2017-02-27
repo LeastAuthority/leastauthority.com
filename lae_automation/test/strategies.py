@@ -317,7 +317,7 @@ def subscription_details():
         oldsecrets=old_secrets(),
         customer_email=email(),
         customer_pgpinfo=strategies.none(),
-        product_id=strategies.just("S4_consumer_iteration_2_beta1_2014-05-27"),
+        product_id=strategies.just(u"S4_consumer_iteration_2_beta1_2014-05-27"),
         customer_id=customer_id(),
         subscription_id=subscription_id(),
         introducer_port_number=port_number(),

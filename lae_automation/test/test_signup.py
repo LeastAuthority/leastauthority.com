@@ -156,7 +156,7 @@ class TestSignupModule(TestCase):
             oldsecrets=old_secrets().example(),
             customer_email=self.MEMAIL,
             customer_pgpinfo=self.MKEYINFO,
-            product_id=None,
+            product_id=u"filler",
             customer_id=self.MCUSTOMER_ID,
             subscription_id=self.MSUBSCRIPTION_ID,
             introducer_port_number=12345,
