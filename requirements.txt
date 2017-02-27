@@ -29,5 +29,9 @@ deepdiff==3.1.0
 # It's really convenient to have around.
 eliot-tree
 
+# A dependency of tahoe-lafs.  Force a specific version so we use the binary
+# wheel we built.
+pycryptopp==0.7.1.869544967005693312591928092448767568728501330214.post0.dev0
+
 # So we can generate tahoe configuration parameters.
 tahoe-lafs==1.11.0

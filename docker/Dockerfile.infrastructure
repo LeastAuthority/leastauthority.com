@@ -35,7 +35,8 @@ RUN chown ${INFRASTRUCTURE_USER_NAME} /app/run
 # unless manual intervention fixes the permissions.
 VOLUME /app/data
 
-# Install all of the application's Python library requirements.
+# Install all of the application's Python library requirements.  This is a
+# band-aid.  Use something like Nix or PEX instead.
 COPY requirements.txt /app/code/requirements.txt
 RUN /app/env/bin/pip install -r /app/code/requirements.txt
 
