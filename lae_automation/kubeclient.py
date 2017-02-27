@@ -75,6 +75,12 @@ class KubeClient(object):
     def get_deployments(self, selector=NullSelector()):
         return self.select(v1beta1.Deployment, selector)
 
+    def get_replicasets(self, selector=NullSelector()):
+        return self.select(v1beta1.ReplicaSet, selector)
+
+    def get_pods(self, selector=NullSelector()):
+        return self.select(v1.Pod, selector)
+
     def delete(self, obj):
         return self.k8s.delete(obj)
 
