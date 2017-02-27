@@ -1,7 +1,7 @@
 --find-links https://s3.amazonaws.com/com.leastauthority.wheelhouse/index.html
 --find-links https://tahoe-lafs.org/deps/
 
-setuptools
+setuptools>=34
 python-dateutil
 stripe==1.41.1
 pem==16.1.0
