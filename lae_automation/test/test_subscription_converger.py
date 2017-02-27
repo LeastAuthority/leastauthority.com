@@ -15,21 +15,23 @@ from hypothesis import Verbosity, settings
 from pyrsistent import thaw, pmap, discard
 
 from eliot import Message, start_action
+from eliot.testing import capture_logging
 
 from testtools.assertions import assert_that
 from testtools.matchers import (
     AfterPreprocessing, Equals, Is, Not, MatchesPredicate, LessThan,
-    GreaterThan, MatchesAll, MatchesRegex, Contains,
+    GreaterThan, MatchesAll, MatchesRegex, Contains, HasLength,
 )
 
 from twisted.python.filepath import FilePath
 from twisted.application.service import IService
+from twisted.python.failure import Failure
 
 from txaws.testing.service import FakeAWSServiceRegion
 from txaws.route53.model import RRSetKey, RRSet, HostedZone
 from txaws.route53.client import Name, CNAME
 
-from lae_util.testtools import TestCase
+from lae_util.testtools import TestCase, CustomException
 
 from lae_automation.test.matchers import GoodEquals
 
@@ -41,6 +43,7 @@ from lae_automation.subscription_converger import (
     Options, makeService,
     get_customer_grid_service,
     converge, get_hosted_zone_by_name, apply_service_changes,
+    divert_errors_to_log,
 )
 from lae_automation.containers import (
     service_ports,
@@ -496,3 +499,19 @@ class SubscriptionConvergenceTests(TestCase):
         # Maybe just the last run's logs are good enough?
         self.clear_logs()
         return SubscriptionConvergence(self)
+
+
+
+class DivertErrorsToLogTests(TestCase):
+    """
+    Tests for ``divert_errors_to_log``.
+    """
+    @capture_logging(None)
+    def test_failure_logged(self, logger):
+        """
+        If the decorated function returns a ``Failure``, it is logged.
+        """
+        def broke():
+            return Failure(CustomException())
+        divert_errors_to_log(broke)()
+        self.assertThat(logger.flush_tracebacks(CustomException), HasLength(1))

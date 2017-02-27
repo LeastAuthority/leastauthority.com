@@ -189,10 +189,8 @@ def divert_errors_to_log(f):
         action = start_action(action_type=u"subscription_converger:" + f.__name__)
         with action.context():
             d = DeferredContext(maybeDeferred(f, *a, **kw))
-            d = d.addActionFinish()
-            # The failure was logged by the above.  Now squash it.
-            d.addErrback(lambda err: None)
-            return d
+            d.addErrback(write_failure)
+            return d.addActionFinish()
     return g
 
 
