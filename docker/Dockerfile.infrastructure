@@ -38,7 +38,9 @@ VOLUME /app/data
 # Install all of the application's Python library requirements.  This is a
 # band-aid.  Use something like Nix or PEX instead.
 COPY requirements.txt /app/code/requirements.txt
-RUN /app/env/bin/pip --verbose --verbose --verbose install -r /app/code/requirements.txt
+RUN \
+    /app/env/bin/pip --verbose --verbose --verbose install -r /app/code/requirements.txt && \
+    /app/env/bin/pip check
 
 # Install the application itself.  This is done as late as possible
 # since it is a major impediment to image/layer caching.
