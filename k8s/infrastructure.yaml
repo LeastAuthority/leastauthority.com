@@ -167,6 +167,12 @@ spec:
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
 
+      # Here is the per-customer-grid router.  The service sends all
+      # connections to it and it figures out which pod services the
+      # subscription the connection is related to.
+      - name: 'grid-router'
+        image: '127.0.0.1:30000/leastauthority/grid-router:7a0eadc'
+
       # Here is the subscription manager.  It contains the canonical (local)
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
       - name: 'subscription-manager'

@@ -65,20 +65,53 @@ def _kubernetes_from_environ(environ):
     return u"https://{}:{}/".format(host, port).encode("ascii")
 
 
-class Options(_Options):
+class KubernetesClientOptionsMixin(object):
+    optParameters = [
+        ("kubernetes", None, _kubernetes_from_environ(environ),
+         "The root URL of the Kubernetes API server.",
+        ),
+
+        ("k8s-context", None, None, "Use a kubectl configuration context to find Kubernetes."),
+
+        ("k8s-config", None, None, "The path of a kubectl configuration file in which to find the context.", FilePath),
+
+        ("kubernetes-namespace", None, None,
+         "The Kubernetes namespace in which to perform convergence.",
+        ),
+
+    ]
+
+    optFlags = [
+        ("k8s-service-account", None, "Use a Kubernetes service account to authenticate to Kubernetes."),
+    ]
+
+
+    def get_kubernetes_service(self, reactor):
+        if self["k8s-service-account"]:
+            return network_kubernetes(
+                # XXX is this really the url to use?
+                base_url=URL.fromText(self["kubernetes"].decode("ascii")),
+                agent=authenticate_with_serviceaccount(reactor),
+            )
+        return network_kubernetes_from_context(reactor, self["k8s-context"], self["k8s-config"])
+
+    def postOptions(self):
+        if self["kubernetes"] is None:
+            raise UsageError("--kubernetes is required")
+        if self["kubernetes-namespace"] is None:
+            raise UsageError("--kubernetes-namespace is required")
+        if (self["k8s-context"] is None) == (not self["k8s-service-account"]):
+            raise UsageError("Exactly one of --k8s-context or --k8s-service-account is required")
+
+
+class Options(_Options, KubernetesClientOptionsMixin):
     optParameters = [
         ("domain", None, None,
          "The domain on which the service is running "
          "(useful for alternate staging deployments).",
         ),
 
-        ("kubernetes-namespace", None, None,
-         "The Kubernetes namespace in which to perform convergence.",
-        ),
-
         ("endpoint", None, None, "The root URL of the subscription manager service."),
-        ("k8s-context", None, None, "Use a kubectl configuration context to find Kubernetes."),
-        ("k8s-config", None, None, "The path of a kubectl configuration file in which to find the context.", FilePath),
 
         ("aws-access-key-id-path", None, None, "The path of a file containing the AWS key identifier to use."),
         ("aws-secret-access-key-path", None, None, "The path of a file containing the AWS secret key to use."),
@@ -88,43 +121,26 @@ class Options(_Options):
         ("storageserver-image", None, None, "The Docker image to run a Tahoe-LAFS storage server."),
 
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
-
-        ("kubernetes", None, _kubernetes_from_environ(environ), "The root URL of the Kubernetes API server."),
-    ]
-
-    optFlags = [
-        ("k8s-service-account", None, "Use a Kubernetes service account to authenticate to Kubernetes."),
     ]
 
     def postOptions(self):
+        KubernetesClientOptionsMixin.postOptions(self)
         if self["domain"] is None:
             raise UsageError("--domain is required")
-        if self["kubernetes-namespace"] is None:
-            raise UsageError("--kubernetes-namespace is required")
         if self["endpoint"] is None:
             raise UsageError("--endpoint is required")
         if self["endpoint"].endswith("/"):
             self["endpoint"] = self["endpoint"][:-1]
-        if self["kubernetes"] is None:
-            raise UsageError("--kubernetes is required")
-
-        if (self["k8s-context"] is None) == (not self["k8s-service-account"]):
-            raise UsageError("Exactly one of --k8s-context or --k8s-service-account is required")
 
 
 def makeService(options):
+    # Boo global reactor
+    # https://twistedmatrix.com/trac/ticket/9063
     from twisted.internet import reactor
     agent = Agent(reactor)
     subscription_client = SMClient(endpoint=options["endpoint"], agent=agent, cooperator=task)
 
-    if options["k8s-service-account"]:
-        kubernetes = network_kubernetes(
-            # XXX is this really the url to use?
-            base_url=URL.fromText(options["kubernetes"].decode("ascii")),
-            agent=authenticate_with_serviceaccount(reactor),
-        )
-    else:
-        kubernetes = network_kubernetes_from_context(reactor, options["k8s-context"], options["k8s-config"])
+    kubernetes = options.get_kubernetes_service(reactor)
 
     k8s_client = kubernetes.client()
     k8s = KubeClient(k8s=k8s_client)

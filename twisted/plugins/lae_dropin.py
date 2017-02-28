@@ -14,3 +14,10 @@ s4_subscription_converger = ServiceMaker(
     "A stateless convergence loop for synchronizing Kubernetes configuration with the S4 subscription database.",
     "s4-subscription-converger",
 )
+
+s4_grid_router = ServiceMaker(
+    "S4 Grid Router",
+    "grid_router",
+    "A self-configuring proxy/router for per-subscription Tahoe-LAFS access.",
+    "s4-grid-router",
+)
