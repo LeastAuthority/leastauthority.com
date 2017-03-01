@@ -3,7 +3,7 @@
 # The anticipated name is <leastauthority/subscription-converger>.
 #
 
-FROM leastauthority/base
+FROM leastauthority/base-lae-automation
 
 # Create a user account as whom the subscription manager can run.
 ENV SUBSCRIPTION_CONVERGER_USER_NAME="converger"
@@ -17,17 +17,6 @@ RUN chown "${SUBSCRIPTION_CONVERGER_USER_NAME}" /app/run
 
 RUN mkdir /app/data && \
     chown "${SUBSCRIPTION_CONVERGER_USER_NAME}":"${SUBSCRIPTION_CONVERGER_USER_NAME}" /app/data
-
-# Install all of the application's Python library requirements.
-COPY requirements.txt /app/code/requirements.txt
-RUN /app/env/bin/pip install -r /app/code/requirements.txt
-
-# Install the application itself.  This is done as late as possible
-# since it is a major impediment to image/layer caching.
-COPY . /app/code
-
-# Generate the twisted plugins system cache files
-RUN /app/env/bin/twist --help > /dev/null
 
 USER "${SUBSCRIPTION_CONVERGER_USER_NAME}"
 

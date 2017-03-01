@@ -3,7 +3,7 @@
 # The anticipated name is <leastauthority/grid-router>.
 #
 
-FROM leastauthority/base
+FROM leastauthority/base-lae-automation
 
 # Create a user account as whom the subscription manager can run.
 ENV ROUTER_USER_NAME="router"
@@ -14,17 +14,6 @@ WORKDIR /app/run
 
 # And give it to the user the application will run as.
 RUN chown "${ROUTER_USER_NAME}" /app/run
-
-# Install all of the application's Python library requirements.
-COPY requirements.txt /app/code/requirements.txt
-RUN /app/env/bin/pip install -r /app/code/requirements.txt
-
-# Install the application itself.  This is done as late as possible
-# since it is a major impediment to image/layer caching.
-COPY . /app/code
-
-# Generate the twisted plugins system cache files
-RUN /app/env/bin/twist --help > /dev/null
 
 USER "${ROUTER_USER_NAME}"
 

@@ -50,7 +50,7 @@ docker exec "${NIX_BUILDER}" cat "${web}" | docker load
 # Clean up the Nix build container.
 docker rm -f "${NIX_BUILDER}"
 
-images="base infrastructure flapp web subscription-manager subscription-converger tahoe-base foolscap-base foolscap-gatherer"
+images="base base-lae-automation infrastructure flapp web subscription-manager subscription-converger tahoe-base foolscap-base foolscap-gatherer"
 tahoe_images="tahoe-introducer tahoe-storage magicwormhole"
 
 for image in ${images}; do
