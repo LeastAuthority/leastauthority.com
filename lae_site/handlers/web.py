@@ -1,11 +1,12 @@
-import os
-
 from jinja2 import Environment, FileSystemLoader
 from jinja2.exceptions import TemplateNotFound
+
 from twisted.web.resource import Resource
+from twisted.python.filepath import FilePath
 
-
-loader = FileSystemLoader(os.path.join(os.path.dirname(__file__), "../templates"))
+loader = FileSystemLoader(
+    FilePath(__file__).parent().parent().child("templates").path,
+)
 env = Environment(loader=loader)
 
 
