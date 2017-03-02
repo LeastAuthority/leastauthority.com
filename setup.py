@@ -14,7 +14,6 @@ setup(
         "python-dateutil",
         "stripe==1.41.1",
         "pem==16.1.0",
-        "pelican==3.2.2",
         "foolscap",
         "Fabric",
         "filepath",
