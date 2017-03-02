@@ -23,7 +23,7 @@ setup(
         "simplejson",
         "twisted",
         "service_identity",
-        "attrs==16.3.0",
+        "attrs",
         "eliot==0.11.0",
         "bitmath==1.3.1.2",
 
