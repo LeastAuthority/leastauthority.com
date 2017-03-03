@@ -79,6 +79,23 @@ let
     };
   };
 
+  eliot-tree = pkgs.python27Packages.buildPythonPackage rec {
+    name = "eliot-tree-15.3.0";
+
+    propagatedBuildInputs =
+      with pkgs.python27Packages;
+      [ toolz jmespath ];
+
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/88/63/48a8f50480255b4902b9ba3c4825d10fca9d47fd726679877ff076407839/${name}.tar.gz";
+      sha256 = "1gasfjbsk9pwb9c3qqrs9z271l7lc334n11xd43byhy1im4hg9cy";
+    };
+
+    checkPhase = ''
+    # foo
+    '';
+  };
+
   pyopenssl16_2_0 = pkgs.python27Packages.buildPythonPackage rec {
     name = "pyopenssl-${version}";
     version = "16.2.0";
@@ -190,7 +207,7 @@ let
     };
 
     buildInputs = with pkgs.python27Packages; [ unittest2 mock ];
-    propagatedBuildInputs = with pkgs.python27Packages; [ requests ];
+    propagatedBuildInputs = with pkgs.python27Packages; [ requests2 ];
 
     meta = {
       homepage = "https://github.com/stripe/stripe-python";
@@ -198,6 +215,57 @@ let
       license = pkgs.stdenv.lib.licenses.mit;
     };
   };
+
+  oauth2client400 = pkgs.python27Packages.oauth2client.override rec {
+    name = "oauth2client-4.0.0";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/o/oauth2client/${name}.tar.gz";
+      sha256 = "1irqqap2zibysf8dba8sklfqikia579srd0phm5n754ni0h59gl0";
+    };
+  };
+
+  pykube = pkgs.python27Packages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "pykube";
+    version = "0.14.0";
+
+    propagatedBuildInputs =
+      with pkgs.python27Packages;
+      [ six pyyaml tzlocal oauth2client400 requests2 requests_oauthlib ];
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/p/${pname}/${name}.tar.gz";
+      sha256 = "1vb51gzrm1ks2x0lgmwbqbr9gs7c0234lf0z9cjgyxl8cq43cfr7";
+    };
+  };
+
+  txkube000 = pkgs.python27Packages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "txkube";
+    version = "0.0.0";
+
+    buildInputs =
+      with pkgs.python27Packages;
+      [ treq pem pyyaml testtools220 hypothesis fixtures300 eliot eliot-tree klein ];
+
+    propagatedBuildInputs =
+      with pkgs.python27Packages;
+      [ zope_interface attrs pyrsistent0_12_0 incremental service-identity pyopenssl16_2_0 twisted pem eliot dateutil pykube ];
+
+
+    src = pkgs.fetchFromGitHub {
+      owner = "LeastAuthority";
+      repo = "txkube";
+      rev = "ba3b65767c629fd63db911e451e3b8c17435f4b0";
+      sha256 = "18wi1j2m2pcfjrxzwbkn531nri3s1hkxfs3pq34pbra1npkx0wkn";
+    };
+
+    checkPhase = ''
+    trial txkube
+    '';
+  };
+
 in
   pkgs.python27Packages.buildPythonPackage rec {
     name = "s4-${version}";
@@ -205,7 +273,7 @@ in
 
     buildInputs =
       with pkgs.python27Packages;
-      [ testtools220 hypothesis mock fixtures300 pelican ];
+      [ testtools220 hypothesis mock fixtures300 pelican klein treq eliot-tree ];
 
     propagatedBuildInputs =
       with pkgs.python27Packages; [
@@ -219,6 +287,7 @@ in
         attrs
         txaws021post5
         tahoe_lafs
+	txkube000
       ];
 
     src = /leastauthority.com;
