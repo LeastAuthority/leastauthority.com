@@ -25,7 +25,6 @@ setup(
         "service_identity",
         "attrs",
         "eliot==0.11.0",
-        "bitmath==1.3.1.2",
 
         "txAWS==0.2.1.post5",
 
