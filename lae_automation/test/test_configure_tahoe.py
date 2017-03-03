@@ -1,4 +1,3 @@
-from sys import executable
 from tempfile import mkstemp, mkdtemp
 from os import fdopen
 from json import dumps
@@ -29,9 +28,8 @@ def configure_tahoe(configuration):
     with fdopen(fd, "w+") as fObj:
         fObj.write(dumps(configuration))
         fObj.seek(0)
-        # Launch it with sys.executable so it gets the same Python
-        # environment, if we are in a virtualenv, as the test process.
-        check_call([executable, CONFIGURE_TAHOE.path], stdin=fObj)
+        # Assume it is executable and has a sane interpreter.
+        check_call([CONFIGURE_TAHOE.path], stdin=fObj)
 
 
 class TahoeNodes(Fixture):
