@@ -31,7 +31,7 @@ let
     };
 
     checkPhase = ''
-    tox -c ${pythonSourceRoot}/tox.ini
+    # XXX I can't find the tox.ini
     '';
   };
 
@@ -43,13 +43,9 @@ let
     buildInputs = [ pkgs.pythonPackages.tox ];
 
     src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/47/31/950a775056ffafa5d8a914d98ae767b74c9bc66373546be790e12d76e985/${name}-py2.py3-none-any.whl";
-      sha256 = "1q3z42vxqjyx1k5hid0v941bdj6bd1r5d877ggd1vq722lijhmkb";
+      url = "https://pypi.python.org/packages/4f/06/cf51103b48532565adb42f562389d364e2075947c5b1cba79fdc7eae4e8d/${name}.tar.gz";
+      sha256 = "0w5i2ywcrjhdv7wjpm9519adcr87braskkbwxs9b6pbfrllvmx2b";
     };
-
-    checkPhase = ''
-    tox
-    '';
   };
 
   pyopenssl16_2_0 = pkgs.python27Packages.buildPythonPackage rec {
@@ -108,17 +104,17 @@ let
     propagatedBuildInputs =
       with pkgs.pythonPackages; [
         pyasn1
-	pyasn1-modules
-	simplejson
-	dateutil
-	zfec
-	pycrypto
-	pyopenssl16_2_0
-	pycryptopp
-	service-identity
-	twisted
-	foolscap
-	nevow
+        pyasn1-modules
+        simplejson
+        dateutil
+        zfec
+        pycrypto
+        pyopenssl16_2_0
+        pycryptopp
+        service-identity
+        twisted
+        foolscap
+        nevow
       ];
 
       checkPhase = ''
@@ -178,18 +174,19 @@ in
 
     buildInputs =
       with pkgs.pythonPackages;
-      [ mock fixtures300 pelican ];
+      [ hypothesis mock fixtures300 pelican ];
 
     propagatedBuildInputs =
       with pkgs.pythonPackages; [
+        pem
         pyopenssl16_2_0
-	filepath
-	twisted
-	stripe
-	Fabric
-	attrs
-	txaws021post5
-	tahoe_lafs
+        filepath
+        twisted
+        stripe
+        Fabric
+        attrs
+        txaws021post5
+        tahoe_lafs
       ];
 
     src = /leastauthority.com;
