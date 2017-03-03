@@ -34,6 +34,7 @@ def make_site(email_path, stripe_secret_api_key, stripe_publishable_api_key, ser
     resource.putChild("", Redirect("https://leastauthority.com/"))
     resource.putChild("index.html", Redirect("https://leastauthority.com/"))
     resource.putChild('signup', Redirect("https://leastauthority.com/"))
+    resource.putChild('static', File(_CONTENT.child(b"static").path))
     resource.putChild('configuration', configuration(stripe_publishable_api_key))
     resource.putChild("s4-subscription-form", JinjaHandler("s4-subscription-form.html"))
     resource.putChild('submit-subscription', SubmitSubscriptionHandler(stripe_secret_api_key, service_confirmed_path, subscriptions_path))
