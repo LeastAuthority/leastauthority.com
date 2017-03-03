@@ -23,7 +23,7 @@ let
     pname = "filepath";
     version = "0.1";
 
-    buildInputs = [ pkgs.pythonPackages.tox ];
+    buildInputs = [ pkgs.python27Packages.tox ];
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/eb/0f/3c5ebbfd6fa6904181ecece2b6737d797a033479a193984e7e84c1d84185/${name}.tar.gz";
@@ -40,11 +40,59 @@ let
     pname = "pem";
     version = "16.1.0";
 
-    buildInputs = [ pkgs.pythonPackages.tox ];
+    buildInputs = [ pkgs.python27Packages.tox ];
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/4f/06/cf51103b48532565adb42f562389d364e2075947c5b1cba79fdc7eae4e8d/${name}.tar.gz";
       sha256 = "0w5i2ywcrjhdv7wjpm9519adcr87braskkbwxs9b6pbfrllvmx2b";
+    };
+  };
+
+  extras100 = pkgs.python27Packages.extras.override rec {
+    name = "${pname}-${version}";
+    pname = "extras";
+    version = "1.0.0";
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/e/extras/${name}.tar.gz";
+      sha256 = "0khvm08rcwm62wc47j8niyl6h13f8w51c8669ifivjdr23g3cbhk";
+    };
+  };
+
+  testtools220 = pkgs.python27Packages.testtools.override rec {
+    name = "${pname}-${version}";
+    pname = "testtools";
+    version = "2.2.0";
+    propagatedBuildInputs =
+      with pkgs.python27Packages;
+      [ pbr python_mimeparse extras100 fixtures300 lxml unittest2 ];
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/t/testtools/${name}.tar.gz";
+      sha256 = "042qlqymy9m40w30fg3gj20wahmac9jphnsfwb8f8k3fg9h0dxl0";
+    };
+    patches = [];
+  };
+
+  pyrsistent0_12_0 = pkgs.python27Packages.pyrsistent.override rec {
+    name = "pyrsistent-0.12.0";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/p/pyrsistent/${name}.tar.gz";
+      sha256 = "1k7kjj1nyzyk1jfiawlg16s1nsmypwmfqsq9yc3iba1m6jq9rq9p";
+    };
+  };
+
+  eliot = pkgs.python27Packages.buildPythonPackage rec {
+    name = "eliot-${version}";
+    version = "0.12.0";
+
+    propagatedBuildInputs =
+      with pkgs.python27Packages;
+      [ six zope_interface pyrsistent0_12_0 ];
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/e/eliot/${name}.tar.gz";
+      sha256 = "07k9lbn3aym05h69rw1xiyjh4wp9swcvay3z2w0f1pqab5h0q8xs";
     };
   };
 
@@ -69,23 +117,23 @@ let
     '';
 
     buildInputs =
-    with pkgs.pythonPackages;
+    with pkgs.python27Packages;
     [ pkgs.openssl pytest pkgs.glibcLocales ];
 
     propagatedBuildInputs =
-    with pkgs.pythonPackages;
+    with pkgs.python27Packages;
     [ cryptography pyasn1 idna ];
   };
 
   service-identity = pkgs.python27Packages.service-identity.override {
-    propagatedBuildInputs = with pkgs.pythonPackages; [
+    propagatedBuildInputs = with pkgs.python27Packages; [
       characteristic pyasn1 pyasn1-modules pyopenssl16_2_0 idna attrs
     ];
   };
 
   foolscap = pkgs.python27Packages.foolscap.override {
     propagatedBuildInputs =
-    with pkgs.pythonPackages;
+    with pkgs.python27Packages;
     [ mock twisted pyopenssl16_2_0 service-identity ];
   };
 
@@ -99,10 +147,10 @@ let
       sha256 = "0hrp87rarbmmpnrxk91s83h6irkykds3pl263dagcddbdl5inqdi";
     };
 
-    buildInputs = [ pkgs.pythonPackages.tox ];
+    buildInputs = [ pkgs.python27Packages.tox ];
 
     propagatedBuildInputs =
-      with pkgs.pythonPackages; [
+      with pkgs.python27Packages; [
         pyasn1
         pyasn1-modules
         simplejson
@@ -134,10 +182,10 @@ let
     };
 
     propagatedBuildInputs =
-      with pkgs.pythonPackages;
+      with pkgs.python27Packages;
       [ dateutil twisted ];
   };
-  fixtures300 = pkgs.pythonPackages.fixtures.override rec {
+  fixtures300 = pkgs.python27Packages.fixtures.override rec {
     name = "fixtures-3.0.0";
     src = pkgs.fetchurl {
       url = "mirror://pypi/f/fixtures/${name}.tar.gz";
@@ -158,8 +206,8 @@ let
       sha256 = "0zvffvq933ia5w5ll6xhx2zgvppgc6zc2mxhc6f0kypw5g2fxvz5";
     };
 
-    buildInputs = with pkgs.pythonPackages; [ unittest2 mock ];
-    propagatedBuildInputs = with pkgs.pythonPackages; [ requests ];
+    buildInputs = with pkgs.python27Packages; [ unittest2 mock ];
+    propagatedBuildInputs = with pkgs.python27Packages; [ requests ];
 
     meta = {
       homepage = "https://github.com/stripe/stripe-python";
@@ -173,15 +221,16 @@ in
     version = "1.0.0";
 
     buildInputs =
-      with pkgs.pythonPackages;
-      [ hypothesis mock fixtures300 pelican ];
+      with pkgs.python27Packages;
+      [ testtools220 hypothesis mock fixtures300 pelican ];
 
     propagatedBuildInputs =
-      with pkgs.pythonPackages; [
+      with pkgs.python27Packages; [
         pem
         pyopenssl16_2_0
         filepath
         twisted
+        eliot
         stripe
         Fabric
         attrs
