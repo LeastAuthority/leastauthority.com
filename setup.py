@@ -6,6 +6,8 @@ setup(
     package_data={
         # Templates for the website.
         "lae_site": ["*.html"],
+        # Helper for starting tahoe-lafs with configuration from our system.
+        "lae_automation": ["configure-tahoe"],
     },
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
