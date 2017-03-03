@@ -240,12 +240,10 @@ in
 
     src = /leastauthority.com;
 
-    # src = pkgs.fetchFromGitHub {
-    #   owner = "LeastAuthority";
-    #   repo = "leastauthority.com";
-    #   rev = "c9a79befcbb6ba649262f009ef876a38f4346869";
-    #   sha256 = "0nz8plamb3bb0689bg91vl8jrfghiny2x768pl7k1rm3d0zy4q0l";
-    # };
+    checkPhase = ''
+      trial lae_util lae_site lae_automation
+    '';
+
     meta = {
       license = pkgs.stdenv.lib.licenses.gpl2;
     };
