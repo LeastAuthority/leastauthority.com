@@ -30,14 +30,12 @@ def configuration(stripe_publishable_api_key):
     )
 
 def make_site(email_path, stripe_secret_api_key, stripe_publishable_api_key, service_confirmed_path, subscriptions_path, site_logs_path):
-    resource = JinjaHandler('index.html')
-    resource.putChild('static', File(_CONTENT.child(b"static").path))
-    resource.putChild('blog', File(_CONTENT.child(b"blog").path))
-    resource.putChild('collect-email', CollectEmailHandler(email_path))
-    resource.putChild('signup', Redirect("/"))
+    resource = Resource()
+    resource.putChild("", Redirect("https://leastauthority.com/"))
+    resource.putChild("index.html", Redirect("https://leastauthority.com/"))
+    resource.putChild('signup', Redirect("https://leastauthority.com/"))
     resource.putChild('configuration', configuration(stripe_publishable_api_key))
     resource.putChild('submit-subscription', SubmitSubscriptionHandler(stripe_secret_api_key, service_confirmed_path, subscriptions_path))
-    resource.putChild('support', Redirect("https://leastauthority.zendesk.com/home"))
 
     site = Site(resource, logPath=site_logs_path.path)
     site.displayTracebacks = True
