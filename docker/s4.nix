@@ -1,22 +1,5 @@
 { pkgs ? import <nixpkgs> {} }:
 
-# pkgs.stdenv.mkDerivation rec {
-#   name = "s4-${version}";
-#   version = "1.0.0";
-#   src = pkgs.fetchFromGitHub {
-#     owner = "LeastAuthority";
-#     repo = "leastauthority.com";
-#     rev = "9e35967b66b5565063198ea4a2ba2e70b9365e5b";
-#     sha256 = "0vvh3ij9lsmxlsgsc04dpvpa168n232i26vmzah1m19ssc58m62l";
-#   };
-#   buildInputs = [ pkgs.development."python-modules"."bootstrapped-pip" ];
-#   builder = builtins.toFile "builder.sh" "
-#     source $stdenv/setup
-#     virtualenv $out/env
-#     $out/env/bin/pip install $in
-#   ";
-# }
-
 let
   filepath = pkgs.python27Packages.buildPythonPackage rec {
     name = "${pname}-${version}";
