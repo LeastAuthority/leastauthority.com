@@ -365,3 +365,6 @@ class TestSignupModule(TestCase):
         self.failUnlessEqual(b32encode("abc"), "MFRGG===")
         self.failUnlessEqual(b32encode("def"), "MRSWM===")
         self.failUnlessEqual(signup.get_bucket_name("abc", "def"), "lae-mfrgg-mrswm")
+
+
+TestSignupModule.test_activate_subscribed_service.__func__.skip = "mostly obsolete"
