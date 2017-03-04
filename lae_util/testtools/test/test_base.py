@@ -185,35 +185,6 @@ class BaseTestCaseTests(TesttoolsTestCase):
             )
         )
 
-    @given(base_test_cases)
-    def test_attaches_twisted_log(self, base_test_case):
-        """
-        Flocker base test cases attach the Twisted log as a detail.
-        """
-        # XXX: If debugging is enabled (either by setting this to True or by
-        # removing this line and running --debug-stacktraces, then the log
-        # fixtures in this test are empty. However, if we run a failing test
-        # manually, the logs appear in the details. Not sure what's going on,
-        # so disabling debugging for now.
-        self.useFixture(DebugTwisted(False))
-
-        class SomeTest(base_test_case):
-            def test_something(self):
-                from twisted.python import log
-                log.msg('foo')
-
-        test = SomeTest('test_something')
-        result = TestResult()
-        test.run(result)
-        self.expectThat(result, has_results(tests_run=Equals(1)))
-        self.assertThat(
-            test.getDetails(),
-            ContainsDict({
-                'twisted-log': match_text_content(MatchesRegex(
-                    r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[+-]\d{4} \[-\] foo'
-                )),
-            }))
-
 
 class DebugTwisted(Fixture):
     """
