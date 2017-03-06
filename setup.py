@@ -4,12 +4,7 @@ setup(
     name="leastauthority.com",
     zip_safe=False,
     packages=find_packages(),
-    package_data={
-        # Templates for the website.
-        "lae_site": ["templates/*.html"],
-        # Helper for starting tahoe-lafs with configuration from our system.
-        "lae_automation": ["configure-tahoe"],
-    },
+    install_package_data=True,
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
     ],
