@@ -1,7 +1,7 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  leastauthority = pkgs.callPackage ./s4.nix {
+  leastauthority = pkgs.callPackage ./lae.nix {
     pkgs = pkgs;
     pythonPackages = pkgs.python27Packages;
   };
