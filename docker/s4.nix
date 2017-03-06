@@ -286,6 +286,7 @@ in
         stripe
         Fabric
         attrs
+	jinja2
 	twisted
         txaws021post5
         tahoe_lafs
