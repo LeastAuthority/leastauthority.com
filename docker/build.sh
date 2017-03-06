@@ -2,9 +2,7 @@
 
 NIX_BUILDER="nix"
 
-SELF=$(realpath $0)
-LEASTAUTHORITY=$(dirname $(dirname ${SELF}))
-PARENT=$(dirname ${LEASTAUTHORITY})
+LEASTAUTHORITY=$(dirname $(dirname $0))
 
 # This will outlast the script.  That's okay.  We're using it as a cache,
 # effectively.  Pretty terrible way to set things up.  Maybe I'll improve it
@@ -13,10 +11,15 @@ docker run \
        --detach \
        --name "${NIX_BUILDER}" \
        --restart always \
-       --volume ${PARENT}:/parent \
        numtide/nix-builder \
-	   sh -c 'ln -s /parent/leastauthority.com /leastauthority.com && sleep 100000000' \
+	   sleep 100000000 \
 || /bin/true
+
+# To facilitate leaving the nix builder running across multiple builds, copy
+# the source into the container like this instead of doing something with a
+# Docker volume.
+docker exec -i "${NIX_BUILDER}" rm -rf /leastauthority.com
+tar cf - --directory "${LEASTAUTHORITY}" "./" | docker exec -i "${NIX_BUILDER}" tar xvf -
 
 docker exec "${NIX_BUILDER}" nix-build /leastauthority.com/docker/web.nix
 web=$(docker exec "${NIX_BUILDER}" nix-build /leastauthority.com/docker/web.nix)
