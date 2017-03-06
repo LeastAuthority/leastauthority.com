@@ -1,12 +1,12 @@
-{ pkgs ? import <nixpkgs> {} }:
+{ pythonPackages,  pkgs ? import <nixpkgs> {} }:
 
 let
-  filepath = pkgs.python27Packages.buildPythonPackage rec {
+  filepath = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "filepath";
     version = "0.1";
 
-    buildInputs = [ pkgs.python27Packages.tox ];
+    buildInputs = [ pythonPackages.tox ];
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/eb/0f/3c5ebbfd6fa6904181ecece2b6737d797a033479a193984e7e84c1d84185/${name}.tar.gz";
@@ -18,12 +18,12 @@ let
     '';
   };
 
-  pem = pkgs.python27Packages.buildPythonPackage rec {
+  pem = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "pem";
     version = "16.1.0";
 
-    buildInputs = [ pkgs.python27Packages.tox ];
+    buildInputs = [ pythonPackages.tox ];
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/4f/06/cf51103b48532565adb42f562389d364e2075947c5b1cba79fdc7eae4e8d/${name}.tar.gz";
@@ -31,7 +31,7 @@ let
     };
   };
 
-  extras100 = pkgs.python27Packages.extras.override rec {
+  extras100 = pythonPackages.extras.override rec {
     name = "${pname}-${version}";
     pname = "extras";
     version = "1.0.0";
@@ -41,12 +41,12 @@ let
     };
   };
 
-  testtools220 = pkgs.python27Packages.testtools.override rec {
+  testtools220 = pythonPackages.testtools.override rec {
     name = "${pname}-${version}";
     pname = "testtools";
     version = "2.2.0";
     propagatedBuildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ pbr python_mimeparse extras100 fixtures300 lxml unittest2 ];
 
     src = pkgs.fetchurl {
@@ -56,7 +56,7 @@ let
     patches = [];
   };
 
-  pyrsistent0_12_0 = pkgs.python27Packages.pyrsistent.override rec {
+  pyrsistent0_12_0 = pythonPackages.pyrsistent.override rec {
     name = "pyrsistent-0.12.0";
 
     src = pkgs.fetchurl {
@@ -65,12 +65,12 @@ let
     };
   };
 
-  eliot = pkgs.python27Packages.buildPythonPackage rec {
+  eliot = pythonPackages.buildPythonPackage rec {
     name = "eliot-${version}";
     version = "0.12.0";
 
     propagatedBuildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ six zope_interface pyrsistent0_12_0 ];
 
     src = pkgs.fetchurl {
@@ -79,11 +79,11 @@ let
     };
   };
 
-  eliot-tree = pkgs.python27Packages.buildPythonPackage rec {
+  eliot-tree = pythonPackages.buildPythonPackage rec {
     name = "eliot-tree-15.3.0";
 
     propagatedBuildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ toolz jmespath ];
 
     src = pkgs.fetchurl {
@@ -96,7 +96,7 @@ let
     '';
   };
 
-  pyopenssl16_2_0 = pkgs.python27Packages.buildPythonPackage rec {
+  pyopenssl16_2_0 = pythonPackages.buildPythonPackage rec {
     name = "pyopenssl-${version}";
     version = "16.2.0";
 
@@ -117,27 +117,27 @@ let
     '';
 
     buildInputs =
-    with pkgs.python27Packages;
+    with pythonPackages;
     [ pkgs.openssl pytest pkgs.glibcLocales ];
 
     propagatedBuildInputs =
-    with pkgs.python27Packages;
+    with pythonPackages;
     [ cryptography pyasn1 idna ];
   };
 
-  service-identity = pkgs.python27Packages.service-identity.override {
-    propagatedBuildInputs = with pkgs.python27Packages; [
+  service-identity = pythonPackages.service-identity.override {
+    propagatedBuildInputs = with pythonPackages; [
       characteristic pyasn1 pyasn1-modules pyopenssl16_2_0 idna attrs
     ];
   };
 
-  foolscap = pkgs.python27Packages.foolscap.override {
+  foolscap = pythonPackages.foolscap.override {
     propagatedBuildInputs =
-    with pkgs.python27Packages;
+    with pythonPackages;
     [ mock twisted pyopenssl16_2_0 service-identity ];
   };
 
-  tahoe_lafs = pkgs.python27Packages.buildPythonPackage rec {
+  tahoe_lafs = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "tahoe-lafs";
     version = "1.11.0";
@@ -147,10 +147,10 @@ let
       sha256 = "0hrp87rarbmmpnrxk91s83h6irkykds3pl263dagcddbdl5inqdi";
     };
 
-    buildInputs = [ pkgs.python27Packages.tox ];
+    buildInputs = [ pythonPackages.tox ];
 
     propagatedBuildInputs =
-      with pkgs.python27Packages; [
+      with pythonPackages; [
         pyasn1
         pyasn1-modules
         simplejson
@@ -160,9 +160,11 @@ let
         pyopenssl16_2_0
         pycryptopp
         service-identity
-        twisted
         foolscap
-        nevow
+	twisted
+        (nevow.override {
+	  postInstall = null;
+	})
       ];
 
       checkPhase = ''
@@ -171,7 +173,7 @@ let
       '';
 
   };
-  txaws021post5 = pkgs.python27Packages.buildPythonPackage rec {
+  txaws021post5 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txAWS";
     version = "0.2.1.post5";
@@ -182,17 +184,17 @@ let
     };
 
     propagatedBuildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ dateutil twisted ];
   };
-  fixtures300 = pkgs.python27Packages.fixtures.override rec {
+  fixtures300 = pythonPackages.fixtures.override rec {
     name = "fixtures-3.0.0";
     src = pkgs.fetchurl {
       url = "mirror://pypi/f/fixtures/${name}.tar.gz";
       sha256 = "1vxj29bzz3rd4pcy51d05wng9q9dh4jq6wx92yklsm7i6h1ddw7w";
     };
   };
-  stripe = pkgs.python27Packages.buildPythonPackage rec {
+  stripe = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "stripe";
     version = "1.41.1";
@@ -206,8 +208,8 @@ let
       sha256 = "0zvffvq933ia5w5ll6xhx2zgvppgc6zc2mxhc6f0kypw5g2fxvz5";
     };
 
-    buildInputs = with pkgs.python27Packages; [ unittest2 mock ];
-    propagatedBuildInputs = with pkgs.python27Packages; [ requests2 ];
+    buildInputs = with pythonPackages; [ unittest2 mock ];
+    propagatedBuildInputs = with pythonPackages; [ requests2 ];
 
     meta = {
       homepage = "https://github.com/stripe/stripe-python";
@@ -216,7 +218,7 @@ let
     };
   };
 
-  oauth2client400 = pkgs.python27Packages.oauth2client.override rec {
+  oauth2client400 = pythonPackages.oauth2client.override rec {
     name = "oauth2client-4.0.0";
 
     src = pkgs.fetchurl {
@@ -225,13 +227,13 @@ let
     };
   };
 
-  pykube = pkgs.python27Packages.buildPythonPackage rec {
+  pykube = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "pykube";
     version = "0.14.0";
 
     propagatedBuildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ six pyyaml tzlocal oauth2client400 requests2 requests_oauthlib ];
 
     src = pkgs.fetchurl {
@@ -240,17 +242,17 @@ let
     };
   };
 
-  txkube000 = pkgs.python27Packages.buildPythonPackage rec {
+  txkube000 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txkube";
     version = "0.0.0";
 
     buildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ treq pem pyyaml testtools220 hypothesis fixtures300 eliot eliot-tree klein ];
 
     propagatedBuildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ zope_interface attrs pyrsistent0_12_0 incremental service-identity pyopenssl16_2_0 twisted pem eliot dateutil pykube ];
 
 
@@ -267,24 +269,24 @@ let
   };
 
 in
-  pkgs.python27Packages.buildPythonPackage rec {
+  pythonPackages.buildPythonPackage rec {
     name = "s4-${version}";
     version = "1.0.0";
 
     buildInputs =
-      with pkgs.python27Packages;
+      with pythonPackages;
       [ testtools220 hypothesis mock fixtures300 pelican klein treq eliot-tree ];
 
     propagatedBuildInputs =
-      with pkgs.python27Packages; [
+      with pythonPackages; [
         pem
         pyopenssl16_2_0
         filepath
-        twisted
         eliot
         stripe
         Fabric
         attrs
+	twisted
         txaws021post5
         tahoe_lafs
 	txkube000
