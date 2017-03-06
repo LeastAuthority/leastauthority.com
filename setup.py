@@ -2,6 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="leastauthority.com",
+    zip_safe=False,
     packages=find_packages(),
     package_data={
         # Templates for the website.
