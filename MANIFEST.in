@@ -1,0 +1,2 @@
+recursive-include lae_site *.html
+include lae_automation/configure-tahoe
