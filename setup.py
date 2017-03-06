@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     package_data={
         # Templates for the website.
-        "lae_site": ["*.html"],
+        "lae_site": ["templates/*.html"],
         # Helper for starting tahoe-lafs with configuration from our system.
         "lae_automation": ["configure-tahoe"],
     },
