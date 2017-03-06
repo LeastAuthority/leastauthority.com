@@ -18,7 +18,7 @@ docker run \
 # To facilitate leaving the nix builder running across multiple builds, copy
 # the source into the container like this instead of doing something with a
 # Docker volume.
-docker exec -i "${NIX_BUILDER}" rm -rf /leastauthority.com
+docker exec "${NIX_BUILDER}" rm -rf /leastauthority.com
 tar cf - --directory "${LEASTAUTHORITY}" "./" | docker exec -i "${NIX_BUILDER}" tar xvf -
 
 docker exec "${NIX_BUILDER}" nix-build /leastauthority.com/docker/web.nix
