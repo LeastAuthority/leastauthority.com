@@ -112,7 +112,7 @@ class SiteOptions(Options):
                 u"use --redirect-to-port value."
             )
 
-        p = self["site-logs-path"]
+        p = self["site-logs-path"].parent()
         if not p.isdir():
             p.makedirs()
 
