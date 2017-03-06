@@ -34,18 +34,19 @@ let
 	      "/bin/dash"
 	      "-c"
 	      pkgs.lib.strings.concatStringsSep " " [
-	      "/bin/python" "-u" "/${python.sitePackages}/lae_site/main.py"
-              "--secure-port=ssl:${port}:${cert}:${key}:${chain}"
-              "--insecure-port=tcp:8080"
-              "--redirect-to-port=\${S4_SERVICE_PORT_HTTPS_SERVER}"
-              "--signup-furl-path=/app/flapp-data/signup.furl"
-              "--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key"
-              "--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key"
-              "--site-logs-path=/app/data/logs/sitelogs"
-              "--interest-path=/app/data/emails.csv"
-              "--subscriptions-path=/app/data/subscriptions.csv"
-              "--service-confirmed-path=/app/data/service_confirmed.csv"
-            ];
+  	      "/bin/python" "-u" "/${python.sitePackages}/lae_site/main.py"
+                "--secure-port=ssl:${port}:${cert}:${key}:${chain}"
+                "--insecure-port=tcp:8080"
+                "--redirect-to-port=\${S4_SERVICE_PORT_HTTPS_SERVER}"
+                "--signup-furl-path=/app/flapp-data/signup.furl"
+                "--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key"
+                "--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key"
+                "--site-logs-path=/app/data/logs/sitelogs"
+                "--interest-path=/app/data/emails.csv"
+                "--subscriptions-path=/app/data/subscriptions.csv"
+                "--service-confirmed-path=/app/data/service_confirmed.csv"
+              ]
+	    ];
         ExposedPorts = {
           "8443/tcp" = {};
         };
