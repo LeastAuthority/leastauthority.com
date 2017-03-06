@@ -25,9 +25,9 @@ let
         Cmd =
           let
             port = "8443";
-            cert = "/app/k8s_secrets/website-cert.pem";
-            key = "/app/k8s_secrets/website-key.pem";
-            chain = "/app/k8s_secrets/website-chain.pem";
+            cert = "certKey=/app/k8s_secrets/website-cert.pem";
+            key = "privateKey=/app/k8s_secrets/website-key.pem";
+            chain = "extraCertChain=/app/k8s_secrets/website-chain.pem";
           in
             [
               "/bin/python" "-u" "/${python.sitePackages}/lae_site/main.py"
@@ -37,10 +37,10 @@ let
               "--signup-furl-path=/app/flapp-data/signup.furl"
               "--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key"
               "--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key"
-              "--site-logs-path /app/data/logs/sitelogs"
-              "--interest-path /app/data/emails.csv"
-              "--subscriptions-path /app/data/subscriptions.csv"
-              "--service-confirmed-path /app/data/service_confirmed.csv"
+              "--site-logs-path=/app/data/logs/sitelogs"
+              "--interest-path=/app/data/emails.csv"
+              "--subscriptions-path=/app/data/subscriptions.csv"
+              "--service-confirmed-path=/app/data/service_confirmed.csv"
             ];
         ExposedPorts = {
           "8443/tcp" = {};
