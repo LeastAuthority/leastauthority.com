@@ -4,7 +4,7 @@ setup(
     name="leastauthority.com",
     zip_safe=False,
     packages=find_packages(),
-    install_package_data=True,
+    include_package_data=True,
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
     ],
