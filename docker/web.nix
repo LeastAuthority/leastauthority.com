@@ -33,7 +33,7 @@ let
             [
 	      "/bin/dash"
 	      "-c"
-	      pkgs.lib.strings.concatStringsSep " " [
+	      (pkgs.lib.strings.concatStringsSep " " [
   	      "/bin/python" "-u" "/${python.sitePackages}/lae_site/main.py"
                 "--secure-port=ssl:${port}:${cert}:${key}:${chain}"
                 "--insecure-port=tcp:8080"
@@ -45,7 +45,7 @@ let
                 "--interest-path=/app/data/emails.csv"
                 "--subscriptions-path=/app/data/subscriptions.csv"
                 "--service-confirmed-path=/app/data/service_confirmed.csv"
-              ]
+              ])
 	    ];
         ExposedPorts = {
           "8443/tcp" = {};
