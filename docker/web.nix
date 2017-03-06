@@ -30,7 +30,7 @@ let
             key = "privateKey=/app/k8s_secrets/website-key.pem";
             chain = "extraCertChain=/app/k8s_secrets/website-chain.pem";
           in
-            concatStringsSep " " [
+            pkgs.lib.strings.concatStringsSep " " [
 	      "/bin/python" "-u" "/${python.sitePackages}/lae_site/main.py"
               "--secure-port=ssl:${port}:${cert}:${key}:${chain}"
               "--insecure-port=tcp:8080"
