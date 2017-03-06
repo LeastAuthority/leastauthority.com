@@ -1,6 +1,8 @@
-{ pythonPackages,  pkgs ? import <nixpkgs> {} }:
+{ pkgs ? import <nixpkgs> {}
+, pythonPackages ? import <nixpkgs.python27Packages> {}
+}:
 
-let
+rec {
   filepath = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "filepath";
@@ -161,10 +163,10 @@ let
         pycryptopp
         service-identity
         foolscap
-	twisted
+  	twisted
         (nevow.override {
-	  postInstall = null;
-	})
+  	  postInstall = null;
+  	})
       ];
 
       checkPhase = ''
@@ -268,8 +270,7 @@ let
     '';
   };
 
-in
-  pythonPackages.buildPythonPackage rec {
+  lae = pythonPackages.buildPythonPackage rec {
     name = "s4-${version}";
     version = "1.0.0";
 
@@ -286,11 +287,11 @@ in
         stripe
         Fabric
         attrs
-	jinja2
-	twisted
+  	jinja2
+  	twisted
         txaws021post5
         tahoe_lafs
-	txkube000
+  	txkube000
       ];
 
     src = /leastauthority.com;
@@ -302,4 +303,5 @@ in
     meta = {
       license = pkgs.stdenv.lib.licenses.gpl2;
     };
-  }
+  };
+}

@@ -1,11 +1,12 @@
 { pkgs ? import <nixpkgs> {} }:
 
 let
-  s4 = pkgs.callPackage ./s4.nix {
-    pythonPackages = pkgs.python27Packages;
+  leastauthority = pkgs.callPackage ./s4.nix {
     pkgs = pkgs;
+    pythonPackages = pkgs.python27Packages;
   };
-  web = { python, s4, pkgs }:
+
+  web = { python, lae, pkgs }:
     pkgs.dockerTools.buildImage {
       name = "leastauthority/web";
       runAsRoot = ''
@@ -16,7 +17,7 @@ let
       '';
 
       contents = python.buildEnv.override {
-        extraLibs = [ s4 ];
+        extraLibs = [ lae ];
 	ignoreCollisions = true;
 	postBuild = "\${out}/bin/twistd --help > /dev/null";
       };
@@ -54,7 +55,7 @@ let
 in
   web {
     python = pkgs.python27;
-    s4 = s4;
+    lae = leastauthority.lae;
     pkgs = pkgs;
   }
 
