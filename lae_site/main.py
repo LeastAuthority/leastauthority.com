@@ -112,6 +112,10 @@ class SiteOptions(Options):
                 u"use --redirect-to-port value."
             )
 
+        p = self["site-logs-path"]
+        if not p.isdir():
+            p.makedirs()
+
 
 def main(reactor, *argv):
     o = SiteOptions(reactor)
