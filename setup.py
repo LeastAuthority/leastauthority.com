@@ -27,7 +27,9 @@ setup(
 
         "txAWS==0.2.1.post5",
 
-        "txkube",
+        # If we had a dev extra ourselves, the [dev] part of this would
+        # probably be better placed there.
+        "txkube[dev]",
 
         # For the test suite.
         "hypothesis==3.6.0",
