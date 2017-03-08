@@ -8,6 +8,8 @@
     K8S_POD=$(kubectl --context prod -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
 }
 
+REPO="$(dirname $0)/../.git"
+
 # A helper to run commands inside a container in the pod.
 EXEC="kubectl --namespace default exec -i ${K8S_POD} --"
 
@@ -20,10 +22,13 @@ ${EXEC} bash -e -x -c '
     dpkg --status ${DEPS} >/dev/null 2>&1 || apt-get update && apt-get install -y ${DEPS};
 '
 
+# Find the git revision hash that we're on right now.  Use it as the Docker
+# image tag so that the image can be unambiguously associated with a revision
+# of the software.
+DOCKER_TAG=$(git --git-dir "${REPO}" rev-parse --short HEAD)
 
 ${EXEC} bash -ex -c '
-    # Clone the git branch variable to the remote environment.
-    GIT_BRANCH="'"${GIT_BRANCH}"'"
+    DOCKER_TAG="'"${DOCKER_TAG}"'"
 
     # Get to our temporary working directory.
     # Get a fresh, clean space to work in.
@@ -31,14 +36,11 @@ ${EXEC} bash -ex -c '
     pushd "${WORKDIR}"
 
     # Get a new source checkout.
-    # Get a shallow one to save time/bandwidth.
-    # Get the branch the user requested.
-    git clone --depth 1 --branch "${GIT_BRANCH}" http://github.com/leastauthority/leastauthority.com;
-
-    # Find the git revision hash that was just checked out.
-    # Use it as the Docker image tag so that the image can be
-    # unambiguously associated with a revision of the software.
-    DOCKER_TAG=$(git --git-dir leastauthority.com/.git rev-parse --short HEAD)
+    # XXX Get a shallow one to save time/bandwidth.
+    git clone http://github.com/leastauthority/leastauthority.com
+    pushd leastauthority.com
+    git checkout "${DOCKER_TAG}"
+    popd
 
     # Build the images.
     ./leastauthority.com/docker/build.sh
