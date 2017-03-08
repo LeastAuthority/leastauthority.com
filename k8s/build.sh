@@ -3,9 +3,9 @@
 # K8S_POD tells us which k8s pod in which to build.
 # GIT_BRANCH tells us which leastauthority.com branch to build.
 
-[[ -v K8S_POD && -v GIT_BRANCH ]] || {
-    echo "Set K8S_POD and GIT_BRANCH variables."
-    exit 1
+[[ -v K8S_POD ]] || {
+    # Find it.
+    K8S_POD=$(kubectl --context prod -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
 }
 
 # A helper to run commands inside a container in the pod.
