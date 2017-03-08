@@ -20,7 +20,7 @@ from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 
-from lae_site.handlers import make_site, make_redirector_site
+from lae_site.handlers import make_resource, make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import start
 
 root_log = logging.getLogger(__name__)
@@ -36,7 +36,6 @@ class SiteOptions(Options):
 
     optParameters = [
         ("signup-furl-path", None, None, "A path to a file containing the signup furl.", FilePath),
-        ("interest-path", None, None, "A path to a file to which contact information of people interested in products will be appended.", FilePath),
         ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
         ("subscriptions-path", None, None, "A path to a file to which new subscription details will be appended.", FilePath),
@@ -90,7 +89,6 @@ class SiteOptions(Options):
     def postOptions(self):
         required_options = [
             "signup-furl-path",
-            "interest-path",
             "stripe-secret-api-key-path",
             "stripe-publishable-api-key-path",
             "service-confirmed-path",
@@ -136,19 +134,9 @@ def main(reactor, *argv):
     signup_furl = o["signup-furl-path"].getContent().strip()
     d = start(signup_furl)
     d.addCallback(
-        lambda ignored: make_site(
-            o["interest-path"],
-            o["stripe-secret-api-key-path"].getContent().strip(),
-            o["stripe-publishable-api-key-path"].getContent().strip(),
-            o["service-confirmed-path"],
-            o["subscriptions-path"],
-            o["site-logs-path"],
-        )
-    )
-    d.addCallback(
-        lambda site: start_site(
+        lambda ignored: start_site(
             reactor,
-            site,
+            site_for_options(o),
             o["secure-ports"],
             o["insecure-ports"],
             o["redirect-to-port"],
@@ -156,6 +144,20 @@ def main(reactor, *argv):
     )
     d.addCallback(lambda ignored: Deferred())
     return d
+
+
+
+def site_for_options(options):
+    resource = make_resource(
+        options["stripe-secret-api-key-path"].getContent().strip(),
+        options["stripe-publishable-api-key-path"].getContent().strip(),
+        options["service-confirmed-path"],
+        options["subscriptions-path"],
+    )
+    site = make_site(resource, options["site-logs-path"])
+    return site
+
+
 
 def start_site(reactor, site, secure_ports, insecure_ports, redirect_to_port):
     parent = MultiService()

@@ -28,19 +28,45 @@ def configuration(stripe_publishable_api_key):
         b"application/json",
     )
 
-def make_site(email_path, stripe_secret_api_key, stripe_publishable_api_key, service_confirmed_path, subscriptions_path, site_logs_path):
+
+
+def make_resource(
+        stripe_secret_api_key,
+        stripe_publishable_api_key,
+        service_confirmed_path,
+        subscriptions_path,
+):
     resource = Resource()
     resource.putChild("", Redirect("https://leastauthority.com/"))
     resource.putChild("index.html", Redirect("https://leastauthority.com/"))
     resource.putChild('signup', Redirect("https://leastauthority.com/"))
     resource.putChild('static', File(_STATIC.path))
-    resource.putChild('configuration', configuration(stripe_publishable_api_key))
-    resource.putChild("s4-subscription-form", JinjaHandler("s4-subscription-form.html"))
-    resource.putChild('submit-subscription', SubmitSubscriptionHandler(stripe_secret_api_key, service_confirmed_path, subscriptions_path))
+    resource.putChild(
+        'configuration',
+        configuration(stripe_publishable_api_key),
+    )
+    resource.putChild(
+        "s4-subscription-form",
+        JinjaHandler("s4-subscription-form.html"),
+    )
+    resource.putChild(
+        'submit-subscription',
+        SubmitSubscriptionHandler(
+            stripe_secret_api_key,
+            service_confirmed_path,
+            subscriptions_path,
+        ),
+    )
 
+    return resource
+
+
+
+def make_site(resource, site_logs_path):
     site = Site(resource, logPath=site_logs_path.path)
-    site.displayTracebacks = True
+    site.displayTracebacks = False
     return site
+
 
 
 EXPECTED_DOMAIN = 'leastauthority.com'
@@ -75,5 +101,5 @@ class RedirectToHTTPS(Resource):
 
 def make_redirector_site(port):
     site = Site(RedirectToHTTPS(port))
-    site.displayTracebacks = True
+    site.displayTracebacks = False
     return site
