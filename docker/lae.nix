@@ -57,6 +57,9 @@ rec {
       url = "mirror://pypi/e/extras/${name}.tar.gz";
       sha256 = "0khvm08rcwm62wc47j8niyl6h13f8w51c8669ifivjdr23g3cbhk";
     };
+    checkPhase = ''
+      python -m unittest extras.tests.test_suite
+    '';
   };
 
   testtools220 = pythonPackages.testtools.override rec {
