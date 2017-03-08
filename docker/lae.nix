@@ -106,6 +106,9 @@ rec {
       url = "mirror://pypi/e/eliot/${name}.tar.gz";
       sha256 = "07k9lbn3aym05h69rw1xiyjh4wp9swcvay3z2w0f1pqab5h0q8xs";
     };
+
+    # Tests fail because eliot-prettyprint can't be found on the PATH
+    doCheck = false;
   };
 
   eliot-tree = pythonPackages.buildPythonPackage rec {
@@ -196,12 +199,10 @@ rec {
   	})
       ];
 
-      checkPhase = ''
-      # XXX
-      # Lots of stuff fails. :(
-      '';
-
+    # Lots of stuff fails. :(
+    doCheck = false;
   };
+
   txaws021post5 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txAWS";
@@ -216,6 +217,7 @@ rec {
       with pythonPackages;
       [ dateutil twisted ];
   };
+
   fixtures300 = pythonPackages.fixtures.override rec {
     name = "fixtures-3.0.0";
     src = pkgs.fetchurl {
@@ -223,6 +225,7 @@ rec {
       sha256 = "1vxj29bzz3rd4pcy51d05wng9q9dh4jq6wx92yklsm7i6h1ddw7w";
     };
   };
+
   stripe = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "stripe";
