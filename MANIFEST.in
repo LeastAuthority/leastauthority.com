@@ -1,0 +1,8 @@
+# Templates for the website.
+graft lae_site/templates
+
+# Other static content for the website.  Stylesheets and more.
+graft lae_site/static
+
+# Helper for starting tahoe-lafs with configuration from our system.
+include lae_automation/configure-tahoe
