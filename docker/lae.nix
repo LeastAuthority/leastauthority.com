@@ -8,7 +8,7 @@ rec {
     pname = "filepath";
     version = "0.1";
 
-    buildInputs = [ pythonPackages.tox ];
+    buildInputs = [ pythonPackages.twisted ];
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/eb/0f/3c5ebbfd6fa6904181ecece2b6737d797a033479a193984e7e84c1d84185/${name}.tar.gz";
@@ -16,7 +16,7 @@ rec {
     };
 
     checkPhase = ''
-    # XXX I can't find the tox.ini
+      trial filepath
     '';
   };
 
