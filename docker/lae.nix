@@ -75,6 +75,11 @@ rec {
       sha256 = "042qlqymy9m40w30fg3gj20wahmac9jphnsfwb8f8k3fg9h0dxl0";
     };
     patches = [];
+
+    # `python -m unittest testtools.tests.test_suite` fails because testtools
+    # test suite requires testscenarios and testscenarios requires testtools
+    # and I don't know how to resolve this circularity for Nix.
+    doCheck = false;
   };
 
   pyrsistent0_12_0 = pythonPackages.pyrsistent.override rec {
