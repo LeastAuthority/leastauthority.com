@@ -31,7 +31,6 @@ def configuration(stripe_publishable_api_key):
 
 
 def make_resource(
-        email_path,
         stripe_secret_api_key,
         stripe_publishable_api_key,
         service_confirmed_path,
@@ -102,5 +101,5 @@ class RedirectToHTTPS(Resource):
 
 def make_redirector_site(port):
     site = Site(RedirectToHTTPS(port))
-    site.displayTracebacks = True
+    site.displayTracebacks = False
     return site
