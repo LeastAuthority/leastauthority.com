@@ -34,7 +34,6 @@ class MakeResourceTests(TestCase):
         verifyObject(IResource, resource)
 
 
-
 class MakeSiteTests(TestCase):
     """
     Tests for ``make_site``.
