@@ -7,7 +7,7 @@ setup(
     include_package_data=True,
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
-        "git+ssh://git@github.com/LeastAuthority/txkube.git@master#egg=txkube-17.1.0",
+        "https://github.com/LeastAuthority/txkube.git@master#egg=txkube-17.1.0",
     ],
     install_requires=[
         "python-dateutil",
