@@ -42,7 +42,7 @@ ${EXEC} bash -ex -c '
     DOCKER_TAG=$(git --git-dir leastauthority.com/.git rev-parse --short HEAD)
 
     # Build the images.
-    ./leastauthority.com/docker/build.sh;
+    ./leastauthority.com/docker/build.sh
 
     # Tag them in the way expected by the deployment configuration and
     # with the tag given in the environment.
