@@ -25,12 +25,28 @@ rec {
     pname = "pem";
     version = "16.1.0";
 
-    buildInputs = [ pythonPackages.tox ];
+    buildInputs = [
+      pkgs.libffi
+      pkgs.openssl
+      pythonPackages.pytest
+      pythonPackages.pycparser
+      pythonPackages.certifi
+      pythonPackages.coverage
+      pythonPackages.pretend
+      pythonPackages.pytest
+      pythonPackages.pyopenssl
+      pythonPackages.incremental
+      pythonPackages.twisted
+    ];
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/4f/06/cf51103b48532565adb42f562389d364e2075947c5b1cba79fdc7eae4e8d/${name}.tar.gz";
       sha256 = "0w5i2ywcrjhdv7wjpm9519adcr87braskkbwxs9b6pbfrllvmx2b";
     };
+
+    checkPhase = ''
+      py.test
+    '';
   };
 
   extras100 = pythonPackages.extras.override rec {
