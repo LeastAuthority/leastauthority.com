@@ -20,15 +20,14 @@ ${EXEC} bash -e -x -c '
     dpkg --status ${DEPS} >/dev/null 2>&1 || apt-get update && apt-get install -y ${DEPS};
 '
 
-# Get a fresh, clean space to work in.
-TEMP=$(${EXEC} bash -c 'mktemp -d')
 
 ${EXEC} bash -ex -c '
     # Clone the git branch variable to the remote environment.
     GIT_BRANCH="'"${GIT_BRANCH}"'"
-    WORKDIR="'"${TEMP}"'"
 
-    # Get back to our temporary working directory.
+    # Get to our temporary working directory.
+    # Get a fresh, clean space to work in.
+    WORKDIR=$(${EXEC} bash -c "mktemp -d")
     pushd "${WORKDIR}"
 
     # Get a new source checkout.
