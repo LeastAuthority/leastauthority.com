@@ -89,6 +89,9 @@ rec {
       url = "mirror://pypi/p/pyrsistent/${name}.tar.gz";
       sha256 = "1k7kjj1nyzyk1jfiawlg16s1nsmypwmfqsq9yc3iba1m6jq9rq9p";
     };
+
+    # Test suite requires an old version of Hypothesis :(
+    doCheck = false;
   };
 
   eliot = pythonPackages.buildPythonPackage rec {
