@@ -1,3 +1,6 @@
 #!/bin/sh -ex
 
 nix-build docker/web.nix
+
+# Push anything that may have changed back into the cache.
+cp -r /nix/* ~/nix-cache
