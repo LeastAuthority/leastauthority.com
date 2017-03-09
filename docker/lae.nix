@@ -1,5 +1,5 @@
 { pkgs ? import <nixpkgs> {}
-, pythonPackages ? import <nixpkgs.python27Packages> {}
+, pythonPackages ? pkgs.python27Packages {}
 }:
 
 rec {
