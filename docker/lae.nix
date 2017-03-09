@@ -324,7 +324,14 @@ rec {
   	txkube000
       ];
 
-    src = ./..;
+    src =
+    let
+      excludedDirs = [ ".git" ".hypothesis" "_trial_temp" ];
+      goodSource = (path: type:
+        type != "directory" || ! (builtins.elem (baseNameOf path) excludedDirs)
+      );
+    in
+      builtins.filterSource goodSource ./..;
 
     checkPhase = ''
       trial lae_util lae_site lae_automation
