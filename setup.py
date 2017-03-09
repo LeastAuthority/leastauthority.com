@@ -8,7 +8,7 @@ setup(
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
         "git+https://github.com/LeastAuthority/txkube.git@master#egg=txkube-17.1.0",
-        "git+https://github.com/twisted/txaws.git@master#egg=txaws-0.2.3",
+        "git+https://github.com/twisted/txaws.git@master#egg=txaws-0.3.0",
     ],
     install_requires=[
         "python-dateutil",
@@ -26,7 +26,7 @@ setup(
         "attrs",
         "eliot==0.12.0",
 
-        "txAWS",
+        "txAWS>0.2.3",
 
         # If we had a dev extra ourselves, the [dev] part of this would
         # probably be better placed there.
