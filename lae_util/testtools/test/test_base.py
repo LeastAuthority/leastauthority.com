@@ -7,13 +7,11 @@ Tests for flocker base test cases.
 import errno
 import os
 import shutil
-from datetime import timedelta
 import unittest
 
-from eliot import MessageType, fields
 from fixtures import Fixture, MonkeyPatch
 from hypothesis import assume, given
-from hypothesis.strategies import binary, integers, lists, text
+from hypothesis.strategies import binary, integers, text
 
 # Use testtools' TestCase for most of these tests so that bugs in our base test
 # case classes don't invalidate the tests for those classes.
@@ -27,15 +25,10 @@ from testtools.matchers import (
     ContainsDict,
     DirExists,
     HasLength,
-    EndsWith,
     Equals,
     FileContains,
-    Is,
     Matcher,
-    MatchesAll,
     MatchesAny,
-    MatchesDict,
-    MatchesListwise,
     MatchesRegex,
     LessThan,
     Not,
@@ -49,10 +42,7 @@ from twisted.python.failure import Failure
 
 from .. import CustomException, TestCase
 from .._base import (
-    _SplitEliotLogs,
-    _iter_lines,
     _path_for_test_id,
-    extract_eliot_from_twisted_log,
 )
 from ..matchers import dir_exists, file_contents
 from ..strategies import fqpns
@@ -195,71 +185,6 @@ class BaseTestCaseTests(TesttoolsTestCase):
             )
         )
 
-    @given(base_test_cases)
-    def test_attaches_twisted_log(self, base_test_case):
-        """
-        Flocker base test cases attach the Twisted log as a detail.
-        """
-        # XXX: If debugging is enabled (either by setting this to True or by
-        # removing this line and running --debug-stacktraces, then the log
-        # fixtures in this test are empty. However, if we run a failing test
-        # manually, the logs appear in the details. Not sure what's going on,
-        # so disabling debugging for now.
-        self.useFixture(DebugTwisted(False))
-
-        class SomeTest(base_test_case):
-            def test_something(self):
-                from twisted.python import log
-                log.msg('foo')
-
-        test = SomeTest('test_something')
-        result = TestResult()
-        test.run(result)
-        self.expectThat(result, has_results(tests_run=Equals(1)))
-        self.assertThat(
-            test.getDetails(),
-            ContainsDict({
-                'twisted-log': match_text_content(MatchesRegex(
-                    r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[+-]\d{4} \[-\] foo'
-                )),
-            }))
-
-    @given(base_test_cases)
-    def test_separate_eliot_log(self, base_test_case):
-        """
-        Flocker base test cases attach the eliot log as a detail separate from
-        the Twisted log.
-        """
-        # XXX: If debugging is enabled (either by setting this to True or by
-        # removing this line and running --debug-stacktraces, then the log
-        # fixtures in this test are empty. However, if we run a failing test
-        # manually, the logs appear in the details. Not sure what's going on,
-        # so disabling debugging for now.
-        self.useFixture(DebugTwisted(False))
-        message_type = MessageType(u'foo', fields(name=str), u'test message')
-
-        class SomeTest(base_test_case):
-            def test_something(self):
-                from twisted.python import log
-                log.msg('foo')
-                message_type(name='qux').write()
-
-        test = SomeTest('test_something')
-        result = TestResult()
-        test.run(result)
-        self.expectThat(result, has_results(tests_run=Equals(1)))
-        self.assertThat(
-            test.getDetails(),
-            MatchesDict({
-                'twisted-log': match_text_content(MatchesRegex(
-                    r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}[+-]\d{4} \[-\] foo'
-                )),
-                _SplitEliotLogs._ELIOT_LOG_DETAIL_NAME: match_text_content(
-                    Contains("  message_type: 'foo'\n"
-                             "  name: 'qux'\n")
-                ),
-            }))
-
 
 class DebugTwisted(Fixture):
     """
@@ -290,118 +215,6 @@ def match_text_content(matcher):
     """
     return AfterPreprocessing(lambda content: content.as_text(), matcher)
 
-
-class IterLinesTests(TesttoolsTestCase):
-    """
-    Tests for ``_iter_lines``.
-    """
-
-    @given(lists(binary()), binary(min_size=1))
-    def test_preserves_data(self, data, separator):
-        """
-        Splitting into lines loses no data.
-        """
-        observed = _iter_lines(iter(data), separator)
-        self.assertThat(''.join(observed), Equals(''.join(data)))
-
-    @given(lists(binary()), binary(min_size=1))
-    def test_separator_terminates(self, data, separator):
-        """
-        After splitting into lines, each line ends with the separator.
-        """
-        # Make sure data ends with the separator.
-        data.append(separator)
-        observed = list(_iter_lines(iter(data), separator))
-        self.assertThat(observed, AllMatch(EndsWith(separator)))
-
-    @given(lists(binary(min_size=1), min_size=1), binary(min_size=1))
-    def test_nonterminated_line(self, data, separator):
-        """
-        If the input data does not end with a separator, then every line ends
-        with a separator *except* the last line.
-        """
-        # Except when the data *ends* with the separator
-        # E.g. data = '\x00'; separator = '\x00'
-        assume(not b''.join(data).endswith(separator))
-        observed = list(_iter_lines(iter(data), separator))
-        self.expectThat(observed[:-1], AllMatch(EndsWith(separator)))
-        self.assertThat(observed[-1], Not(EndsWith(separator)))
-
-
-class ExtractEliotFromTwistedLogTests(TesttoolsTestCase):
-    """
-    Tests for ``extract_eliot_from_twisted_log``.
-    """
-
-    def test_twisted_line(self):
-        """
-        When given a line logged by Twisted, extract_eliot_from_twisted_log
-        returns ``None``.
-        """
-        line = '2015-12-11 11:59:48+0000 [-] foo\n'
-        self.assertThat(extract_eliot_from_twisted_log(line), Is(None))
-
-    def test_eliot_line(self):
-        """
-        When given a line logged by Eliot, extract_eliot_from_twisted_log
-        returns the bytes that were logged by Eliot.
-        """
-        logged_line = (
-            '2015-12-11 11:59:48+0000 [-] ELIOT: '
-            '{"timestamp": 1449835188.575052, '
-            '"task_uuid": "6c579710-1b95-4604-b5a1-36b56f8ceb53", '
-            '"message_type": "foo", '
-            '"name": "qux", '
-            '"task_level": [1]}\n'
-        )
-        expected = (
-            '{"timestamp": 1449835188.575052, '
-            '"task_uuid": "6c579710-1b95-4604-b5a1-36b56f8ceb53", '
-            '"message_type": "foo", '
-            '"name": "qux", '
-            '"task_level": [1]}'
-        )
-        self.assertThat(
-            extract_eliot_from_twisted_log(logged_line), Equals(expected))
-
-    def test_line_with_substructure(self):
-        """
-        When given a line that has JSON substructures,
-        extract_eliot_from_twisted_log returns the bytes that were logged by
-        Eliot.
-        """
-        logged_line = (
-            '{"timestamp": 1449835188.575052, '
-            '"task_uuid": "6c579710-1b95-4604-b5a1-36b56f8ceb53", '
-            '"message_type": "foo", '
-            '"name": "qux", '
-            '"subobj": {"a": "cat"},'
-            '"task_level": [1]} \n'
-        )
-        expected = (
-            '{"timestamp": 1449835188.575052, '
-            '"task_uuid": "6c579710-1b95-4604-b5a1-36b56f8ceb53", '
-            '"message_type": "foo", '
-            '"name": "qux", '
-            '"subobj": {"a": "cat"},'
-            '"task_level": [1]}'
-        )
-        self.assertThat(
-            extract_eliot_from_twisted_log(logged_line), Equals(expected))
-
-    def test_line_with_invalid_json(self):
-        """
-        When given an incomplete line that has the beginning of a JSON line,
-        extract_eliot_from_twisted_log returns None.
-        """
-        logged_line = (
-            'prefix ELIOT: {"timestamp": 1449835188.575052, '
-            '"task_uuid": "6c579710-1b95-4604-b5a1-36b56f8ceb53", '
-            '"message_type": "foo", '
-            '"name": "qu'
-        )
-        self.assertThat(
-            extract_eliot_from_twisted_log(logged_line), Is(None))
 
 
 class MakeTemporaryTests(TesttoolsTestCase):

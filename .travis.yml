@@ -2,9 +2,6 @@
 # This is the Travis-CI configuration.
 #
 
-# This gets us an environment pretty well pre-configured for Python.
-language: "python"
-
 # This gets us a faster build via the container-based build system.
 # It comes with some limitations but they shouldn't be a problem.
 sudo: false
@@ -15,10 +12,23 @@ sudo: false
 notifications:
   email: false
 
+# Configure more than one builder.
+matrix:
+  # Each included item will be a builder.
+  include:
+    # This builder will run our test suite directly.
+    - env: ENV="testing"
+      language: "python"
+
+    # This builder will build the Nix packages (which happens to run the test
+    # suite as well).
+    - env: ENV="packaging"
+      language: "nix"
+
 # Install leastauthority.com's dependencies.
 install:
-  - "./test-tools/install"
+  - "./test-tools/install-${ENV}"
 
 # Run its test suite.
 script:
-  - "./test-tools/run-tests"
+  - "./test-tools/run-${ENV}"

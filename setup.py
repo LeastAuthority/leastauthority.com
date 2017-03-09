@@ -7,6 +7,7 @@ setup(
     include_package_data=True,
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
+        "git+https://github.com/LeastAuthority/txkube.git@master#egg=txkube-17.1.0",
     ],
     install_requires=[
         "python-dateutil",
@@ -25,6 +26,10 @@ setup(
         "eliot==0.12.0",
 
         "txAWS==0.2.1.post5",
+
+        # If we had a dev extra ourselves, the [dev] part of this would
+        # probably be better placed there.
+        "txkube[dev]",
 
         # For the test suite.
         "hypothesis==3.6.0",

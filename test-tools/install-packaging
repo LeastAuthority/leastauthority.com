@@ -1,0 +1,4 @@
+#!/bin/sh -ex
+
+# The Nix install steps are currently all handled by travis-ci itself owing to
+# the `language: "nix"` declaration in .travis.yml.

@@ -23,26 +23,16 @@ Originally ``flocker/testtools/__init__.py``.
 import gc
 import io
 import socket
-import sys
 import os
 import pwd
 from collections import namedtuple
 from contextlib import contextmanager
 from random import randrange
-import shutil
 from functools import wraps
-from unittest import skipIf, skipUnless
-from StringIO import StringIO
-
-from bitmath import MiB
-
-from pyrsistent import PClass, field
-
-from eliot import ActionType, MessageType, fields
-from eliot.twisted import DeferredContext
+from unittest import skipIf
 
 from zope.interface import implementer
-from zope.interface.verify import verifyClass, verifyObject
+from zope.interface.verify import verifyClass
 
 from twisted.internet.interfaces import (
     IProcessTransport, IReactorProcess, IReactorCore,
@@ -52,15 +42,12 @@ from twisted.internet.base import _ThreePhaseEvent
 from twisted.internet.task import Clock
 from twisted.internet.defer import Deferred
 from twisted.internet.error import ConnectionDone
-from twisted.internet import reactor
 from twisted.trial.unittest import SkipTest
-from twisted.internet.protocol import Factory, ProcessProtocol, Protocol
+from twisted.internet.protocol import Factory, Protocol
 from twisted.test.proto_helpers import MemoryReactor
-from twisted.python.procutils import which
-from twisted.python.logfile import LogFile
 
 from ._base import (
-    TestCase, extract_eliot_from_twisted_log,
+    TestCase,
 )
 
 __all__ = [
@@ -68,14 +55,12 @@ __all__ = [
     'FakeProcessReactor',
     'FakeSysModule',
     'MemoryCoreReactor',
-    'make_standard_options_test',
     'TestCase',
     'assertContainsAll',
     'assertNoFDsLeaked',
     'assert_equal_comparison',
     'assert_not_equal_comparison',
     'attempt_effective_uid',
-    'extract_eliot_from_twisted_log',
     'find_free_port',
     'help_problems',
     'if_root',
