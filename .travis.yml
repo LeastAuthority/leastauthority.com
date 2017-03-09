@@ -19,6 +19,9 @@ matrix:
   include:
     - env: ENV="testing"
     - env: ENV="packaging"
+      # The Nix installer wants to dump things into /.  Sadly, that requires
+      # superuser permissions.
+      sudo: "required"
       cache:
         # See test-tools/install-packaging
         - "nix-cache"
