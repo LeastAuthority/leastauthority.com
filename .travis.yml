@@ -13,6 +13,12 @@ sudo: false
 notifications:
   email: false
 
+
+cache:
+  - "/nix/store/"
+  - "/nix/var/nix/binary-cache-v3.sqlite"
+  - "/nix/var/nix/db/"
+
 matrix:
   include:
     - env: ENV="testing"
@@ -22,11 +28,6 @@ matrix:
     - env: ENV="packaging"
       # This gets us nix 1.11.2
       language: "nix"
-
-      cache:
-        - "/nix/store/"
-        - "/nix/var/nix/binary-cache-v3.sqlite"
-        - "/nix/var/nix/db/"
 
 # Install leastauthority.com's dependencies.
 install:
