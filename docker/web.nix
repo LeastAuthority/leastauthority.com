@@ -61,7 +61,3 @@ in
     lae = leastauthority.lae;
     pkgs = pkgs;
   }
-
-# nix-channel --add https://nixos.org/channels/nixpkgs-unstable nixpkgs
-# nix-channel --update
-# nix-build -A pythonFull '<nixpkgs>'
