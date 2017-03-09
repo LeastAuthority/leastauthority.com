@@ -243,23 +243,6 @@ rec {
     doCheck = false;
   };
 
-  txaws021post5 = pythonPackages.buildPythonPackage rec {
-    name = "${pname}-${version}";
-    pname = "txAWS";
-    version = "0.2.1.post5";
-
-    propagatedBuildInputs =
-      with pythonPackages;
-      [ dateutil twisted ];
-
-    src = pkgs.fetchurl {
-      url = "https://tahoe-lafs.org/deps/txAWS-0.2.1.post5.tar.gz";
-      sha256 = "1mwxpkr3ivsq35cp6s84f0yfmavyskqdf9drhvk5jvnmi6xfppq2";
-    };
-
-    # Test suite fails with some networking errors.
-  };
-
   constantly = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "constantly";
@@ -401,7 +384,7 @@ rec {
         attrs
         jinja2
         twisted
-        txaws021post5
+        txaws030dev0
         tahoe_lafs
         txkube000
       ];
