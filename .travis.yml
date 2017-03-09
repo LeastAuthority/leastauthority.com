@@ -2,8 +2,6 @@
 # This is the Travis-CI configuration.
 #
 
-# This gets us an environment pretty well pre-configured for Python.
-language: "python"
 
 # This gets us a faster build via the container-based build system.
 # It comes with some limitations but they shouldn't be a problem.
@@ -18,13 +16,12 @@ notifications:
 matrix:
   include:
     - env: ENV="testing"
+      # This gets us an environment pretty well pre-configured for Python.
+      language: "python"
+
     - env: ENV="packaging"
-      # The Nix installer wants to dump things into /.  Sadly, that requires
-      # superuser permissions.
-      sudo: "required"
-      cache:
-        # See test-tools/install-packaging
-        - "nix-cache"
+      # This gets us nix 1.11.2
+      language: "nix"
 
 # Install leastauthority.com's dependencies.
 install:
