@@ -42,7 +42,6 @@ let
                 "--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key"
                 "--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key"
                 "--site-logs-path=/app/data/logs/sitelogs"
-                "--interest-path=/app/data/emails.csv"
                 "--subscriptions-path=/app/data/subscriptions.csv"
                 "--service-confirmed-path=/app/data/service_confirmed.csv"
               ])

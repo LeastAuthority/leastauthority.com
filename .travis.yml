@@ -15,10 +15,14 @@ sudo: false
 notifications:
   email: false
 
+env:
+  - ENV="testing"
+  - ENV="packaging"
+
 # Install leastauthority.com's dependencies.
 install:
-  - "./test-tools/install"
+  - "./test-tools/install-${ENV}"
 
 # Run its test suite.
 script:
-  - "./test-tools/run-tests"
+  - "./test-tools/run-${ENV}"
