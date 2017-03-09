@@ -324,7 +324,7 @@ rec {
   	txkube000
       ];
 
-    src = /leastauthority.com;
+    src = ./..;
 
     checkPhase = ''
       trial lae_util lae_site lae_automation
