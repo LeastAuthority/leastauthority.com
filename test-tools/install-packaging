@@ -1,10 +1,10 @@
 #!/bin/sh
 
-export NIX_PROFILE="/nix/var/nix/profiles/ubuntu"
+export NIX_PROFILE="/nix/var/nix/profiles/${USER}"
 export PATH="${NIX_PROFILE}/bin:$PATH"
-export NIX_PATH="nixpkgs=/nix/var/nix/profiles/per-user/ubuntu/channels/nixpkgs"
+export NIX_PATH="nixpkgs=/nix/var/nix/profiles/per-user/${USER}/channels/nixpkgs"
 
-install -o ubuntu -d /nix ~/nix-cache
+install --directory /nix ~/nix-cache
 mv ~/nix-cache/* /nix || true
 type -p nix-build 2>/dev/null || curl https://nixos.org/nix/install | bash
 cp -r /nix/* ~/nix-cache
