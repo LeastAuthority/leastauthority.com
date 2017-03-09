@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh -ex
 
 export NIX_PROFILE="/nix/var/nix/profiles/${USER}"
 export PATH="${NIX_PROFILE}/bin:$PATH"
