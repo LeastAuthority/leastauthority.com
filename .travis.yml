@@ -15,9 +15,13 @@ sudo: false
 notifications:
   email: false
 
-env:
-  - ENV="testing"
-  - ENV="packaging"
+matrix:
+  include:
+    - env: ENV="testing"
+    - env: ENV="packaging"
+      cache:
+        # See test-tools/install-packaging
+        - "nix-cache"
 
 # Install leastauthority.com's dependencies.
 install:
