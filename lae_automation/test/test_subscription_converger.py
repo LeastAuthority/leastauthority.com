@@ -495,9 +495,6 @@ class SubscriptionConvergenceTests(TestCase):
         )
 
     def _machine(self):
-        # Clear the Eliot logs at the beginning of every run
-        # Maybe just the last run's logs are good enough?
-        self.clear_logs()
         return SubscriptionConvergence(self)
 
 
