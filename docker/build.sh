@@ -25,7 +25,7 @@ docker run \
            # because the Nix store has some initial state from the container
            # that it would be hard to initialize a volume with.
            if [ -d ${CACHE_PATH} ]; then
-               cp -vr ${CACHE_PATH}/* /nix/ || /bin/true
+               cp -r ${CACHE_PATH}/* /nix/ || /bin/true
            fi
 
            nixbuild() {
@@ -46,7 +46,7 @@ docker run \
            # Copy everything back to the cache volume so it is available
            # for next time.
            if [ -d ${CACHE_PATH} ]; then
-               cp -vr /nix/* ${CACHE_PATH}/
+               cp -r /nix/* ${CACHE_PATH}/
            fi
        '
 
