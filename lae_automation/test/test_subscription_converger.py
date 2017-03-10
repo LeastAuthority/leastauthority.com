@@ -10,7 +10,6 @@ import attr
 
 from hypothesis import assume, given
 from hypothesis.strategies import lists, choices
-from hypothesis import Verbosity, settings
 
 from pyrsistent import thaw, pmap, discard
 
@@ -232,6 +231,7 @@ class MakeServiceTests(TestCase):
             b"--kubernetes", b"kubernetes",
             b"--k8s-context", u"testing",
             b"--k8s-config", config.path,
+            b"--no-eliot-to-stdout",
         ])
         verifyObject(IService, makeService(options))
 
@@ -492,7 +492,6 @@ class SubscriptionConvergenceTests(TestCase):
     def test_convergence(self):
         run_state_machine_as_test(
             self._machine,
-            settings(verbosity=Verbosity.verbose),
         )
 
     def _machine(self):

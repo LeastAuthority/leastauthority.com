@@ -123,6 +123,16 @@ class Options(_Options, KubernetesClientOptionsMixin):
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
     ]
 
+    def __init__(self):
+        _Options.__init__(self)
+        self["eliot-to-stdout"] = True
+
+    def opt_no_eliot_to_stdout(self):
+        """
+        Do not dump Eliot logs to stdout.
+        """
+        self["eliot-to-stdout"] = False
+
     def postOptions(self):
         KubernetesClientOptionsMixin.postOptions(self)
         if self["domain"] is None:
@@ -153,10 +163,11 @@ def makeService(options):
         secret_key=secret_access_key,
     ))
 
-    # XXX not exactly the right place for this
-    from eliot import to_file
-    from sys import stdout
-    to_file(stdout)
+    if options["eliot-to-stdout"]:
+        # XXX not exactly the right place for this
+        from eliot import to_file
+        from sys import stdout
+        to_file(stdout)
 
     Message.log(
         event=u"convergence-service:key-notification",
