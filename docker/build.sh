@@ -10,7 +10,7 @@ if docker volume ls >/dev/null 2>&1; then
     docker volume create --name "${CACHE_VOLUME}" || /bin/true
     CACHE_OPTION="--volume ${CACHE_VOLUME}:${CACHE_PATH}"
 else
-    CACHE_OPTION=""
+    CACHE_OPTION="--volume ${CACHE_VOLUME}:${CACHE_PATH}"
 fi
 
 # Get a Nix toolchain environment we can use for the next few steps.
