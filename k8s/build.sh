@@ -29,7 +29,7 @@ ${EXEC} bash -e -x -c '
 # of the software.
 DOCKER_TAG=$(git --git-dir "${REPO}" rev-parse --short HEAD)
 
-${EXEC} bash -ex -c '
+${EXEC} env DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
     DOCKER_TAG="'"${DOCKER_TAG}"'"
 
     # Get a fresh, clean space to work in.
