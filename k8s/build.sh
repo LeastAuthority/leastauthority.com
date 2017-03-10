@@ -43,15 +43,26 @@ ${EXEC} bash -ex -c '
     # Get back to our temporary working directory.
     pushd "${WORKDIR}"
 
-    # Get a new source checkout.
-    # XXX Get a shallow one to save time/bandwidth.
-    git clone http://github.com/leastauthority/leastauthority.com
-    pushd leastauthority.com
-    git checkout "${DOCKER_TAG}"
-    popd
+    # Update the source checkout.
+    LEASTAUTHORITY=/tmp/leastauthority.com
+    REPO="http://github.com/leastauthority/leastauthority.com"
+
+    docker run \
+        --rm \
+        --volume ${LEASTAUTHORITY}:/leastauthority.com \
+        --workdir /leastauthority.com \
+        indiehosters/git \
+            bash -c "
+                { git fetch || git clone ${REPO} .; } && git checkout ${DOCKER_TAG}
+            "
 
     # Build the images.
-    ./leastauthority.com/docker/build.sh
+    docker run \
+        --rm \
+        --volume ${LEASTAUTHORITY}:/leastauthority.com \
+        --workdir /leastauthority.com \
+        busybox \
+            cat /leastauthority.com/docker/build.sh | LEASTAUTHORITY=${LEASTAUTHORITY} bash -ex
 
     # Tag them in the way expected by the deployment configuration and
     # with the tag given in the environment.
