@@ -46,7 +46,7 @@ ${EXEC} env DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
     # Get a new source checkout.
     # XXX Get a shallow one to save time/bandwidth.
     REPO="http://github.com/leastauthority/leastauthority.com"
-    git clone http://github.com/leastauthority/leastauthority.com
+    git clone "${REPO}"
     pushd leastauthority.com
     git checkout "${DOCKER_TAG}"
     popd
