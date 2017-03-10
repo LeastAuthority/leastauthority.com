@@ -12,6 +12,7 @@ setup(
         "git+https://github.com/twisted/txaws.git@master#egg=txAWS-0.3.0",
     ],
     install_requires=[
+        "pycryptopp==0.7.1.869544967005693312591928092448767568728501330214.post0.dev0",
         "python-dateutil",
         "stripe==1.41.1",
         "pem==16.1.0",
