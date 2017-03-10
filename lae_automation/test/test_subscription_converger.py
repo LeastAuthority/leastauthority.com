@@ -267,6 +267,7 @@ class ApplyServiceChangesTests(TestCase):
             subscription_details(),
             min_size=1,
             average_size=3,
+            max_size=5,
             unique_by=lambda d: d.subscription_id,
         ),
         choices(),
