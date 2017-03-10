@@ -14,12 +14,15 @@ else
 fi
 
 # Get a Nix toolchain environment we can use for the next few steps.
-docker run \
+tar cf - -C "${LEASTAUTHORITY}" . | docker run \
        --rm \
+       --interactive \
        ${CACHE_OPTION} \
        --volume "${LEASTAUTHORITY}":/leastauthority.com \
        --volume /var/run/docker.sock:/var/run/docker.sock \
        numtide/nix-builder /bin/env CACHE_PATH=${CACHE_PATH} /bin/sh -exc '
+           tar xf - -C /leastauthority.com
+
            # As a horrible hack, copy everything from the cache volume into
            # the Nix store.  The cache volume is separate from the Nix store
            # because the Nix store has some initial state from the container
