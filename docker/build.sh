@@ -15,8 +15,12 @@ nixbuild() {
 
 NIX_BUILDER="nix"
 
-LEASTAUTHORITY=${PWD}/$(dirname $(dirname $0))
-PARENT=${LEASTAUTHORITY}/..
+if [ "$1" = "" ]; then
+    LEASTAUTHORITY=${PWD}/$(dirname $(dirname $0))
+else
+    LEASTAUTHORITY=$1
+    shift
+fi
 
 CACHE_PATH=/nix-cache
 CACHE_VOLUME=nix-cache
