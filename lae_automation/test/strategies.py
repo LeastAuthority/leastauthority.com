@@ -336,7 +336,6 @@ def subscription_details():
             storage_port_number=ports[1],
             **kw
         ),
-        model.SubscriptionDetails,
         bucketname=bucket_name(),
         oldsecrets=old_secrets(),
         customer_email=emails(),
