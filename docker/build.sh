@@ -21,7 +21,7 @@ PARENT=${LEASTAUTHORITY}/..
 CACHE_PATH=/nix-cache
 CACHE_VOLUME=nix-cache
 
-if docker volume ls >/dev/null; then
+if docker volume ls 2>&1 >/dev/null; then
     # A cache for build artifacts.  If we created it on a previous run, great.
     docker volume create --name "${CACHE_VOLUME}" || /bin/true
     CACHE_OPTION="--volume ${CACHE_VOLUME}:${CACHE_PATH}"
