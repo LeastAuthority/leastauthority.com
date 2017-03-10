@@ -33,8 +33,7 @@ fi
 if docker run \
        --detach \
        --name "${NIX_BUILDER}" \
-       "${CACHE_OPTION}" \
-       --volume "${LEASTAUTHORITY}":/leastauthority.com \
+       "${CACHE_OPTION}" --volume "${LEASTAUTHORITY}":/leastauthority.com \
        numtide/nix-builder \
 	   sleep 100000000; then
 
