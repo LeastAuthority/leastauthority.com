@@ -141,7 +141,7 @@ def swissnum():
 
 def port_numbers():
     return strategies.integers(
-        min_value=0, max_value=2 ** 16 - 1
+        min_value=1, max_value=2 ** 16 - 1
     )
 
 port_number = port_numbers
@@ -310,8 +310,30 @@ def old_secrets():
         server.secrets_to_legacy_format
     )
 
+
+def two_distinct_ports():
+    def make_ports(port, adjustment):
+        other_port = port + adjustment
+        if other_port > 65535:
+            other_port %= 65536
+        if other_port == 0:
+            other_port += 1
+        return port, other_port
+
+    return strategies.builds(
+        make_ports,
+        port=port_numbers(),
+        adjustment=strategies.integers(min_value=1, max_value=65534),
+    )
+
+
 def subscription_details():
     return strategies.builds(
+        lambda ports, **kw: model.SubscriptionDetails(
+            introducer_port_number=ports[0],
+            storage_port_number=ports[1],
+            **kw
+        ),
         model.SubscriptionDetails,
         bucketname=bucket_name(),
         oldsecrets=old_secrets(),
@@ -320,8 +342,5 @@ def subscription_details():
         product_id=strategies.just(u"S4_consumer_iteration_2_beta1_2014-05-27"),
         customer_id=customer_id(),
         subscription_id=subscription_id(),
-        introducer_port_number=port_number(),
-        storage_port_number=port_number(),
-    ).filter(
-        lambda details: details.introducer_port_number != details.storage_port_number,
+        ports=two_distinct_ports(),
     )
