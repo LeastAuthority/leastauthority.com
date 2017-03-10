@@ -106,6 +106,8 @@ def _valid_for_idna(domain):
 
 
 def domains():
+    # XXX This fails to generate a value a lot of the time because of its two
+    # filters.
     return strategies.lists(
         strategies.text(min_size=1, average_size=8, max_size=255),
         min_size=1, average_size=2
@@ -126,7 +128,7 @@ def emails():
     return strategies.builds(
         u"{local}@{domain}".format,
         local=_local_part(),
-        domain=domain(),
+        domain=domains(),
     )
 
 email = emails
@@ -337,7 +339,7 @@ def subscription_details():
         model.SubscriptionDetails,
         bucketname=bucket_name(),
         oldsecrets=old_secrets(),
-        customer_email=email(),
+        customer_email=emails(),
         customer_pgpinfo=strategies.none(),
         product_id=strategies.just(u"S4_consumer_iteration_2_beta1_2014-05-27"),
         customer_id=customer_id(),
