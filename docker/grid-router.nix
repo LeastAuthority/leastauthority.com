@@ -6,7 +6,7 @@ let
     pythonPackages = pkgs.python27Packages;
   };
 
-  grid-router = { lae pkgs }:
+  grid-router = { python, lae, pkgs }:
     pkgs.dockerTools.buildImage {
       name = "leastauthority/grid-router";
       runAsRoot = ''
@@ -24,7 +24,7 @@ let
         Cmd = [
 	  "/bin/dash"
 	  "-c"
-	  (pkgs.lib.strings.concatStringSep " " [
+	  (pkgs.lib.strings.concatStringsSep " " [
 	    "/bin/twist" "s4-grid-router" "--kubernetes-namespace"
 	    "$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
 	  ])
@@ -33,6 +33,7 @@ let
     };
 in
   grid-router {
+    python = pkgs.python27;
     lae = leastauthority.lae;
     pkgs = pkgs;
   }
