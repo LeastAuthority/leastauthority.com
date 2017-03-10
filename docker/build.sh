@@ -43,6 +43,8 @@ tar cf - -C "${LEASTAUTHORITY}" . | docker run \
                docker load --input ${artifact}
            }
 
+           nix-env -i docker
+
            nixbuild web.nix
            nixbuild grid-router.nix
 
