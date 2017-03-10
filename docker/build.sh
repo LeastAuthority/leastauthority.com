@@ -49,7 +49,7 @@ if docker run \
         if [ -d ${CACHE_PATH} ]; then
             cp -r ${CACHE_PATH}/* /nix/ || /bin/true
         fi
-        "
+    "
 fi
 
 nixbuild "web.nix"
