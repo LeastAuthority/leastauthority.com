@@ -209,17 +209,6 @@ rec {
     [ mock twisted pyopenssl16_2_0 service-identity ];
   };
 
-  pycryptopp = pythonPackages.buildPythonPackage rec {
-    name = "pycryptopp-0.7.1.869544967005693312591928092448767568728501330214.post0.dev0";
-
-    format = "wheel";
-
-    src = pkgs.fetchurl {
-      url = "https://s3.amazonaws.com/com.leastauthority.wheelhouse/${name}-cp27-cp27mu-manylinux1_x86_64.whl";
-      sha256 = "16mn6j943rl8bji3nncg1qhg4sj574c7qvcrfjygl3qc4cbrvidv";
-    };
-  };
-
   tahoe_lafs = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "tahoe-lafs";

@@ -7,12 +7,10 @@ setup(
     include_package_data=True,
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
-        "https://s3.amazonaws.com/com.leastauthority.wheelhouse/index.html",
         "git+https://github.com/LeastAuthority/txkube.git@master#egg=txkube-17.1.0",
         "git+https://github.com/twisted/txaws.git@master#egg=txAWS-0.3.0",
     ],
     install_requires=[
-        "pycryptopp==0.7.1.869544967005693312591928092448767568728501330214.post0.dev0",
         "python-dateutil",
         "stripe==1.41.1",
         "pem==16.1.0",
