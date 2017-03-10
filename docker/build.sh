@@ -21,14 +21,19 @@ PARENT=${LEASTAUTHORITY}/..
 CACHE_PATH=/nix-cache
 CACHE_VOLUME=nix-cache
 
-# A cache for build artifacts.  If we created it on a previous run, great.
-docker volume create --name "${CACHE_VOLUME}" || /bin/true
+if docker volume ls >/dev/null; then
+    # A cache for build artifacts.  If we created it on a previous run, great.
+    docker volume create --name "${CACHE_VOLUME}" || /bin/true
+    CACHE_OPTION="--volume ${CACHE_VOLUME}:${CACHE_PATH}"
+else
+    CACHE_OPTION=""
+fi
 
 # Get a Nix toolchain environment we can use for the next few steps.
 if docker run \
        --detach \
        --name "${NIX_BUILDER}" \
-       --volume "${CACHE_VOLUME}":"${CACHE_PATH}" \
+       "${CACHE_OPTION}" \
        --volume "${LEASTAUTHORITY}":/leastauthority.com \
        numtide/nix-builder \
 	   sleep 100000000; then
