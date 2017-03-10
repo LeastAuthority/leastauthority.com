@@ -41,7 +41,11 @@ if docker run \
     # store.  The cache volume is separate from the Nix store because the Nix
     # store has some initial state from the container that it would be hard to
     # initialize a volume with.
-    docker exec "${NIX_BUILDER}" sh -c "{ [ -d ${CACHE_PATH} ] && cp -r ${CACHE_PATH}/* /nix/ } || /bin/true"
+    docker exec "${NIX_BUILDER}" sh -c "
+        if [ -d ${CACHE_PATH} ]; then
+            cp -r ${CACHE_PATH}/* /nix/ || /bin/true
+        fi
+        "
 fi
 
 nixbuild "web.nix"
