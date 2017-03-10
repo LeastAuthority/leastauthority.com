@@ -49,6 +49,7 @@ ${EXEC} env DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
     git clone http://github.com/leastauthority/leastauthority.com
     pushd leastauthority.com
     git checkout "${DOCKER_TAG}"
+    popd
 
     # Build the images.
     ./leastauthority.com/docker/build.sh
