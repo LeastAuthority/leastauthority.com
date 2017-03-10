@@ -56,7 +56,11 @@ nixbuild "web.nix"
 nixbuild "grid-router.nix"
 
 # Copy everything back to the cache volume so it's available for next time.
-docker exec "${NIX_BUILDER}" sh -c "cp -r /nix/* ${CACHE_PATH}/"
+docker exec "${NIX_BUILDER}" sh -c "
+    if [ -d ${CACHE_PATH} ]; then
+        cp -r /nix/* ${CACHE_PATH}/
+    fi
+"
 
 # Clean up the Nix build container.
 docker rm -f "${NIX_BUILDER}"
