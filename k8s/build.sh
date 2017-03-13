@@ -38,7 +38,7 @@ ${EXEC} env DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
     SERVER_PORT=30000
     SERVER="127.0.0.1:${SERVER_PORT}"
 
-    microservices="web flapp tahoe-introducer tahoe-storage foolscap-gatherer magicwormhole subscription-manager subscription-converger"
+    microservices="web flapp grid-router tahoe-introducer tahoe-storage foolscap-gatherer magicwormhole subscription-manager subscription-converger"
 
     # Get back to our temporary working directory.
     pushd "${WORKDIR}"
