@@ -2,27 +2,19 @@
 
 LEASTAUTHORITY=${PWD}/$(dirname $(dirname $0))
 
-CACHE_PATH=/nix-cache
-CACHE_VOLUME=nix-cache
-
-if docker volume ls >/dev/null 2>&1; then
-    # A cache for build artifacts.  If we created it on a previous run, great.
-    docker volume create --name "${CACHE_VOLUME}" || /bin/true
-    CACHE_OPTION="--volume ${CACHE_VOLUME}:${CACHE_PATH}"
-else
-    CACHE_OPTION="--volume ${CACHE_VOLUME}:${CACHE_PATH}"
-fi
+NIX_STORE=/nix
+CACHE_VOLUME=nix-cache-implicit-init
 
 # Get a Nix toolchain environment we can use for the next few steps.
 tar cf - -C "${LEASTAUTHORITY}" . | docker run \
        --rm \
        --interactive \
-       ${CACHE_OPTION} \
+       --volume ${CACHE_VOLUME}:${NIX_STORE} \
        --volume "${LEASTAUTHORITY}":/leastauthority.com \
        --volume /var/run/docker.sock:/var/run/docker.sock \
-       numtide/nix-builder /bin/env CACHE_PATH=${CACHE_PATH} /bin/sh -exc "
+       numtide/nix-builder /bin/env /bin/sh -exc "
            tar xf - -C /leastauthority.com
-           CACHE_PATH=${CACHE_PATH} /leastauthority.com/docker/_nix-build web.nix grid-router.nix
+           /leastauthority.com/docker/_nix-build web.nix grid-router.nix
        "
 
 images="base base-lae-automation infrastructure flapp web subscription-manager subscription-converger tahoe-base foolscap-base foolscap-gatherer"

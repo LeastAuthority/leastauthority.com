@@ -1,5 +1,5 @@
 #!/usr/bin/env nix-shell
-#! nix-shell -i python --packages pythonPackages.docker rsync
+#! nix-shell -i python --packages pythonPackages.docker
 
 # ^^ From
 # https://gist.github.com/MostAwesomeDude/2fed99e5cf630639df42df7997e12d1e#file-verifier-py-L1-L2
@@ -8,8 +8,8 @@
 # script, run in the environment set up by installing the given packages.
 
 from sys import argv
-from os import environ
-from os.path import isdir
+# from os import environ
+# from os.path import isdir
 from subprocess import check_output
 
 from docker import from_env
@@ -33,20 +33,21 @@ def main(names):
     # the Nix store.  The cache volume is separate from the Nix store
     # because the Nix store has some initial state from the container
     # that it would be hard to initialize a volume with.
-    cache_path = environ[u"CACHE_PATH"].decode("utf-8")
-    if isdir(cache_path):
-        print("Priming nix store...")
-        check_output([u"rsync", u"-avP", cache_path + u"/", u"/nix/"])
+    # cache_path = environ[u"CACHE_PATH"].decode("utf-8")
+    # if isdir(cache_path):
+    #     print("Priming nix store...")
+    #     check_output([u"rsync", u"-avP", cache_path + u"/", u"/nix/"])
 
     try:
         for name in names:
             nixbuild(name)
     finally:
-        # Copy everything back to the cache volume so it is available
-        # for next time.
-        if isdir(cache_path):
-            print("Caching nix store...")
-            check_output([u"rsync", u"-avP", u"/nix/", cache_path + u"/"])
+        pass
+        # # Copy everything back to the cache volume so it is available
+        # # for next time.
+        # if isdir(cache_path):
+        #     print("Caching nix store...")
+        #     check_output([u"rsync", u"-avP", u"/nix/", cache_path + u"/"])
 
 
 main(argv[1:])
