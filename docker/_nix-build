@@ -8,8 +8,6 @@
 # script, run in the environment set up by installing the given packages.
 
 from sys import argv
-# from os import environ
-# from os.path import isdir
 from subprocess import check_output
 
 from docker import from_env
@@ -29,25 +27,8 @@ def nixbuild(name):
 
 
 def main(names):
-    # As a horrible hack, copy everything from the cache volume into
-    # the Nix store.  The cache volume is separate from the Nix store
-    # because the Nix store has some initial state from the container
-    # that it would be hard to initialize a volume with.
-    # cache_path = environ[u"CACHE_PATH"].decode("utf-8")
-    # if isdir(cache_path):
-    #     print("Priming nix store...")
-    #     check_output([u"rsync", u"-avP", cache_path + u"/", u"/nix/"])
-
-    try:
-        for name in names:
-            nixbuild(name)
-    finally:
-        pass
-        # # Copy everything back to the cache volume so it is available
-        # # for next time.
-        # if isdir(cache_path):
-        #     print("Caching nix store...")
-        #     check_output([u"rsync", u"-avP", u"/nix/", cache_path + u"/"])
+    for name in names:
+        nixbuild(name)
 
 
 main(argv[1:])
