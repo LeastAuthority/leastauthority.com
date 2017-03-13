@@ -401,7 +401,7 @@ rec {
       builtins.filterSource goodSource ./..;
 
     checkPhase = ''
-      trial lae_util lae_site lae_automation
+      HYPOTHESIS_VERBOSITY_LEVEL=debug trial lae_util lae_site lae_automation
     '';
 
     meta = {
