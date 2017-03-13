@@ -28,7 +28,7 @@ def nixbuild(name):
 
 def main(names):
     for name in names:
-        nixbuild(name)
+        nixbuild(name.decode("utf-8"))
 
 
 main(argv[1:])
