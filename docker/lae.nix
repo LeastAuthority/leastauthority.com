@@ -401,7 +401,7 @@ rec {
       builtins.filterSource goodSource ./..;
 
     checkPhase = ''
-      HYPOTHESIS_VERBOSITY_LEVEL=debug trial lae_automation.test.test_subscription_converger.ApplyServiceChangesTests.test_delete
+      trial lae_util lae_site lae_automation
     '';
 
     meta = {

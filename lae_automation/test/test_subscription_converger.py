@@ -8,7 +8,7 @@ from zope.interface.verify import verifyObject
 
 import attr
 
-from hypothesis import assume, given, settings, Verbosity
+from hypothesis import assume, given
 from hypothesis.strategies import lists, choices
 
 from pyrsistent import thaw, pmap, discard
@@ -272,7 +272,6 @@ class ApplyServiceChangesTests(TestCase):
         ),
         choices(),
     )
-    @settings(verbosity=Verbosity.debug)
     def test_delete(self, details, choose):
         """
         ``apply_service_changes`` removes entries based on the ``to_delete``
