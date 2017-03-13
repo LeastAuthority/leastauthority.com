@@ -40,10 +40,8 @@ tar cf - -C "${LEASTAUTHORITY}" . | docker run \
 
                # Get the built artifact out of the container and load it in to
                # Docker.
-               docker load --input ${artifact}
+               _docker-load-image "${artifact}"
            }
-
-           nix-env -i docker
 
            nixbuild web.nix
            nixbuild grid-router.nix
