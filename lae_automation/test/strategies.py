@@ -7,7 +7,8 @@ QuickCheck-style testing of ``lae_automation`` APIs.
 """
 
 from os import devnull
-from string import uppercase, lowercase, ascii_letters, digits
+from sys import maxunicode
+from string import uppercase, lowercase, ascii_letters, ascii_lowercase, digits
 from base64 import b32encode
 
 from hypothesis import strategies
@@ -97,26 +98,88 @@ def _local_part():
     )
 
 
-def _valid_for_idna(domain):
-    try:
-        domain.encode("idna")
-    except UnicodeError:
-        return False
-    return True
+def idna_text(**kw):
+    # It's really expensive to build up a comprehensive list of code points
+    # that are acceptable in an (I)nternational (D)omain (N)ame.  Also, it may
+    # not actually be possible to decide if a code point is usable in
+    # isolation - context may matter (I'm not sure).  So just build up a bunch
+    # of safe stuff including _some_ non-ASCII and hopefully that will be good
+    # enough.  http://www.unicode.org/faq/idn.html#33 says some stuff for
+    # someone intrepid. -exarkun
+    idna_alphabet = (
+        ascii_lowercase.decode("ascii") +
+        digits.decode("ascii") + u"".join([
+            # Here's a random assortment of code points from different
+            # categories which should all be safe to include in an IDN.  This
+            # is far from comprehensive but it avoids the massive expense of
+            # building the exactly correct alphabet.
+            u'2', u'_', u'\xa0', u'\xa5', u'\xab', u'\xb8', u'\xbb', u'\xe6',
+            u'\u0187', u'\u01c8', u'\u0214', u'\u02c1', u'\u02cb', u'\u02d5',
+            u'\u02f0', u'\u02f3', u'\u02f8', u'\u035b', u'\u0385', u'\u03a8',
+            u'\u0488', u'\u0489', u'\u04d3', u'\u0516', u'\u058a', u'\u05b8',
+            u'\u0600', u'\u0601', u'\u0602', u'\u0603', u'\u066a', u'\u06de',
+            u'\u094b', u'\u09f3', u'\u09f6', u'\u09fb', u'\u0b57', u'\u0b6b',
+            u'\u0bc7', u'\u0c44', u'\u0cca', u'\u0cd6', u'\u0d46', u'\u0ddf',
+            u'\u0e50', u'\u0e57', u'\u0f3b', u'\u0f3c', u'\u0fd0', u'\u0fd4',
+            u'\u106c', u'\u109c', u'\u1400', u'\u1566', u'\u169c', u'\u16ed',
+            u'\u17b4', u'\u17b5', u'\u17db', u'\u19de', u'\u1c3c', u'\u1d1d',
+            u'\u1d39', u'\u1d41', u'\u1d5c', u'\u1dab', u'\u1db7', u'\u1e19',
+            u'\u1e2d', u'\u1e35', u'\u1f52', u'\u1f8e', u'\u1f8f', u'\u1f98',
+            u'\u1f9a', u'\u1f9c', u'\u1fa9', u'\u1fac', u'\u1fbc', u'\u1fcc',
+            u'\u1fcd', u'\u1fed', u'\u2003', u'\u2004', u'\u2005', u'\u2007',
+            u'\u2009', u'\u200a', u'\u2010', u'\u2012', u'\u2014', u'\u2019',
+            u'\u201b', u'\u201c', u'\u201d', u'\u201e', u'\u201f', u'\u202f',
+            u'\u2039', u'\u203a', u'\u203f', u'\u2040', u'\u2045', u'\u2054',
+            u'\u205d', u'\u205f', u'\u2064', u'\u2081', u'\u20a3', u'\u20ad',
+            u'\u20b8', u'\u20dd', u'\u20df', u'\u20e0', u'\u20e2', u'\u20e3',
+            u'\u20e4', u'\u2266', u'\u23c9', u'\u247a', u'\u2480', u'\u2495',
+            u'\u25eb', u'\u276f', u'\u2773', u'\u2774', u'\u2775', u'\u27ed',
+            u'\u27ee', u'\u2850', u'\u288d', u'\u294a', u'\u29d9', u'\u2a0d',
+            u'\u2a12', u'\u2a28', u'\u2a46', u'\u2ad0', u'\u2af9', u'\u2b42',
+            u'\u2b49', u'\u2c18', u'\u2de0', u'\u2de3', u'\u2e02', u'\u2e03',
+            u'\u2e05', u'\u2e09', u'\u2e0a', u'\u2e0c', u'\u2e0d', u'\u2e17',
+            u'\u2e1b', u'\u2e1c', u'\u2e1d', u'\u2e20', u'\u2e21', u'\u3015',
+            u'\u3016', u'\u3030', u'\u3031', u'\u3039', u'\u309a', u'\u31cf',
+            u'\u31db', u'\u4f53', u'\ua082', u'\ua4fd', u'\ua623', u'\ua626',
+            u'\ua672', u'\ua6e6', u'\ua700', u'\ua715', u'\ua717', u'\ua874',
+            u'\ua904', u'\ua909', u'\uaa54', u'\uad9f', u'\ufd3e', u'\ufe32',
+            u'\ufe33', u'\ufe34', u'\ufe37', u'\ufe38', u'\ufe3b', u'\ufe4d',
+            u'\ufe4e', u'\ufe4f', u'\ufe56', u'\ufe58', u'\ufe69', u'\uff08',
+            u'\uff0d', u'\uff3d', u'\uff3f', u'\uffe0', u'\uffe5',
+            u'\U00010140', u'\U00010148', u'\U0001018a', u'\U0001085e',
+            u'\U00010a46', u'\U00010e7e', u'\U00011081', u'\U000110bd',
+            u'\U00012400', u'\U00012403', u'\U00012412', u'\U00012438',
+            u'\U0001243f', u'\U00012453', u'\U0001d049', u'\U0001d134',
+            u'\U0001d186', u'\U0001d244', u'\U0001d40c', u'\U0001d4c3',
+            u'\U0001d5a9', u'\U0001d66e', u'\U0001d686', u'\U0001d6e8',
+            u'\U0001d702', u'\U0001d728', u'\U0001d7dc', u'\U0001f03e',
+            u'\U0001f087', u'\U0001f104', u'\U000236ca', u'\U00028ebf',
+            u'\U0002937a', u'\U00029944', u'\U0002a39f', u'\U0002b0d3',
+            u'\U000e01a9', u'\U000e01ce',
+        ])
+    )
+
+    return strategies.text(
+        alphabet=idna_alphabet,
+        **kw
+    )
 
 
 def domains():
     # XXX This fails to generate a value a lot of the time because of its two
     # filters.
-    return strategies.lists(
-        strategies.text(min_size=1, average_size=8, max_size=255),
-        min_size=1, average_size=2
+    def build_domain(complete, random):
+        while complete:
+            piece = complete[:random.randrange(64)]
+            complete = complete[len(piece):]
+            yield piece
+
+    return strategies.builds(
+        build_domain,
+        complete=idna_text(min_size=1, max_size=255),
+        random=strategies.randoms(),
     ).map(
         lambda parts: u".".join(parts)
-    ).filter(
-        lambda domain: _valid_for_idna(domain)
-    ).filter(
-        lambda domain: len(domain) <= 255,
     )
 
 domain = domains
