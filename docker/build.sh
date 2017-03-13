@@ -20,38 +20,10 @@ tar cf - -C "${LEASTAUTHORITY}" . | docker run \
        ${CACHE_OPTION} \
        --volume "${LEASTAUTHORITY}":/leastauthority.com \
        --volume /var/run/docker.sock:/var/run/docker.sock \
-       numtide/nix-builder /bin/env CACHE_PATH=${CACHE_PATH} /bin/sh -exc '
+       numtide/nix-builder /bin/env CACHE_PATH=${CACHE_PATH} /bin/sh -exc "
            tar xf - -C /leastauthority.com
-
-           # As a horrible hack, copy everything from the cache volume into
-           # the Nix store.  The cache volume is separate from the Nix store
-           # because the Nix store has some initial state from the container
-           # that it would be hard to initialize a volume with.
-           if [ -d ${CACHE_PATH} ]; then
-               cp -r ${CACHE_PATH}/* /nix/ || /bin/true
-           fi
-
-           nixbuild() {
-               # Build it.
-               nix-build /leastauthority.com/docker/$1
-
-               # Get the name of the built artifact.
-               artifact=$(nix-build /leastauthority.com/docker/$1)
-
-               # Get the built artifact out of the container and load it in to
-               # Docker.
-               _docker-load-image "${artifact}"
-           }
-
-           nixbuild web.nix
-           nixbuild grid-router.nix
-
-           # Copy everything back to the cache volume so it is available
-           # for next time.
-           if [ -d ${CACHE_PATH} ]; then
-               cp -r /nix/* ${CACHE_PATH}/
-           fi
-       '
+           CACHE_PATH=${CACHE_PATH} /leastauthority.com/docker/_nix-build web.nix grid-router.nix
+       "
 
 images="base base-lae-automation infrastructure flapp web subscription-manager subscription-converger tahoe-base foolscap-base foolscap-gatherer"
 tahoe_images="tahoe-introducer tahoe-storage magicwormhole"
