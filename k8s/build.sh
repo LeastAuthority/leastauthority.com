@@ -33,7 +33,7 @@ ${EXEC} bash -e -x -c '
     fi
 '
 
-${EXEC} env DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
+${EXEC} env GIT_REV=${GIT_REV} DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
     DOCKER_TAG="'"${DOCKER_TAG}"'"
 
     # Get a fresh, clean space to work in.
