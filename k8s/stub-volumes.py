@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 
-from sys import stdin, stdout
+from sys import argv, stdin, stdout
 from subprocess import check_output
 
 from yaml import safe_load_all, safe_dump_all
 
 from pyrsistent import ny, freeze, thaw
 
-def main():
-    rev = check_output(["git", "rev-parse", "HEAD"]).strip()[:7]
+def main(rev=None):
+    if rev is None:
+        rev = check_output(["git", "rev-parse", "HEAD"]).strip()[:7]
     stdout.write(safe_dump_all(stub_all_volumes(rev, list(safe_load_all(stdin)))))
 
 
@@ -41,4 +42,4 @@ def stub_all_volumes(rev, docs):
         )
     )
 
-main()
+main(*argv[1:])

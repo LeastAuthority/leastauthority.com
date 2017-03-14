@@ -7,7 +7,16 @@
     K8S_POD=$(kubectl --context prod -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
 }
 
-REPO="$(dirname $0)/../.git"
+[[ -v GIT_REV ]] || {
+    REPO="$(dirname $0)/../.git"
+
+    # Find the git revision hash that we're on right now.  Use it as the
+    # Docker image tag so that the image can be unambiguously associated with
+    # a revision of the software.
+    GIT_REV=$(git --git-dir "${REPO}" rev-parse --short HEAD)
+}
+
+DOCKER_TAG="${GIT_REV}"
 
 # A helper to run commands inside a container in the pod.
 EXEC="kubectl exec  --context prod -i ${K8S_POD} --"
@@ -23,11 +32,6 @@ ${EXEC} bash -e -x -c '
         apt-get install -y ${pkg}
     fi
 '
-
-# Find the git revision hash that we're on right now.  Use it as the Docker
-# image tag so that the image can be unambiguously associated with a revision
-# of the software.
-DOCKER_TAG=$(git --git-dir "${REPO}" rev-parse --short HEAD)
 
 ${EXEC} env DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
     DOCKER_TAG="'"${DOCKER_TAG}"'"
@@ -48,7 +52,7 @@ ${EXEC} env DOCKER_TAG=${DOCKER_TAG} bash -ex -c '
     REPO="http://github.com/leastauthority/leastauthority.com"
     git clone "${REPO}"
     pushd leastauthority.com
-    git checkout "${DOCKER_TAG}"
+    git checkout "${GIT_REV}"
     popd
 
     # Build the images.
