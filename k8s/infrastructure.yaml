@@ -186,7 +186,7 @@ spec:
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
-        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        image: '127.0.0.1:30000/leastauthority/subscription-converger:b5671da'
         env:
         - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
           value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
