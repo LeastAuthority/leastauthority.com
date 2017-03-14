@@ -29,7 +29,7 @@ ${EXEC} bash -e -x -c '
     # This lets us skip the slightly slow "apt-get update" on subsequent runs.
     if ! dpkg --status ${DEPS} >/dev/null 2>&1; then
         apt-get update
-        apt-get install -y ${pkg}
+        apt-get install -y ${DEPS}
     fi
 '
 
