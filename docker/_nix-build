@@ -15,7 +15,10 @@ from docker import from_env
 
 def nixbuild(name):
     # Build it.
-    output = check_output([u"nix-build", u"/leastauthority.com/docker/" + name])
+    output = check_output([
+        u"nix-build", u"--show-trace",
+        u"/leastauthority.com/docker/" + name,
+    ])
 
     # Get the name of the built artifact.
     image_archive_filename = output.splitlines()[-1]
