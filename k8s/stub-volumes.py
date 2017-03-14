@@ -26,6 +26,18 @@ def stub_all_volumes(rev, docs):
     def specified_tag(image):
         return u":".join((image.rsplit(u":", 1)[0], rev))
 
+    def owned_by(whom):
+        def check_owned_by(image):
+            parts = image.split(u"/")
+            if len(parts) == 2:
+                owner = parts[0]
+            elif len(parts) == 3:
+                owner = parts[1]
+            else:
+                raise ValueError("Can't parse {!r}".format(image))
+            return owner == whom
+        return check_owned_by
+
     def if_(predicate, thunk):
         def xform(value):
             if predicate(value):
@@ -38,7 +50,7 @@ def stub_all_volumes(rev, docs):
             [deployments, u"spec", u"template", u"spec", u"volumes", ny],
             if_(persistent_volume_claim, to_empty_dir),
             [deployments, u"spec", u"template", u"spec", u"containers", ny, u"image"],
-            specified_tag,
+            if_(owned_by("leastauthority"), specified_tag),
         )
     )
 
