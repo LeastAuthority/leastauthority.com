@@ -4,6 +4,7 @@ setup(
     name="leastauthority.com",
     zip_safe=False,
     packages=find_packages(),
+    py_modules=["twisted.plugins.lae_dropin"],
     include_package_data=True,
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
