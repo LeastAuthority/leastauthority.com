@@ -58,7 +58,7 @@ spec:
         image: 'registry:2'
         resources:
           limits:
-            cpu: '100m'
+            cpu: '50m'
             memory: '100Mi'
         env:
         - name: 'REGISTRY_HTTP_ADDR'

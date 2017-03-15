@@ -150,6 +150,10 @@ spec:
         volumeMounts:
         - mountPath: '/data'
           name: 'log-gatherer-data'
+        resources:
+          limits:
+            cpu: '20m'
+            memory: '100Mi'
 
       # This is the web server.  It serves up all the
       # leastauthority.com content.
@@ -175,6 +179,10 @@ spec:
         - name: 'web-secrets'
           mountPath: '/app/k8s_secrets'
           readOnly: true
+        resources:
+          limits:
+            cpu: '100m'
+            memory: '100Mi'
 
       # This is the flapp server.  It handles signup requests.
       - name: 'flapp'
@@ -188,6 +196,10 @@ spec:
         - name: 'flapp-secrets'
           mountPath: '/app/k8s_secrets'
           readOnly: true
+        resources:
+          limits:
+            cpu: '20m'
+            memory: '100Mi'
 
       # This is the wormhole relay server.  It will help people get
       # introduced to their grid, someday.
@@ -203,6 +215,10 @@ spec:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 4000
         - containerPort: 4001
+        resources:
+          limits:
+            cpu: '10m'
+            memory: '100Mi'
 ---
 # Read about StorageClass at
 # http://blog.kubernetes.io/2016/10/dynamic-provisioning-and-storage-in-kubernetes.html
