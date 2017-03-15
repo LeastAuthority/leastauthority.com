@@ -6,7 +6,10 @@ KUBECTL="kubectl --context prod"
 
 [[ -v K8S_POD ]] || {
     # Find it.
-    K8S_POD=$(kubectl --context prod -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
+    K8S_POD=$(
+	${KUBECTL} -o json get pods -l run=image-building |
+	jp --unquoted "(items[?status.phase=='Running'].metadata.name)[0]"
+    )
 }
 
 [[ -v GIT_REV ]] || {
