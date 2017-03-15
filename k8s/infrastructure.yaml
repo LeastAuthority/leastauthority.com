@@ -116,6 +116,7 @@ spec:
         provider: 'LeastAuthority'
         app: 's4'
         component: 'Infrastructure'
+        version: '1'
     spec:
       volumes:
       - name: 'subscription-manager-data'
