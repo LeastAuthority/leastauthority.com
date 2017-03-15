@@ -96,12 +96,14 @@ class KubernetesClientOptionsMixin(object):
         return network_kubernetes_from_context(reactor, self["k8s-context"], self["k8s-config"])
 
     def postOptions(self):
-        if self["kubernetes"] is None:
-            raise UsageError("--kubernetes is required")
         if self["kubernetes-namespace"] is None:
             raise UsageError("--kubernetes-namespace is required")
         if (self["k8s-context"] is None) == (not self["k8s-service-account"]):
             raise UsageError("Exactly one of --k8s-context or --k8s-service-account is required")
+        if self["k8s-service-account"]:
+            if self["kubernetes"] is None:
+                raise UsageError("--kubernetes is required with --k8s-service-account")
+
 
 
 class Options(_Options, KubernetesClientOptionsMixin):
