@@ -16,7 +16,7 @@ let
         useradd --system --gid router --home-dir /app/data router
       '';
       contents = python.buildEnv.override {
-        extraLibs = [ pkgs.dash lae ];
+        extraLibs = [ pkgs.dash pkgs.coreutils lae ];
 	ignoreCollisions = true;
 	postBuild = "\${out}/bin/twistd --help > /dev/null";
       };
