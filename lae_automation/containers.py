@@ -11,7 +11,10 @@ from .server import marshal_tahoe_configuration
 
 from txkube import v1, v1beta1
 
-_S4_METADATA = v1.ObjectMeta(
+# This metadata is associated with everything that is part of S4 which is
+# associated with per-customer resources.  For example, Deployments,
+# ConfigMaps, ReplicaSets, Pods.
+_S4_CUSTOMER_METADATA = v1.ObjectMeta(
     labels={
         # Some labels that help us identify stuff belonging to
         # customer-specific pieces (deployments, configmaps, etc) of the
@@ -27,8 +30,14 @@ _S4_METADATA = v1.ObjectMeta(
 
 
 
+_S4_INFRASTRUCTURE_METADATA = _S4_CUSTOMER_METADATA.transform(
+    [u"labels", u"component"], u"Infrastructure",
+)
+
+
+
 CONFIGMAP_TEMPLATE = v1.ConfigMap(
-    metadata=_S4_METADATA,
+    metadata=_S4_CUSTOMER_METADATA,
 )
 
 
@@ -112,14 +121,14 @@ def create_configuration(deploy_config, details):
 
 
 DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
-    metadata=_S4_METADATA,
+    metadata=_S4_CUSTOMER_METADATA,
     status=None,
     spec={
 	u"replicas": 1,
         # Don't keep an arbitrarily large amount of history around.
         u"revisionHistoryLimit": 2,
 	u"template": {
-	    u"metadata": _S4_METADATA,
+	    u"metadata": _S4_CUSTOMER_METADATA,
 	    u"spec": {
 		u"volumes": [
 		    {
@@ -246,10 +255,12 @@ def create_deployment(deploy_config, details):
 # http://blog.kubernetes.io/2016/09/high-performance-network-policies-kubernetes.html
 S4_CUSTOMER_GRID_NAME = u"s4-customer-grids"
 EMPTY_SERVICE = v1.Service(
-    metadata=_S4_METADATA.set(u"name", S4_CUSTOMER_GRID_NAME),
+    metadata=_S4_CUSTOMER_METADATA.set(u"name", S4_CUSTOMER_GRID_NAME),
     spec={
 	u"type": u"LoadBalancer",
-	u"selector": _S4_METADATA.labels,
+        # We don't actually want to select the "customer" pods here.  Instead,
+        # want the infrastructure pod that includes the grid router.
+	u"selector": _S4_INFRASTRUCTURE_METADATA.labels,
     }
 )
 
