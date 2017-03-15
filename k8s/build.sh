@@ -2,6 +2,8 @@
 
 # K8S_POD tells us which k8s pod in which to build.
 
+KUBECTL="kubectl --context prod"
+
 [[ -v K8S_POD ]] || {
     # Find it.
     K8S_POD=$(kubectl --context prod -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
@@ -19,7 +21,7 @@
 DOCKER_TAG="${GIT_REV}"
 
 # A helper to run commands inside a container in the pod.
-EXEC="kubectl exec  --context prod -i ${K8S_POD} --"
+EXEC="${KUBECTL} exec -i ${K8S_POD} --"
 
 ${EXEC} bash -e -x -c '
     # Dependencies for the build.
