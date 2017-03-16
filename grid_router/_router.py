@@ -14,6 +14,7 @@ from twisted.application.internet import StreamServerEndpointService, TimerServi
 from eliot import Message, start_action
 from eliot.twisted import DeferredContext
 
+from lae_automation.kubeclient import KubeClient
 from lae_automation.subscription_converger import (
     KubernetesClientOptionsMixin, get_customer_grid_pods,
 )
@@ -77,21 +78,22 @@ class _GridRouterService(MultiService):
 
         # Look at what should be routed but maybe isn't currently.
         for pod in pods:
+            name = pod.metadata.name
             # Build up a set of names for later.
-            pod_names[pod.name] = pod
+            pod_names.add(name)
 
-            if pod.metadata.name not in self.namedServices:
+            if name not in self.namedServices:
                 # We're not currently servicing this pod.  We should do so.
                 try:
                     pod_service = self._service_for_pod(pod)
                 except ValueError as e:
-                    Message.log(event_type=u"router-update:add", not_ready=unicode(e), pod=pod.metadata.name)
+                    Message.log(event_type=u"router-update:add", not_ready=unicode(e), pod=name)
                 else:
-                    Message.log(event_type=u"router-update:add", ready=True, pod=pod.metadata.name)
+                    Message.log(event_type=u"router-update:add", ready=True, pod=name)
                     pod_service.setServiceParent(self)
 
         # Look at what is routed currently but maybe shouldn't be.
-        for service in self.namedServices:
+        for service in self.namedServices.itervalues():
             if service.name not in pod_names:
                 # We're currently providing service but there is no longer any
                 # corresponding pod.
@@ -106,16 +108,23 @@ class _GridRouterService(MultiService):
 
         :param v1.Pod pod:
         """
-        address = pod.status.podIP
-        if not address:
-            raise ValueError("no podIP")
-
+        address = self._address_for_pod(pod)
         s = MultiService()
         s.name = pod.metadata.name
         for container in pod.spec.containers:
             proxy = self._proxy_for_container_port(address, container.ports[0])
             proxy.setServiceParent(s)
         return s
+
+
+    def _dns_name_for_pod(self, pod):
+        """
+        Determine the address (IP or DNS name) at which a Pod can be reached.
+        """
+        address = pod.status.podIP
+        if not address:
+            raise ValueError("no podIP")
+        return address
 
 
     def _proxy_for_container_port(self, address, container_port):
@@ -128,8 +137,8 @@ class _GridRouterService(MultiService):
             to proxy.
         """
         return StreamServerEndpointService(
-            TCP4ServerEndpoint(self._reactor, container_port.hostPort),
-            ProxyFactory(address, container_port.hostPort),
+            TCP4ServerEndpoint(self._reactor, container_port.containerPort),
+            ProxyFactory(address, container_port.containerPort),
         )
 
 
@@ -150,7 +159,7 @@ class _RouterUpdateService(TimerService):
         a = start_action(action_type=u"router-update:check")
         with a.context():
             d = DeferredContext(
-                get_customer_grid_pods(k8s, namespace)
+                get_customer_grid_pods(KubeClient(k8s=k8s), namespace)
             )
             d.addCallback(self._router.set_pods)
             return d.addActionFinish()
