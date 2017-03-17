@@ -49,11 +49,17 @@ def main(rev=None):
 
         print(check_output([u"kubectl", u"--context", context_name, u"create", u"-f", fObj.name]))
 
-    job_name = check_output([
-        u"kubectl", u"--context", context_name, u"get", u"pods",
-        u"--show-all", u"--selector=job-name={}".format(job.metadata.name),
-        u"--output=jsonpath={.items..metadata.name}",
-    ]).decode("ascii").strip()
+    while True:
+        job_name = check_output([
+            u"kubectl", u"--context", context_name, u"get", u"pods",
+            u"--show-all", u"--selector=job-name={}".format(job.metadata.name),
+            u"--output=jsonpath={.items..metadata.name}",
+        ]).decode("ascii").strip()
+        if u" " not in job_name:
+            # Sometimes there's garbage left over from a previous job.  Keep
+            # checking pods until there's just the one we want.  This lame but
+            # simple.
+            break
 
     while True:
         try:
