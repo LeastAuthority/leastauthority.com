@@ -1,0 +1,71 @@
+# https://kubernetes.io/docs/concepts/jobs/run-to-completion-finite-workloads/#what-is-a-job
+apiVersion: 'batch/v1'
+kind: 'Job'
+metadata:
+  # A unique name for this Job within its namespace.
+  name: 'build-image'
+
+  # Apply the usual labels allowing us to identify the role this Job places,
+  # should we find it on a cluster and be uncertain.
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Build'
+
+spec:
+  # The Job will continue to create Pods until one of them succeeds or until
+  # this much time has elapsed.  We don't want to let the Job continue to
+  # create Pods forever if something is wrong.  So limit it to trying a build
+  # for an hour.  This is a long time but builds also take a long time.
+  #
+  # XXX It would be nicer to just tell the Job not to re-create Pods when they
+  # fail with an error but there appears to be no way to do that.
+  activeDeadlineSeconds: 3600
+
+  template:
+    # Assign the same identifying metadata to the Pod created by the Job.
+    metadata:
+      name: 'build-image'
+      labels:
+        provider: 'LeastAuthority'
+        app: 's4'
+        component: 'Build'
+
+    spec:
+      # If the container command exits with an error, that's the end.  The Pod
+      # should not try to start it for another try.
+      restartPolicy: "Never"
+      volumes:
+        # Give the container access to Docker so it can build and load images.
+        - name: 'docker'
+          hostPath:
+            path: '/var/run/docker.sock'
+      containers:
+        - name: 'build'
+          image: 'ubuntu:16.10'
+          env:
+            # This will have a value substituted by the build driver.
+            - name: "GIT_REV"
+              value: null
+            # This is the Git repository to checkout and build from.
+            - name: "REPO"
+              value: "https://github.com/leastauthority/leastauthority.com"
+          volumeMounts:
+            # The other half of exposing Docker to the container...
+            - name: 'docker'
+              mountPath: '/var/run/docker.sock'
+          command:
+            # The command is the minimal amount of work we need to get a build
+            # script from the repository which can take over for us.
+            - "bash"
+            - "-exc"
+            - |
+              apt-get update && apt-get install -y git docker.io python-twisted
+              git clone "${REPO}" leastauthority.com
+              # Note we have to switch to the desired revision here otherwise we
+              # will have a build script from the wrong revision (and so it may
+              # do the wrong build steps).
+              pushd leastauthority.com
+              git checkout "${GIT_REV}"
+              popd
+              DOCKER_TAG="${GIT_REV}" ./leastauthority.com/k8s/build-tag-push
