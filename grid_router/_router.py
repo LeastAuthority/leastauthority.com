@@ -20,6 +20,7 @@ from lae_automation.subscription_converger import (
 )
 
 
+
 class Options(_Options, KubernetesClientOptionsMixin):
     optParameters = [
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on reconfiguration.", float),
@@ -117,7 +118,7 @@ class _GridRouterService(MultiService):
         return s
 
 
-    def _dns_name_for_pod(self, pod):
+    def _address_for_pod(self, pod):
         """
         Determine the address (IP or DNS name) at which a Pod can be reached.
         """
