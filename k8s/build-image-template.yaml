@@ -42,7 +42,7 @@ spec:
             path: '/var/run/docker.sock'
       containers:
         - name: 'build'
-          image: 'ubuntu:16.10'
+          image: 'ubuntu:16.04'
           env:
             # This will have a value substituted by the build driver.
             - name: "GIT_REV"
@@ -60,7 +60,9 @@ spec:
             - "bash"
             - "-exc"
             - |
-              apt-get update && apt-get install -y git docker.io python-twisted
+              # We have to make sure the Docker client in here is compatible
+              # with the Docker daemon on the Kubernetes node. :/
+              apt-get update && apt-get install -y git 'docker.io=1.10.3-0ubuntu6' python-twisted
               git clone "${REPO}" leastauthority.com
               # Note we have to switch to the desired revision here otherwise we
               # will have a build script from the wrong revision (and so it may
