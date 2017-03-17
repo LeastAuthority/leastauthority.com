@@ -9,7 +9,9 @@ pkgs.dockerTools.buildImage {
       "/bin/dash"
       "-c"
       (pkgs.lib.strings.concatStringsSep " " [
-        "/bin/twist" "s4-grid-router" "--kubernetes-namespace"
+        "/bin/twist" "s4-grid-router"
+	"--k8s-service-account"
+	"--kubernetes-namespace"
         "$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
       ])
     ];
