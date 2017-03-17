@@ -194,6 +194,7 @@ def deployment_name(subscription_id):
     return u"customer-deployment-" + _sanitize(subscription_id)
 
 
+
 def create_deployment(deploy_config, details):
     name = deployment_name(details.subscription_id)
     configmap = configmap_name(details.subscription_id)
