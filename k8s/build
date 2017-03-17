@@ -74,4 +74,9 @@ def main(rev=None):
         else:
             break
 
+    # Job cleanup is the responsibility of the job creator.
+    print(check_output([
+        u"kubectl", u"--context", context_name, u"delete", u"job", job.metadata.name,
+    ]))
+
 main(*argv[1:])
