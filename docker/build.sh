@@ -6,7 +6,7 @@ NIX_STORE=/nix
 CACHE_VOLUME=nix-cache-implicit-init
 
 # Get a Nix toolchain environment we can use for the next few steps.
-tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs-ignores . | docker run \
+tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs --exclude-vcs-ignores . | docker run \
        --rm \
        --interactive \
        --volume ${CACHE_VOLUME}:${NIX_STORE} \
