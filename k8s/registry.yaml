@@ -77,8 +77,10 @@ kind: 'PersistentVolumeClaim'
 apiVersion: 'v1'
 metadata:
   name: 'private-registry-pvc'
-  namespace: 'leastauthority-tweaks'
   labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Platform'
     kubernetes.io/cluster-service: "true"
 spec:
   accessModes:
