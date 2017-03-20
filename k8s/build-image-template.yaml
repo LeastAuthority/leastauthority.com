@@ -32,6 +32,13 @@ spec:
         component: 'Build'
 
     spec:
+      # We can select a Node for the Pod to be scheduled on.  In this case, we
+      # want to select the node that has the big disk.  This is probably a
+      # temporary constraint.  Eventually the Node with a small disk should be
+      # upgraded and also we should do something about the Nix builder's
+      # binary cache (which is what uses up all the disk space).
+      nodeSelector:
+        kubernetes.io/hostname: ip-172-20-74-23.ec2.internal
       # If the container command exits with an error, that's the end.  The Pod
       # should not try to start it for another try.
       restartPolicy: "Never"
