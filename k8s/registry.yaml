@@ -55,10 +55,18 @@ spec:
             cpu: '50m'
             memory: '100Mi'
         env:
+        # Listen on this address for HTTP
         - name: 'REGISTRY_HTTP_ADDR'
           value: ':30000'
+        # Use this filesystem directory as storage
         - name: 'REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY'
           value: '/var/lib/registry'
+        # Purge abandoned uploads sometimes.
+        - name: 'REGISTRY_STORAGE_MAINTENANCE_UPLOADPURGING'
+          value: '{enabled: true, age: "24h", interval: "12h", dryrun: false}'
+        # Enable image deletion via the API
+        - name: 'REGISTRY_STORAGE_DELETE'
+          value: '{enabled: true}'
         volumeMounts:
         - name: 'image-store'
           mountPath: '/var/lib/registry'
