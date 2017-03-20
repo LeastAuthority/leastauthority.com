@@ -20,16 +20,23 @@ class _FakePort(object):
     def stopListening(self):
         ports = getattr(self._reactor, self._kind)
         for port in ports:
-            interface = port[-1] or '0.0.0.0'
-            if port[0] == self._hostAddress.port and interface == self._hostAddress.host:
+            if same_address(port, self._hostAddress.port, self._hostAddress.host):
                 ports.remove(port)
                 break
         return succeed(None)
 
 
+def same_address(server, port, interface):
+    listen_interface = server[-1] or '0.0.0.0'
+    return server[0] == port and listen_interface == interface
+
+
 _listenTCP = MemoryReactor.listenTCP
-def listenTCP(self, *a, **kw):
-    port = _listenTCP(self, *a, **kw)
+def listenTCP(self, port, factory, backlog=50, interface=''):
+    for server in self.tcpServers:
+        if same_address(server, port, interface):
+            raise ValueError(u"Already listening on {}:{}".format(interface, port))
+    port = _listenTCP(self, port, factory, backlog, interface)
     return _FakePort(
         reactor=self,
         hostAddress=port._hostAddress,
