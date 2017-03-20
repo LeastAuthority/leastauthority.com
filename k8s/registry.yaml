@@ -82,30 +82,14 @@ metadata:
     app: 's4'
     component: 'Platform'
     kubernetes.io/cluster-service: "true"
+  annotations:
+    # This enables dynamic provisioning of the volume.  See
+    # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
+    volume.beta.kubernetes.io/storage-class: 'normal'
 spec:
   accessModes:
     - 'ReadWriteOnce'
   resources:
     requests:
-      storage: '8G'
----
-# Read about PersistentVolumes at
-# http://kubernetes.io/docs/user-guide/persistent-volumes/
-kind: 'PersistentVolume'
-apiVersion: 'v1'
-metadata:
-  name: 'leastauthority-tweaks-kube-registry-pv'
-  labels:
-    kubernetes.io/cluster-service: "true"
-spec:
-  capacity:
-    storage: '8G'
-  accessModes:
-    # One node can mount this read-write.
-    - 'ReadWriteOnce'
-  awsElasticBlockStore:
-    # Create this volume manually with a command like:
-    #   aws ec2 create-volume --availability-zone us-east-1a --size 8
-    volumeID: 'vol-0f1ca7d3ab1426833'
-    fsType: 'ext4'
+      storage: '100G'
 ---
