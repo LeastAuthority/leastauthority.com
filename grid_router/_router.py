@@ -31,10 +31,11 @@ class Options(_Options, KubernetesClientOptionsMixin):
 
 
 
-def makeService(options):
-    # Boo global reactor
-    # https://twistedmatrix.com/trac/ticket/9063
-    from twisted.internet import reactor
+def makeService(options, reactor=None):
+    if reactor is None:
+        # Boo global reactor
+        # https://twistedmatrix.com/trac/ticket/9063
+        from twisted.internet import reactor
     return grid_router_service(
         reactor,
         options.get_kubernetes_service(reactor).client(),
@@ -51,7 +52,7 @@ def grid_router_service(reactor, k8s, kubernetes_namespace, interval):
     service = MultiService()
     router = _GridRouterService(reactor)
     router.setServiceParent(service)
-    updater = _RouterUpdateService(interval, k8s, kubernetes_namespace, router)
+    updater = _RouterUpdateService(reactor, interval, k8s, kubernetes_namespace, router)
     updater.setServiceParent(service)
     return service
 
@@ -94,12 +95,18 @@ class _GridRouterService(MultiService):
                     pod_service.setServiceParent(self)
 
         # Look at what is routed currently but maybe shouldn't be.
+        to_disown = []
         for service in self.namedServices.itervalues():
             if service.name not in pod_names:
                 # We're currently providing service but there is no longer any
                 # corresponding pod.
                 Message.log(event_type=u"router-update:remove", pod=service.name)
-                service.disownServiceParent()
+                # Avoid mutating self.namedServices in this loop.
+                to_disown.append(service)
+
+        # Now clean up everything we decided is not necessary any more.
+        for service in to_disown:
+            service.disownServiceParent()
 
 
     def _service_for_pod(self, pod):
@@ -148,8 +155,11 @@ class _RouterUpdateService(TimerService):
     """
     ``_RouterUpdateService`` reports valid Pods to a ``_GridRouterService``.
     """
-    def __init__(self, interval, k8s, namespace, router):
+    def __init__(self, reactor, interval, k8s, namespace, router):
         TimerService.__init__(self, interval, self._check_once, k8s, namespace)
+        # This attribute controls the the reactor used by TimerService to set
+        # up the LoopingCall.
+        self.clock = reactor
         self._router = router
 
 

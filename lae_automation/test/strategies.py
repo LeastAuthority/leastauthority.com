@@ -51,13 +51,14 @@ def bucket_name():
         lambda (s, c): signup.get_bucket_name(s, c)
     )
 
-def ipv4_address():
+def ipv4_addresses():
     return strategies.lists(
         elements=strategies.integers(min_value=0, max_value=255),
         min_size=4, max_size=4,
     ).map(
         lambda parts: u"{}.{}.{}.{}".format(*parts)
     )
+ipv4_address = ipv4_addresses
 
 def aws_access_key_id():
     return strategies.text(
@@ -220,7 +221,7 @@ def furl():
             swissnum,
         ),
         node_pem(),
-        ipv4_address(),
+        ipv4_addresses(),
         port_number(),
         swissnum(),
     )
@@ -295,8 +296,8 @@ def storage_configuration(keypair=keyutil.make_keypair()):
         "node_privkey": strategies.sampled_from([keypair[0]]),
 
         "bucket_name": bucket_name(),
-        "publichost": ipv4_address(),
-        "privatehost": ipv4_address(),
+        "publichost": ipv4_addresses(),
+        "privatehost": ipv4_addresses(),
         "s3_access_key_id": aws_access_key_id(),
         "s3_secret_key": aws_secret_key(),
 
