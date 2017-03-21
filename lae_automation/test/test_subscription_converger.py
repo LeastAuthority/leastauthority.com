@@ -510,5 +510,5 @@ class DivertErrorsToLogTests(TestCase):
         """
         def broke():
             return Failure(CustomException())
-        divert_errors_to_log(broke)()
+        divert_errors_to_log(broke, u"test-failure-logged")()
         self.assertThat(logger.flush_tracebacks(CustomException), HasLength(1))
