@@ -210,12 +210,12 @@ def makeService(options):
 
     return TimerService(
         options["interval"],
-        divert_errors_to_log(converge), config, subscription_client, k8s, aws,
+        divert_errors_to_log(converge, u"subscription_converger"), config, subscription_client, k8s, aws,
     )
 
-def divert_errors_to_log(f):
+def divert_errors_to_log(f, scope):
     def g(*a, **kw):
-        action = start_action(action_type=u"subscription_converger:" + f.__name__)
+        action = start_action(action_type=scope + u":" + f.__name__)
         with action.context():
             d = DeferredContext(maybeDeferred(f, *a, **kw))
             d.addErrback(write_failure)

@@ -5,18 +5,22 @@ Tahoe-LAFS introducers and storage server.
 The proxy reconfigures itself based on Kubernetes Pods it observes to exist.
 """
 
+import sys
+
 from twisted.python.usage import Options as _Options
 from twisted.protocols.portforward import ProxyFactory
 from twisted.internet.endpoints import TCP4ServerEndpoint
-from twisted.application.service import MultiService
+from twisted.application.service import MultiService, Service
 from twisted.application.internet import StreamServerEndpointService, TimerService
 
-from eliot import Message, start_action
+from eliot import (
+    Message, start_action, FileDestination, add_destination, remove_destination,
+)
 from eliot.twisted import DeferredContext
 
 from lae_automation.kubeclient import KubeClient
 from lae_automation.subscription_converger import (
-    KubernetesClientOptionsMixin, get_customer_grid_pods,
+    KubernetesClientOptionsMixin, get_customer_grid_pods, divert_errors_to_log,
 )
 
 
@@ -57,6 +61,15 @@ def grid_router_service(reactor, k8s, kubernetes_namespace, interval):
     return service
 
 
+class _EliotLogging(Service):
+    def startService(self):
+        self._destination = FileDestination(sys.stdout)
+        add_destination(self._destination)
+
+
+    def stopService(self):
+        remove_destination(self._destination)
+
 
 class _GridRouterService(MultiService):
     """
@@ -66,6 +79,7 @@ class _GridRouterService(MultiService):
     """
     def __init__(self, reactor):
         MultiService.__init__(self)
+        _EliotLogging().setServiceParent(self)
         self._reactor = reactor
 
 
@@ -76,37 +90,38 @@ class _GridRouterService(MultiService):
         :param list[v1.Pod] pods: The pods which were observed to exist very
             recently.
         """
-        pod_names = set()
+        with start_action(action_type="router-update:set-pods", count=len(pods)):
+            pod_names = set()
 
-        # Look at what should be routed but maybe isn't currently.
-        for pod in pods:
-            name = pod.metadata.name
-            # Build up a set of names for later.
-            pod_names.add(name)
+            # Look at what should be routed but maybe isn't currently.
+            for pod in pods:
+                name = pod.metadata.name
+                # Build up a set of names for later.
+                pod_names.add(name)
 
-            if name not in self.namedServices:
-                # We're not currently servicing this pod.  We should do so.
-                try:
-                    pod_service = self._service_for_pod(pod)
-                except ValueError as e:
-                    Message.log(event_type=u"router-update:add", not_ready=unicode(e), pod=name)
-                else:
-                    Message.log(event_type=u"router-update:add", ready=True, pod=name)
-                    pod_service.setServiceParent(self)
+                if name not in self.namedServices:
+                    # We're not currently servicing this pod.  We should do so.
+                    try:
+                        pod_service = self._service_for_pod(pod)
+                    except ValueError as e:
+                        Message.log(event_type=u"router-update:add", not_ready=unicode(e), pod=name)
+                    else:
+                        Message.log(event_type=u"router-update:add", ready=True, pod=name)
+                        pod_service.setServiceParent(self)
 
-        # Look at what is routed currently but maybe shouldn't be.
-        to_disown = []
-        for service in self.namedServices.itervalues():
-            if service.name not in pod_names:
-                # We're currently providing service but there is no longer any
-                # corresponding pod.
-                Message.log(event_type=u"router-update:remove", pod=service.name)
-                # Avoid mutating self.namedServices in this loop.
-                to_disown.append(service)
+            # Look at what is routed currently but maybe shouldn't be.
+            to_disown = []
+            for service in self.namedServices.itervalues():
+                if service.name not in pod_names:
+                    # We're currently providing service but there is no longer any
+                    # corresponding pod.
+                    Message.log(event_type=u"router-update:remove", pod=service.name)
+                    # Avoid mutating self.namedServices in this loop.
+                    to_disown.append(service)
 
-        # Now clean up everything we decided is not necessary any more.
-        for service in to_disown:
-            service.disownServiceParent()
+            # Now clean up everything we decided is not necessary any more.
+            for service in to_disown:
+                service.disownServiceParent()
 
 
     def _service_for_pod(self, pod):
@@ -120,8 +135,13 @@ class _GridRouterService(MultiService):
         s = MultiService()
         s.name = pod.metadata.name
         for container in pod.spec.containers:
-            proxy = self._proxy_for_container_port(address, container.ports[0])
-            proxy.setServiceParent(s)
+            with start_action(
+                    action_type=u"router-update:new-service",
+                    name=pod.metadata.name, address=address,
+                    port=container.ports[0].serialize(),
+            ):
+                proxy = self._proxy_for_container_port(address, container.ports[0])
+                proxy.setServiceParent(s)
         return s
 
 
@@ -156,7 +176,13 @@ class _RouterUpdateService(TimerService):
     ``_RouterUpdateService`` reports valid Pods to a ``_GridRouterService``.
     """
     def __init__(self, reactor, interval, k8s, namespace, router):
-        TimerService.__init__(self, interval, self._check_once, k8s, namespace)
+        TimerService.__init__(
+            self,
+            interval,
+            divert_errors_to_log(self._check_once, u"router-update"),
+            k8s,
+            namespace,
+        )
         # This attribute controls the the reactor used by TimerService to set
         # up the LoopingCall.
         self.clock = reactor
