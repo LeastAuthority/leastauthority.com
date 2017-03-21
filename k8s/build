@@ -70,11 +70,12 @@ def main(rev=None):
             print(str(e))
             sleep(1)
         else:
+            # Job cleanup is the responsibility of the job creator.  Do this
+            # if the job succeeded.  Leave it for debugging otherwise.
+            print(check_output([
+                u"kubectl", u"--context", context_name, u"delete", u"job", job.metadata.name,
+            ]))
             break
 
-    # Job cleanup is the responsibility of the job creator.
-    print(check_output([
-        u"kubectl", u"--context", context_name, u"delete", u"job", job.metadata.name,
-    ]))
 
 main(*argv[1:])
