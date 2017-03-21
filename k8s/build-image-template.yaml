@@ -67,6 +67,8 @@ spec:
             - "bash"
             - "-exc"
             - |
+              # Try to get a good Ubuntu mirror.
+              sed -ie 's,/archive.ubuntu.com/,/mirror.math.princeton.edu/pub/,g' /etc/apt/sources.list
               # We have to make sure the Docker client in here is compatible
               # with the Docker daemon on the Kubernetes node. :/
               apt-get update && apt-get install -y git 'docker.io=1.10.3-0ubuntu6' python-twisted
