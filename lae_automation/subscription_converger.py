@@ -497,11 +497,12 @@ class _ChangeableService(PClass):
 
 def _converge_s3(actual, config, subscription, k8s, aws):
     buckets = []
+    actual_bucket_names = {bucket.name for bucket in actual.buckets}
     for subscription in actual.subscriptions.itervalues():
         bucket_name = get_bucket_name(
             subscription.subscription_id, subscription.customer_id,
         )
-        if bucket_name not in actual.buckets:
+        if bucket_name not in actual_bucket_names:
             Message.log(actor=u"converge-s3", bucket=bucket_name, activity=u"create")
             buckets.append(bucket_name)
 
