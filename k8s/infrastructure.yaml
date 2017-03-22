@@ -9,12 +9,15 @@ metadata:
   labels:
     # Everything we make and put into k8s will have this label.
     provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
 spec:
   selector:
     # Pick up all the other resources that claim to be part of the s4 app.
     # This makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
     app: 's4'
+    component: 'Infrastructure'
 
   # This service exposes network ports via a load balancer - ELB on
   # AWS.  The load balancer will be configured to spread traffic
@@ -24,7 +27,7 @@ spec:
   #
   # Note that ELB on AWS takes a minute or two to become usable,
   # probably due to DNS record propagation delay.
-  type: LoadBalancer
+  type: 'LoadBalancer'
 
   ports:
   # Define the service's one HTTPS port.  This also causes
@@ -59,12 +62,15 @@ metadata:
   labels:
     # Everything we make and put into k8s will have this label.
     provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
 spec:
   selector:
     # Pick up all the other resources that claim to be part of the s4 app.
     # This makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
     app: 's4'
+    component: 'Infrastructure'
 
   # This service exposes the log gatherer internally only.  Pods
   # running on the cluster can access it but the public internet
