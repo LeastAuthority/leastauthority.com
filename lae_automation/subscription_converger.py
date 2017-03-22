@@ -20,7 +20,7 @@ from pyrsistent import PClass, field
 from eliot import Message, start_action, write_failure
 from eliot.twisted import DeferredContext
 
-from twisted.internet.defer import Deferred, inlineCallbacks, returnValue, maybeDeferred, gatherResults
+from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
 from twisted.internet import task
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options, UsageError
@@ -319,21 +319,33 @@ def get_customer_grid_pods(k8s, namespace):
 
 
 
-@inlineCallbacks
 def get_active_subscriptions(subscriptions):
-    with start_action(action_type=u"load-subscriptions") as action:
-        active_subscriptions = {
-            subscription.subscription_id: subscription
-            for subscription
-            in (yield subscriptions.list())
-        }
-        action.add_success_fields(subscription_count=len(active_subscriptions))
-    returnValue(active_subscriptions)
+    action = start_action(action_type=u"load-subscriptions")
+    with action.context():
+        d = DeferredContext(subscriptions.list())
+        def got_subscriptions(subscriptions):
+            subscriptions = list(subscriptions)
+            action.add_success_fields(subscription_count=len(subscriptions))
+            return {
+                subscription.subscription_id: subscription
+                for subscription
+                in subscriptions
+            }
+        d.addCallback(got_subscriptions)
+        return d.addActionFinish()
 
 
 
 def get_s3_buckets(s3):
-    return s3.list_buckets()
+    action = start_action(action_type=u"list-buckets")
+    with action.context():
+        d = DeferredContext(s3.list_buckets())
+        def got_buckets(buckets):
+            buckets = list(buckets)
+            action.add_success_fields(bucket_count=len(buckets))
+            return buckets
+        d.addCallback(got_buckets)
+        return d.addActionFinish()
 
 
 
@@ -490,6 +502,7 @@ def _converge_s3(actual, config, subscription, k8s, aws):
             subscription.subscription_id, subscription.customer_id,
         )
         if bucket_name not in actual.buckets:
+            Message.log(actor=u"converge-s3", bucket=bucket_name, activity=u"create")
             buckets.append(bucket_name)
 
     s3 = aws.get_s3_client()
@@ -760,18 +773,20 @@ def get_hosted_zone_by_name(route53, name):
 
     :return Deferred(HostedZone): The hosted zone with a matching name.
     """
-    d = route53.list_hosted_zones()
-    def filter_results(zones):
-        Message.log(zone_names=list(zone.name for zone in zones))
-        for zone in zones:
-            # XXX Bleuch zone.name should be a Name!
-            if Name(zone.name) == name:
-                d = route53.list_resource_record_sets(zone_id=zone.identifier)
-                d.addCallback(lambda rrsets: (zone, rrsets))
-                return d
-        raise KeyError(name)
-    d.addCallback(filter_results)
-    return d
+    action = start_action(action_type=u"get-hosted-zone")
+    with action.context():
+        d = DeferredContext(route53.list_hosted_zones())
+        def filter_results(zones):
+            Message.log(zone_names=list(zone.name for zone in zones))
+            for zone in zones:
+                # XXX Bleuch zone.name should be a Name!
+                if Name(zone.name) == name:
+                    d = route53.list_resource_record_sets(zone_id=zone.identifier)
+                    d.addCallback(lambda rrsets: (zone, rrsets))
+                    return d
+            raise KeyError(name)
+        d.addCallback(filter_results)
+        return d.addActionFinish()
 
 
 
