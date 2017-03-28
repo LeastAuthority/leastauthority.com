@@ -62,13 +62,16 @@ The application logic for the signup process is in full_signup_docker.sh.
 Tahoe-LAFS Introducer
 ---------------------
 
-A Tahoe-LAFS introducer runs on a per-customer EC2 instance that is created by the signup process.
+A Tahoe-LAFS introducer runs in a per-customer container.
+The container is managed by a per-customer Kubernetes Deployment that is created by the signup process.
+This container mediates access to the customer's storage service.
 
 Tahoe-LAFS Storage Service
 --------------------------
 
-A Tahoe-LAFS storage service runs alongside the introducer.
-This mediates access to the customer's S3 bucket.
+A Tahoe-LAFS storage service runs in another per-customer container.
+The container is managed by a per-customer Kubernetes Deployment that is created by the signup process.
+This container mediates access to the customer's S3 bucket.
 
 Bottom-Up Components
 ~~~~~~~~~~~~~~~~~~~~
@@ -88,14 +91,15 @@ Persistent state related to the operation of the service
 is stored on EBS instances attached to the EC2 instances.
 The EBS instances belong to a LeastAuthority-owned AWS account.
 
-Each customer has their own EC2 instance.
+Customer requests are serviced by containers which share the EC2 instances.
+Each customer has their own containers.
 Customer data is stored on S3, not instance storage of EBS.
-Recreating a destroyed customer EC2 instance is possible, though it is a manual task.
+Per-customer Kubernetes Deployments will automatically recreate destroyed customer containers.
 
 AWS EC2 is not a very tightly coupled component of the system.
-The signup process does integrate against the EC2 APIs directly.
-A future direction is for customers to receive service from a container instead of an EC2 instance.
-This will reduce coupling.
+The intent is that Kubernetes is the platform.
+The hope is that if Kubernetes were deployed on a different cloud provider, everything would continue to work.
+This is probably not the case but perhaps the necessary porting would be minimal.
 
 AWS S3
 ------
@@ -123,7 +127,7 @@ This is not currently implemented.
 Kubernetes
 ----------
 
-Some errors are expected as kubernetes resources are created.
+Some errors are expected as Kubernetes resources are created.
 Ordering of creation of different components is not enforced.
 The cluster should converge on a working state as dependencies get created.
 
