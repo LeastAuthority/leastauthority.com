@@ -2,7 +2,7 @@ import urllib, time, re
 from hashlib import sha1
 from base64 import b64encode
 
-from twisted.internet import reactor, task
+from twisted.internet import reactor, task, defer
 from xml.parsers.expat import ExpatError
 from xml.etree import ElementTree
 from txaws.util import XML
@@ -265,11 +265,22 @@ def get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint_uri, instance_i
     return client.describe_console_output(instance_id)
 
 
+
+def squash(exception_type, value):
+    def squasher(reason):
+        reason.trap(exception_type)
+        return value
+    return squasher
+
+
 def wait_for_EC2_sshfp(ec2accesskeyid, ec2secretkey, endpoint, poll_time, wait_time, stdout, stderr,
                        instance_id):
     print >>stdout, "Attempting to get console data. Will try for %s seconds." % (wait_time,)
     def _wait(remaining_time):
         d = get_EC2_consoleoutput(ec2accesskeyid, ec2secretkey, endpoint, instance_id)
+        # If the request itself times out, turn that into something
+        # _maybe_again can deal with.
+        d.addErrback(squash(defer.TimeoutError, None))
         def _maybe_again(res):
             if res:
                 return res
