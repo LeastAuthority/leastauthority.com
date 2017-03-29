@@ -8,7 +8,6 @@ The proxy reconfigures itself based on Kubernetes Pods it observes to exist.
 import sys
 
 from twisted.python.usage import Options as _Options
-from twisted.protocols.portforward import ProxyFactory
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ServerEndpoint, TCP4ClientEndpoint, serverFromString
 from twisted.application.service import MultiService, Service
@@ -257,31 +256,6 @@ class _GridRouterService(MultiService):
                 Message.log(event_type=u"router-update:remove", pod=old[tub_id][0].metadata.name)
 
             return new
-
-
-    def _address_for_pod(self, pod):
-        """
-        Determine the address (IP or DNS name) at which a Pod can be reached.
-        """
-        address = pod.status.podIP
-        if not address:
-            raise ValueError("no podIP")
-        return address
-
-
-    def _proxy_for_container_port(self, address, container_port):
-        """
-        Create an ``IService`` which can proxy for a single port.
-
-        :param unicode address: The IP address to which to proxy.
-
-        :param v1.ContainerPort container_port: The port on which and to which
-            to proxy.
-        """
-        return StreamServerEndpointService(
-            TCP4ServerEndpoint(self._reactor, container_port.containerPort),
-            ProxyFactory(address, container_port.containerPort),
-        )
 
 
 
