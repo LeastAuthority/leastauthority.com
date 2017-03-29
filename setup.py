@@ -37,6 +37,7 @@ setup(
         "hypothesis==3.6.0",
         "testtools==2.2.0",
         "fixtures==3.0.0",
+        "deepdiff==3.1.2",
 
         # So we can generate tahoe configuration parameters.
         "tahoe-lafs==1.11.0",
