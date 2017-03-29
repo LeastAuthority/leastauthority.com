@@ -2,12 +2,13 @@
 Tests for ``grid_router``.
 """
 
-from testtools.matchers import AfterPreprocessing, Equals, HasLength
+from testtools.matchers import AfterPreprocessing, Equals
 
 from hypothesis import given, assume
 from hypothesis.strategies import choices
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
+from twisted.internet.address import IPv4Address
 from twisted.internet.interfaces import IReactorTCP, IReactorTime
 from twisted.test.proto_helpers import StringTransport, MemoryReactor
 from twisted.python.components import proxyForInterface
@@ -259,9 +260,12 @@ class GridRouterTests(TestCase):
         transport = StringTransport()
         protocol.makeConnection(transport)
         protocol.dataReceived((
-            u"GET /id/{}\r\n"
+            u"GET /id/{} HTTP/1.1\r\n"
             u"Host: example.invalid\r\n"
             u"\r\n"
         ).format(details.introducer_tub_id).encode("ascii"))
 
-        self.assertThat(network.tcpServers, HasLength(1))
+        self.assertThat(
+            network.connectors.pop(0).getDestination(),
+            Equals(IPv4Address("TCP", ip, details.introducer_port_number)),
+        )

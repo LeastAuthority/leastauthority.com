@@ -275,7 +275,7 @@ def fake_node_pems():
 
 
 
-def introducer_configuration():
+def introducer_configuration(node_pems=node_pems):
     return strategies.fixed_dictionaries({
         "port": port_number(),
         "node_pem": node_pems(),
@@ -291,7 +291,7 @@ def introducer_configuration():
         _add_furl("stats-gatherer-swissnum", "stats_gatherer_furl")
     )
 
-def storage_configuration(keypair=keyutil.make_keypair()):
+def storage_configuration(keypair=keyutil.make_keypair(), node_pems=node_pems):
     return strategies.fixed_dictionaries({
         "port": port_number(),
         "node_pem": node_pems(),
@@ -377,6 +377,8 @@ def old_secrets():
         "storage": storage_configuration(),
     }).map(
         server.secrets_to_legacy_format
+    ).filter(
+        lambda secrets: secrets[u"introducer_node_pem"] != secrets[u"server_node_pem"]
     )
 
 

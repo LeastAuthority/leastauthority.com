@@ -123,15 +123,12 @@ class _FoolscapProxy(Negotiation):
 
     def _handleTubRequest(self, targetTubID):
         try:
-            port_func, pod = self.factory.route_mapping()[targetTubID]
+            _, (ip, port_number) = self.factory.route_mapping()[targetTubID]
         except KeyError:
             raise NegotiationError("unknown TubID %s" % (targetTubID,))
 
-        ip = pod.status.podID
         if not ip:
             raise NegotiationError("TubID not yet available %s" % (targetTubID,))
-
-        port_number = port_func(pod)
 
         # Now proxy to ip:port_number
         proxy(self, TCP4ClientEndpoint(self.factory.reactor, ip, port_number))
