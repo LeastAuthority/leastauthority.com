@@ -11,7 +11,7 @@ from zope.interface.verify import verifyObject
 from twisted.python.filepath import FilePath
 from twisted.application.service import IService
 
-from testtools.matchers import Equals, Is, Not, HasLength
+from testtools.matchers import Equals, Is, Not
 
 from hypothesis import given, assume
 
@@ -49,13 +49,13 @@ class SubscriptionManagerTestMixin(object):
         d = client.create(details.subscription_id, details)
         created = self.successResultOf(d)
 
-        # Ports and secrets are randomly assigned but we can scrape them out
+        # Secrets are randomly assigned but we can scrape them out
         # of the created object.
         expected = attr.assoc(
             details,
+            introducer_port_number=10000,
+            storage_port_number=10001,
             oldsecrets=created.oldsecrets,
-            introducer_port_number=created.introducer_port_number,
-            storage_port_number=created.storage_port_number,
         )
         self.expectThat(expected, AttrsEquals(created))
 
@@ -81,15 +81,7 @@ class SubscriptionManagerTestMixin(object):
         details_a = self.successResultOf(client.create(id_a, details))
         details_b = self.successResultOf(client.create(id_b, details))
 
-        ports = {
-            details_a.introducer_port_number,
-            details_a.storage_port_number,
-            details_b.introducer_port_number,
-            details_b.storage_port_number,
-        }
-        self.expectThat(ports, HasLength(4))
-
-        # Secrets also get populated with some random goodness.
+        # Secrets get populated with some random goodness.
         self.expectThat(details_a.oldsecrets, Not(Is(None)))
         self.expectThat(details_b.oldsecrets, Not(Is(None)))
         self.expectThat(details_a.oldsecrets, Not(Equals(details_b.oldsecrets)))

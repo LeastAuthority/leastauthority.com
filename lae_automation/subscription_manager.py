@@ -172,19 +172,9 @@ class SubscriptionDatabase(object):
 
     def _assign_addresses(self):
         with start_action(action_type=u"subscription-database:assign-addresses") as a:
-            subscription_count = len(self.path.listdir())
-
-            start_port = 10000
-            end_port = 65535
-
-            first_port = start_port + 2 * subscription_count
-            if first_port > end_port:
-                # We ran out of ports to allocate.
-                raise Exception("We ran out of ports to allocate.")
-
             result = dict(
-                introducer_port_number=first_port,
-                storage_port_number=first_port + 1,
+                introducer_port_number=10000,
+                storage_port_number=10001,
             )
             a.add_success_fields(**result)
             return result
