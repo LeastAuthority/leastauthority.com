@@ -35,15 +35,11 @@ from txaws.route53.model import Name, CNAME, RRSet, delete_rrset, create_rrset
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
-    SUBSCRIPTION_ANNOTATION_PREFIX,
     autopad_b32decode,
-    annotation_key_for_sid,
-    sid_for_annotation_key,
     configmap_name, deployment_name,
     configmap_public_host,
     create_configuration, create_deployment,
     new_service,
-    add_subscription_to_service, remove_subscription_from_service
 )
 from .initialize import create_user_bucket
 from .signup import get_bucket_name
@@ -454,47 +450,6 @@ def _compute_changes(desired, actual):
 
 
 
-class _ChangeableService(PClass):
-    service = field()
-
-    def itersubscription_ids(self):
-        annotations = self.service.metadata.annotations
-        for annotation, value in annotations.iteritems():
-            if annotation.startswith(SUBSCRIPTION_ANNOTATION_PREFIX):
-                sid = sid_for_annotation_key(annotation)
-                yield sid
-
-
-    def needs_update(self, subscription):
-        sid = subscription.subscription_id
-        # Just compare the annotation.  Assume we always atomically update the
-        # annotation with the ports in the spec.
-        key = annotation_key_for_sid(sid)
-        value = self.service.metadata.annotations[key]
-        version, rest = value.split(None, 1)
-        if version != u"v1":
-            raise Exception("Zoops")
-        names = rest.split()
-
-        # Get the result to have introducer then storage to simplify code
-        # below.
-        ports = sorted(
-            (port for port in self.service.spec.ports if port.name in names),
-            key=lambda p: names.index(p.name),
-        )
-
-        assert len(ports) == 2
-
-        introducer = ports[0].port
-        storage = ports[1].port
-
-        return (
-            subscription.introducer_port_number != introducer or
-            subscription.storage_port_number != storage
-        )
-
-
-
 def _converge_s3(actual, config, subscription, k8s, aws):
     buckets = []
     actual_bucket_names = {bucket.name for bucket in actual.buckets}
@@ -520,30 +475,10 @@ def _converge_s3(actual, config, subscription, k8s, aws):
 def _converge_service(actual, config, subscriptions, k8s, aws):
     create_service = (actual.service is None)
     if create_service:
-        configured_service = new_service(config.kubernetes_namespace)
-    else:
-        configured_service = actual.service
-
-    changes = _compute_changes(
-        actual.subscriptions,
-        _ChangeableService(service=configured_service),
-    )
-
-    service = apply_service_changes(
-        configured_service,
-        to_delete=changes.delete,
-        to_create=changes.create,
-    )
-
-    if create_service:
-        # Always create it if it was missing, even if there are no
-        # subscriptions.
+        service = new_service(config.kubernetes_namespace)
+        # Create it if it was missing.
         return [lambda: k8s.create(service)]
-    else:
-        if changes.create or changes.delete:
-            # Only replace it if there were changes made.
-            return [lambda: k8s.replace(service)]
-    # Neither replacement nor creation needed, no jobs to execute.
+
     return []
 
 
@@ -837,14 +772,3 @@ def create_route53_rrsets(route53, zone, subscriptions):
     c = DeferredContext(d)
     c.addActionFinish()
     return c.result
-
-
-def apply_service_changes(service, to_delete, to_create):
-    with start_action(action_type=u"change-service"):
-        with_deletions = reduce(
-            remove_subscription_from_service, to_delete, service,
-        )
-        with_creations = reduce(
-            add_subscription_to_service, to_create, with_deletions,
-        )
-        return with_creations

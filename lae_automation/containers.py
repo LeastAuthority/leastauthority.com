@@ -268,13 +268,17 @@ def create_deployment(deploy_config, details):
 # Some background on performance of many-ports Services:
 # http://blog.kubernetes.io/2016/09/high-performance-network-policies-kubernetes.html
 S4_CUSTOMER_GRID_NAME = u"s4-customer-grids"
-EMPTY_SERVICE = v1.Service(
+CUSTOMER_GRID_SERVICE = v1.Service(
     metadata=_S4_CUSTOMER_METADATA.set(u"name", S4_CUSTOMER_GRID_NAME),
     spec={
 	u"type": u"LoadBalancer",
         # We don't actually want to select the "customer" pods here.  Instead,
         # want the infrastructure pod that includes the grid router.
 	u"selector": _S4_INFRASTRUCTURE_METADATA.labels,
+        u"ports": [
+            {u"name": u"introducer", u"protocol": u"TCP", u"port": 10000},
+            {u"name": u"storage", u"protocol": u"TCP", u"port": 10001},
+        ],
     }
 )
 

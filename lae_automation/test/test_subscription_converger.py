@@ -453,10 +453,6 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
     def check_service(self, database, config, subscriptions, k8s_state, aws):
         expected = new_service(config.kubernetes_namespace)
-        for sid in subscriptions:
-            expected = add_subscription_to_service(
-                expected, database.get_subscription(sid),
-            )
         assert_that(
             k8s_state.services.item_by_name(expected.metadata.name),
             GoodEquals(expected),
