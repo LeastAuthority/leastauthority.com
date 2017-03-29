@@ -10,6 +10,7 @@ from hypothesis import given, assume
 from hypothesis.strategies import choices
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
+from twisted.python.log import msg
 from twisted.trial.unittest import TestCase as AsyncTestCase
 from twisted.internet.address import IPv4Address
 from twisted.internet.interfaces import IReactorTCP, IReactorTime
@@ -280,6 +281,11 @@ class GridRouterTests(TestCase):
 
 
 
+# XXX Doesn't seem to be easily reversible.
+from foolscap.logging.log import bridgeLogsToTwisted
+bridgeLogsToTwisted(lambda event: True)
+
+
 class FoolscapProxyTests(AsyncTestCase):
     """
     Tests for ``_FoolscapProxy``.
@@ -289,8 +295,10 @@ class FoolscapProxyTests(AsyncTestCase):
         self.reactor = reactor
 
     def tearDown(self):
+        # XXX Lots of Foolscap selectables left in the reactor without this.
         return deferLater(self.reactor, 0.1, lambda: None)
 
+    # XXX This hangs sometimes while waiting for connectTo to succeed.
     def test_proxying(self):
         pems = node_pems()
 
@@ -318,6 +326,7 @@ class FoolscapProxyTests(AsyncTestCase):
                 break
 
         server_address = server_socket.getsockname()
+        msg("Got server address {}".format(server_address))
         server_endpoint = AdoptedStreamServerEndpoint(
             self.reactor, server_socket.fileno(), AF_INET,
         )
@@ -342,13 +351,12 @@ class FoolscapProxyTests(AsyncTestCase):
             # client tub and rely on the proxy to get us to the right place.
             host = proxy_port.getHost().host.decode("ascii")
             port_number = proxy_port.getHost().port
-            server.setLocation(
-                u"{host}:{port}".format(
-                    host=host,
-                    port=port_number,
-                ).encode("ascii"),
+            location = u"{host}:{port}".format(
+                host=host,
+                port=port_number,
             )
-
+            server.setLocation(location.encode("ascii"))
+            msg("Set server Tub location {}".format(location))
             # Register something arbitrary that we can poke at.
             furl = server.registerReference(Referenceable())
 
