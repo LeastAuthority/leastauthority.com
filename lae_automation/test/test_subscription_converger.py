@@ -9,7 +9,7 @@ from zope.interface.verify import verifyObject
 import attr
 
 from hypothesis import assume, given
-from hypothesis.strategies import lists, choices
+from hypothesis.strategies import choices
 
 from pyrsistent import thaw, pmap, discard
 
@@ -41,17 +41,15 @@ from lae_automation.subscription_converger import (
     _introducer_name_for_subscription,
     Options, makeService,
     get_customer_grid_service,
-    converge, get_hosted_zone_by_name, apply_service_changes,
+    converge, get_hosted_zone_by_name,
     divert_errors_to_log,
 )
 from lae_automation.containers import (
-    service_ports,
     new_service,
     create_configuration,
     create_deployment,
     configmap_name,
     deployment_name,
-    add_subscription_to_service,
 )
 from lae_automation.signup import get_bucket_name
 
@@ -107,31 +105,6 @@ class ConvergeHelperTests(TestCase):
                     ),
                 ),
             ),
-        )
-
-    @given(subscription_details())
-    def test_service_ports(self, details):
-        """
-        ``service_ports`` returns a two-element list containing mappings
-        which expose the subscription's introducer and storage ports.
-        """
-        service = new_service(u"testing")
-        self.assertThat(
-            service_ports(service, details),
-            GoodEquals([
-                v1.ServicePort(
-                    name=u"0i" + details.subscription_id[:13].lower().replace(u"_", u"-"),
-                    port=details.introducer_port_number,
-                    targetPort=details.introducer_port_number,
-                    protocol=u"TCP",
-                ),
-                v1.ServicePort(
-                    name=u"0s" + details.subscription_id[:13].lower().replace(u"_", u"-"),
-                    port=details.storage_port_number,
-                    targetPort=details.storage_port_number,
-                    protocol=u"TCP",
-                ),
-            ]),
         )
 
     def test_get_hosted_zone_by_name_missing(self):
@@ -241,70 +214,6 @@ from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_a
 from tempfile import mkdtemp
 
 from lae_automation.subscription_manager import SubscriptionDatabase
-
-
-class ApplyServiceChangesTests(TestCase):
-    """
-    Tests for ``apply_service_changes``.
-    """
-    @given(lists(subscription_details(), average_size=1, unique_by=lambda d: d.subscription_id))
-    def test_create(self, details):
-        """
-        ``apply_service_changes`` adds entries based on the ``to_create``
-        subscriptions to the service's ``ports``.
-        """
-        service = new_service(u"testing")
-        changed = apply_service_changes(service, to_delete=set(), to_create=details)
-        self.assertThat(
-            set(changed.spec.ports),
-            Equals(
-                set(p for d in details for p in service_ports(service, d)),
-            ),
-        )
-
-    @given(
-        lists(
-            subscription_details(),
-            min_size=1,
-            average_size=3,
-            max_size=5,
-            unique_by=lambda d: d.subscription_id,
-        ),
-        choices(),
-    )
-    def test_delete(self, details, choose):
-        """
-        ``apply_service_changes`` removes entries based on the ``to_delete``
-        subscriptions from the service's ``ports``.
-        """
-        to_delete = []
-        to_create = []
-        # Creating this dict and choosing from the keys makes Hypothesis
-        # failure reports more meaningful.
-        subscriptions = {
-            "not delete": to_create,
-            "delete": to_delete,
-        }
-        for d in details:
-            subscriptions[choose(("not delete", "delete"))].append(d)
-        empty = new_service(u"testing")
-        expected = apply_service_changes(
-            empty,
-            to_create=to_create,
-            to_delete=[],
-        )
-        complete = apply_service_changes(
-            expected,
-            to_create=to_delete,
-            to_delete=[],
-        )
-        actual = apply_service_changes(
-            complete,
-            to_create=[],
-            to_delete=list(d.subscription_id for d in to_delete),
-        )
-        self.expectThat(actual, GoodEquals(expected))
-
 
 
 class SubscriptionConvergence(RuleBasedStateMachine):

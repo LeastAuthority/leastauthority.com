@@ -1,11 +1,10 @@
-from itertools import count
 from base64 import b32encode, b32decode
 from json import dumps
 from hashlib import sha256
 
 from eliot import Message
 
-from pyrsistent import freeze, discard, ny
+from pyrsistent import ny
 
 from .server import marshal_tahoe_configuration
 
@@ -283,61 +282,9 @@ CUSTOMER_GRID_SERVICE = v1.Service(
 )
 
 def new_service(namespace):
-    return EMPTY_SERVICE.transform(
+    return CUSTOMER_GRID_SERVICE.transform(
         [u"metadata", u"namespace"], namespace,
     )
-
-
-def extender(values):
-    def f(pvector):
-        return pvector.extend(values)
-    return f
-
-
-
-def distinct_port_name(service, kind, seed):
-    """
-    Compute name, not already used in ``service``, for a new subscription.
-    """
-    existing_names = set(port.name for port in service.spec.ports)
-    for i in count():
-        name = u"{}{}{}".format(i, kind, seed)[:15].lower().replace(u"_", u"-")
-        if name not in existing_names:
-            return name
-
-
-def service_ports(old_service, details):
-    # We need to be able to easily identify which subscription owns which
-    # ports later on.  It probably _would_ be possible for the deletion
-    # codepath to find these values from the subscription manager
-    # database... And avoiding duplication might even be a really good thing.
-    # However, some cases might require particular attention.  For example,
-    # what if a subscription is deactivated and then another one is activated
-    # and assigned the same ports, and _then_ the convergence loop runs.
-    # Based solely on port numbers, will we delete the right ones?
-    introducer_name = distinct_port_name(
-        old_service, u"i", details.subscription_id,
-    )
-    storage_name = distinct_port_name(
-        old_service, u"s", details.subscription_id,
-    )
-    intro = v1.ServicePort(
-        name=introducer_name,
-        port=details.introducer_port_number,
-        targetPort=details.introducer_port_number,
-        protocol=u"TCP",
-    )
-    storage = v1.ServicePort(
-        name=storage_name,
-        port=details.storage_port_number,
-        targetPort=details.storage_port_number,
-        protocol=u"TCP",
-    )
-    return [intro, storage]
-
-
-
-SUBSCRIPTION_ANNOTATION_PREFIX = u"leastauthority.com/subscription."
 
 
 def autopad_b32decode(s):
@@ -345,71 +292,3 @@ def autopad_b32decode(s):
     s += u"=" * padding
     v = b32decode(s.upper())
     return v
-
-
-def annotation_key_for_sid(sid):
-    return SUBSCRIPTION_ANNOTATION_PREFIX + b32encode(sid).strip(u"=")
-
-
-def sid_for_annotation_key(key):
-    return autopad_b32decode(key[len(SUBSCRIPTION_ANNOTATION_PREFIX):])
-
-
-def add_subscription_to_service(old_service, details):
-    """
-    Update a ``txkube.v1.Service`` to include details necessary to provide
-    service to the given subscription.
-
-    :param txkube.v1.Service old_service: An existing service object to
-        update.
-
-    :param SubscriptionDetails details: The details of the subscription to add
-        to the service.
-
-    :return txkube.v1.Service: A modified version of ``old_service`` that
-        accounts for ``details``.
-    """
-    ports = service_ports(old_service, details)
-
-    return old_service.transform(
-        # Put the identifiers into the metadata area of the service.
-        [u"metadata", u"annotations", annotation_key_for_sid(details.subscription_id)],
-        u"v1 {} {}".format(ports[0].name, ports[1].name),
-
-        # Each subscription has been allocated two public-facing port (one
-        # embedded in the introducer furl for that subscription, one reachable
-        # with information retrieved from the introducer).  The service needs
-        # to be updated to route those port into the right pods.  For now, the
-        # internal and external ports match.  That means we just add two
-        # entries to the service's ports list with port / targetPort set to
-        # the subscriptions values.
-        [u"spec", u"ports"], extender(ports),
-
-        # Also keep the entries in port number-sorted order.  This simplifies
-        # testing and maybe probably helps in other areas (by reducing the
-        # possible number of states the service can be in, I guess).
-        [u"spec", u"ports"], lambda v: freeze(sorted(v, key=lambda m: m.port)),
-
-    )
-
-
-
-def remove_subscription_from_service(old_service, subscription_id):
-    annotation_key = annotation_key_for_sid(subscription_id)
-    port_names = old_service.metadata.annotations[annotation_key]
-    version = port_names.split()[0]
-    if version != u"v1":
-        raise ValueError("Cannot interpret port name metadata version " + version)
-    _, introducer_name, storage_name =  port_names.split()
-
-    ports = {introducer_name, storage_name}
-    return old_service.transform(
-        # Take the annotation out of the service.
-        [u"metadata", u"annotations", annotation_key],
-        discard,
-
-        # Take the port out of the service.
-        [u"spec", u"ports"],
-        # Where are my value-based transforms!
-        filter(lambda p: p.name not in ports, old_service.spec.ports),
-    )
