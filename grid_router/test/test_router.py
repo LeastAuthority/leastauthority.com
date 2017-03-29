@@ -2,14 +2,14 @@
 Tests for ``grid_router``.
 """
 
-from testtools.matchers import AfterPreprocessing, Equals
+from testtools.matchers import AfterPreprocessing, Equals, HasLength
 
 from hypothesis import given, assume
 from hypothesis.strategies import choices
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
 from twisted.internet.interfaces import IReactorTCP, IReactorTime
-from twisted.test.proto_helpers import MemoryReactor
+from twisted.test.proto_helpers import StringTransport, MemoryReactor
 from twisted.python.components import proxyForInterface
 from twisted.internet.task import Clock
 
@@ -17,8 +17,8 @@ from foolscap.pb import Tub
 
 from lae_util.testtools import TestCase
 from lae_automation.test.strategies import (
-    ipv4_addresses, port_numbers, node_pems, deployment_configuration,
-    subscription_details,
+    ipv4_addresses, port_numbers, node_pems,
+    deployment_configuration, subscription_details,
 )
 from lae_automation.containers import create_deployment
 from lae_automation.model import NullDeploymentConfiguration, SubscriptionDetails
@@ -76,7 +76,9 @@ class GridRouterStateMachine(RuleBasedStateMachine):
 
         self.used_tubs = set()
         self.pods = {}
-
+        # Keep deployments alive so they can provide a unique identifier for
+        # pod naming.
+        self.deployments = []
 
         self.interval = 1.0
         options = Options()
@@ -117,7 +119,8 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         signed up and got provisioned.
         """
         assume(
-            Tub(storage_pem).getTubID() not in self.used_tubs
+            storage_pem != intro_pem
+            and Tub(storage_pem).getTubID() not in self.used_tubs
             and Tub(intro_pem).getTubID() not in self.used_tubs
         )
         details = SubscriptionDetails(
@@ -138,6 +141,7 @@ class GridRouterStateMachine(RuleBasedStateMachine):
             storage_port_number=storage_port,
         )
         deployment = create_deployment(self.deploy_config, details)
+        self.deployments.append(deployment)
         pod = create_pod(deployment, ip)
         self.case.successResultOf(self.client.create(pod))
 
@@ -184,12 +188,19 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         expected = {}
         for pod, values in self.pods.iteritems():
             (ip, storage_pem, storage_port, intro_pem, intro_port) = values
-            expected[Tub(storage_pem).getTubID()] = (pod, (ip, storage_port))
-            expected[Tub(intro_pem).getTubID()] = (pod, (ip, storage_port))
+            expected[Tub(storage_pem).getTubID()] = (ip, storage_port)
+            expected[Tub(intro_pem).getTubID()] = (ip, intro_port)
 
         self.case.assertThat(
             mapping,
-            Equals(expected),
+            AfterPreprocessing(
+                lambda m: {
+                    tub_id: address
+                    for (tub_id, (pod, address))
+                    in m.iteritems()
+                },
+                Equals(expected),
+            ),
         )
 
 
@@ -228,3 +239,29 @@ class GridRouterTests(TestCase):
                 }),
             ),
         )
+
+    @given(
+        ip=ipv4_addresses(),
+        deploy_config=deployment_configuration(),
+        details=subscription_details()
+    )
+    def test_proxy(self, ip, deploy_config, details):
+        network = MemoryReactor()
+        clock = Clock()
+        reactor = FakeReactor(network, clock)
+        service = _GridRouterService(reactor)
+        deployment = create_deployment(deploy_config, details)
+        pod = create_pod(deployment, ip)
+        service.set_pods([pod])
+        factory = service.factory()
+        protocol = factory.buildProtocol(None)
+
+        transport = StringTransport()
+        protocol.makeConnection(transport)
+        protocol.dataReceived((
+            u"GET /id/{}\r\n"
+            u"Host: example.invalid\r\n"
+            u"\r\n"
+        ).format(details.introducer_tub_id).encode("ascii"))
+
+        self.assertThat(network.tcpServers, HasLength(1))

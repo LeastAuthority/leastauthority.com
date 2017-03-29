@@ -93,6 +93,8 @@ class _EliotLogging(Service):
 
 
 class _FoolscapProxy(Negotiation):
+    isClient = False
+
     # Basically just copied from foolscap/negotiate.py so we get the tub id
     # extraction logic but we can then do something different with it.
     def handlePLAINTEXTServer(self, header):
@@ -118,6 +120,9 @@ class _FoolscapProxy(Negotiation):
 
         Message.log(event_type=u"handlePLAINTEXTServer", want_encrypted=wantEncrypted)
 
+        self._handleTubRequest(targetTubID)
+
+    def _handleTubRequest(self, targetTubID):
         try:
             port_func, pod = self.factory.route_mapping()[targetTubID]
         except KeyError:
@@ -195,6 +200,7 @@ class _GridRouterService(MultiService):
     def factory(self):
         f = Factory.forProtocol(_FoolscapProxy)
         f.reactor = self._reactor
+        f.route_mapping = self.route_mapping
         return f
 
 
