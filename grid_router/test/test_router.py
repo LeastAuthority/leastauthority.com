@@ -2,19 +2,27 @@
 Tests for ``grid_router``.
 """
 
+from socket import AF_INET, socket
+
 from testtools.matchers import AfterPreprocessing, Equals
 
 from hypothesis import given, assume
 from hypothesis.strategies import choices
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
+from twisted.trial.unittest import TestCase as AsyncTestCase
 from twisted.internet.address import IPv4Address
 from twisted.internet.interfaces import IReactorTCP, IReactorTime
+from twisted.internet.defer import Deferred
+from twisted.internet.endpoints import AdoptedStreamServerEndpoint, TCP4ServerEndpoint
 from twisted.test.proto_helpers import StringTransport, MemoryReactor
 from twisted.python.components import proxyForInterface
-from twisted.internet.task import Clock
+from twisted.internet.task import Clock, deferLater
+
+from pyrsistent import freeze
 
 from foolscap.pb import Tub
+from foolscap.referenceable import Referenceable
 
 from lae_util.testtools import TestCase
 from lae_automation.test.strategies import (
@@ -269,3 +277,92 @@ class GridRouterTests(TestCase):
             network.connectors.pop(0).getDestination(),
             Equals(IPv4Address("TCP", ip, details.introducer_port_number)),
         )
+
+
+
+class FoolscapProxyTests(AsyncTestCase):
+    """
+    Tests for ``_FoolscapProxy``.
+    """
+    def setUp(self):
+        from twisted.internet import reactor
+        self.reactor = reactor
+
+    def tearDown(self):
+        return deferLater(self.reactor, 0.1, lambda: None)
+
+    def test_proxying(self):
+        pems = node_pems()
+
+        # Create client and server tubs we can use to speak Foolscap through
+        # the proxy.  This should demonstrate the proxy is working.
+        client = Tub(pems.example())
+        client.startService()
+        self.addCleanup(client.stopService)
+
+        server = Tub(pems.example())
+        server.startService()
+        self.addCleanup(server.stopService)
+
+        # Get an arbitrary local address on which the server tub can listen.
+        while True:
+            server_socket = socket()
+            try:
+                server_socket.bind(("", 0))
+            except Exception as e:
+                print(e)
+                server_socket.close()
+            else:
+                server_socket.listen(1)
+                self.addCleanup(server_socket.close)
+                break
+
+        server_address = server_socket.getsockname()
+        server_endpoint = AdoptedStreamServerEndpoint(
+            self.reactor, server_socket.fileno(), AF_INET,
+        )
+        server.listenOn(server_endpoint)
+
+        # Get a grid router that knows where the server tub really is and so
+        # should be able to proxy connections to it for us.
+        grid_router = _GridRouterService(self.reactor)
+        grid_router.set_route_mapping(freeze({
+            server.getTubID().decode("ascii"): (None, server_address),
+        }))
+
+        # Start the proxy listening.
+        factory = grid_router.factory()
+        d = TCP4ServerEndpoint(self.reactor, 0).listen(factory)
+
+        def listening(proxy_port):
+            self.addCleanup(proxy_port.stopListening)
+
+            # Tell the server tub where the _proxy_ is it generates a furl
+            # pointing at the proxy.  We'll use that furl to connect with the
+            # client tub and rely on the proxy to get us to the right place.
+            host = proxy_port.getHost().host.decode("ascii")
+            port_number = proxy_port.getHost().port
+            server.setLocation(
+                u"{host}:{port}".format(
+                    host=host,
+                    port=port_number,
+                ).encode("ascii"),
+            )
+
+            # Register something arbitrary that we can poke at.
+            furl = server.registerReference(Referenceable())
+
+            # Try to connect to the server tub with the client tub through the
+            # proxy.
+            d = Deferred()
+            reconn = client.connectTo(furl, d.callback)
+            self.addCleanup(reconn.stopConnecting)
+            return d
+
+        d.addCallback(listening)
+        def connected(ref):
+            pass
+        d.addCallback(connected)
+        return d
+
+    # xasdasd

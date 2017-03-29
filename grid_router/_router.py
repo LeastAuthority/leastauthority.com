@@ -9,11 +9,10 @@ import sys
 
 from twisted.python.usage import Options as _Options
 from twisted.internet.protocol import Factory, Protocol
-from twisted.internet.endpoints import TCP4ServerEndpoint, TCP4ClientEndpoint, serverFromString
+from twisted.internet.endpoints import TCP4ClientEndpoint, serverFromString
 from twisted.application.service import MultiService, Service
 from twisted.application.internet import StreamServerEndpointService, TimerService
 
-from foolscap.negotiate import Negotiation
 from foolscap.tokens import BananaError, NegotiationError
 from foolscap.util import isSubstring
 
@@ -91,8 +90,15 @@ class _EliotLogging(Service):
 
 
 
-class _FoolscapProxy(Negotiation):
-    isClient = False
+class _FoolscapProxy(Protocol):
+    buffered = b""
+
+    def dataReceived(self, data):
+        self.buffered += data
+        if b"\r\n\r\n" in self.buffered:
+            header = self.buffered
+            self.buffered = b""
+            self.handlePLAINTEXTServer(header)
 
     # Basically just copied from foolscap/negotiate.py so we get the tub id
     # extraction logic but we can then do something different with it.
@@ -119,9 +125,9 @@ class _FoolscapProxy(Negotiation):
 
         Message.log(event_type=u"handlePLAINTEXTServer", want_encrypted=wantEncrypted)
 
-        self._handleTubRequest(targetTubID)
+        self._handleTubRequest(header, targetTubID)
 
-    def _handleTubRequest(self, targetTubID):
+    def _handleTubRequest(self, header, targetTubID):
         try:
             _, (ip, port_number) = self.factory.route_mapping()[targetTubID]
         except KeyError:
@@ -131,11 +137,11 @@ class _FoolscapProxy(Negotiation):
             raise NegotiationError("TubID not yet available %s" % (targetTubID,))
 
         # Now proxy to ip:port_number
-        proxy(self, TCP4ClientEndpoint(self.factory.reactor, ip, port_number))
+        proxy(self, TCP4ClientEndpoint(self.factory.reactor, ip, port_number), header)
 
 
 
-def proxy(upstream, endpoint):
+def proxy(upstream, endpoint, header):
     def failed(reason):
         upstream.transport.resumeProducing()
         upstream.transport.abortConnection()
@@ -144,14 +150,16 @@ def proxy(upstream, endpoint):
     upstream.transport.pauseProducing()
     d = endpoint.connect(Factory.forProtocol(_Proxy))
     d.addCallbacks(
-        lambda downstream: downstream.take_over(upstream),
+        lambda downstream: downstream.take_over(upstream, header),
         failed,
     )
 
 
 
 class _Proxy(Protocol):
-    def take_over(self, upstream):
+    def take_over(self, upstream, header):
+        self.transport.write(header)
+
         upstream.dataReceived = self.transport.write
         upstream.connectionLost = self._upstream_connection_lost
 
@@ -159,22 +167,18 @@ class _Proxy(Protocol):
         self.upstream = upstream
         self.upstream.transport.resumeProducing()
 
-    def _cleanup(self):
-        del self.upstream.dataReceived
-        del self.upstream.connectionLost
-
-        del self.dataReceived
-        del self.upstream
-
 
     def _upstream_connection_lost(self, reason):
         self.transport.abortConnection()
-        self._cleanup()
 
 
     def connectionLost(self, reason):
         self.upstream.transport.abortConnection()
-        self._cleanup()
+        del self.upstream.dataReceived
+        del self.upstream.connectionLost
+
+        del self.dataReceived
+        self.upstream = None
 
 
 
@@ -216,7 +220,11 @@ class _GridRouterService(MultiService):
         :param list[v1.Pod] pods: The pods which were observed to exist very
             recently.
         """
-        self._route_mapping = self._pods_to_routes(self._route_mapping, pods)
+        self.set_route_mapping(self._pods_to_routes(self._route_mapping, pods))
+
+
+    def set_route_mapping(self, route_mapping):
+        self._route_mapping = freeze(route_mapping)
 
 
     def _pods_to_routes(self, old, pods):
