@@ -7,6 +7,7 @@ The proxy reconfigures itself based on Kubernetes Pods it observes to exist.
 
 import sys
 
+from twisted.python.log import msg
 from twisted.python.usage import Options as _Options
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint, serverFromString
@@ -94,6 +95,7 @@ class _FoolscapProxy(Protocol):
     buffered = b""
 
     def dataReceived(self, data):
+        msg("_FoolscapProxy.dataReceived {!r}".format(data))
         self.buffered += data
         if b"\r\n\r\n" in self.buffered:
             header = self.buffered
