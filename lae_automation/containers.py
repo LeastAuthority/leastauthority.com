@@ -256,6 +256,11 @@ def create_deployment(deploy_config, details):
         v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
 
         # Some other metadata to make inspecting this stuff a little easier.
+        # First added to the pod template...
+        [u"spec", u"template"],
+        lambda template: template.transform(*subscription_metadata(details)),
+
+        # ... and then to the deployment spec.
         *subscription_metadata(details)
     )
 
