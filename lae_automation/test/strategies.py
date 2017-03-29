@@ -7,7 +7,6 @@ QuickCheck-style testing of ``lae_automation`` APIs.
 """
 
 from os import devnull
-from sys import maxunicode
 from string import uppercase, lowercase, ascii_letters, ascii_lowercase, digits
 from base64 import b32encode
 
@@ -212,7 +211,7 @@ def port_numbers():
 
 port_number = port_numbers
 
-def furl():
+def furls():
     # XXX Not well factored probably.
     return strategies.builds(
         lambda pem, addr, port, swissnum: encode_furl(
@@ -225,6 +224,7 @@ def furl():
         port_number(),
         swissnum(),
     )
+furl = furls
 
 def _add_furl(swissnum, target):
     def add(config):
@@ -234,7 +234,7 @@ def _add_furl(swissnum, target):
         return config
     return add
 
-def node_pem():
+def node_pems():
     # XXX Slow to generate these.  Variations probably matter little.
     # Still, they might.  Do something better.
     NODE_PEM = """\
@@ -272,10 +272,12 @@ OzEHlEY+wXPu5R9v3tt2Ktfvfm2Mpfr9Gn+6CUXYn/+P
 """
     return strategies.sampled_from([NODE_PEM])
 
+node_pem = node_pems
+
 def introducer_configuration():
     return strategies.fixed_dictionaries({
         "port": port_number(),
-        "node_pem": node_pem(),
+        "node_pem": node_pems(),
 
         "introducer-swissnum": swissnum(),
         "log-gatherer-swissnum": swissnum(),

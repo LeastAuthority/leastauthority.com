@@ -50,6 +50,14 @@ def subscription_metadata(details):
         [u"metadata", u"annotations", u"customer"], details.customer_id,
         [u"metadata", u"annotations", u"subscription"], details.subscription_id,
         [u"metadata", u"annotations", u"plan"], details.product_id,
+        [u"metadata", u"annotations", u"leastauthority.com/introducer-tub-id"],
+        details.introducer_tub_id,
+        [u"metadata", u"annotations", u"leastauthority.com/storage-tub-id"],
+        details.storage_tub_id,
+        [u"metadata", u"annotations", u"leastauthority.com/introducer-port-number"],
+        u"{}".format(details.introducer_port_number),
+        [u"metadata", u"annotations", u"leastauthority.com/storage-port-number"],
+        u"{}".format(details.storage_port_number),
     ]
 
 

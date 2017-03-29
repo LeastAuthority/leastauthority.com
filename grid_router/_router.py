@@ -9,9 +9,16 @@ import sys
 
 from twisted.python.usage import Options as _Options
 from twisted.protocols.portforward import ProxyFactory
-from twisted.internet.endpoints import TCP4ServerEndpoint
+from twisted.internet.protocol import Factory, Protocol
+from twisted.internet.endpoints import TCP4ServerEndpoint, TCP4ClientEndpoint, serverFromString
 from twisted.application.service import MultiService, Service
 from twisted.application.internet import StreamServerEndpointService, TimerService
+
+from foolscap.negotiate import Negotiation
+from foolscap.tokens import BananaError, NegotiationError
+from foolscap.util import isSubstring
+
+from pyrsistent import freeze, pmap, pset
 
 from eliot import (
     Message, start_action, FileDestination, add_destination, remove_destination,
@@ -53,12 +60,25 @@ def grid_router_service(reactor, k8s, kubernetes_namespace, interval):
     """
     Create an ``IService`` which can route connections to the correct grid.
     """
-    service = MultiService()
+    service = _GridRouterParent()
+
     router = _GridRouterService(reactor)
     router.setServiceParent(service)
+
     updater = _RouterUpdateService(reactor, interval, k8s, kubernetes_namespace, router)
     updater.setServiceParent(service)
+
+    StreamServerEndpointService(
+        serverFromString(reactor, "tcp:10000"),
+        router.factory(),
+    ).setServiceParent(service)
+
     return service
+
+
+class _GridRouterParent(MultiService):
+    def route_mapping(self):
+        return self.getServiceNamed(_GridRouterService.name).route_mapping()
 
 
 class _EliotLogging(Service):
@@ -71,16 +91,120 @@ class _EliotLogging(Service):
         remove_destination(self._destination)
 
 
+
+class _FoolscapProxy(Negotiation):
+    # Basically just copied from foolscap/negotiate.py so we get the tub id
+    # extraction logic but we can then do something different with it.
+    def handlePLAINTEXTServer(self, header):
+        # the client sends us a GET message
+        lines = header.split("\r\n")
+        if not lines[0].startswith("GET "):
+            raise BananaError("not right")
+        command, url, version = lines[0].split()
+        if not url.startswith("/id/"):
+            # probably a web browser
+            raise BananaError("not right")
+        targetTubID = url[4:]
+
+        Message.log(event_type=u"handlePLAINTEXTServer", tub_id=targetTubID)
+
+        if targetTubID == "":
+            # they're asking for an old UnauthenticatedTub. Refuse.
+            raise NegotiationError("secure Tubs require encryption")
+        if isSubstring("Upgrade: TLS/1.0\r\n", header):
+            wantEncrypted = True
+        else:
+            wantEncrypted = False
+
+        Message.log(event_type=u"handlePLAINTEXTServer", want_encrypted=wantEncrypted)
+
+        try:
+            port_func, pod = self.factory.route_mapping()[targetTubID]
+        except KeyError:
+            raise NegotiationError("unknown TubID %s" % (targetTubID,))
+
+        ip = pod.status.podID
+        if not ip:
+            raise NegotiationError("TubID not yet available %s" % (targetTubID,))
+
+        port_number = port_func(pod)
+
+        # Now proxy to ip:port_number
+        proxy(self, TCP4ClientEndpoint(self.factory.reactor, ip, port_number))
+
+
+
+def proxy(upstream, endpoint):
+    def failed(reason):
+        upstream.transport.resumeProducing()
+        upstream.transport.abortConnection()
+        return reason
+
+    upstream.transport.pauseProducing()
+    d = endpoint.connect(Factory.forProtocol(_Proxy))
+    d.addCallbacks(
+        lambda downstream: downstream.take_over(upstream),
+        failed,
+    )
+
+
+
+class _Proxy(Protocol):
+    def take_over(self, upstream):
+        upstream.dataReceived = self.transport.write
+        upstream.connectionLost = self._upstream_connection_lost
+
+        self.dataReceived = upstream.transport.write
+        self.upstream = upstream
+        self.upstream.transport.resumeProducing()
+
+    def _cleanup(self):
+        del self.upstream.dataReceived
+        del self.upstream.connectionLost
+
+        del self.dataReceived
+        del self.upstream
+
+
+    def _upstream_connection_lost(self, reason):
+        self.transport.abortConnection()
+        self._cleanup()
+
+
+    def connectionLost(self, reason):
+        self.upstream.transport.abortConnection()
+        self._cleanup()
+
+
+
 class _GridRouterService(MultiService):
     """
     ``_GridRouterService`` accepts connections on many ports and proxies them
     to the pod responsible for them.  Responsibility is determined by the
     local port number.
     """
+    name = u"grid-router"
+
     def __init__(self, reactor):
         MultiService.__init__(self)
-        _EliotLogging().setServiceParent(self)
+        # _EliotLogging().setServiceParent(self)
         self._reactor = reactor
+        self._route_mapping = freeze({})
+
+
+    def factory(self):
+        f = Factory.forProtocol(_FoolscapProxy)
+        f.reactor = self._reactor
+        return f
+
+
+    def route_mapping(self):
+        """
+        Retrieve the mapping describing how to route connections to pods.
+
+        :return PMap: A mapping from a tub identifier to a (host, port) pair.
+        """
+        return self._route_mapping
 
 
     def set_pods(self, pods):
@@ -90,59 +214,43 @@ class _GridRouterService(MultiService):
         :param list[v1.Pod] pods: The pods which were observed to exist very
             recently.
         """
-        with start_action(action_type="router-update:set-pods", count=len(pods)):
-            pod_names = set()
-
-            # Look at what should be routed but maybe isn't currently.
-            for pod in pods:
-                name = pod.metadata.name
-                # Build up a set of names for later.
-                pod_names.add(name)
-
-                if name not in self.namedServices:
-                    # We're not currently servicing this pod.  We should do so.
-                    try:
-                        pod_service = self._service_for_pod(pod)
-                    except ValueError as e:
-                        Message.log(event_type=u"router-update:add", not_ready=unicode(e), pod=name)
-                    else:
-                        Message.log(event_type=u"router-update:add", ready=True, pod=name)
-                        pod_service.setServiceParent(self)
-
-            # Look at what is routed currently but maybe shouldn't be.
-            to_disown = []
-            for service in self.namedServices.itervalues():
-                if service.name not in pod_names:
-                    # We're currently providing service but there is no longer any
-                    # corresponding pod.
-                    Message.log(event_type=u"router-update:remove", pod=service.name)
-                    # Avoid mutating self.namedServices in this loop.
-                    to_disown.append(service)
-
-            # Now clean up everything we decided is not necessary any more.
-            for service in to_disown:
-                service.disownServiceParent()
+        self._route_mapping = self._pods_to_routes(self._route_mapping, pods)
 
 
-    def _service_for_pod(self, pod):
-        """
-        Create an ``IService`` which will perform the necessary proxying for
-        ``pod``.
+    def _pods_to_routes(self, old, pods):
+        def _introducer_tub(pod):
+            return pod.metadata.annotations[u"leastauthority.com/introducer-tub-id"]
+        def _storage_tub(pod):
+            return pod.metadata.annotations[u"leastauthority.com/storage-tub-id"]
 
-        :param v1.Pod pod:
-        """
-        address = self._address_for_pod(pod)
-        s = MultiService()
-        s.name = pod.metadata.name
-        for container in pod.spec.containers:
-            with start_action(
-                    action_type=u"router-update:new-service",
-                    name=pod.metadata.name, address=address,
-                    port=container.ports[0].serialize(),
-            ):
-                proxy = self._proxy_for_container_port(address, container.ports[0])
-                proxy.setServiceParent(s)
-        return s
+        def _introducer_port_number(pod):
+            return int(pod.metadata.annotations[u"leastauthority.com/introducer-port-number"])
+        def _storage_port_number(pod):
+            return int(pod.metadata.annotations[u"leastauthority.com/storage-port-number"])
+
+        def _introducer_address(pod):
+            return (pod.status.podIP, _introducer_port_number(pod))
+        def _storage_address(pod):
+            return (pod.status.podIP, _storage_port_number(pod))
+
+        with start_action(action_type=u"router-update:set-pods", count=len(pods)):
+            new = pmap([
+                (_introducer_tub(pod), (pod, _introducer_address(pod)))
+                for pod in pods
+            ] + [
+                (_storage_tub(pod), (pod, _storage_address(pod)))
+                for pod in pods
+            ])
+
+            adding = pset(new.keys()) - pset(old.keys())
+            removing = pset(old.keys()) - pset(new.keys())
+
+            for tub_id in adding:
+                Message.log(event_type=u"router-update:add", pod=new[tub_id][0].metadata.name)
+            for tub_id in removing:
+                Message.log(event_type=u"router-update:remove", pod=old[tub_id][0].metadata.name)
+
+            return new
 
 
     def _address_for_pod(self, pod):

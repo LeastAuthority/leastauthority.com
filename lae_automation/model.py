@@ -5,6 +5,7 @@ from pem import parse
 
 from twisted.python.url import URL
 
+from foolscap.pb import Tub
 from foolscap.furl import decode_furl, encode_furl
 
 from lae_util.validators import all
@@ -163,3 +164,11 @@ class SubscriptionDetails(object):
     @property
     def server_node_pem(self):
         return "".join(map(str, self.oldsecrets["server_node_pem"]))
+
+    @property
+    def introducer_tub_id(self):
+        return Tub(self.introducer_node_pem).getTubID().decode("ascii")
+
+    @property
+    def storage_tub_id(self):
+        return Tub(self.server_node_pem).getTubID().decode("ascii")

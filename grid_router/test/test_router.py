@@ -2,9 +2,9 @@
 Tests for ``grid_router``.
 """
 
-from testtools.matchers import Equals, AfterPreprocessing
+from testtools.matchers import AfterPreprocessing, Equals
 
-from hypothesis import assume
+from hypothesis import given, assume
 from hypothesis.strategies import choices
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
@@ -13,14 +13,37 @@ from twisted.test.proto_helpers import MemoryReactor
 from twisted.python.components import proxyForInterface
 from twisted.internet.task import Clock
 
+from foolscap.pb import Tub
+
 from lae_util.testtools import TestCase
-from lae_automation.test.strategies import port_numbers, ipv4_addresses
+from lae_automation.test.strategies import (
+    ipv4_addresses, port_numbers, node_pems, deployment_configuration,
+    subscription_details,
+)
 from lae_automation.containers import create_deployment
 from lae_automation.model import NullDeploymentConfiguration, SubscriptionDetails
 
 from .. import Options, makeService
+from .._router import _GridRouterService
 
 from txkube import v1, memory_kubernetes
+
+
+
+def create_pod(deployment, podIP):
+    # This is roughly how a Deployment creates a Pod... I suppose.
+    return v1.Pod(
+        metadata=deployment.metadata.transform(
+            [u"name"],
+            u"{}-{}".format(deployment.metadata.name, hex(id(deployment))),
+        ),
+        spec=deployment.spec.template.spec,
+        # This is a cheat.  We can't really set the status.  But the
+        # in-memory Kubernetes won't set it either so we'd better do it.
+        status=v1.PodStatus(
+            podIP=podIP,
+        ),
+    )
 
 
 class FakeReactor(
@@ -51,8 +74,9 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         self.deploy_config.introducer_image = u"example-invalid/tahoe-introducer"
         self.deploy_config.storageserver_image = u"example-invalid/tahoe-storageserver"
 
-        self.used_ports = set()
-        self.pods = set()
+        self.used_tubs = set()
+        self.pods = {}
+
 
         self.interval = 1.0
         options = Options()
@@ -79,48 +103,49 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         assume(not self.service.running)
         self.service.privilegedStartService()
         self.service.startService()
+        self.case.addCleanup(self.service.stopService)
 
 
-    @rule(port_number=port_numbers(), host_ip=ipv4_addresses())
-    def create_pod(self, port_number, host_ip):
+    @rule(
+        ip=ipv4_addresses(),
+        storage_pem=node_pems(), storage_port=port_numbers(),
+        intro_pem=node_pems(), intro_port=port_numbers(),
+    )
+    def create_pod(self, ip, storage_pem, storage_port, intro_pem, intro_port):
         """
         A new customer grid pod shows up, as would happen if a new user just
         signed up and got provisioned.
         """
         assume(
-            port_number not in self.used_ports
-            and port_number + 1 not in self.used_ports
+            Tub(storage_pem).getTubID() not in self.used_tubs
+            and Tub(intro_pem).getTubID() not in self.used_tubs
         )
-        self.used_ports.add(port_number)
-        self.used_ports.add(port_number + 1)
         details = SubscriptionDetails(
             bucketname=u"foo",
-            oldsecrets={},
+            # Set the node secrets.  From these, tub identifiers can be
+            # derived.
+            oldsecrets={
+                # Storage server.
+                u"server_node_pem": storage_pem,
+                u"introducer_node_pem": intro_pem,
+            },
             customer_email=u"foo",
             customer_pgpinfo=u"foo",
             product_id=u"foo",
             customer_id=u"foo",
             subscription_id=u"foo",
-            introducer_port_number=port_number,
-            storage_port_number=port_number + 1,
+            introducer_port_number=intro_port,
+            storage_port_number=storage_port,
         )
         deployment = create_deployment(self.deploy_config, details)
-        # This is roughly how a Deployment creates a Pod... I suppose.
-        pod = v1.Pod(
-            metadata=dict(
-                namespace=deployment.metadata.namespace,
-                name=u"{}-{}".format(deployment.metadata.name, port_number),
-                labels=deployment.metadata.labels,
-            ),
-            spec=deployment.spec.template.spec,
-            # This is a cheat.  We can't really set the status.  But the
-            # in-memory Kubernetes won't set it either so we'd better do it.
-            status=v1.PodStatus(
-                podIP=host_ip,
-            ),
-        )
+        pod = create_pod(deployment, ip)
         self.case.successResultOf(self.client.create(pod))
-        self.pods.add(pod)
+
+        self.pods[pod] = (ip, storage_pem, storage_port, intro_pem, intro_port)
+        self.used_tubs.update({
+            Tub(storage_pem).getTubID(),
+            Tub(intro_pem).getTubID(),
+        })
 
 
     @rule(choose=choices())
@@ -130,12 +155,12 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         cancelled their subscription.
         """
         assume(0 < len(self.pods))
-        pod = choose(sorted(self.pods))
-        self.pods.remove(pod)
-        self.used_ports.difference_update({
-            port.containerPort
-            for container in pod.spec.containers
-            for port in container.ports
+        pod, values = choose(sorted(self.pods.items()))
+        _, storage_pem, _, intro_pem, _ = values
+        del self.pods[pod]
+        self.used_tubs.difference_update({
+            Tub(storage_pem).getTubID(),
+            Tub(intro_pem).getTubID(),
         })
         self.case.successResultOf(self.client.delete(pod))
 
@@ -152,14 +177,19 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         # at the current state.
         self.clock.advance(self.interval)
 
-        # GridRouter ought to have directed the reactor to listen on exactly
-        # the ports we've tracked in used_ports.
+        # GridRouter ought to have a mapping from the active subscription tub
+        # identifiers to the internal addresses that own those tubs.
+        mapping = self.service.route_mapping()
+
+        expected = {}
+        for pod, values in self.pods.iteritems():
+            (ip, storage_pem, storage_port, intro_pem, intro_port) = values
+            expected[Tub(storage_pem).getTubID()] = (pod, (ip, storage_port))
+            expected[Tub(intro_pem).getTubID()] = (pod, (ip, storage_port))
+
         self.case.assertThat(
-            self.network.tcpServers,
-            AfterPreprocessing(
-                lambda servers: {server[0] for server in servers},
-                Equals(self.used_ports),
-            ),
+            mapping,
+            Equals(expected),
         )
 
 
@@ -170,3 +200,31 @@ class GridRouterTests(TestCase):
     """
     def test_grid_router(self):
         run_state_machine_as_test(lambda: GridRouterStateMachine(self))
+
+
+    @given(
+        ip=ipv4_addresses(),
+        deploy_config=deployment_configuration(),
+        details=subscription_details()
+    )
+    def test_pods_to_routes(self, ip, deploy_config, details):
+        reactor = object()
+        service = _GridRouterService(reactor)
+        deployment = create_deployment(deploy_config, details)
+        pod = create_pod(deployment, ip)
+        service.set_pods([pod])
+        mapping = service.route_mapping()
+        self.assertThat(
+            mapping,
+            AfterPreprocessing(
+                lambda m: {
+                    tub_id: address
+                    for (tub_id, (pod, address))
+                    in m.iteritems()
+                },
+                Equals({
+                    details.introducer_tub_id: (ip, details.introducer_port_number),
+                    details.storage_tub_id: (ip, details.storage_port_number),
+                }),
+            ),
+        )
