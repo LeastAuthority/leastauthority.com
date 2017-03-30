@@ -360,30 +360,36 @@ class _State(PClass):
 
 
 def _get_converge_inputs(config, subscriptions, k8s, aws):
-    return gatherResults([
-        get_active_subscriptions(subscriptions),
-        get_customer_grid_configmaps(k8s, config.kubernetes_namespace),
-        get_customer_grid_deployments(k8s, config.kubernetes_namespace),
-        # get_customer_grid_replicasets(k8s, config.kubernetes_namespace),
-        # get_customer_grid_pods(k8s, config.kubernetes_namespace),
-        get_customer_grid_service(k8s, config.kubernetes_namespace),
-        get_hosted_zone_by_name(aws.get_route53_client(), Name(config.domain)),
-        get_s3_buckets(aws.get_s3_client()),
-    ]).addCallback(
-        lambda state: _State(**dict(
-            zip([
-                u"subscriptions",
-                u"configmaps",
-                u"deployments",
-                # u"replicasets",
-                # u"pods",
-                u"service",
-                u"zone",
-                u"buckets",
-            ], state,
-            ),
-        ))
-    )
+    a = start_action(action_type=u"load-converge-inputs")
+    with a.context():
+        d = DeferredContext(
+            gatherResults([
+                get_active_subscriptions(subscriptions),
+                get_customer_grid_configmaps(k8s, config.kubernetes_namespace),
+                get_customer_grid_deployments(k8s, config.kubernetes_namespace),
+                # get_customer_grid_replicasets(k8s, config.kubernetes_namespace),
+                # get_customer_grid_pods(k8s, config.kubernetes_namespace),
+                get_customer_grid_service(k8s, config.kubernetes_namespace),
+                get_hosted_zone_by_name(aws.get_route53_client(), Name(config.domain)),
+                get_s3_buckets(aws.get_s3_client()),
+            ]),
+        )
+        d.addCallback(
+            lambda state: _State(**dict(
+                zip([
+                    u"subscriptions",
+                    u"configmaps",
+                    u"deployments",
+                    # u"replicasets",
+                    # u"pods",
+                    u"service",
+                    u"zone",
+                    u"buckets",
+                ], state,
+                ),
+            )),
+        )
+        return d.addActionFinish()
 
 
 @with_action(action_type=u"converge-logic")
