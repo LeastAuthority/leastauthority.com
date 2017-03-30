@@ -63,12 +63,12 @@ web.static = public_html
 
 # This gives a Twisted endpoint description string defining where the
 # storage node will listen for Foolscap connections.
-tub.port = tcp:port=%(tub_port_number)s
+tub.port = tcp:port=%(private_port_number)s
 
 # This gives a comma-separated list of ip:port pairs which will be
 # published as locations at which this storage node's Foolscap server
 # can be reached.
-tub.location = %(publichost)s:%(tub_port_number)s,%(privatehost)s:%(tub_port_number)s
+tub.location = %(publichost)s:%(public_port_number)s,%(privatehost)s:%(private_port_number)s
 
 # This gives the furl of a Foolscap log gatherer where we can send our
 # logs.
@@ -169,7 +169,8 @@ def configure_storage(
         nickname=bucket_name,
         publichost=publichost,
         privatehost=privatehost,
-        tub_port_number=port,
+        private_port_number=port,
+        public_port_number=10000,
         introducer_furl=add_preferred_address(privatehost, introducer_furl),
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
