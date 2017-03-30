@@ -717,12 +717,16 @@ def _execute_converge_outputs(jobs):
     if not jobs:
         return
 
-    job = jobs.pop(0)
-    d = DeferredContext(job())
-    d.addErrback(write_failure)
+    a = start_action(action_type=u"execute-converge-step")
+    with a.context():
+        job = jobs.pop(0)
+        d = DeferredContext(job())
+        d.addErrback(write_failure)
+        d = d.addActionFinish()
+
     if jobs:
         d.addCallback(lambda ignored: _execute_converge_outputs(jobs))
-    return d.result
+    return d
 
 
 
