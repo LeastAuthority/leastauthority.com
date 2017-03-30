@@ -727,7 +727,11 @@ def _execute_converge_output(jobs):
         d = d.addActionFinish()
 
     if jobs:
-        d.addCallback(lambda ignored: _execute_converge_output(jobs))
+        # Capture whatever action context is active now and make sure it is
+        # also active when we get back here to process the next job.
+        DeferredContext(d).addCallback(
+            lambda ignored: _execute_converge_output(jobs),
+        )
     return d
 
 
