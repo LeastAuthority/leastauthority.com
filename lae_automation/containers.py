@@ -172,6 +172,11 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 			    }
 			],
                         u"ports": [],
+                        u"resources": {
+                            u"requests": {
+                                u"memory": u"300Mi",
+                            },
+                        },
 		    },
 		    {
                         # The image is filled in at instantiation time.
@@ -183,6 +188,11 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 			    }
 			],
                         u"ports": [],
+                        u"resources": {
+                            u"requests": {
+                                u"memory": u"300Mi",
+                            },
+                        },
 		    }
 		]
 	    }
