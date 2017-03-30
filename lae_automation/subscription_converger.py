@@ -407,7 +407,8 @@ def _converge_logic(actual, config, subscriptions, k8s, aws):
 
     jobs = []
     for converger in convergers:
-        jobs.extend(converger(actual, config, subscriptions, k8s, aws))
+        with start_action(action_type=converger.func_name):
+            jobs.extend(converger(actual, config, subscriptions, k8s, aws))
 
     return jobs
 
