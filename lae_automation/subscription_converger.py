@@ -30,7 +30,9 @@ from twisted.web.client import Agent
 
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceRegion
-from txaws.route53.model import Name, CNAME, RRSet, delete_rrset, create_rrset
+from txaws.route53.model import (
+    Name, CNAME, RRSetKey, RRSet, delete_rrset, create_rrset, upsert_rrset,
+)
 
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
@@ -393,7 +395,8 @@ def _converge_logic(actual, config, subscriptions, k8s, aws):
         _converge_deployments,
         # _converge_replicasets,
         # _converge_pods,
-        _converge_route53,
+        _converge_route53_customer,
+        _converge_route53_infrastructure,
     ]
 
     jobs = []
@@ -604,6 +607,15 @@ def _converge_configmaps(actual, config, subscriptions, k8s, aws):
 
 
 
+def _introducer_domain(domain):
+    """
+    Construct a ``Name`` for the intermediate domain name that glues per-user
+    domain names to the load balancer hostname/address for the grid service.
+    """
+    return Name(u"introducer.{}".format(domain))
+
+
+
 class _ChangeableZone(PClass):
     zone = field()
     rrsets = field()
@@ -614,7 +626,7 @@ class _ChangeableZone(PClass):
             if key.type == u"CNAME":
                 subscription_part, rest = key.label.text.split(u".", 1)
                 # XXX Ugh strings
-                if rest.rstrip(u".") == u"introducer.{}".format(self.domain).rstrip(u"."):
+                if Name(rest) == _introducer_domain(self.domain):
                     subscription_id = autopad_b32decode(subscription_part)
                     yield subscription_id
 
@@ -626,7 +638,16 @@ class _ChangeableZone(PClass):
 
 
 
-def _converge_route53(actual, config, subscriptions, k8s, aws):
+def _converge_route53_customer(actual, config, subscriptions, k8s, aws):
+    """
+    Converge on the desired Route53 state relating to individual S4
+    subscriptions.
+
+    Specifically, make sure the per-subscription domain names that grants
+    access to individual subscription's introducer and storage servers exist
+    and point at the right thing.  Also clean up the names for any cancelled
+    subscriptions.
+    """
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableZone(
@@ -646,6 +667,43 @@ def _converge_route53(actual, config, subscriptions, k8s, aws):
     creates = list(partial(create, s) for s in changes.create)
     return deletes + creates
 
+
+
+def _converge_route53_infrastructure(actual, config, subscriptions, k8s, aws):
+    """
+    Converge on the desired Route53 state relating to general S4
+    infrastructure.
+
+    Specifically, make sure there is an rrset for the ``introducer`` subdomain
+    which points at the customer grid service's load balancer endpoint.
+    """
+    if actual.service is None or actual.service.status is None:
+        # Cannot do anything without a v1.Service or one without a populated
+        # v1.ServiceStatus field.
+        return []
+
+    loadbalancer_hostname = actual.service.status.loadBalancer.ingress[0].hostname
+    introducer_key = RRSetKey(label=_introducer_domain(config.domain), type=u"CNAME")
+    desired_rrset = RRSet(
+        label=introducer_key.label,
+        type=introducer_key.type,
+        ttl=60,
+        records={
+            CNAME(canonical_name=Name(loadbalancer_hostname)),
+        },
+    )
+
+    zone, rrsets = actual.zone
+    actual_rrset = rrsets.get(introducer_key, None)
+    if actual_rrset == desired_rrset:
+        # Nothing to do.
+        return []
+
+    # Create it or change it to what we want.
+    route53 = aws.get_route53_client()
+    return [
+        lambda: change_route53_rrsets(route53, zone, desired_rrset),
+    ]
 
 
 def _execute_converge_outputs(jobs):
@@ -757,9 +815,9 @@ def delete_route53_rrsets(route53, zone, subscription_ids):
             for subscription_id
             in subscription_ids
         ))
-    c = DeferredContext(d)
-    c.addActionFinish()
-    return c.result
+        d = DeferredContext(d)
+        return d.addActionFinish()
+
 
 def create_route53_rrsets(route53, zone, subscriptions):
     a = start_action(action_type=u"create-route53")
@@ -769,6 +827,13 @@ def create_route53_rrsets(route53, zone, subscriptions):
             for subscription
             in subscriptions
         ))
-    c = DeferredContext(d)
-    c.addActionFinish()
-    return c.result
+        d = DeferredContext(d)
+        return d.addActionFinish()
+
+
+def change_route53_rrsets(route53, zone, rrset):
+    a = start_action(action_type=u"change-route53")
+    with a.context():
+        d = route53.change_resource_record_sets(zone.identifier, [upsert_rrset(rrset)])
+        d = DeferredContext(d)
+        return d.addActionFinish()

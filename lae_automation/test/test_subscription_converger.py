@@ -9,7 +9,7 @@ from zope.interface.verify import verifyObject
 import attr
 
 from hypothesis import assume, given
-from hypothesis.strategies import choices
+from hypothesis.strategies import choices, data
 
 from pyrsistent import thaw, pmap, discard
 
@@ -45,6 +45,7 @@ from lae_automation.subscription_converger import (
     divert_errors_to_log,
 )
 from lae_automation.containers import (
+    S4_CUSTOMER_GRID_NAME,
     new_service,
     create_configuration,
     create_deployment,
@@ -53,7 +54,9 @@ from lae_automation.containers import (
 )
 from lae_automation.signup import get_bucket_name
 
-from .strategies import subscription_id, subscription_details, deployment_configuration
+from .strategies import (
+    domains, subscription_id, subscription_details, deployment_configuration,
+)
 from ..kubeclient import KubeClient
 
 from txkube import v1, memory_kubernetes
@@ -279,6 +282,41 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         Message.log(deactivating=subscription_id)
         self.database.deactivate_subscription(subscription_id)
 
+    @rule(data=data())
+    def allocate_loadbalancer(self, data):
+        """
+        Complete the S4 Customer Grid service setup by updating its status to
+        reflect the existence of a platform-supplied LoadBalancer.  This would
+        happen due to actions taken by Kubernetes for any ``LoadBalancer``
+        service.
+        """
+        k8s_state = self.kubernetes._state
+        services = [
+            service
+            for service
+            in k8s_state.services.items
+            if service.spec.type == u"LoadBalancer"
+            and service.status is None
+        ]
+        assume([] != services)
+        for service in services:
+            self.kubernetes._state = k8s_state = k8s_state.replace(
+                u"services",
+                service,
+                service.set(
+                    u"status",
+                    v1.ServiceStatus(
+                        loadBalancer=v1.LoadBalancerStatus(
+                            ingress=[
+                                v1.LoadBalancerIngress(
+                                    hostname=data.draw(domains()),
+                                ),
+                            ],
+                        ),
+                    ),
+                ),
+            )
+
     @rule()
     def converge(self):
         """
@@ -362,14 +400,42 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
     def check_service(self, database, config, subscriptions, k8s_state, aws):
         expected = new_service(config.kubernetes_namespace)
+        actual = k8s_state.services.item_by_name(expected.metadata.name)
+        # Don't actually care about the status.  That belongs to the server
+        # anyway.
+        tweaked = actual.set(u"status", None)
         assert_that(
-            k8s_state.services.item_by_name(expected.metadata.name),
+            tweaked,
             GoodEquals(expected),
         )
         Message.log(check_service=thaw(expected))
 
     def check_route53(self, database, config, subscriptions, k8s_state, aws):
         expected_rrsets = pmap()
+
+        service = k8s_state.services.item_by_name(S4_CUSTOMER_GRID_NAME)
+        if service.status is not None:
+            # TODO: It would be slightly nicer to make this a Route53 Alias
+            # instead of a CNAME.  txAWS needs support for creating Route53 Alias
+            # rrsets first, though.
+            introducer = RRSetKey(
+                label=Name(u"introducer.{domain}".format(domain=config.domain)),
+                type=u"CNAME",
+            )
+            service_ingress = RRSet(
+                label=introducer.label,
+                type=introducer.type,
+                ttl=60,
+                records={
+                    CNAME(
+                        canonical_name=Name(
+                            service.status.loadBalancer.ingress[0].hostname,
+                        ),
+                    ),
+                },
+            )
+            expected_rrsets = expected_rrsets.set(introducer, service_ingress)
+
         for sid in subscriptions:
             label = _introducer_name_for_subscription(sid, config.domain)
             key = RRSetKey(label=label, type=u"CNAME")
@@ -392,6 +458,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             actual_rrsets,
             GoodEquals(expected_rrsets),
         )
+
 
 class SubscriptionConvergenceTests(TestCase):
     def test_convergence(self):

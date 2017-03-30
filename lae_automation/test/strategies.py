@@ -167,8 +167,6 @@ def idna_text(**kw):
 
 
 def domains():
-    # XXX This fails to generate a value a lot of the time because of its two
-    # filters.
     def build_domain(complete, random):
         while complete:
             piece = complete[:random.randrange(64)]
