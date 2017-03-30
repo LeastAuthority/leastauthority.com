@@ -14,8 +14,8 @@ from os import environ
 from functools import partial
 from hashlib import sha256
 
+import attr
 from pyrsistent import PClass, field
-
 
 from eliot import Message, start_action, write_failure
 from eliot.twisted import DeferredContext
@@ -839,7 +839,7 @@ def create_route53_rrsets(route53, zone, subscriptions):
 
 
 def change_route53_rrsets(route53, zone, rrset):
-    a = start_action(action_type=u"change-route53")
+    a = start_action(action_type=u"change-route53", zone=zone.identifier, rrset=attr.asdict(rrset))
     with a.context():
         d = route53.change_resource_record_sets(zone.identifier, [upsert_rrset(rrset)])
         d = DeferredContext(d)
