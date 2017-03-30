@@ -20,7 +20,9 @@ from pyrsistent import PClass, field
 from eliot import Message, start_action, write_failure
 from eliot.twisted import DeferredContext
 
-from twisted.internet.defer import Deferred, maybeDeferred, gatherResults
+from twisted.internet.defer import (
+    Deferred, maybeDeferred, gatherResults, succeed,
+)
 from twisted.internet import task
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options, UsageError
@@ -713,9 +715,9 @@ def _converge_route53_infrastructure(actual, config, subscriptions, k8s, aws):
     ]
 
 
-def _execute_converge_outputs(jobs):
+def _execute_converge_output(jobs):
     if not jobs:
-        return
+        return succeed(None)
 
     a = start_action(action_type=u"execute-converge-step")
     with a.context():
@@ -725,9 +727,15 @@ def _execute_converge_outputs(jobs):
         d = d.addActionFinish()
 
     if jobs:
-        d.addCallback(lambda ignored: _execute_converge_outputs(jobs))
+        d.addCallback(lambda ignored: _execute_converge_output(jobs))
     return d
 
+
+def _execute_converge_outputs(jobs):
+    a = start_action(action_type=u"execute-converge-steps")
+    with a.context():
+        d = DeferredContext(_execute_converge_output(jobs))
+        return d.addActionFinish()
 
 
 def converge(config, subscriptions, k8s, aws):
