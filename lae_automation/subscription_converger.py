@@ -228,11 +228,17 @@ def with_action(action_type):
         def g(*args, **kwargs):
             action = start_action(action_type=action_type)
             with action.context():
-                result = f(*args, **kwargs)
-                if isinstance(result, Deferred):
-                    d = DeferredContext(result)
-                    d.addActionFinish()
-                return result
+                try:
+                    result = f(*args, **kwargs)
+                except Exception as e:
+                    action.finish(e)
+                else:
+                    if isinstance(result, Deferred):
+                        d = DeferredContext(result)
+                        return d.addActionFinish()
+                    else:
+                        action.finish()
+                        return result
         return g
     return wrapper
 
