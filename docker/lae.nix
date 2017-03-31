@@ -233,7 +233,7 @@ rec {
         pycryptopp
         service-identity
         foolscap
-          twisted
+        twisted
         (nevow.override {
             postInstall = null;
           })
