@@ -24,6 +24,7 @@ matrix:
     # suite as well).
     - env: ENV="packaging"
       language: "nix"
+      sudo: "required"
 
 # Install leastauthority.com's dependencies.
 install:
