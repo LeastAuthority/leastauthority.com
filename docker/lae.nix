@@ -401,7 +401,7 @@ rec {
       builtins.filterSource goodSource ./..;
 
     checkPhase = ''
-      trial lae_util lae_site lae_automation
+      trial lae_util lae_site lae_automation grid_router
     '';
 
     meta = {
