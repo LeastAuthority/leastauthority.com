@@ -6,6 +6,7 @@ from json import dumps
 
 from zope.interface.verify import verifyObject
 
+import pem
 import attr
 
 from hypothesis import assume, given
@@ -56,14 +57,11 @@ from lae_automation.signup import get_bucket_name
 
 from .strategies import (
     domains, subscription_id, subscription_details, deployment_configuration,
+    node_pems,
 )
 from ..kubeclient import KubeClient
 
 from txkube import v1, memory_kubernetes
-
-CERTIFICATE = FilePath(__file__).parent().child("cert.pem")
-KEY = CERTIFICATE.sibling("key.pem")
-
 
 def is_lower():
     return MatchesPredicate(
@@ -165,21 +163,29 @@ class MakeServiceTests(TestCase):
         """
         ``makeService`` returns an object that provides ``IService``.
         """
-        config = FilePath(self.mktemp())
+        scratch = FilePath(self.mktemp())
+        scratch.makedirs()
+
+        cert_and_key = node_pems().example()
+        cert, key = pem.parse(cert_and_key)
+        scratch.child(u"cert.pem").setContent(cert.as_bytes())
+        scratch.child(u"key.pem").setContent(key.as_bytes())
+
+        config = scratch.child(u"config.json")
         config.setContent(dumps({
             u"apiVersion": u"v1",
             u"clusters": [{
                 u"name": u"testing",
                 u"cluster": {
-                    u"certificate-authority": CERTIFICATE.path,
+                    u"certificate-authority": scratch.child(u"cert.pem").path,
                     u"server": u"https://bar/",
                 },
             }],
             u"users": [{
                 u"name": u"testing",
                 u"user": {
-                    u"client-certificate": CERTIFICATE.path,
-                    u"client-key": KEY.path,
+                    u"client-certificate": scratch.child(u"cert.pem").path,
+                    u"client-key": scratch.child(u"key.pem").path,
                 },
             }],
             u"contexts": [{
