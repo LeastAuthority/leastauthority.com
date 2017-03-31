@@ -425,4 +425,19 @@ rec {
       license = pkgs.stdenv.lib.licenses.gpl2;
     };
   };
+
+  s4-common-image = pkgs.dockerTools.buildImage {
+      name = "leastauthority/s4-common";
+      runAsRoot = ''
+        #!${pkgs.stdenv.shell}
+        ${pkgs.dockerTools.shadowSetup}
+        groupadd --system lae
+        useradd --system --gid lae --home-dir /app/data lae
+      '';
+      contents = pkgs.python27.buildEnv.override {
+        extraLibs = [ pkgs.dash pkgs.coreutils lae ];
+        ignoreCollisions = true;
+        postBuild = "\${out}/bin/twistd --help > /dev/null";
+      };
+    };
 }
