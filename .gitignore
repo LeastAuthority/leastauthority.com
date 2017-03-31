@@ -1,6 +1,25 @@
-/flapp
+# Compiled Python bytecode cache files
 *.pyc
 *.pyo
+
+# Editor backups
 *~
-env/*
-_trial_temp/
+
+# Temporary working directory for trial test runner
+_trial_temp
+_trial_temp-*
+
+# Hypothesis example database
+.hypothesis
+
+# Twisted plugin system cache file
+twisted/plugins/dropin.cache
+
+# distutils artifact output directory
+dist
+
+# distutils metadata artifact
+leastauthority.com.egg-info
+
+# telepresence log file
+telepresence.log
