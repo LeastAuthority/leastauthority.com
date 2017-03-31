@@ -172,9 +172,16 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 			    }
 			],
                         u"ports": [],
+                        # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                         u"resources": {
                             u"requests": {
-                                u"memory": u"300Mi",
+                                # Observed virtual size of the introducer
+                                # around 206MiB.  Observed resident size of
+                                # the introducer around 54MiB.  Normally I
+                                # don't think the working set size of the
+                                # introducer should change much - it does very
+                                # little work.
+                                u"memory": u"64Mi",
                             },
                         },
 		    },
@@ -188,9 +195,17 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
 			    }
 			],
                         u"ports": [],
+                        # # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                         u"resources": {
                             u"requests": {
-                                u"memory": u"300Mi",
+                                # Observed virtual size of the introducer
+                                # around 299MiB.  Observed resident size of
+                                # the introducer around 64MiB.  I would expect
+                                # the working set size of the storage server
+                                # to vary more than that of the introducer.
+                                # It handles buffering of more data flowing
+                                # between clients and S3.
+                                u"memory": u"128Mi",
                             },
                         },
 		    }
