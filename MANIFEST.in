@@ -6,6 +6,3 @@ graft lae_site/static
 
 # Helper for starting tahoe-lafs with configuration from our system.
 include lae_automation/configure-tahoe
-
-# Some data files used by the test suite.
-include lae_automation/test/*.pem
