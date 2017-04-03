@@ -1,8 +1,34 @@
 { pkgs ? import <nixpkgs> {}
-, pythonPackages ? pkgs.python27Packages {}
+, pythonPackages ? pkgs.python27Packages
 }:
 
 rec {
+  jsonpickle = pythonPackages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "jsonpickle";
+    version = "0.9.4";
+
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/cc/5e/6ecbd1d27524fcafeed4f6156f47a2a79e31e4bfa383e329e9ba93c7f3ee/jsonpickle-0.9.4.tar.gz";
+      sha256 = "0f7rs3v30xhwdmnqhqn9mnm8nxjq3yhp6gdzkg3z8m8lynhr968x";
+    };
+  };
+
+  deepdiff = pythonPackages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "deepdiff";
+    version = "3.1.2";
+
+    propagatedBuildInputs = [ jsonpickle ];
+
+    format = "wheel";
+
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/6f/56/9b61c4ecc6e16e1de85f474540c314434d7e2ec6f3c03fe4e0e3cc92a873/deepdiff-3.1.2-py2-none-any.whl";
+      sha256 = "033hn1a3didw782fnknqbw118cangy1gf30icpv28p73qcd7dli8";
+    };
+  };
+
   filepath = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "filepath";
@@ -111,16 +137,30 @@ rec {
     doCheck = false;
   };
 
+  tree-format = pythonPackages.buildPythonPackage rec {
+    name = "tree-format-0.1.1";
+
+    format = "wheel";
+
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/50/a4/ea87a1808a130ccd5b9a47b1cfe82d4f75bc630c094a62179a46da7209c4/tree_format-0.1.1-py2-none-any.whl";
+      sha256 = "0y664nz2sg3mzn95fpq4nq08fyi14pyp7cm3jii783bvgfwpb1j9";
+    };
+  };
+
   eliot-tree = pythonPackages.buildPythonPackage rec {
-    name = "eliot-tree-15.3.0";
+    name = "eliot-tree-17.0.0";
+
+    format = "wheel";
 
     propagatedBuildInputs =
       with pythonPackages;
-      [ toolz jmespath ];
+      [ toolz jmespath six iso8601 termcolor tree-format eliot ];
 
     src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/88/63/48a8f50480255b4902b9ba3c4825d10fca9d47fd726679877ff076407839/${name}.tar.gz";
-      sha256 = "1gasfjbsk9pwb9c3qqrs9z271l7lc334n11xd43byhy1im4hg9cy";
+      # Wheels have underscores?  Argh or whatever.
+      url = "https://pypi.python.org/packages/02/d9/585af501ee09d797f59ebe94369a0d2a20d3bf239795e663c7b8b055e228/eliot_tree-17.0.0-py2-none-any.whl";
+      sha256 = "0fim44kqkx5hv5spx700jpc7xn8922b926vymz53v256j7jh3svy";
     };
 
     checkPhase = ''
@@ -193,10 +233,10 @@ rec {
         pycryptopp
         service-identity
         foolscap
-  	twisted
+        twisted
         (nevow.override {
-  	  postInstall = null;
-  	})
+            postInstall = null;
+          })
       ];
 
     # Lots of stuff fails. :(
@@ -208,14 +248,55 @@ rec {
     pname = "txAWS";
     version = "0.2.1.post5";
 
+    propagatedBuildInputs =
+      with pythonPackages;
+      [ dateutil twisted ];
+
     src = pkgs.fetchurl {
       url = "https://tahoe-lafs.org/deps/txAWS-0.2.1.post5.tar.gz";
       sha256 = "1mwxpkr3ivsq35cp6s84f0yfmavyskqdf9drhvk5jvnmi6xfppq2";
     };
 
+    # Test suite fails with some networking errors.
+  };
+
+  constantly = pythonPackages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "constantly";
+    version = "15.1.0";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/c/constantly/${name}.tar.gz";
+      sha256 = "0dgwdla5kfpqz83hfril716inm41hgn9skxskvi77605jbmp4qsq";
+    };
+
+    # Constantly doesn't ship with *any* tests!
+    doCheck = false;
+  };
+
+  txaws030dev0 = pythonPackages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "txAWS";
+    version = "0.3.0.dev0";
+
+    src = pkgs.fetchFromGitHub {
+      owner = "twisted";
+      repo = "txaws";
+      rev = "2c1a075caa24c9fa3c4e84dbe206196a4faa279c";
+      sha256 = "1jdswmpkncvljsjlszl8968q5c2s0569k9hs3c5rqnf54czj2lq5";
+    };
+
+    buildInputs =
+      with pythonPackages;
+      [ treq ];
+
     propagatedBuildInputs =
       with pythonPackages;
-      [ dateutil twisted ];
+      [ venusian attrs dateutil incremental pyrsistent0_12_0 constantly pyopenssl16_2_0 pem service-identity twisted lxml ];
+
+    checkPhase = ''
+      trial txaws
+    '';
   };
 
   fixtures300 = pythonPackages.fixtures.override rec {
@@ -281,18 +362,18 @@ rec {
 
     buildInputs =
       with pythonPackages;
-      [ treq pem pyyaml testtools220 hypothesis fixtures300 eliot eliot-tree klein ];
+      [ testtools220 hypothesis fixtures300 eliot-tree ];
 
     propagatedBuildInputs =
       with pythonPackages;
-      [ zope_interface attrs pyrsistent0_12_0 incremental service-identity pyopenssl16_2_0 twisted pem eliot dateutil pykube ];
+      [ zope_interface attrs pyrsistent0_12_0 incremental service-identity pyopenssl16_2_0 twisted pem eliot dateutil pykube eliot treq pem pyyaml klein ];
 
 
     src = pkgs.fetchFromGitHub {
       owner = "LeastAuthority";
       repo = "txkube";
-      rev = "ba3b65767c629fd63db911e451e3b8c17435f4b0";
-      sha256 = "18wi1j2m2pcfjrxzwbkn531nri3s1hkxfs3pq34pbra1npkx0wkn";
+      rev = "444fec5a1bfe66410ee56c867a022de9a19275c1";
+      sha256 = "07rbckc2f171wspns0fr6fpck982si73p20cjkm1d3mw0ygxnlrk";
     };
 
     checkPhase = ''
@@ -311,24 +392,27 @@ rec {
     propagatedBuildInputs =
       with pythonPackages; [
         pem
+        deepdiff
         pyopenssl16_2_0
         filepath
         eliot
         stripe
         Fabric
         attrs
-  	jinja2
-  	twisted
+        jinja2
+        twisted
         txaws021post5
         tahoe_lafs
-  	txkube000
+        txkube000
       ];
 
     src =
     let
-      excludedDirs = [ ".git" ".hypothesis" "_trial_temp" ];
+      excludedDirs = [ ".git" ".hypothesis" "_trial_temp" "dist" "docs" "docker" "k8s" ];
+      excludedFiles = [ ".travis.yml" ".dockerignore" ".gitignore" "requirements.txt" ];
       goodSource = (path: type:
-        type != "directory" || ! (builtins.elem (baseNameOf path) excludedDirs)
+        ! (type == "directory" && (builtins.elem (baseNameOf path) excludedDirs)) &&
+	! (type == "regular" && (builtins.elem (baseNameOf path) excludedFiles))
       );
     in
       builtins.filterSource goodSource ./..;
@@ -341,4 +425,19 @@ rec {
       license = pkgs.stdenv.lib.licenses.gpl2;
     };
   };
+
+  s4-common-image = pkgs.dockerTools.buildImage {
+      name = "leastauthority/s4-common";
+      runAsRoot = ''
+        #!${pkgs.stdenv.shell}
+        ${pkgs.dockerTools.shadowSetup}
+        groupadd --system lae
+        useradd --system --gid lae --home-dir /app/data lae
+      '';
+      contents = pkgs.python27.buildEnv.override {
+        extraLibs = [ pkgs.dash pkgs.coreutils lae ];
+        ignoreCollisions = true;
+        postBuild = "\${out}/bin/twistd --help > /dev/null";
+      };
+    };
 }
