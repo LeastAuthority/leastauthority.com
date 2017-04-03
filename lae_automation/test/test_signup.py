@@ -178,7 +178,6 @@ class TestSignupModule(TestCase):
         self.failUnlessEqual(signup.get_bucket_name("abc", "def"), "lae-mfrgg-mrswm")
 
 
-TestSignupModule.test_activate_subscribed_service.__func__.skip = "mostly obsolete"
 
 # New tests for signup.  Trying to keep a healthy distance from old
 # test implementation.
