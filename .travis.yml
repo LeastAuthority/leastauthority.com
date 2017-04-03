@@ -23,9 +23,11 @@ matrix:
     # This builder will build the Nix packages (which happens to run the test
     # suite as well).
     - env: ENV="packaging"
-      language: "nix"
       # Force this to run in a VM since the packaging script wants to launch Docker.
       sudo: "required"
+      # We don't really need any particular language runtime.
+      # Maybe the C runtime is lighter than the rest?
+      language: "C"
 
 # Install leastauthority.com's dependencies.
 install:
