@@ -24,6 +24,7 @@ matrix:
     # suite as well).
     - env: ENV="packaging"
       language: "nix"
+      # Force this to run in a VM since the packaging script wants to launch Docker.
       sudo: "required"
 
 # Install leastauthority.com's dependencies.
