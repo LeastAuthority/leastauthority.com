@@ -10,9 +10,9 @@ tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs --exclude-vcs-ignores . | docker r
        --rm \
        --interactive \
        --volume ${CACHE_VOLUME}:${NIX_STORE} \
-       --volume "${LEASTAUTHORITY}":/leastauthority.com \
        --volume /var/run/docker.sock:/var/run/docker.sock \
        numtide/nix-builder /bin/env /bin/sh -exc "
+           mkdir /leastauthority.com
            tar xf - -C /leastauthority.com
            /leastauthority.com/docker/_nix-build web.nix grid-router.nix
        "
