@@ -277,9 +277,9 @@ rec {
       with pythonPackages;
       [ venusian attrs dateutil incremental pyrsistent0_12_0 constantly pyopenssl16_2_0 pem service-identity twisted lxml ];
 
-    checkPhase = ''
-      trial txaws
-    '';
+    # checkPhase = ''
+    #   trial txaws
+    # '';
   };
 
   fixtures300 = pythonPackages.fixtures.override rec {
