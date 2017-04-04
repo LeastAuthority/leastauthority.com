@@ -14,10 +14,10 @@ tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs --exclude-vcs-ignores . | docker r
        numtide/nix-builder /bin/env /bin/sh -exc "
            mkdir /leastauthority.com
            tar xf - -C /leastauthority.com
-           /leastauthority.com/docker/_nix-build web.nix grid-router.nix
+           /leastauthority.com/docker/_nix-build web.nix grid-router.nix subscription-manager.nix subscription-converger.nix
        "
 
-images="base base-lae-automation infrastructure flapp subscription-manager subscription-converger tahoe-base foolscap-base foolscap-gatherer"
+images="base base-lae-automation infrastructure flapp tahoe-base foolscap-base foolscap-gatherer"
 tahoe_images="tahoe-introducer tahoe-storage magicwormhole"
 
 for image in ${images}; do
