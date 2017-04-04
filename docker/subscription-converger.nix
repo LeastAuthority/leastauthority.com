@@ -10,7 +10,7 @@ pkgs.dockerTools.buildImage {
         "/bin/dash"
         "-c"
         (pkgs.lib.strings.concatStringsSep " " [
-          "/app/env/bin/twist" "s4-subscription-converger"
+          "twist" "s4-subscription-converger"
           "--domain" "$(cat /app/k8s_secrets/domain)"
           "--kubernetes-namespace" "$(cat /var/run/secrets/kubernetes.io/serviceaccount/namespace)"
           "--aws-access-key-id-path" "/app/k8s_secrets/aws.id"

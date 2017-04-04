@@ -10,7 +10,7 @@ pkgs.dockerTools.buildImage {
         "/bin/dash"
         "-c"
         (pkgs.lib.strings.concatStringsSep " " [
-          "/app/env/bin/twist" "s4-subscription-manager"
+          "twist" "s4-subscription-manager"
           "--domain" "$(cat /app/k8s_secrets/domain)"
           "--state-path" "/app/data/subscriptions"
           "--listen-address" "tcp:8000"
