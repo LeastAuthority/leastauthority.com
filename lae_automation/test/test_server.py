@@ -1,16 +1,11 @@
 
-import mock
 from hypothesis import given, settings
 
 from os import fdopen
 from json import loads, dumps
-from cStringIO import StringIO
 from tempfile import mkstemp
 
-from twisted.python.filepath import FilePath
 from twisted.python.url import URL
-
-from datetime import datetime
 
 from testtools.matchers import Equals
 
@@ -18,39 +13,12 @@ from lae_util.testtools import TestCase
 
 from lae_automation import server
 from lae_automation.model import DeploymentConfiguration
-from lae_automation.server import api
 
 from .matchers import hasLocationHint
 from .strategies import (
     bucket_name, ipv4_address, aws_access_key_id, aws_secret_key,
     furl,
 )
-
-INTRODUCER_PORT = '12345'
-SERVER_PORT = '12346'
-
-# Vector data for the config file data:
-from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
-CONFIGFILEJSON = MOCKJSONCONFIGFILE
-def fifo(xs):
-    xs.reverse()
-    return xs
-
-
-class CommonTestFixture(TestCase):
-    def setUp(self):
-        super(CommonTestFixture, self).setUp()
-        self.TEST_SHA1_STRING = 'deadbeef'*5
-        self.TEST_IPv4_STRING = '0.0.0.0'
-        self.TEST_LOCAL_HOST_STRING = self.TEST_IPv4_STRING
-        self.TEST_LOCAL_REPO_STRING = './.git'
-        self.TEST_ADMIN_PRIVKEY_PATH_STRING = '../secret_config/PRIVKEYFILE.pem'
-        self.TEST_GIT_SSH_PATH_STRING = 'PATHTOLADIR/leastauthority.com/git_ssh.sh'
-        self.TEST_LIVE_PATH_STRING = '/home/website/SECRET_OR_LA_DIR/.git'
-        self.TEST_DATETIME = datetime(2014, 5, 19, 14, 32, 31, 788921)
-        self.TEST_TAG_NAME = '2014-05-19T14-32-31Z_0.0.0.0_deadbeef'
-
-
 
 class NewTahoeConfigurationTests(TestCase):
     """
