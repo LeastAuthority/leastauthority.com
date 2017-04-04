@@ -1,4 +1,46 @@
-#! /usr/bin/python
+#!/usr/bin/env python
+
+# Usage:
+#
+#    ./check-miscaptures.py [file or directory; default ${PWD}]
+#
+# Report on Python source files with respect to their use of closures over
+# loop variables.  A closure over a loop variable is most often a mistake.
+#
+# For example, consider these two snippets (both within some enclosing function):
+#
+#    ys = []
+#    for x in xs:
+#        def f():
+#            return x
+#        ys.append(f)
+#
+# versus
+#
+#    ys = []
+#    for x in xs:
+#        def f(value=x):
+#            return value
+#        ys.append(f)
+#
+# The functions created inside the loop in the first snippet close over ``x``.
+# However, the value of ``x`` varies over the execution of the loop and is
+# left with the final value of the ``xs`` iterable.  Therefore all functions
+# in ``ys`` will return the final value of the ``xs`` iterable.
+#
+# The functions created inside the loop in the second snippet do not close
+# over ``x``.  Instead, they use a common trick for avoiding the above
+# described behavior.  They bind the value of ``x`` as the default for the
+# ``value`` parameter.  These functions, when called with no arguments, will
+# return that default.  Since the value is bound at function definition time,
+# each iteration will produce a function which returns a subsequent value from
+# the ``xs`` iterable.
+#
+# The former code will provoke a report like the following from this tool:
+#
+#     ./path/to/source.py:10 <lambda> captures 'x' assigned at line 5
+#     1 suspiciously captured variables in 1 out of 1 file(s).
+
 
 import os, sys, compiler
 from compiler.ast import Node, For, While, ListComp, AssName, Name, Lambda, Function
