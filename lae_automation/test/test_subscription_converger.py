@@ -120,6 +120,7 @@ class ConvergeHelperTests(TestCase):
         d = get_hosted_zone_by_name(route53, u"example.invalid")
         self.failureResultOf(d, KeyError)
 
+
     def test_get_hosted_zone_by_name(self):
         zone = HostedZone(
             name=u"example.invalid",
@@ -135,9 +136,9 @@ class ConvergeHelperTests(TestCase):
         d = route53.create_hosted_zone(zone.reference, zone.name)
         self.successResultOf(d)
         d = get_hosted_zone_by_name(route53, Name(zone.name))
-        retrieved_zone, retrieved_rrsets = self.successResultOf(d)
-        self.expectThat(zone.reference, Equals(retrieved_zone.reference))
-        self.expectThat(zone.name, Equals(retrieved_zone.name))
+        retrieved = self.successResultOf(d)
+        self.expectThat(retrieved.zone.reference, Equals(zone.reference))
+        self.expectThat(retrieved.zone.name, Equals(zone.name))
 
 
     def test_customer_grid_service(self):

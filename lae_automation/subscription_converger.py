@@ -355,6 +355,12 @@ def get_s3_buckets(s3):
 
 
 
+class _ZoneState(PClass):
+    zone = field()
+    rrsets = field()
+
+
+
 class _State(PClass):
     subscriptions = field()
     configmaps = field()
@@ -362,7 +368,7 @@ class _State(PClass):
     replicasets = field()
     pods = field()
     service = field()
-    zone = field()
+    zone = field(type=_ZoneState)
     buckets = field()
 
 
@@ -663,8 +669,8 @@ def _converge_route53_customer(actual, config, subscriptions, k8s, aws):
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableZone(
-            zone=actual.zone[0],
-            rrsets=actual.zone[1],
+            zone=actual.zone.zone,
+            rrsets=actual.zone.rrsets,
             domain=config.domain,
         ),
     )
@@ -672,9 +678,9 @@ def _converge_route53_customer(actual, config, subscriptions, k8s, aws):
     # of delete/create.  Some structured objects would make that easier.
     route53 = aws.get_route53_client()
     def delete(sid):
-        return delete_route53_rrsets(route53, actual.zone[0], [sid])
+        return delete_route53_rrsets(route53, actual.zone.zone, [sid])
     def create(subscription):
-        return create_route53_rrsets(route53, actual.zone[0], [subscription])
+        return create_route53_rrsets(route53, actual.zone.zone, [subscription])
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
     return deletes + creates
@@ -705,8 +711,7 @@ def _converge_route53_infrastructure(actual, config, subscriptions, k8s, aws):
         },
     )
 
-    zone, rrsets = actual.zone
-    actual_rrset = rrsets.get(introducer_key, None)
+    actual_rrset = actual.zone.rrsets.get(introducer_key, None)
     if actual_rrset == desired_rrset:
         # Nothing to do.
         return []
@@ -714,7 +719,7 @@ def _converge_route53_infrastructure(actual, config, subscriptions, k8s, aws):
     # Create it or change it to what we want.
     route53 = aws.get_route53_client()
     return [
-        lambda: change_route53_rrsets(route53, zone, desired_rrset),
+        lambda: change_route53_rrsets(route53, actual.zone.zone, desired_rrset),
     ]
 
 
@@ -802,7 +807,12 @@ def get_hosted_zone_by_name(route53, name):
                 # XXX Bleuch zone.name should be a Name!
                 if Name(zone.name) == name:
                     d = route53.list_resource_record_sets(zone_id=zone.identifier)
-                    d.addCallback(lambda rrsets: (zone, rrsets))
+                    d.addCallback(
+                        lambda rrsets, zone=zone: _ZoneState(
+                            zone=zone,
+                            rrsets=rrsets,
+                        ),
+                    )
                     return d
             raise KeyError(name)
         d.addCallback(filter_results)
