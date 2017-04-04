@@ -355,8 +355,8 @@ rec {
     src = pkgs.fetchFromGitHub {
       owner = "LeastAuthority";
       repo = "txkube";
-      rev = "444fec5a1bfe66410ee56c867a022de9a19275c1";
-      sha256 = "07rbckc2f171wspns0fr6fpck982si73p20cjkm1d3mw0ygxnlrk";
+      rev = "a2192316533b7e5bb8c106ff0b2799b07280ebaf";
+      sha256 = "00655hns446v9qylbw2q8s5wc9a8c6a0gqd6nqi67l8xqii0ddmc";
     };
 
     checkPhase = ''
