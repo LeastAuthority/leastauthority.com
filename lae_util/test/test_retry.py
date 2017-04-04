@@ -26,7 +26,7 @@ from hypothesis import given, assume
 from hypothesis import strategies as st
 
 from testtools.matchers import (
-    MatchesPredicate, Is, Equals, AllMatch, IsInstance, GreaterThan, raises
+    MatchesPredicate, Equals, AllMatch, IsInstance, GreaterThan, raises
 )
 
 from eliot import MessageType, fields

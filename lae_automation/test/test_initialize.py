@@ -1,20 +1,9 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
-import sys
-
-from twisted.trial.unittest import TestCase as AsyncTestCase
-from twisted.internet import defer
-from twisted.python.failure import Failure
-from twisted.python.filepath import FilePath
 from twisted.internet.task import Clock
 
-from twisted.conch.ssh.keys import Key
-from twisted.conch.client.knownhosts import KnownHostsFile
-
 from hypothesis import given
-
-import mock
 
 from testtools.matchers import Is
 
@@ -23,7 +12,6 @@ from txaws.credentials import AWSCredentials
 
 from lae_util.testtools import TestCase
 
-import lae_automation.initialize
 from lae_automation.initialize import create_user_bucket
 
 from .strategies import aws_access_key_id, aws_secret_key, bucket_name
