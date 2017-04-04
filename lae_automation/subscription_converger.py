@@ -359,8 +359,8 @@ class _State(PClass):
     subscriptions = field()
     configmaps = field()
     deployments = field()
-    # replicasets = field()
-    # pods = field()
+    replicasets = field()
+    pods = field()
     service = field()
     zone = field()
     buckets = field()
@@ -375,8 +375,8 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
                 get_active_subscriptions(subscriptions),
                 get_customer_grid_configmaps(k8s, config.kubernetes_namespace),
                 get_customer_grid_deployments(k8s, config.kubernetes_namespace),
-                # get_customer_grid_replicasets(k8s, config.kubernetes_namespace),
-                # get_customer_grid_pods(k8s, config.kubernetes_namespace),
+                get_customer_grid_replicasets(k8s, config.kubernetes_namespace),
+                get_customer_grid_pods(k8s, config.kubernetes_namespace),
                 get_customer_grid_service(k8s, config.kubernetes_namespace),
                 get_hosted_zone_by_name(aws.get_route53_client(), Name(config.domain)),
                 get_s3_buckets(aws.get_s3_client()),
@@ -388,8 +388,8 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
                     u"subscriptions",
                     u"configmaps",
                     u"deployments",
-                    # u"replicasets",
-                    # u"pods",
+                    u"replicasets",
+                    u"pods",
                     u"service",
                     u"zone",
                     u"buckets",
@@ -407,8 +407,8 @@ def _converge_logic(actual, config, subscriptions, k8s, aws):
         _converge_service,
         _converge_configmaps,
         _converge_deployments,
-        # _converge_replicasets,
-        # _converge_pods,
+        _converge_replicasets,
+        _converge_pods,
         _converge_route53_customer,
         _converge_route53_infrastructure,
     ]
@@ -553,7 +553,6 @@ def _converge_deployments(actual, config, subscriptions, k8s, aws):
     return deletes + creates
 
 
-# XXX Untested
 def _converge_replicasets(actual, config, subscriptions, k8s, aws):
     # We don't ever have to create a ReplicaSet.  We'll just delete the ones
     # we don't need anymore.
@@ -568,11 +567,9 @@ def _converge_replicasets(actual, config, subscriptions, k8s, aws):
     return list(partial(delete, metadata) for metadata in deletes)
 
 
-# XXX Untested
 def _converge_pods(actual, config, subscriptions, k8s, aws):
     # We don't ever have to create a Pod.  We'll just delete the ones we don't
     # need anymore.
-
     deletes = []
     for pod in actual.pods:
         if pod.metadata.labels[u"subscription"] not in actual.subscriptions:

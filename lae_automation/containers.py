@@ -132,6 +132,10 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
     status=None,
     spec={
 	u"replicas": 1,
+        u"selector": {
+            u"matchExpressions": None,
+            u"matchLabels": None,
+        },
         # Don't keep an arbitrarily large amount of history around.
         u"revisionHistoryLimit": 2,
 	u"template": {
@@ -240,7 +244,7 @@ def create_deployment(deploy_config, details):
     intro_name = u"introducer"
     storage_name = u"storage"
 
-    return DEPLOYMENT_TEMPLATE.transform(
+    deployment = DEPLOYMENT_TEMPLATE.transform(
         # Make sure it ends up in our namespace.
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
 
@@ -287,6 +291,17 @@ def create_deployment(deploy_config, details):
         # ... and then to the deployment spec.
         *subscription_metadata(details)
     )
+    deployment = deployment.transform(
+        # Be explicit about how we select replicasets and pods belonging to
+        # this deployment.  This probably lines up with the default behavior
+        # if a selector is omitted.  It's nice to be explicit here since it
+        # reduces the amount of stuff about the Deployment that changes after
+        # it's submitted to Kubernetes for creation.
+        [u"spec", u"selector", u"matchLabels"], deployment.metadata.labels,
+    )
+    return deployment
+
+
 
 # This service exposes all the customer introducers and storage servers to the public internet.
 # Some background on performance of many-ports Services:

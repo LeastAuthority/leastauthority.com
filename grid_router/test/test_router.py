@@ -33,27 +33,13 @@ from lae_automation.test.strategies import (
 from lae_automation.containers import create_deployment
 from lae_automation.model import NullDeploymentConfiguration, SubscriptionDetails
 
+from lae_util.k8s import derive_pod
+
 from .. import Options, makeService
 from .._router import _GridRouterService
 
-from txkube import v1, memory_kubernetes
+from txkube import memory_kubernetes
 
-
-
-def create_pod(deployment, podIP):
-    # This is roughly how a Deployment creates a Pod... I suppose.
-    return v1.Pod(
-        metadata=deployment.metadata.transform(
-            [u"name"],
-            u"{}-{}".format(deployment.metadata.name, hex(id(deployment))),
-        ),
-        spec=deployment.spec.template.spec,
-        # This is a cheat.  We can't really set the status.  But the
-        # in-memory Kubernetes won't set it either so we'd better do it.
-        status=v1.PodStatus(
-            podIP=podIP,
-        ),
-    )
 
 
 class FakeReactor(
@@ -152,7 +138,7 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         )
         deployment = create_deployment(self.deploy_config, details)
         self.deployments.append(deployment)
-        pod = create_pod(deployment, ip)
+        pod = derive_pod(deployment, ip)
         self.case.successResultOf(self.client.create(pod))
 
         self.pods[pod] = (ip, storage_pem, storage_port, intro_pem, intro_port)
@@ -232,7 +218,7 @@ class GridRouterTests(TestCase):
         reactor = object()
         service = _GridRouterService(reactor)
         deployment = create_deployment(deploy_config, details)
-        pod = create_pod(deployment, ip)
+        pod = derive_pod(deployment, ip)
         service.set_pods([pod])
         mapping = service.route_mapping()
         self.assertThat(
@@ -261,7 +247,7 @@ class GridRouterTests(TestCase):
         reactor = FakeReactor(network, clock)
         service = _GridRouterService(reactor)
         deployment = create_deployment(deploy_config, details)
-        pod = create_pod(deployment, ip)
+        pod = derive_pod(deployment, ip)
         service.set_pods([pod])
         factory = service.factory()
         protocol = factory.buildProtocol(None)

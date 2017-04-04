@@ -31,6 +31,9 @@ from txaws.testing.service import FakeAWSServiceRegion
 from txaws.route53.model import RRSetKey, RRSet, HostedZone
 from txaws.route53.client import Name, CNAME
 
+from lae_util.k8s import (
+    derive_pod, derive_replicaset, get_replicasets, get_pods,
+)
 from lae_util.testtools import TestCase, CustomException
 
 from lae_automation.test.matchers import GoodEquals
@@ -57,7 +60,7 @@ from lae_automation.signup import get_bucket_name
 
 from .strategies import (
     domains, subscription_id, subscription_details, deployment_configuration,
-    node_pems,
+    node_pems, ipv4_addresses,
 )
 from ..kubeclient import KubeClient
 
@@ -323,6 +326,57 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                 ),
             )
 
+
+    @rule()
+    def create_replicasets(self):
+        """
+        Fabricate ReplicaSets which warrant existence and which Kubernetes would
+        have made for us had we actually been using it.  This happens
+        automatically as a consequence of creating an appropriate Deployment.
+        """
+        k8s_state = self.kubernetes._state
+        deployments = list(
+            deployment
+            for deployment
+            in k8s_state.deployments.items
+            if 0 == len(get_replicasets(k8s_state, deployment))
+        )
+        assume([] != deployments)
+        for deployment in deployments:
+            self.kubernetes._state_changed(
+                k8s_state.create(
+                    u"replicasets",
+                    derive_replicaset(deployment),
+                ),
+            )
+
+
+    @rule(data=data())
+    def create_pods(self, data):
+        """
+        Fabricate Pods which warrant existence and which Kubernetes would have
+        made for us had we actually been using it.  This happens automatically
+        as a consequence of creating an appropriate Deployments (by way of
+        ReplicaSets).
+        """
+        k8s_state = self.kubernetes._state
+        deployments = list(
+            deployment
+            for deployment
+            in k8s_state.deployments.items
+            if 0 == len(get_pods(k8s_state, deployment))
+        )
+
+        addresses = ipv4_addresses()
+        for deployment in deployments:
+            self.kubernetes._state_changed(
+                k8s_state.create(
+                    u"pods",
+                    derive_pod(deployment, data.draw(addresses)),
+                ),
+            )
+
+
     @rule()
     def converge(self):
         """
@@ -354,6 +408,8 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             checks = {
                 self.check_configmaps,
                 self.check_deployments,
+                self.check_replicasets,
+                self.check_pods,
                 self.check_service,
                 self.check_route53,
                 self.check_s3,
@@ -387,6 +443,31 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                 create_configuration(config, database.get_subscription(sid)),
                 GoodEquals(k8s_state.configmaps.item_by_name(configmap_name(sid))),
             )
+
+
+    def check_pods(self, database, config, subscriptions, k8s_state, aws):
+        """
+        Any Pods which exists should have an active subscription.  Not all active
+        subscriptions necessarily have a Pod.
+        """
+        for pods in k8s_state.pods.items:
+            self.case.assertThat(
+                subscriptions,
+                Contains(pods.metadata.labels[u"subscription"]),
+            )
+
+
+    def check_replicasets(self, database, config, subscriptions, k8s_state, aws):
+        """
+        Any ReplicaSet which exists should have an active subscription.  Not all
+        active subscriptions necessarily have a ReplicaSet.
+        """
+        for replicaset in k8s_state.replicasets.items:
+            self.case.assertThat(
+                subscriptions,
+                Contains(replicaset.metadata.labels[u"subscription"]),
+            )
+
 
     def check_deployments(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
