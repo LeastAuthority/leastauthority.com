@@ -59,7 +59,8 @@ A Foolscap application server runs in a container handling signup requests from 
 The container is run by Docker on a Kubernetes worker node on an EC2 instance.
 The server uses filesystem storage to persist logs and other signup details.
 It is part of the s4-infrastructure pod.
-The application logic for the signup process is in full_signup_docker.sh.
+The application logic for the signup process is in ``full_signup_docker.sh``.
+
 
 Tahoe-LAFS Introducer
 ---------------------
