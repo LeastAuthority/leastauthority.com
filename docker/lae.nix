@@ -417,10 +417,13 @@ rec {
         groupadd --system lae
         useradd --system --gid lae --home-dir /app/data lae
       '';
-      contents = pkgs.python27.buildEnv.override {
-        extraLibs = [ pkgs.dash pkgs.coreutils lae ];
-        ignoreCollisions = true;
-        postBuild = "\${out}/bin/twistd --help > /dev/null";
-      };
+      contents = [
+        pkgs.cacert
+        (pkgs.python27.buildEnv.override {
+          extraLibs = [ pkgs.dash pkgs.coreutils lae ];
+          ignoreCollisions = true;
+          postBuild = "\${out}/bin/twistd --help > /dev/null";
+        })
+      ];
     };
 }
