@@ -155,6 +155,13 @@ The Tahoe-LAFS S3 storage backend is leveraged extensively.
 Customer data is stored in S3 buckets.
 A transition to another storage system requires both code changes and data migration.
 
+AWS Route53
+-----------
+
+Each subscription is given an introducer furl containing a unique domain name.
+These domain names are managed automatically by the *subscription converger*.
+They are created and destroyed using the Route53 API.
+
 Docker Registry
 ---------------
 
