@@ -79,6 +79,24 @@ It presents an HTTP-based API for creating, retrieving, and de-activating them.
 It is part of the s4-infrastructure pod.
 The subscription manager is implemented in ``lae_automation/subscription_manager.py``.
 
+Subscription Converger
+----------------------
+
+The subscription converger updates Kubernetes configuration to reflect active subscriptions.
+For example, when a new subscription is created:, the subscription converger:
+
+  * finds it in the subscription manager database
+  * notices that resources to service that subscription do not exist
+  * creates Kubernetes ConfigMap and Deployment to provide Tahoe-LAFS nodes for the subscription
+  * creates AWS Route53 record for the domain name in the subscription's furl
+  * etc
+
+It also performs the reverse process when it finds resources for which there is no active subscription.
+At this time, the subscription converger will *not* delete the S3 bucket storing Tahoe-LAFS shares
+(as a precaution against accidentally destroying important customer data).
+It is part of the s4-infrastructure pod.
+The subscription converger is implemented in ``lae_automation/subscription_converger.py``.
+
 Tahoe-LAFS Introducer
 ---------------------
 
