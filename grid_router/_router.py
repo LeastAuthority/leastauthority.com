@@ -6,12 +6,20 @@ A self-reconfiguring proxy for TCP connections to Kubernetes pods runninig
 Tahoe-LAFS introducers and storage server.
 
 The proxy reconfigures itself based on Kubernetes Pods it observes to exist.
+
+This module is used with ``twisted.application.service.ServiceMaker`` in
+``lae_dropin.py``.  ``ServiceMaker`` uses ``Options`` and ``makeService`` to
+expose this code via ``twist`` and ``twistd``.
 """
 
 import sys
 
 from twisted.python.log import msg
+# Rename this so we can have a module attribute named Options.  Stick with the
+# attribute-import style (as opposed to just importing ``usage``) to get early
+# warning of mistakes.
 from twisted.python.usage import Options as _Options
+from twisted.internet.defer import Deferred
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint, serverFromString
 from twisted.application.service import MultiService, Service
@@ -35,8 +43,13 @@ from lae_automation.subscription_converger import (
 
 
 class Options(_Options, KubernetesClientOptionsMixin):
+    """
+    Command-line option definitions for *twist[d] s4-grid-router*.
+    """
     optParameters = [
-        ("interval", None, 10.0, "The interval (in seconds) at which to iterate on reconfiguration.", float),
+        ("interval", None, 10.0,
+         "The interval (in seconds) at which to iterate on reconfiguration.", float,
+        ),
     ]
 
     def postOptions(self):
@@ -45,16 +58,29 @@ class Options(_Options, KubernetesClientOptionsMixin):
 
 
 def makeService(options, reactor=None):
+    """
+    Make a grid router service.
+
+    :param Options options: Choices about configuration for the service.
+
+    :param reactor: A Twisted reactor to give to the service for its eventing
+        needs.
+
+    :return IService: A service which is capable of accepting Foolscap
+    connections and routing/proxying them to the appropriate destination.
+    """
     if reactor is None:
         # Boo global reactor
         # https://twistedmatrix.com/trac/ticket/9063
         from twisted.internet import reactor
-    return grid_router_service(
+    service = grid_router_service(
         reactor,
         options.get_kubernetes_service(reactor).client(),
         options["kubernetes-namespace"].decode("ascii"),
         options["interval"],
     )
+    _EliotLogging().setServiceParent(service)
+    return service
 
 
 
@@ -78,14 +104,35 @@ def grid_router_service(reactor, k8s, kubernetes_namespace, interval):
     return service
 
 
+
 class _GridRouterParent(MultiService):
+    """
+    A service container for the services that make up the grid router.
+    """
     def route_mapping(self):
+        """
+        Proxy through to ``_GridRouterService.route_mapping``.
+
+        This is provided so users don't have to reach into this service's
+        children (creating the freedom to re-arrange those children should we
+        later wish to).
+
+        :see: ``_GridRouterService.route_mapping``
+        """
         return self.getServiceNamed(_GridRouterService.name).route_mapping()
 
 
+
 class _EliotLogging(Service):
+    """
+    A service which adds stdout as an Eliot destination while it is running.
+
+    :ivar _destination: The Eliot destination which will is added by this
+        service.
+    """
+    _destination = FileDestination(sys.stdout)
+
     def startService(self):
-        self._destination = FileDestination(sys.stdout)
         add_destination(self._destination)
 
 
@@ -95,9 +142,21 @@ class _EliotLogging(Service):
 
 
 class _FoolscapProxy(Protocol):
+    """
+    A protocol which speaks just enough of the first part of a Foolscap
+    conversation to extract the TubID so that a proxy target can be selected
+    based on that value.
+
+    :ivar bytes buffered: Data which has been received and buffered but not
+        yet interpreted or passed on.
+    """
     buffered = b""
 
     def dataReceived(self, data):
+        """
+        Buffer the received data until enough is received that we can determine a
+        proxy destination.
+        """
         msg("_FoolscapProxy.dataReceived {!r}".format(data))
         self.buffered += data
         if b"\r\n\r\n" in self.buffered:
@@ -108,6 +167,10 @@ class _FoolscapProxy(Protocol):
     # Basically just copied from foolscap/negotiate.py so we get the tub id
     # extraction logic but we can then do something different with it.
     def handlePLAINTEXTServer(self, header):
+        """
+        Parse a complete HTTP-like Foolscap negotiation request and begin proxying
+        to a destination selected based on the extract TubID.
+        """
         # the client sends us a GET message
         lines = header.split("\r\n")
         if not lines[0].startswith("GET "):
@@ -132,7 +195,16 @@ class _FoolscapProxy(Protocol):
 
         self._handleTubRequest(header, targetTubID)
 
+
     def _handleTubRequest(self, header, targetTubID):
+        """
+        Proxy to the destination which is responsible for the target TubID.
+
+        :param bytes header: The first part of the Foolscap negotiation which
+            will need to be passed along to the proxy target.
+
+        :param bytes targetTubID: The TubID which was requested.
+        """
         try:
             _, (ip, port_number) = self.factory.route_mapping()[targetTubID]
         except KeyError:
@@ -147,43 +219,99 @@ class _FoolscapProxy(Protocol):
 
 
 def proxy(upstream, endpoint, header):
+    """
+    Establish a new connection to ``endpoint`` and begin proxying between that
+    connection and ``upstream``.
+
+    :param IProtocol upstream: A connected protocol.  All data received by
+        this protocol from this point on will be sent along to another newly
+        established connection.
+
+    :param IStreamClientEndpoint endpoint: An endpoint to use to establish a
+        new connection.  All data received over this connection will be sent
+        along to the upstream connection.
+
+    :param bytes header: Some extra data to write to the new downstream
+        connection before proxying begins.
+    """
     def failed(reason):
         upstream.transport.resumeProducing()
         upstream.transport.abortConnection()
         return reason
 
     upstream.transport.pauseProducing()
-    d = endpoint.connect(Factory.forProtocol(_Proxy))
-    d.addCallbacks(
-        lambda downstream: downstream.take_over(upstream, header),
-        failed,
+
+    peer = upstream.transport.getPeer()
+    action = start_action(
+        action_type=u"grid-router:proxy",
+        **{u"from": (peer.host, peer.port)}
     )
+    with action.context():
+        d = DeferredContext(endpoint.connect(Factory.forProtocol(_Proxy)))
+        d.addCallbacks(
+            lambda downstream: DeferredContext(downstream.take_over(upstream, header)),
+            failed,
+        )
+        return d.addActionFinish()
 
 
 
 class _Proxy(Protocol):
+    """
+    Handle the downstream connection for a proxy between two connections.
+    """
     def take_over(self, upstream, header):
-        self.transport.write(header)
+        """
+        Begin actively proxying between this protocol and ``upstream``.
 
-        upstream.dataReceived = self.transport.write
-        upstream.connectionLost = self._upstream_connection_lost
+        :param Protocol: The upstream connection involved in this proxying
+            operation.  It will be abused somewhat.  Read the implementation.
 
-        self.dataReceived = upstream.transport.write
-        self.upstream = upstream
-        self.upstream.transport.resumeProducing()
+        :param bytes header: Any data that should be sent downstream before
+            engaging the proxy.
+
+        :return Deferred: A ``Deferred`` that fires when this protocol's
+            connection is lost.  This should be tightly coupled to loss of the
+            upstream protocol's connection.
+        """
+        self.done = Deferred()
+
+        peer = self.transport.getPeer()
+        a = start_action(
+            action_type=u"grid-router:proxy:take-over",
+            to=(peer.host, peer.port),
+        )
+        with a:
+            self.transport.write(header)
+
+            upstream.dataReceived = self.transport.write
+            upstream.connectionLost = self._upstream_connection_lost
+
+            self.dataReceived = upstream.transport.write
+            self.upstream = upstream
+            self.upstream.transport.resumeProducing()
+            return self.done
 
 
     def _upstream_connection_lost(self, reason):
+        """
+        The upstream connection was lost.  Close this connection as well.
+        """
         self.transport.abortConnection()
 
 
     def connectionLost(self, reason):
+        """
+        This protocol's connection was lost.  Close the upstream connection as
+        well.
+        """
         self.upstream.transport.abortConnection()
         del self.upstream.dataReceived
         del self.upstream.connectionLost
 
         del self.dataReceived
         self.upstream = None
+        self.done.callback(None)
 
 
 
@@ -192,17 +320,27 @@ class _GridRouterService(MultiService):
     ``_GridRouterService`` accepts connections on many ports and proxies them
     to the pod responsible for them.  Responsibility is determined by the
     local port number.
+
+    :ivar _reactor: A Twisted reactor which can be used to establish
+        connections for the proxy.
+
+    :ivar _route_mapping: A mapping from tub identifiers to destination
+        information.  The destination information is a two-tuple of an IP
+        address and a port number.  It gives an address where a Foolscap node
+        capable of servicing the tub identifier can be reached.
     """
     name = u"grid-router"
 
     def __init__(self, reactor):
         MultiService.__init__(self)
-        # _EliotLogging().setServiceParent(self)
         self._reactor = reactor
         self._route_mapping = freeze({})
 
 
     def factory(self):
+        """
+        :return: A protocol factory for a Foolscap proxy server.
+        """
         f = Factory.forProtocol(_FoolscapProxy)
         f.reactor = self._reactor
         f.route_mapping = self.route_mapping
@@ -229,10 +367,27 @@ class _GridRouterService(MultiService):
 
 
     def set_route_mapping(self, route_mapping):
+        """
+        Record a new route mapping.
+
+        :param route_mapping: A new value for the private ``_route_mapping``
+            attribute.
+        """
         self._route_mapping = freeze(route_mapping)
 
 
     def _pods_to_routes(self, old, pods):
+        """
+        Extract the addressing information from some pods.
+
+        :param old: The old routing information.  Used to log route changes.
+
+        :param list[v1.Pod] pods: Some pods from which routing information can
+            be extracted.
+
+        :return: A mapping of the new routing information deriving solely from
+            ``pods``.
+        """
         def _introducer_tub(pod):
             return pod.metadata.annotations[u"leastauthority.com/introducer-tub-id"]
         def _storage_tub(pod):
