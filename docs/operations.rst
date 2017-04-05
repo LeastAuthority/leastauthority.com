@@ -110,8 +110,10 @@ Tahoe-LAFS Storage Service
 --------------------------
 
 A Tahoe-LAFS storage service runs in another per-customer container.
-The container is managed by a per-customer Kubernetes Deployment that is created by the signup process.
+The container is managed by a per-customer Kubernetes Deployment that is created by the *subscription manager*.
 This container mediates access to the customer's S3 bucket.
+The container contains vanilla Tahoe-LAFS.
+The container is defined by ``docker/Dockerfile.tahoe-storage``.
 
 Bottom-Up Components
 ~~~~~~~~~~~~~~~~~~~~
