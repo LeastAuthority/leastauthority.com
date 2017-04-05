@@ -195,7 +195,10 @@ The Kubernetes cluster is created and managed using kops_:
 
 Consult the kops documentation to learn more about its operation.
 
-The infrastructure services are defined by the yaml files referenced in the above transcript.
+Infrastructure Description
+==========================
+
+The infrastructure resources are defined by ``k8s/infrastructure.yaml``.
 To ensure repeatability, the services should always be deployed from these version-controlled artifacts.
 The Kubernetes dashboard provides features for directly editing the configuration of the services.
 This can be useful for experimentation.
