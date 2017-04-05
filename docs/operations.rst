@@ -18,10 +18,10 @@ The primary interaction expected is to deploy new versions of the service softwa
 Caveats
 -------
 
-The implementation of the service is closely tied to the LeastAuthority infrastructure server.
-This server runs the leastauthority.com website and has many functions unrelated to the S4 service.
-Consequently, this document may be of interest to website maintainers as well.
-However, the S4 service and the website should be split apart so this is no longer the case.
+The implementation of the service leverages Kubernetes heavily.
+Some familiarity with Kubernetes will be helpful in understanding the documentation.
+An attempt has been made to explain many relevant Kubernetes concepts here.
+However, for a more complete understanding, see the official Kubernetes documentation.
 
 Overview
 ~~~~~~~~
