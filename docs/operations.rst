@@ -29,11 +29,11 @@ Overview
 The service operates as a web server which accepts end-user requests for content and registration.
 Web requests for registration generate a foolscap request to a flapp server responsible for that process.
 The flapp server launches a "full signup" script.
-The signup script creates a new EC2 instance and deploys Tahoe-LAFS and other necessary software on it.
-It then configures Tahoe-LAFS and notifies the user of the details of the newly provisioned service
-(the introducer furl, for example).
-The new EC2 instance continues to operate for as long as the user remains subscribed.
-It provides service to that user alone.
+The signup script submits subscription details to the *subscription manager* which maintains a subscription database.
+Separately, a *subscription converger* polls the *subscription manager*.
+It provisions resources (such as Tahoe-LAFS nodes) for new subscriptions it finds there and cleans up resources for no-longer-active subscriptions.
+Each subscription has a large portion of dedicated resources:
+the Kubernetes cluster (and its compute, memory, and network components) is a shared resource but little else is.
 
 Top-Down Components
 ~~~~~~~~~~~~~~~~~~~
