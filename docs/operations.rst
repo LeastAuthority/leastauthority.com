@@ -71,6 +71,14 @@ It determines which Tahoe-LAFS node any particular connection is attempting to r
 It is part of the s4-infrastructure pod.
 The grid router is implemented in ``grid_router``.
 
+Subscription Manager
+--------------------
+
+The subscription manager maintains a database of S4 subscriptions.
+It presents an HTTP-based API for creating, retrieving, and de-activating them.
+It is part of the s4-infrastructure pod.
+The subscription manager is implemented in ``lae_automation/subscription_manager.py``.
+
 Tahoe-LAFS Introducer
 ---------------------
 
