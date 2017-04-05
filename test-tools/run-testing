@@ -1,4 +1,4 @@
 #!/bin/sh
 
 test-tools/check-miscaptures.py
-PYTHONPATH=${PWD}:${PYTHONPATH} trial lae_util lae_site lae_automation
+PYTHONPATH=${PWD}:${PYTHONPATH} trial lae_util lae_site grid_router lae_automation
