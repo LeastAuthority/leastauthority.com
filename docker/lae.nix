@@ -419,8 +419,10 @@ rec {
       '';
       contents = [
         pkgs.cacert
+	pkgs.dash
+	pkgs.coreutils
         (pkgs.python27.buildEnv.override {
-          extraLibs = [ pkgs.dash pkgs.coreutils lae ];
+          extraLibs = [ lae ];
           ignoreCollisions = true;
           postBuild = "\${out}/bin/twistd --help > /dev/null";
         })
