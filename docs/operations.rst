@@ -44,11 +44,13 @@ Web Server
 ----------
 
 Twisted Web runs in a container serving up static content residing in that same container.
+It serves website content specifically related to the signup process
+(the rest of the leastauthority.com website is served elsewhere).
 The container is run by Docker on a Kubernetes worker node on an EC2 instance.
-The server uses filesystem storage to persist logs and other signup details.
+The server uses filesystem storage to persist access logs and to read state to find the Flapp server.
 The server also manages the Stripe interaction for billing new signups.
 It is part of the s4-infrastructure pod.
-The server is implemented in lae_site.
+The server is implemented in ``lae_site``.
 
 Flapp Server
 ------------
