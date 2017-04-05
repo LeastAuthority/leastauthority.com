@@ -1,3 +1,9 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
+"""
+Kubernetes-related functionality used across multiple Python packages.
+"""
 
 from functools import partial
 

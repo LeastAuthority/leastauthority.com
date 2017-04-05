@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 """
 Tests for ``lae_automation.subscription_converger``.
 """

@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 import attr
 from attr import validators
 

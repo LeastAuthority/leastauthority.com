@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 from sys import argv, stdin, stdout
 from subprocess import check_output

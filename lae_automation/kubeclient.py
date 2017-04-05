@@ -1,3 +1,5 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 from twisted.python.url import URL
 

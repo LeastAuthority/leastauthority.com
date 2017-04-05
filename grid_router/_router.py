@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 """
 A self-reconfiguring proxy for TCP connections to Kubernetes pods runninig
 Tahoe-LAFS introducers and storage server.

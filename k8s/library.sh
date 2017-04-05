@@ -1,5 +1,7 @@
-# Source me.
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
+# Source me.
 
 node_address() {
     local node_name=$1

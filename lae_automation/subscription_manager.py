@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 """
 This module implements an HTTP-accessible microservice which
 provides persistence of S4 subscriptions.

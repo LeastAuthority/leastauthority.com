@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 from pprint import pprint
 
 from twisted.web.client import Agent
@@ -17,4 +20,3 @@ def main(reactor):
 
 from twisted.internet.task import react
 react(main)
-

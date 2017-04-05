@@ -1,3 +1,5 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 from io import BytesIO
 from base64 import b32encode

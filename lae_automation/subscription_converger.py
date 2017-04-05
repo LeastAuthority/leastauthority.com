@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 """
 This module implements a convergence service which keeps
 Kubernetes configuration in line with customer subscriptions.

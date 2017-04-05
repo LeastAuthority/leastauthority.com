@@ -1,3 +1,5 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 """
 -- The EC2Admin public keys, corresponding to the EC2Admin private keys they specify will live on the web server.

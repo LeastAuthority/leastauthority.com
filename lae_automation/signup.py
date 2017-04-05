@@ -1,4 +1,5 @@
-#!/usr/bin/python
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 import time
 from base64 import b32encode

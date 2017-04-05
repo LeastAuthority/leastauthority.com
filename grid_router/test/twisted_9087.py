@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 """
 Hotfix for https://twistedmatrix.com/trac/ticket/9087
 """

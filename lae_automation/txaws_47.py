@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 """
 Hotfix for https://github.com/twisted/txaws/issues/47
 """

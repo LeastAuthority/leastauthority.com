@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 from tempfile import mkstemp, mkdtemp
 from os import fdopen
 from json import dumps

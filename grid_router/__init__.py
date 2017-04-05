@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 """
 The grid router accepts connections on many different ports destined for
 the introducer or storage server of many different grids and proxies those

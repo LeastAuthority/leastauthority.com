@@ -1,4 +1,6 @@
 #!/bin/bash -ex
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 SERVER_PORT=30000
 SERVER="127.0.0.1:${SERVER_PORT}"

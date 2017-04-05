@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 #
 # configure-tahoe reads an lae-specific description of tahoe

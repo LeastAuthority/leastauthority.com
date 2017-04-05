@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 from base64 import b32encode, b32decode
 from json import dumps
 from hashlib import sha256
