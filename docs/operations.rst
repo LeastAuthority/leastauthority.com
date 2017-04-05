@@ -193,7 +193,6 @@ kops
 The Kubernetes cluster is created and managed using kops_:
 "Production Grade K8s Installation, Upgrades, and Management."
 
-
 Consult the kops documentation to learn more about its operation.
 
 The infrastructure services are defined by the yaml files referenced in the above transcript.
