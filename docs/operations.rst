@@ -176,6 +176,13 @@ This is not currently implemented.
 Kubernetes
 ----------
 
+Kubernetes is used as a way to manage Docker containers, AWS network configuration, storage resources, and more.
+The *subscription converger* interacts extensively with the Kubernetes API server.
+
+Important operational behavior, such as recovering failed containers (by launching replacements), is delegated to Kubernetes.
+Kubernetes also bears responsibility for most AWS interactions (such as setting up Elastic Load Balancers for ingress).
+It does this based on the Kubernetes-specific configuration we put into Kubernetes.
+
 Some errors are expected as Kubernetes resources are created.
 Ordering of creation of different components is not enforced.
 The cluster should converge on a working state as dependencies get created.
