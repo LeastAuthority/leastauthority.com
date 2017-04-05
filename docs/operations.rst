@@ -61,6 +61,15 @@ The server uses filesystem storage to persist logs and other signup details.
 It is part of the s4-infrastructure pod.
 The application logic for the signup process is in ``full_signup_docker.sh``.
 
+Grid Router
+-----------
+
+All client access to Tahoe-LAFS resources are mediated by this Foolscap proxy.
+Kubernetes is configured to route all S4 Tahoe-LAFS connections to this proxy.
+This proxy maintains an awareness of which Tahoe-LAFS introducers and storage servers are running and to whom they belong.
+It determines which Tahoe-LAFS node any particular connection is attempting to reach and then proxies it to the appropriate container.
+It is part of the s4-infrastructure pod.
+The grid router is implemented in ``grid_router``.
 
 Tahoe-LAFS Introducer
 ---------------------
