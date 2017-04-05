@@ -101,8 +101,10 @@ Tahoe-LAFS Introducer
 ---------------------
 
 A Tahoe-LAFS introducer runs in a per-customer container.
-The container is managed by a per-customer Kubernetes Deployment that is created by the signup process.
+The container is managed by a per-customer Kubernetes Deployment that is created by the *subscription converger*.
 This container mediates access to the customer's storage service.
+The container contains vanilla Tahoe-LAFS.
+The container is defined by ``docker/Dockerfile.tahoe-introducer``.
 
 Tahoe-LAFS Storage Service
 --------------------------
