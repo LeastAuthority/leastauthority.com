@@ -24,6 +24,7 @@ from testtools.assertions import assert_that
 from testtools.matchers import (
     AfterPreprocessing, Equals, Is, Not, MatchesPredicate, LessThan,
     GreaterThan, MatchesAll, MatchesRegex, Contains, HasLength,
+    MatchesAny,
 )
 
 from twisted.python.filepath import FilePath
@@ -242,6 +243,12 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.path, self.domain,
         )
 
+        # Track which subscriptions have had these resources created in
+        # Kubernetes (by Kubernetes).  Once they've been created, we expect
+        # them to continue to exist until the subscription is deactivated.
+        self.has_replicaset = set()
+        self.has_pod = set()
+
         self.deploy_config = deployment_configuration().example()
 
         self.subscription_client = memory_client(self.database.path, self.domain)
@@ -294,6 +301,16 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         subscription_id = choose(sorted(identifiers))
         Message.log(deactivating=subscription_id)
         self.database.deactivate_subscription(subscription_id)
+
+        # We no longer require that the pods and replicasets belonging to this
+        # subscription exist since the system is supposed to destroy them if
+        # there is no corresponding active subscription.  We use ``discard``
+        # because we may be deactivating the subscription before we ever got
+        # around to creating a Deployment for it (or before the ReplicaSet or
+        # Pod for the Deployment got created by the system).
+        self.has_replicaset.discard(subscription_id)
+        self.has_pod.discard(subscription_id)
+
 
     @rule(data=data())
     def allocate_loadbalancer(self, data):
@@ -353,6 +370,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                     derive_replicaset(deployment),
                 ),
             )
+            self.has_replicaset.add(deployment.metadata.annotations[u"subscription"])
 
 
     @rule(data=data())
@@ -379,6 +397,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                     derive_pod(deployment, data.draw(addresses)),
                 ),
             )
+            self.has_pod.add(deployment.metadata.annotations[u"subscription"])
 
 
     @rule()
@@ -451,26 +470,53 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
     def check_pods(self, database, config, subscriptions, k8s_state, aws):
         """
-        Any Pods which exists should have an active subscription.  Not all active
-        subscriptions necessarily have a Pod.
+        Any Pods which exist should have an active subscription.  Not all active
+        subscriptions necessarily have a Pod.  Any Pods which were created as
+        a result of Deployments should also still exist.
         """
-        for pods in k8s_state.pods.items:
-            self.case.assertThat(
-                subscriptions,
-                Contains(pods.metadata.labels[u"subscription"]),
-            )
+        seen = set()
+        for pod in k8s_state.pods.items:
+            sid = pod.metadata.annotations[u"subscription"]
+            seen.add(sid)
+            self.case.assertThat(subscriptions, Contains(sid))
+
+        # Every activate subscription for which a pod has been created should
+        # still have a pod.  The ``seen`` set we built up in that loop should
+        # contain at least the subscriptions in this intersection:
+        required = set(subscriptions) & self.has_pod
+        self.case.assertThat(
+            required,
+            MatchesAny(
+                LessThan(seen),
+                Equals(seen),
+            ),
+        )
 
 
     def check_replicasets(self, database, config, subscriptions, k8s_state, aws):
         """
         Any ReplicaSet which exists should have an active subscription.  Not all
-        active subscriptions necessarily have a ReplicaSet.
+        active subscriptions necessarily have a ReplicaSet.  Any ReplicaSets
+        which were created as a result of Deployments should also still exist.
         """
+        seen = set()
         for replicaset in k8s_state.replicasets.items:
-            self.case.assertThat(
-                subscriptions,
-                Contains(replicaset.metadata.labels[u"subscription"]),
-            )
+            sid = replicaset.metadata.annotations[u"subscription"]
+            seen.add(sid)
+            self.case.assertThat(subscriptions, Contains(sid))
+
+        # Every activate subscription for which a replicaset has been created
+        # should still have a replicaset.  The ``seen`` set we built up in
+        # that loop should contain at least the subscriptions in this
+        # intersection:
+        required = set(subscriptions) & self.has_replicaset
+        self.case.assertThat(
+            required,
+            MatchesAny(
+                LessThan(seen),
+                Equals(seen),
+            ),
+        )
 
 
     def check_deployments(self, database, config, subscriptions, k8s_state, aws):

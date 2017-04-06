@@ -567,7 +567,8 @@ def _converge_replicasets(actual, config, subscriptions, k8s, aws):
     # we don't need anymore.
     deletes = []
     for replicaset in actual.replicasets:
-        if replicaset.metadata.labels[u"subscription"] not in actual.subscriptions:
+        sid = replicaset.metadata.annotations[u"subscription"]
+        if sid not in actual.subscriptions:
             deletes.append(replicaset.metadata)
 
     def delete(metadata):
@@ -581,7 +582,8 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
     # need anymore.
     deletes = []
     for pod in actual.pods:
-        if pod.metadata.labels[u"subscription"] not in actual.subscriptions:
+        sid = pod.metadata.annotations[u"subscription"]
+        if sid not in actual.subscriptions:
             deletes.append(pod.metadata)
 
     def delete(metadata):
