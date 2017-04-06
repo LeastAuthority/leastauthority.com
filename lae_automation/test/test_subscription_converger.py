@@ -594,6 +594,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         )
 
 
+
 class SubscriptionConvergenceTests(TestCase):
     def test_convergence(self):
         run_state_machine_as_test(
@@ -601,6 +602,8 @@ class SubscriptionConvergenceTests(TestCase):
         )
 
     def _machine(self):
+        # XXX Should probably clear captured Eliot logs here?  Otherwise we
+        # get a mix of logs from all the different cases Hypothesis explores.
         return SubscriptionConvergence(self)
 
 
