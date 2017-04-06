@@ -417,6 +417,14 @@ rec {
         groupadd --system lae
         useradd --system --gid lae --home-dir /app/data lae
       '';
+      config = {
+        Env = [
+          # pkgs.cacert below provides this file.  The simple ca certificate
+          # discovery techniques employed by txAWS and Twisted can't find the
+          # certificates in it without a hint like this.
+          "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
+        ];
+      };
       contents = [
         pkgs.cacert
         pkgs.dash
