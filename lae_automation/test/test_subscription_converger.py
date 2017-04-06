@@ -385,7 +385,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             in self.kubernetes._state.deployments.items
             if 0 == len(get_pods(self.kubernetes._state, deployment))
         )
-
+        assume([] != deployments)
         addresses = ipv4_addresses()
         for deployment in deployments:
             self.kubernetes._state_changed(
