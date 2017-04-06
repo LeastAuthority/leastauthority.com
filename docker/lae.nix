@@ -395,7 +395,7 @@ rec {
       excludedFiles = [ ".travis.yml" ".dockerignore" ".gitignore" "requirements.txt" ];
       goodSource = (path: type:
         ! (type == "directory" && (builtins.elem (baseNameOf path) excludedDirs)) &&
-	! (type == "regular" && (builtins.elem (baseNameOf path) excludedFiles))
+        ! (type == "regular" && (builtins.elem (baseNameOf path) excludedFiles))
       );
     in
       builtins.filterSource goodSource ./..;
@@ -419,8 +419,8 @@ rec {
       '';
       contents = [
         pkgs.cacert
-	pkgs.dash
-	pkgs.coreutils
+        pkgs.dash
+        pkgs.coreutils
         (pkgs.python27.buildEnv.override {
           extraLibs = [ lae ];
           ignoreCollisions = true;
