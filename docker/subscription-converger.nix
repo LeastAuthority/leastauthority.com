@@ -5,7 +5,7 @@ pkgs.dockerTools.buildImage {
   name = "leastauthority/subscription-converger";
   fromImage = lae.s4-common-image;
   config = {
-    Env = lae.s4-common-image.buildArgs.config;
+    Env = lae.s4-common-image.buildArgs.config.Env;
     Cmd =
       [
         "/bin/dash"
