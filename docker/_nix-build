@@ -7,6 +7,8 @@
 # "-i python" tells it to use python as an interpreter for the rest of the
 # script, run in the environment set up by installing the given packages.
 
+from __future__ import print_function, unicode_literals
+
 from sys import argv
 from subprocess import check_output
 
