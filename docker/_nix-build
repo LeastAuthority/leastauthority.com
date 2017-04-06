@@ -24,7 +24,10 @@ def nixbuild(name):
 
     # Get the name of the built artifact.
     image_archive_filename = output.splitlines()[-1]
+    return image_archive_filename
 
+
+def loadimage(image_archive_filename):
     # Load the built Docker image archive into Docker.
     client = from_env(version="auto")
     with open(image_archive_filename) as image_archive:
@@ -33,7 +36,11 @@ def nixbuild(name):
 
 def main(names):
     for name in names:
-        nixbuild(name.decode("utf-8"))
+        print("Building {}.".format(name))
+        result = nixbuild(name.decode("utf-8"))
+        print("Build complete.  Loading {}.".format(result))
+        loadimage(result)
+        print("Load complete.")
 
 
 main(argv[1:])
