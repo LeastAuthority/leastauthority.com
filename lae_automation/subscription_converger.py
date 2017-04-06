@@ -458,12 +458,14 @@ def _compute_changes(desired, actual):
             # If it was missing, we don't want it.  Please delete it.  We
             # don't need to remove it from to_create because if it wasn't
             # desired, it won't have been there to begin with.
+            Message.log(condition=u"undesired", subscription=sid)
             to_delete.add(sid)
             continue
 
         if actual.needs_update(subscription):
             # Something about the actual state disagrees with the subscription
             # state.  Delete the current state and re-create the new state.
+            Message.log(condition=u"needs-update", subscription=sid)
             to_delete.add(sid)
         else:
             # It appears to be fine as-is.  Don't delete it and don't create
@@ -569,6 +571,7 @@ def _converge_replicasets(actual, config, subscriptions, k8s, aws):
     for replicaset in actual.replicasets:
         sid = replicaset.metadata.annotations[u"subscription"]
         if sid not in actual.subscriptions:
+            Message.log(condition=u"undesired", subscription=sid)
             deletes.append(replicaset.metadata)
 
     def delete(metadata):
@@ -584,6 +587,7 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
     for pod in actual.pods:
         sid = pod.metadata.annotations[u"subscription"]
         if sid not in actual.subscriptions:
+            Message.log(condition=u"undesired", subscription=sid)
             deletes.append(pod.metadata)
 
     def delete(metadata):
