@@ -320,17 +320,16 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         happen due to actions taken by Kubernetes for any ``LoadBalancer``
         service.
         """
-        k8s_state = self.kubernetes._state
         services = [
             service
             for service
-            in k8s_state.services.items
+            in self.kubernetes._state.services.items
             if service.spec.type == u"LoadBalancer"
             and service.status is None
         ]
         assume([] != services)
         for service in services:
-            self.kubernetes._state = k8s_state = k8s_state.replace(
+            self.kubernetes._state_changed(self.kubernetes._state.replace(
                 u"services",
                 service,
                 service.set(
@@ -345,7 +344,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                         ),
                     ),
                 ),
-            )
+            ))
 
 
     @rule()
@@ -355,17 +354,16 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         have made for us had we actually been using it.  This happens
         automatically as a consequence of creating an appropriate Deployment.
         """
-        k8s_state = self.kubernetes._state
         deployments = list(
             deployment
             for deployment
-            in k8s_state.deployments.items
-            if 0 == len(get_replicasets(k8s_state, deployment))
+            in self.kubernetes._state.deployments.items
+            if 0 == len(get_replicasets(self.kubernetes._state, deployment))
         )
         assume([] != deployments)
         for deployment in deployments:
             self.kubernetes._state_changed(
-                k8s_state.create(
+                self.kubernetes._state.create(
                     u"replicasets",
                     derive_replicaset(deployment),
                 ),
@@ -381,18 +379,17 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         as a consequence of creating an appropriate Deployments (by way of
         ReplicaSets).
         """
-        k8s_state = self.kubernetes._state
         deployments = list(
             deployment
             for deployment
-            in k8s_state.deployments.items
-            if 0 == len(get_pods(k8s_state, deployment))
+            in self.kubernetes._state.deployments.items
+            if 0 == len(get_pods(self.kubernetes._state, deployment))
         )
 
         addresses = ipv4_addresses()
         for deployment in deployments:
             self.kubernetes._state_changed(
-                k8s_state.create(
+                self.kubernetes._state.create(
                     u"pods",
                     derive_pod(deployment, data.draw(addresses)),
                 ),
