@@ -51,9 +51,9 @@ def create(path):
 
 class Subscriptions(Resource):
     """
+    Handle requests relating to the collection of subscriptions.
+
     GET / -> list of subscription identifiers
-    PUT /<subscription id> -> create new subscription
-    DELETE /<subscription id> -> cancel an existing subscription
     """
     def __init__(self, database):
         Resource.__init__(self)
@@ -87,6 +87,12 @@ def marshal_subscription(details):
 
 
 class Subscription(Resource):
+    """
+    Handle requests relating to a particular subscription.
+
+    PUT /<subscription id> -> create new subscription
+    DELETE /<subscription id> -> cancel an existing subscription
+    """
     def __init__(self, database, subscription_id):
         Resource.__init__(self)
         self.database = database
