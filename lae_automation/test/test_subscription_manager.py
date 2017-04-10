@@ -37,6 +37,10 @@ def partial_subscription_details():
 class SubscriptionManagerTestMixin(object):
     """
     Tests for the subscription manager's HTTP interface.
+
+    Subclasses will mix this in to define tests against the subscription
+    manager client interface.  They must override ``get_client`` to create a
+    client to subject to the tests.
     """
     def get_client(self):
         raise NotImplementedError()
@@ -46,7 +50,7 @@ class SubscriptionManagerTestMixin(object):
     def test_round_trip(self, details):
         """
         A subscription created with a PUT to /v1/subscriptions/<id> can be
-        retrieved with a GET of /v1/subscriptions.
+        found in the list retrieved with a GET of /v1/subscriptions.
         """
         client = self.get_client()
         d = client.create(details.subscription_id, details)
@@ -113,6 +117,8 @@ class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
             u"s4.example.com"
         )
 
+
+# TODO: A more integration-y test using network_client.
 
 
 class MakeServiceTests(TestCase):
