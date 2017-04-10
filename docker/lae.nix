@@ -349,29 +349,42 @@ rec {
     };
   };
 
-  txkube000 = pythonPackages.buildPythonPackage rec {
+  txkube010 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txkube";
-    version = "0.0.0";
+    version = "0.1.0";
 
     buildInputs =
       with pythonPackages;
       [ testtools220 hypothesis fixtures300 eliot-tree ];
 
     propagatedBuildInputs =
-      with pythonPackages;
-      [ zope_interface attrs pyrsistent0_12_0 incremental service-identity pyopenssl16_2_0 twisted pem eliot dateutil pykube eliot treq pem pyyaml klein ];
+      with pythonPackages; [
+        zope_interface
+        attrs
+        pyrsistent0_12_0
+        incremental
+        service-identity
+        pyopenssl16_2_0
+        twisted
+        pem
+        eliot
+        dateutil
+        pykube
+        treq
+        pyyaml
+        klein
+      ];
 
+    format = "wheel";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "LeastAuthority";
-      repo = "txkube";
-      rev = "a2192316533b7e5bb8c106ff0b2799b07280ebaf";
-      sha256 = "00655hns446v9qylbw2q8s5wc9a8c6a0gqd6nqi67l8xqii0ddmc";
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/36/53/cdba3d10f1284b1bcf7971855fbd8844dda17cdf9ce7db3d02e6858575b0/txkube-0.1.0-py2-none-any.whl";
+      sha256 = "1bfakg5skal9ba47zpshq5mxvw6h0ahjbzdz0mcinaxzn0qa9ag0";
     };
 
     checkPhase = ''
-    trial txkube
+      trial txkube
     '';
   };
 
@@ -397,7 +410,7 @@ rec {
         twisted
         txaws030
         tahoe_lafs
-        txkube000
+        txkube010
       ];
 
     src =
