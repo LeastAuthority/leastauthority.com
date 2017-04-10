@@ -4,8 +4,10 @@
 from twisted.python.url import URL
 
 import attr
+import attr.validators
 
 from txkube import (
+    IKubernetesClient,
     v1, v1beta1, network_kubernetes, authenticate_with_serviceaccount,
 )
 
@@ -53,7 +55,7 @@ def select(collection, selector):
 
 @attr.s(frozen=True)
 class KubeClient(object):
-    k8s = attr.ib()
+    k8s = attr.ib(validator=attr.validators.provides(IKubernetesClient))
 
     @classmethod
     def from_service_account(cls):
