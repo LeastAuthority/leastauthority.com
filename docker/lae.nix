@@ -257,16 +257,16 @@ rec {
     doCheck = false;
   };
 
-  txaws030dev0 = pythonPackages.buildPythonPackage rec {
+  txaws030 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txAWS";
-    version = "0.3.0.dev0";
+    version = "0.3.0";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "twisted";
-      repo = "txaws";
-      rev = "2c1a075caa24c9fa3c4e84dbe206196a4faa279c";
-      sha256 = "1jdswmpkncvljsjlszl8968q5c2s0569k9hs3c5rqnf54czj2lq5";
+    format = "wheel";
+
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/58/dc/e248f57763621e70e37514d8d4969d93e66c50652f6faeadca0c20b297f2/txAWS-0.3.0-py2-none-any.whl";
+      sha256 = "1ymkr2a7z33a9m69w2wqa1npxvd9jznql1qrjl21zdi9ddm8sbs7";
     };
 
     buildInputs =
@@ -274,12 +274,23 @@ rec {
       [ treq ];
 
     propagatedBuildInputs =
-      with pythonPackages;
-      [ venusian attrs dateutil incremental pyrsistent0_12_0 constantly pyopenssl16_2_0 pem service-identity twisted lxml ];
+      with pythonPackages; [
+        venusian
+        attrs
+        dateutil
+        incremental
+        pyrsistent0_12_0
+        constantly
+        pyopenssl16_2_0
+        pem
+        service-identity
+        twisted
+        lxml
+      ];
 
-    # checkPhase = ''
-    #   trial txaws
-    # '';
+    checkPhase = ''
+      trial txaws
+    '';
   };
 
   fixtures300 = pythonPackages.fixtures.override rec {
@@ -384,7 +395,7 @@ rec {
         attrs
         jinja2
         twisted
-        txaws030dev0
+        txaws030
         tahoe_lafs
         txkube000
       ];
