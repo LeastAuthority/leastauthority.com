@@ -18,7 +18,7 @@ from docker import from_env
 def nixbuild(name):
     # Build it.
     output = check_output([
-        "nix-build", "--show-trace",
+        "nix-build", "--quiet", "--show-trace",
         "/leastauthority.com/docker/{}.nix".format(name),
     ])
 
