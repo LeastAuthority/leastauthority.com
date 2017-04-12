@@ -25,6 +25,9 @@ matrix:
     - env: ENV="packaging"
       # Force this to run in a VM since the packaging script wants to launch Docker.
       sudo: "required"
+      # We want the version of tar from trusty which has the
+      # --exclude-vcs-ignores option.
+      dist: "trusty"
       # We don't really need any particular language runtime.
       # Maybe the C runtime is lighter than the rest?
       language: "C"
