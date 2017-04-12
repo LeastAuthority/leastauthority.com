@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 # Read about services at
 # http://kubernetes.io/docs/user-guide/services/
 kind: 'Service'
@@ -9,12 +12,15 @@ metadata:
   labels:
     # Everything we make and put into k8s will have this label.
     provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
 spec:
   selector:
     # Pick up all the other resources that claim to be part of the s4 app.
     # This makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
     app: 's4'
+    component: 'Infrastructure'
 
   # This service exposes network ports via a load balancer - ELB on
   # AWS.  The load balancer will be configured to spread traffic
@@ -24,7 +30,7 @@ spec:
   #
   # Note that ELB on AWS takes a minute or two to become usable,
   # probably due to DNS record propagation delay.
-  type: LoadBalancer
+  type: 'LoadBalancer'
 
   ports:
   # Define the service's one HTTPS port.  This also causes
@@ -59,12 +65,15 @@ metadata:
   labels:
     # Everything we make and put into k8s will have this label.
     provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
 spec:
   selector:
     # Pick up all the other resources that claim to be part of the s4 app.
     # This makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
     app: 's4'
+    component: 'Infrastructure'
 
   # This service exposes the log gatherer internally only.  Pods
   # running on the cluster can access it but the public internet
@@ -93,6 +102,9 @@ apiVersion: 'extensions/v1beta1'
 metadata:
   name: 's4-infrastructure'
 spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
 
   # The containers both write directly to the filesystem.  It's not
   # safe to have more than one instance running at a time.  So limit
@@ -113,8 +125,12 @@ spec:
         provider: 'LeastAuthority'
         app: 's4'
         component: 'Infrastructure'
+        version: '1'
     spec:
       volumes:
+      - name: 'subscription-manager-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-subscription-manager-pvc'
       - name: 'log-gatherer-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-foolscap-logs-pvc'
@@ -132,11 +148,64 @@ spec:
       - name: 'flapp-secrets'
         secret:
           secretName: 'signup-secrets'
+      - name: 'subscription-manager-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          defaultMode: 0444
+          items:
+          - key: 'domain'
+            path: 'domain'
+      - name: 'convergence-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          defaultMode: 0444
+          items:
+          - key: 'domain'
+            path: 'domain'
+
+          # XXX Should allocate some Route53-only keys for this.
+          # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
+          # XXX Maybe I should create _two_ sets of keys...
+          # XXX OTOH There's also IAM roles which might be even better?
+          - key: 'aws-s4.key'
+            path: 'aws.key'
+          - key: 'aws-s4.id'
+            path: 'aws.id'
 
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
+
+      # Here is the per-customer-grid router.  The service sends all
+      # connections to it and it figures out which pod services the
+      # subscription the connection is related to.
+      - name: 'grid-router'
+        image: '127.0.0.1:30000/leastauthority/grid-router:7a0eadc'
+
+      # Here is the subscription manager.  It contains the canonical (local)
+      # state for our subscriptions (Stripe is _really_ canonical... TODO!)
+      - name: 'subscription-manager'
+        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        volumeMounts:
+        - mountPath: '/app/data'
+          name: 'subscription-manager-data'
+        - mountPath: '/app/k8s_secrets'
+          name: 'subscription-manager-secrets'
+
+      # Here is the subscription converger.  It talks to the subscription
+      # manager and Kubernetes and keeps them synchronized.
+      - name: 'subscription-converger'
+        image: '127.0.0.1:30000/leastauthority/subscription-converger:b5671da'
+        env:
+        - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
+          value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
+        - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
+          value: '127.0.0.1:30000/leastauthority/tahoe-storage:1d72b09'
+        volumeMounts:
+        - mountPath: '/app/k8s_secrets'
+          name: 'convergence-secrets'
+          readOnly: true
 
       # Here is the Foolscap log gatherer.
       - name: 'foolscap-log-gatherer'
@@ -258,6 +327,27 @@ spec:
   resources:
     requests:
       storage: '10G'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-subscription-manager-pvc'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+  annotations:
+    # This enables dynamic provisioning of the volume.  See
+    # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
+    volume.beta.kubernetes.io/storage-class: 'normal'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '1G'
 ---
 # Read about PersistentVolumeClaims at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/

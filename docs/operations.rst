@@ -18,10 +18,10 @@ The primary interaction expected is to deploy new versions of the service softwa
 Caveats
 -------
 
-The implementation of the service is closely tied to the LeastAuthority infrastructure server.
-This server runs the leastauthority.com website and has many functions unrelated to the S4 service.
-Consequently, this document may be of interest to website maintainers as well.
-However, the S4 service and the website should be split apart so this is no longer the case.
+The implementation of the service leverages Kubernetes heavily.
+Some familiarity with Kubernetes will be helpful in understanding the documentation.
+An attempt has been made to explain many relevant Kubernetes concepts here.
+However, for a more complete understanding, see the official Kubernetes documentation.
 
 Overview
 ~~~~~~~~
@@ -29,11 +29,11 @@ Overview
 The service operates as a web server which accepts end-user requests for content and registration.
 Web requests for registration generate a foolscap request to a flapp server responsible for that process.
 The flapp server launches a "full signup" script.
-The signup script creates a new EC2 instance and deploys Tahoe-LAFS and other necessary software on it.
-It then configures Tahoe-LAFS and notifies the user of the details of the newly provisioned service
-(the introducer furl, for example).
-The new EC2 instance continues to operate for as long as the user remains subscribed.
-It provides service to that user alone.
+The signup script submits subscription details to the *subscription manager* which maintains a subscription database.
+Separately, a *subscription converger* polls the *subscription manager*.
+It provisions resources (such as Tahoe-LAFS nodes) for new subscriptions it finds there and cleans up resources for no-longer-active subscriptions.
+Each subscription has a large portion of dedicated resources:
+the Kubernetes cluster (and its compute, memory, and network components) is a shared resource but little else is.
 
 Top-Down Components
 ~~~~~~~~~~~~~~~~~~~
@@ -44,11 +44,13 @@ Web Server
 ----------
 
 Twisted Web runs in a container serving up static content residing in that same container.
+It serves website content specifically related to the signup process
+(the rest of the leastauthority.com website is served elsewhere).
 The container is run by Docker on a Kubernetes worker node on an EC2 instance.
-The server uses filesystem storage to persist logs and other signup details.
+The server uses filesystem storage to persist access logs and to read state to find the Flapp server.
 The server also manages the Stripe interaction for billing new signups.
 It is part of the s4-infrastructure pod.
-The server is implemented in lae_site.
+The server is implemented in ``lae_site``.
 
 Flapp Server
 ------------
@@ -57,18 +59,61 @@ A Foolscap application server runs in a container handling signup requests from 
 The container is run by Docker on a Kubernetes worker node on an EC2 instance.
 The server uses filesystem storage to persist logs and other signup details.
 It is part of the s4-infrastructure pod.
-The application logic for the signup process is in full_signup_docker.sh.
+The application logic for the signup process is in ``full_signup_docker.sh``.
+
+Grid Router
+-----------
+
+All client access to Tahoe-LAFS resources are mediated by this Foolscap proxy.
+Kubernetes is configured to route all S4 Tahoe-LAFS connections to this proxy.
+This proxy maintains an awareness of which Tahoe-LAFS introducers and storage servers are running and to whom they belong.
+It determines which Tahoe-LAFS node any particular connection is attempting to reach and then proxies it to the appropriate container.
+It is part of the s4-infrastructure pod.
+The grid router is implemented in ``grid_router``.
+
+Subscription Manager
+--------------------
+
+The subscription manager maintains a database of S4 subscriptions.
+It presents an HTTP-based API for creating, retrieving, and de-activating them.
+It is part of the s4-infrastructure pod.
+The subscription manager is implemented in ``lae_automation/subscription_manager.py``.
+
+Subscription Converger
+----------------------
+
+The subscription converger updates Kubernetes configuration to reflect active subscriptions.
+For example, when a new subscription is created:, the subscription converger:
+
+  * finds it in the subscription manager database
+  * notices that resources to service that subscription do not exist
+  * creates Kubernetes ConfigMap and Deployment to provide Tahoe-LAFS nodes for the subscription
+  * creates AWS Route53 record for the domain name in the subscription's furl
+  * etc
+
+It also performs the reverse process when it finds resources for which there is no active subscription.
+At this time, the subscription converger will *not* delete the S3 bucket storing Tahoe-LAFS shares
+(as a precaution against accidentally destroying important customer data).
+It is part of the s4-infrastructure pod.
+The subscription converger is implemented in ``lae_automation/subscription_converger.py``.
 
 Tahoe-LAFS Introducer
 ---------------------
 
-A Tahoe-LAFS introducer runs on a per-customer EC2 instance that is created by the signup process.
+A Tahoe-LAFS introducer runs in a per-customer container.
+The container is managed by a per-customer Kubernetes Deployment that is created by the *subscription converger*.
+This container mediates access to the customer's storage service.
+The container contains vanilla Tahoe-LAFS.
+The container is defined by ``docker/Dockerfile.tahoe-introducer``.
 
 Tahoe-LAFS Storage Service
 --------------------------
 
-A Tahoe-LAFS storage service runs alongside the introducer.
-This mediates access to the customer's S3 bucket.
+A Tahoe-LAFS storage service runs in another per-customer container.
+The container is managed by a per-customer Kubernetes Deployment that is created by the *subscription manager*.
+This container mediates access to the customer's S3 bucket.
+The container contains vanilla Tahoe-LAFS.
+The container is defined by ``docker/Dockerfile.tahoe-storage``.
 
 Bottom-Up Components
 ~~~~~~~~~~~~~~~~~~~~
@@ -88,14 +133,15 @@ Persistent state related to the operation of the service
 is stored on EBS instances attached to the EC2 instances.
 The EBS instances belong to a LeastAuthority-owned AWS account.
 
-Each customer has their own EC2 instance.
+Customer requests are serviced by containers which share the EC2 instances.
+Each customer has their own containers.
 Customer data is stored on S3, not instance storage of EBS.
-Recreating a destroyed customer EC2 instance is possible, though it is a manual task.
+Per-customer Kubernetes Deployments will automatically recreate destroyed customer containers.
 
 AWS EC2 is not a very tightly coupled component of the system.
-The signup process does integrate against the EC2 APIs directly.
-A future direction is for customers to receive service from a container instead of an EC2 instance.
-This will reduce coupling.
+The intent is that Kubernetes is the platform.
+The hope is that if Kubernetes were deployed on a different cloud provider, everything would continue to work.
+This is probably not the case but perhaps the necessary porting would be minimal.
 
 AWS S3
 ------
@@ -108,6 +154,13 @@ AWS S3 is a fairly tightly coupled component of the system.
 The Tahoe-LAFS S3 storage backend is leveraged extensively.
 Customer data is stored in S3 buckets.
 A transition to another storage system requires both code changes and data migration.
+
+AWS Route53
+-----------
+
+Each subscription is given an introducer furl containing a unique domain name.
+These domain names are managed automatically by the *subscription converger*.
+They are created and destroyed using the Route53 API.
 
 Docker Registry
 ---------------
@@ -123,7 +176,14 @@ This is not currently implemented.
 Kubernetes
 ----------
 
-Some errors are expected as kubernetes resources are created.
+Kubernetes is used as a way to manage Docker containers, AWS network configuration, storage resources, and more.
+The *subscription converger* interacts extensively with the Kubernetes API server.
+
+Important operational behavior, such as recovering failed containers (by launching replacements), is delegated to Kubernetes.
+Kubernetes also bears responsibility for most AWS interactions (such as setting up Elastic Load Balancers for ingress).
+It does this based on the Kubernetes-specific configuration we put into Kubernetes.
+
+Some errors are expected as Kubernetes resources are created.
 Ordering of creation of different components is not enforced.
 The cluster should converge on a working state as dependencies get created.
 
@@ -133,10 +193,12 @@ kops
 The Kubernetes cluster is created and managed using kops_:
 "Production Grade K8s Installation, Upgrades, and Management."
 
-
 Consult the kops documentation to learn more about its operation.
 
-The infrastructure services are defined by the yaml files referenced in the above transcript.
+Infrastructure Description
+==========================
+
+The infrastructure resources are defined by ``k8s/infrastructure.yaml``.
 To ensure repeatability, the services should always be deployed from these version-controlled artifacts.
 The Kubernetes dashboard provides features for directly editing the configuration of the services.
 This can be useful for experimentation.

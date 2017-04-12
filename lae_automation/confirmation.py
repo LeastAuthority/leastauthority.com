@@ -1,3 +1,5 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 from twisted.internet import defer
 
@@ -62,17 +64,16 @@ signup.py
 NOTIFY_FAILURE_EMAIL = "support@leastauthority.com"
 
 
-def send_signup_confirmation(publichost, customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr):
+def send_signup_confirmation(customer_email, external_introducer_furl, customer_keyinfo, stdout, stderr):
     # TODO: the name is URL-escaped UTF-8. It should be OK to unescape it since the email is plain text,
     # but I'm being cautious for now since I haven't reviewed email.mime.text.MIMEText to make sure that's safe.
     content = CONFIRMATION_EMAIL_BODY % {
-               "external_introducer_furl": external_introducer_furl,
-               "publichost": publichost
-              }
+        "external_introducer_furl": external_introducer_furl,
+    }
     headers = {
-               "From": FROM_ADDRESS,
-               "Subject": CONFIRMATION_EMAIL_SUBJECT,
-              }
+        "From": FROM_ADDRESS,
+        "Subject": CONFIRMATION_EMAIL_SUBJECT,
+    }
 
     d = defer.succeed(None)
     if customer_keyinfo:
