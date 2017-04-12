@@ -92,6 +92,7 @@ class GridRouterStateMachine(RuleBasedStateMachine):
             b"--kubernetes-namespace", self.deploy_config.kubernetes_namespace.encode("ascii"),
             b"--k8s-service-account",
             b"--kubernetes", b"http://127.0.0.1:1234/",
+            b"--no-eliot-to-stdout",
         ])
         self.service = makeService(options, self.reactor)
 

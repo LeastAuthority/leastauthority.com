@@ -52,6 +52,18 @@ class Options(_Options, KubernetesClientOptionsMixin):
         ),
     ]
 
+    def __init__(self):
+        _Options.__init__(self)
+        self["eliot-to-stdout"] = True
+
+
+    def opt_no_eliot_to_stdout(self):
+        """
+        Do not dump Eliot logs to stdout.
+        """
+        self["eliot-to-stdout"] = False
+
+
     def postOptions(self):
         KubernetesClientOptionsMixin.postOptions(self)
 
@@ -79,7 +91,8 @@ def makeService(options, reactor=None):
         options["kubernetes-namespace"].decode("ascii"),
         options["interval"],
     )
-    _EliotLogging().setServiceParent(service)
+    if options["eliot-to-stdout"]:
+        _EliotLogging().setServiceParent(service)
     return service
 
 
