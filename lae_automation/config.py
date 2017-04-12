@@ -1,3 +1,5 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 import simplejson
 
@@ -26,7 +28,7 @@ class Config(object):
         assert isinstance(self.products, list)
         for value in self.products:
             assert isinstance(value, dict), value
-            for field in ("amount", "interval", "currency", "plan_name", "plan_ID", "plan_name",
+            for field in ("amount", "interval", "currency", "plan_name", "plan_ID",
                           "plan_trial_period_days", "ami_image_id", "instance_size", "statement_description"):
                 assert field in value, value
                 value[field] = str(value[field])
@@ -36,7 +38,7 @@ class Config(object):
 
     @staticmethod
     def _load_config_json(configFile):
-        if type(configFile) is str:
+        if isinstance(configFile, (str, unicode)):
             configFile = open(configFile, 'r')
 
         try:

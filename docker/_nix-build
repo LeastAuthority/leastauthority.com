@@ -1,0 +1,47 @@
+#!/usr/bin/env nix-shell
+#! nix-shell -i python --packages pythonPackages.docker
+
+# ^^ From
+# https://gist.github.com/MostAwesomeDude/2fed99e5cf630639df42df7997e12d1e#file-verifier-py-L1-L2
+#
+# "-i python" tells it to use python as an interpreter for the rest of the
+# script, run in the environment set up by installing the given packages.
+
+from __future__ import print_function, unicode_literals
+
+from sys import argv
+from subprocess import STDOUT, check_output
+
+from docker import from_env
+
+
+def nixbuild(name):
+    # Build it.
+    expr = "/leastauthority.com/docker/{}.nix".format(name)
+    output = check_output(
+        ["nix-build", "--show-trace", expr],
+        stderr=STDOUT,
+    )
+
+    # Get the name of the built artifact.
+    image_archive_filename = output.splitlines()[-1]
+    return image_archive_filename
+
+
+def loadimage(image_archive_filename):
+    # Load the built Docker image archive into Docker.
+    client = from_env(version="auto")
+    with open(image_archive_filename) as image_archive:
+        client.images.load(image_archive.read())
+
+
+def main(names):
+    for name in names:
+        print("Building {}.".format(name))
+        result = nixbuild(name.decode("utf-8"))
+        print("Build complete.  Loading {}.".format(result))
+        loadimage(result)
+        print("Load complete.")
+
+
+main(argv[1:])

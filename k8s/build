@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+from sys import argv
+from time import sleep
+from subprocess import CalledProcessError, check_output, check_call
+from tempfile import NamedTemporaryFile
+
+from twisted.python.filepath import FilePath
+
+from pyrsistent import freeze, thaw
+
+from yaml import safe_load, safe_dump
+
+HERE = FilePath(__file__).parent()
+
+def value(seq, pred):
+    def check(idx):
+        return pred(seq[idx])
+    return check
+
+def name(pred):
+    def check(value):
+        return pred(value.name)
+    return check
+
+def equals(expected):
+    def check(actual):
+        return actual == expected
+    return check
+
+def main(rev=None):
+    context_name = u"dev"
+    template = HERE.child("build-image-template.yaml")
+    with template.open() as fObj:
+        job = freeze(safe_load(fObj))
+    if rev is None:
+        rev = check_output([u"git", u"rev-parse", u"HEAD"])[:7]
+    git_rev = value(job.spec.template.spec.containers[0].env, name(equals(u"GIT_REV")))
+    job = job.transform(
+        [u"spec", u"template", u"spec", u"containers", 0, u"env", git_rev, u"value"],
+        rev.decode("ascii"),
+    )
+
+    with NamedTemporaryFile() as fObj:
+        fObj.write(safe_dump(thaw(job)))
+        fObj.flush()
+
+        print(check_output([u"kubectl", u"--context", context_name, u"create", u"-f", fObj.name]))
+
+    while True:
+        job_name = check_output([
+            u"kubectl", u"--context", context_name, u"get", u"pods",
+            u"--show-all", u"--selector=job-name={}".format(job.metadata.name),
+            u"--output=jsonpath={.items..metadata.name}",
+        ]).decode("ascii").strip()
+        if u" " not in job_name:
+            # Sometimes there's garbage left over from a previous job.  Keep
+            # checking pods until there's just the one we want.  This lame but
+            # simple.
+            break
+
+    while True:
+        try:
+            check_call([
+                u"kubectl", u"--context", context_name,
+                u"logs", u"--follow", u"--timestamps",
+                job_name,
+            ])
+        except CalledProcessError as e:
+            print(str(e))
+            sleep(1)
+        else:
+            # Job cleanup is the responsibility of the job creator.  Do this
+            # if the job succeeded.  Leave it for debugging otherwise.
+            print(check_output([
+                u"kubectl", u"--context", context_name, u"delete", u"job", job.metadata.name,
+            ]))
+            break
+
+
+main(*argv[1:])

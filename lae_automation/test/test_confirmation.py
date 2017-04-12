@@ -1,3 +1,5 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 from cStringIO import StringIO
 
@@ -106,7 +108,7 @@ class TestConfirmation(unittest.TestCase):
 
         stdout = StringIO()
         stderr = StringIO()
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      customer_keyinfo, stdout, stderr)
         def _check(ign):
             self.failUnless('flag' in connected)
@@ -133,7 +135,7 @@ class TestConfirmation(unittest.TestCase):
             raise MarkerException()
         self.patch(send_email, 'ESMTPSenderFactory', call_ESMTPSenderFactory)
 
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
@@ -159,7 +161,7 @@ class TestConfirmation(unittest.TestCase):
             pass
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")
@@ -185,7 +187,7 @@ class TestConfirmation(unittest.TestCase):
             raise MarkerException()
         self.patch(send_email, 'connectTCP', call_connectTCP)
 
-        d = send_signup_confirmation(self.PUBIP, self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
+        d = send_signup_confirmation(self.CUSTOMER_EMAIL, self.EXTERNAL_INTRODUCER_FURL,
                                      '', stdout, stderr)
         def _bad_success(ign):
             self.fail("should have got a failure")

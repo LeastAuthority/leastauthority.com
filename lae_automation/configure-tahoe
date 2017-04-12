@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 #
 # configure-tahoe reads an lae-specific description of tahoe
@@ -14,10 +16,12 @@
 #
 
 from errno import ENOENT, EEXIST
-from sys import stdin
+from sys import argv, stdin
 from json import load
 
 from twisted.python.filepath import FilePath
+
+from foolscap.furl import decode_furl, encode_furl
 
 INTRODUCER_CFG_TEMPLATE = """# -*- mode: conf; coding: utf-8 -*-
 
@@ -61,12 +65,12 @@ web.static = public_html
 
 # This gives a Twisted endpoint description string defining where the
 # storage node will listen for Foolscap connections.
-tub.port = tcp:port=%(tub_port_number)s
+tub.port = tcp:port=%(private_port_number)s
 
 # This gives a comma-separated list of ip:port pairs which will be
 # published as locations at which this storage node's Foolscap server
 # can be reached.
-tub.location = %(publichost)s:%(tub_port_number)s,%(privatehost)s:%(tub_port_number)s
+tub.location = %(publichost)s:%(public_port_number)s,%(privatehost)s:%(private_port_number)s
 
 # This gives the furl of a Foolscap log gatherer where we can send our
 # logs.
@@ -95,12 +99,12 @@ enabled = false
 local.directory =
 """
 
-def main():
+def main(root):
     config = load(stdin)
     if "introducer" in config:
         section = config["introducer"]
         configure_introducer(
-            introducer=FilePath(section["root"]),
+            introducer=FilePath(root),
             port=section["port"],
             node_pem=section["node_pem"],
             introducer_furl=section["introducer_furl"],
@@ -110,7 +114,7 @@ def main():
     if "storage" in config:
         section = config["storage"]
         configure_storage(
-            storage=FilePath(section["root"]),
+            storage=FilePath(root),
             port=section["port"],
             node_pem=section["node_pem"],
             node_privkey=section["node_privkey"],
@@ -145,6 +149,13 @@ def configure_introducer(
     introducer.child(b"tahoe.cfg").setContent(tahoe_cfg)
 
 
+def add_preferred_address(host, furl):
+    tub_id, location_hints, name = decode_furl(furl)
+    port = location_hints[0].split(":")[1]
+    location_hints.insert(0, host + ":" + port)
+    return encode_furl(tub_id, location_hints, name)
+
+
 def configure_storage(
         storage, port, node_pem, node_privkey,
         bucket_name, publichost, privatehost, introducer_furl,
@@ -153,15 +164,16 @@ def configure_storage(
 ):
     configure_secrets(storage, node_pem)
     if node_privkey is not None:
-        storage.descendant((b"private", "node.privkey")).setContent(node_privkey)
-    storage.descendant((b"private", "s3secret")).setContent(s3_secret_key)
+        storage.descendant((b"private", b"node.privkey")).setContent(node_privkey)
+    storage.descendant((b"private", b"s3secret")).setContent(s3_secret_key)
 
     tahoe_cfg = STORAGE_CFG_TEMPLATE % dict(
         nickname=bucket_name,
         publichost=publichost,
         privatehost=privatehost,
-        tub_port_number=port,
-        introducer_furl=introducer_furl,
+        private_port_number=port,
+        public_port_number=10000,
+        introducer_furl=add_preferred_address(privatehost, introducer_furl),
         s3_access_key_id=s3_access_key_id,
         bucket_name=bucket_name,
         log_gatherer_furl=log_gatherer_furl,
@@ -197,4 +209,4 @@ def force_remove(path):
 
 
 if __name__ == '__main__':
-    main()
+    main(*argv[1:])

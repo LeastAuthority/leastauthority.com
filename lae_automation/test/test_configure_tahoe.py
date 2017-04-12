@@ -1,3 +1,6 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
 from tempfile import mkstemp, mkdtemp
 from os import fdopen
 from json import dumps
@@ -11,6 +14,8 @@ from fixtures import Fixture
 
 from twisted.python.filepath import FilePath
 
+from foolscap.furl import decode_furl, encode_furl
+
 from .testcase import TestBase
 from .matchers import hasContents, hasConfiguration
 from .strategies import introducer_configuration, storage_configuration
@@ -23,13 +28,13 @@ CONFIGURE_TAHOE = FilePath(__file__).parent().parent().child(b"configure-tahoe")
 # of successful examples to be considered a success.
 simple = settings(max_examples=5)
 
-def configure_tahoe(configuration):
+def configure_tahoe(configuration, root):
     fd, name = mkstemp()
     with fdopen(fd, "w+") as fObj:
         fObj.write(dumps(configuration))
         fObj.seek(0)
         # Assume it is executable and has a sane interpreter.
-        check_call([CONFIGURE_TAHOE.path], stdin=fObj)
+        check_call([CONFIGURE_TAHOE.path, root], stdin=fObj)
 
 
 class TahoeNodes(Fixture):
@@ -65,6 +70,8 @@ class ConfigureTahoeTests(TestBase):
             introducer_pem=introducer_config["node_pem"],
             storage_pem=storage_config["node_pem"],
             storage_privkey=storage_config["node_privkey"],
+            introducer_port=introducer_config["port"],
+            storageserver_port=storage_config["port"],
             bucket_name=storage_config["bucket_name"],
             publichost=storage_config["publichost"],
             privatehost=storage_config["privatehost"],
@@ -74,9 +81,8 @@ class ConfigureTahoeTests(TestBase):
             log_gatherer_furl=None,
             stats_gatherer_furl=None,
         )
-        config["introducer"]["root"] = self.nodes.introducer.path
-        config["storage"]["root"] = self.nodes.storage.path
-        configure_tahoe(config)
+        configure_tahoe({"introducer": config["introducer"]}, self.nodes.introducer.path)
+        configure_tahoe({"storage": config["storage"]}, self.nodes.storage.path)
 
         config_files = [
             self.nodes.introducer.child(b"tahoe.cfg"),
@@ -101,6 +107,8 @@ class ConfigureTahoeTests(TestBase):
             introducer_pem=introducer_config["node_pem"],
             storage_pem=storage_config["node_pem"],
             storage_privkey=storage_config["node_privkey"],
+            introducer_port=introducer_config["port"],
+            storageserver_port=storage_config["port"],
             bucket_name=storage_config["bucket_name"],
             publichost=storage_config["publichost"],
             privatehost=storage_config["privatehost"],
@@ -110,9 +118,8 @@ class ConfigureTahoeTests(TestBase):
             log_gatherer_furl=introducer_config["log_gatherer_furl"],
             stats_gatherer_furl=introducer_config["stats_gatherer_furl"],
         )
-        config["introducer"]["root"] = self.nodes.introducer.path
-        config["storage"]["root"] = self.nodes.storage.path
-        configure_tahoe(config)
+        configure_tahoe({"introducer": config["introducer"]}, self.nodes.introducer.path)
+        configure_tahoe({"storage": config["storage"]}, self.nodes.storage.path)
 
         intro_config_path = self.nodes.introducer.child(b"tahoe.cfg")
         storage_config_path = self.nodes.storage.child(b"tahoe.cfg")
@@ -137,10 +144,14 @@ class ConfigureTahoeTests(TestBase):
             self.nodes.introducer.descendant([b"private", b"introducer.furl"]),
             hasContents(introducer_furl),
         )
+        tub_id, location_hints, name = decode_furl(introducer_furl)
+        port = location_hints[0].split(":")[1]
+        location_hints[:0] = [storage_config["privatehost"] + ":" + port]
+        internal_introducer_furl = encode_furl(tub_id, location_hints, name)
         self.expectThat(
             storage_config_path,
             hasConfiguration({
-                ("client", "introducer.furl", introducer_furl),
+                ("client", "introducer.furl", internal_introducer_furl),
             }),
         )
 
@@ -154,7 +165,7 @@ class MarshalTahoeConfiguration(TestBase):
         The basic structure of the result returned matches the structure
         created by the hypothesis strategies used by other tests.
         """
-        marshalled = marshal_tahoe_configuration("", "", "", "", "", "", "", "", "")
+        marshalled = marshal_tahoe_configuration("", "", "", 0, 0, "", "", "", "", "", "")
         introducer = introducer_configuration().example()
         storage = storage_configuration().example()
 

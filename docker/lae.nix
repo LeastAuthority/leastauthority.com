@@ -243,23 +243,6 @@ rec {
     doCheck = false;
   };
 
-  txaws021post5 = pythonPackages.buildPythonPackage rec {
-    name = "${pname}-${version}";
-    pname = "txAWS";
-    version = "0.2.1.post5";
-
-    propagatedBuildInputs =
-      with pythonPackages;
-      [ dateutil twisted ];
-
-    src = pkgs.fetchurl {
-      url = "https://tahoe-lafs.org/deps/txAWS-0.2.1.post5.tar.gz";
-      sha256 = "1mwxpkr3ivsq35cp6s84f0yfmavyskqdf9drhvk5jvnmi6xfppq2";
-    };
-
-    # Test suite fails with some networking errors.
-  };
-
   constantly = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "constantly";
@@ -274,16 +257,16 @@ rec {
     doCheck = false;
   };
 
-  txaws030dev0 = pythonPackages.buildPythonPackage rec {
+  txaws030 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txAWS";
-    version = "0.3.0.dev0";
+    version = "0.3.0";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "twisted";
-      repo = "txaws";
-      rev = "2c1a075caa24c9fa3c4e84dbe206196a4faa279c";
-      sha256 = "1jdswmpkncvljsjlszl8968q5c2s0569k9hs3c5rqnf54czj2lq5";
+    format = "wheel";
+
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/58/dc/e248f57763621e70e37514d8d4969d93e66c50652f6faeadca0c20b297f2/txAWS-0.3.0-py2-none-any.whl";
+      sha256 = "1ymkr2a7z33a9m69w2wqa1npxvd9jznql1qrjl21zdi9ddm8sbs7";
     };
 
     buildInputs =
@@ -291,8 +274,19 @@ rec {
       [ treq ];
 
     propagatedBuildInputs =
-      with pythonPackages;
-      [ venusian attrs dateutil incremental pyrsistent0_12_0 constantly pyopenssl16_2_0 pem service-identity twisted lxml ];
+      with pythonPackages; [
+        venusian
+        attrs
+        dateutil
+        incremental
+        pyrsistent0_12_0
+        constantly
+        pyopenssl16_2_0
+        pem
+        service-identity
+        twisted
+        lxml
+      ];
 
     checkPhase = ''
       trial txaws
@@ -355,29 +349,42 @@ rec {
     };
   };
 
-  txkube000 = pythonPackages.buildPythonPackage rec {
+  txkube010 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txkube";
-    version = "0.0.0";
+    version = "0.1.0";
 
     buildInputs =
       with pythonPackages;
       [ testtools220 hypothesis fixtures300 eliot-tree ];
 
     propagatedBuildInputs =
-      with pythonPackages;
-      [ zope_interface attrs pyrsistent0_12_0 incremental service-identity pyopenssl16_2_0 twisted pem eliot dateutil pykube eliot treq pem pyyaml klein ];
+      with pythonPackages; [
+        zope_interface
+        attrs
+        pyrsistent0_12_0
+        incremental
+        service-identity
+        pyopenssl16_2_0
+        twisted
+        pem
+        eliot
+        dateutil
+        pykube
+        treq
+        pyyaml
+        klein
+      ];
 
+    format = "wheel";
 
-    src = pkgs.fetchFromGitHub {
-      owner = "LeastAuthority";
-      repo = "txkube";
-      rev = "444fec5a1bfe66410ee56c867a022de9a19275c1";
-      sha256 = "07rbckc2f171wspns0fr6fpck982si73p20cjkm1d3mw0ygxnlrk";
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/36/53/cdba3d10f1284b1bcf7971855fbd8844dda17cdf9ce7db3d02e6858575b0/txkube-0.1.0-py2-none-any.whl";
+      sha256 = "1bfakg5skal9ba47zpshq5mxvw6h0ahjbzdz0mcinaxzn0qa9ag0";
     };
 
     checkPhase = ''
-    trial txkube
+      trial txkube
     '';
   };
 
@@ -401,9 +408,9 @@ rec {
         attrs
         jinja2
         twisted
-        txaws021post5
+        txaws030
         tahoe_lafs
-        txkube000
+        txkube010
       ];
 
     src =
@@ -412,13 +419,13 @@ rec {
       excludedFiles = [ ".travis.yml" ".dockerignore" ".gitignore" "requirements.txt" ];
       goodSource = (path: type:
         ! (type == "directory" && (builtins.elem (baseNameOf path) excludedDirs)) &&
-	! (type == "regular" && (builtins.elem (baseNameOf path) excludedFiles))
+        ! (type == "regular" && (builtins.elem (baseNameOf path) excludedFiles))
       );
     in
       builtins.filterSource goodSource ./..;
 
     checkPhase = ''
-      trial lae_util lae_site lae_automation
+      ./test-tools/run-testing
     '';
 
     meta = {
@@ -434,10 +441,23 @@ rec {
         groupadd --system lae
         useradd --system --gid lae --home-dir /app/data lae
       '';
-      contents = pkgs.python27.buildEnv.override {
-        extraLibs = [ pkgs.dash pkgs.coreutils lae ];
-        ignoreCollisions = true;
-        postBuild = "\${out}/bin/twistd --help > /dev/null";
+      config = {
+        Env = [
+          # pkgs.cacert below provides this file.  The simple ca certificate
+          # discovery techniques employed by txAWS and Twisted can't find the
+          # certificates in it without a hint like this.
+          "SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt"
+        ];
       };
+      contents = [
+        pkgs.cacert
+        pkgs.dash
+        pkgs.coreutils
+        (pkgs.python27.buildEnv.override {
+          extraLibs = [ lae ];
+          ignoreCollisions = true;
+          postBuild = "\${out}/bin/twistd --help > /dev/null";
+        })
+      ];
     };
 }

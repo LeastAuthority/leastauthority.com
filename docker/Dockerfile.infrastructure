@@ -4,7 +4,7 @@
 # The anticipated name is <leastauthority/infrastructure>.
 #
 
-FROM leastauthority/base
+FROM leastauthority/base-lae-automation
 
 # This was already set in leastauthority/base but ARG does not cross
 # Dockerfiles.  See Dockerfile.base for explanation.
@@ -15,7 +15,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 #
 # XXX Move the mail service elsewhere.
 RUN echo postfix postfix/main_mailer_type select No configuration | debconf-set-selections && \
-    apt-get update && apt-get install -y \
+    apt-get --quiet update && apt-get --quiet install -y \
         postfix \
     && rm -rf /var/lib/apt/lists/*
 
@@ -34,11 +34,3 @@ RUN chown ${INFRASTRUCTURE_USER_NAME} /app/run
 # XXX This ends up owned by root.  The website user can't write to it
 # unless manual intervention fixes the permissions.
 VOLUME /app/data
-
-# Install all of the application's Python library requirements.
-COPY requirements.txt /app/code/requirements.txt
-RUN /app/env/bin/pip install -r /app/code/requirements.txt
-
-# Install the application itself.  This is done as late as possible
-# since it is a major impediment to image/layer caching.
-COPY . /app/code

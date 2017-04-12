@@ -1,38 +1,34 @@
-#!/usr/bin/python
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
 
 import time
-import attr
 from base64 import b32encode
+import json
+from functools import partial
 
-from twisted.internet import defer, reactor, task
+import attr
+
+from eliot import start_action
+from eliot.twisted import DeferredContext
+
+from twisted.internet import reactor
+from twisted.web.client import Agent
 from twisted.python.filepath import FilePath
+from twisted.internet.defer import succeed
 
-from foolscap.furl import decode_furl
+from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 
 from lae_automation.config import Config
-from lae_automation.initialize import create_stripe_user_bucket, deploy_EC2_instance, verify_and_store_serverssh_pubkey
-from lae_automation.aws.queryapi import TimeoutError, wait_for_EC2_addresses
-from lae_automation.server import install_server, bounce_server, NotListeningError
-from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
+from lae_automation.model import DeploymentConfiguration, SubscriptionDetails
+from lae_util.streams import LoggingStream
 from lae_util.servers import append_record
+
+from .subscription_manager import network_client
+
 from lae_util.timestamp import format_iso_time
 
 EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
 #EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
-
-POLL_TIME = 30
-
-# credit card verification might take 15 minutes, so wait 20.
-CC_VERIFICATION_TIME = 20 * 60
-
-# wait 75 seconds before the first poll, then up to 5 minutes for the addresses.
-ADDRESS_DELAY_TIME = 75
-ADDRESS_WAIT_TIME = 5 * 60
-
-LISTEN_RETRIES = 5
-LISTEN_POLL_TIME = 15
-VERIFY_POLL_TIME = 5
-VERIFY_TOTAL_WAIT = 600
 
 
 def lookup_product(config, plan_ID):
@@ -46,220 +42,186 @@ def lookup_product(config, plan_ID):
 def encode_id(ident):
     return b32encode(ident).rstrip("=").lower()
 
+
 def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
 
-def activate_subscribed_service(deploy_config, stdout, stderr, logfile, clock=None):
-    print >>stderr, "entering activate_subscribed_service call."
-    if clock is None:
-        clock = reactor
+# TODO Replace activate with this
+def activate_ex(
+        just_activate_subscription,
+        send_signup_confirmation,
+        send_notify_failure,
+        domain,
+        subscription_manager_endpoint,
+        secrets_dir,
+        automation_config_path,
+        server_info_path,
+        stdin,
+        flapp_stdout_path,
+        flapp_stderr_path,
+):
+    append_record(flapp_stdout_path, "Automation script started.")
+    parameters_json = stdin.read()
+    (customer_email,
+     customer_pgpinfo,
+     customer_id,
+     plan_id,
+     subscription_id) = json.loads(parameters_json)
 
-    location = None  # default S3 location for now
-
-    d = create_stripe_user_bucket(
-        deploy_config.s3_access_key_id,
-        deploy_config.s3_secret_key,
-        deploy_config.bucketname,
-        stdout,
-        stderr,
-        location,
+    (abslogdir_fp,
+    stripesecrets_log_fp,
+    SSEC2secrets_log_fp,
+    signup_log_fp) = create_log_filepaths(
+        secrets_dir, plan_id, customer_id, subscription_id,
     )
 
-    print >>stdout, "After create_stripe_account_user_bucket %s..." % (deploy_config,)
+    append_record(flapp_stdout_path, "Writing logs to %r." % (abslogdir_fp.path,))
 
-    d.addCallback(lambda ign: deploy_server(deploy_config, stdout, stderr, clock=clock))
+    stripesecrets_log_fp.setContent(parameters_json)
 
-    d.addErrback(lambda f: send_notify_failure(
-        f, deploy_config.customer_email, logfile, stdout, stderr,
-    ))
-    return d
+    SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
+    signup_logfile = signup_log_fp.open('a+')
+    signup_stdout = LoggingStream(signup_logfile, '>')
+    signup_stderr = LoggingStream(signup_logfile, '')
 
-def replace_server(oldsecrets, amiimageid, instancesize, customer_email, stdout, stderr,
-                   secretsfile, logfilename,
-                   configpath=None,
-                   serverinfopath=None, clock=None):
-    config = Config(configpath)
-    s3_access_key_id = oldsecrets['access_key_id']
-    s3_secretkey   = oldsecrets['secret_key']
-    usertoken     = oldsecrets.get('user_token', None)     # DevPay only
-    producttoken  = oldsecrets.get('product_token', None)  # DevPay only
-    bucketname    = oldsecrets["bucket_name"]
+    def errhandler(err):
+        with flapp_stderr_path.open("a") as fh:
+            err.printTraceback(fh)
+        return err
+
+    with flapp_stderr_path.open("a") as stderr:
+        print >>stderr, "plan_id is %s" % plan_id
+
+    config = Config(automation_config_path.path)
+    product = lookup_product(config, plan_id)
+    fullname = product['plan_name']
+
+    with flapp_stdout_path.open("a") as stdout:
+        print >>stdout, "Signing up customer for %s..." % (fullname,)
 
     deploy_config = DeploymentConfiguration(
+        domain=domain,
+        kubernetes_namespace=None,
+        subscription_manager_endpoint=subscription_manager_endpoint,
         products=config.products,
-        s3_access_key_id=s3_access_key_id,
-        s3_secret_key=s3_secretkey,
-        bucketname=bucketname,
-        amiimageid=amiimageid,
-        instancesize=instancesize,
+        s3_access_key_id=config.other["s3_access_key_id"].decode("ascii"),
+        s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip().decode("ascii"),
 
-        usertoken=usertoken,
-        producttoken=producttoken,
+        # Confusingly, this isn't used in the signup codepath. :/
+        # Instead, the subscription converger has the value passed to it.
+        # This is mostly because updating the product configuration is a pain in the ass.
+        # Fix that and then fix this.
+        introducer_image=u"",
+        storageserver_image=u"",
 
-        oldsecrets=oldsecrets,
-        customer_email=customer_email,
-        customer_pgpinfo=None,
-        secretsfile=secretsfile,
-        serverinfopath=serverinfopath,
+        log_gatherer_furl=config.other.get("log_gatherer_furl") or None,
+        stats_gatherer_furl=config.other.get("stats_gatherer_furl") or None,
 
-        ssec2_access_key_id=config["ssec2_access_key_id"],
-        ssec2_secret_path=config["ssec2_secret_path"],
+        secretsfile=SSEC2_secretsfile,
+        serverinfopath=server_info_path.path,
 
-        ssec2admin_keypair_name=config["ssec2admin_keypair_name"],
-        ssec2admin_privkey_path=config["ssec2admin_privkey_path"],
+        ssec2_access_key_id=config.other.get("ssec2_access_key_id", None),
+        ssec2_secret_path=config.other.get("ssec2_secret_path", None),
 
-        monitor_pubkey_path=config["monitor_pubkey_path"],
-        monitor_privkey_path=config["monitor_privkey_path"],
+        ssec2admin_keypair_name=config.other.get("ssec2admin_keypair_name", None),
+        ssec2admin_privkey_path=config.other.get("ssec2admin_privkey_path", None),
+
+        monitor_pubkey_path=config.other.get("monitor_pubkey_path", None),
+        monitor_privkey_path=config.other.get("monitor_privkey_path", None),
     )
+    subscription = SubscriptionDetails(
+        bucketname=get_bucket_name(subscription_id, customer_id),
+        oldsecrets=None,
+        customer_email=customer_email,
+        customer_pgpinfo=customer_pgpinfo,
+        product_id=plan_id,
+        customer_id=customer_id,
+        subscription_id=subscription_id,
 
-    d = deploy_server(deploy_config, stdout, stderr, clock)
-    d.addErrback(lambda f: send_notify_failure(f, customer_email, logfilename, stdout,
-                                               stderr))
-    return d
+        introducer_port_number=None,
+        storage_port_number=None,
+    )
+    a = start_action(
+        action_type=u"signup:activate",
+        subscription=attr.asdict(subscription),
+    )
+    with a.context():
+        d = DeferredContext(just_activate_subscription(
+            deploy_config, subscription, None, None,
+        ))
+        def activate_success(details):
+            a = start_action(
+                action_type=u"signup:send-confirmation",
+                subscription=attr.asdict(details),
+            )
+            with a.context():
+                d = DeferredContext(send_signup_confirmation(
+                    details.customer_email, details.external_introducer_furl,
+                    None, signup_stdout, signup_stderr,
+                ))
+                return d.addActionFinish()
+        d.addCallback(activate_success)
 
+        def activate_failure(reason):
+            # XXX Eliot log reason here too
+            a = start_action(action_type=u"signup:send-failure")
+            with a.context():
+                d = DeferredContext(send_notify_failure(
+                    reason, subscription.customer_email, signup_log_fp.path,
+                    signup_stdout, signup_stderr,
+                ))
+                return d.addActionFinish()
+        d.addErrback(activate_failure)
 
-def _validate_products(instance, attribute, value):
-    if len(value) == 0:
-        raise ValueError("At least one product is required.")
-
-def and_(*v):
-    def _and(inst, attr, value):
-        for validator in v:
-            validator(inst, attr, value)
-    return _and
-
-validate_furl = and_(
-    attr.validators.instance_of(str),
-    lambda inst, attr, value: decode_furl(value),
-)
-
-@attr.s(frozen=True)
-class DeploymentConfiguration(object):
-    products = attr.ib(validator=_validate_products)
-    s3_access_key_id = attr.ib()
-    s3_secret_key = attr.ib(repr=False)
-    bucketname = attr.ib()
-    amiimageid = attr.ib()
-    instancesize = attr.ib()
-
-    # DevPay configuration.  Just for TLoS3, probably obsolete.
-    usertoken = attr.ib()
-    producttoken = attr.ib()
-
-    ssec2_access_key_id = attr.ib()
-    ssec2_secret_path = attr.ib()
-
-    ssec2admin_keypair_name = attr.ib()
-    ssec2admin_privkey_path = attr.ib()
-
-    monitor_pubkey_path = attr.ib()
-    monitor_privkey_path = attr.ib()
-
-    oldsecrets = attr.ib()
-    customer_email = attr.ib()
-    customer_pgpinfo = attr.ib()
-    secretsfile = attr.ib(validator=attr.validators.instance_of(file))
-    serverinfopath = attr.ib(default="../serverinfo.csv")
-
-    log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
-    stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
+        d.addErrback(errhandler)
+        d.addBoth(lambda ign: signup_logfile.close())
+        return d.addActionFinish()
 
 
-# TODO: too many args. Consider passing them in a dict.
-def deploy_server(deploy_config, stdout, stderr, clock=None):
+
+def just_activate_subscription(deploy_config, subscription, clock, smclient):
     if clock is None:
         clock = reactor
 
-    ec2accesskeyid = deploy_config.ssec2_access_key_id
-    ec2secretpath = deploy_config.ssec2_secret_path
-    ec2secretkey = FilePath(ec2secretpath).getContent().strip()
+    if smclient is None:
+        endpoint = deploy_config.subscription_manager_endpoint.asText().encode("utf-8")
+        agent = Agent(reactor)
+        smclient = network_client(endpoint, agent)
 
-    instancename = deploy_config.customer_email  # need not be unique
+    a = start_action(action_type=u"signup:provision-subscription")
+    with a.context():
+        d = DeferredContext(
+            provision_subscription(
+                clock, deploy_config, subscription, smclient,
+            ),
+        )
+        return d.addActionFinish()
 
-    admin_keypair_name = str(deploy_config.ssec2admin_keypair_name)
-    admin_privkey_path = str(deploy_config.ssec2admin_privkey_path)
-    monitor_pubkey = FilePath(str(deploy_config.monitor_pubkey_path)).getContent().strip()
-    monitor_privkey_path = str(deploy_config.monitor_privkey_path)
 
-    # XXX Here's where we decide whether the new signup goes to a new EC2.
-    d = deploy_EC2_instance(
-        ec2accesskeyid,
-        ec2secretkey,
-        EC2_ENDPOINT,
-        deploy_config.amiimageid,
-        deploy_config.instancesize,
-        deploy_config.bucketname,
-        admin_keypair_name,
-        instancename,
-        stdout,
-        stderr,
-    )
 
-    def _deployed(instance):
-        print >>stdout, "Waiting %d seconds for the server to be ready..." % (ADDRESS_DELAY_TIME,)
-        d2 = task.deferLater(clock, ADDRESS_DELAY_TIME, wait_for_EC2_addresses,
-                             ec2accesskeyid, ec2secretkey, EC2_ENDPOINT, stdout, stderr, POLL_TIME,
-                             ADDRESS_WAIT_TIME, instance.instance_id)
+def provision_subscription(reactor, deploy_config, details, smclient):
+    """
+    Create the subscription state in the SubscriptionManager service.
 
-        def _got_addresses(addresses):
-            assert len(addresses) == 1, addresses
-            (publichost, privatehost) = addresses[0]
-            print >>stdout, "The server's public address is %r." % (publichost,)
-
-            d3 = verify_and_store_serverssh_pubkey(ec2accesskeyid, ec2secretkey, EC2_ENDPOINT,
-                                                   publichost, VERIFY_POLL_TIME, VERIFY_TOTAL_WAIT,
-                                                   stdout, stderr, instance.instance_id)
-
-            def _got_sshfp(ignored):
-                retries = LISTEN_RETRIES
-                while True:
-                    try:
-                        install_server(publichost, admin_privkey_path, monitor_pubkey,
-                                       monitor_privkey_path, stdout, stderr)
-                        break
-                    except NotListeningError:
-                        retries -= 1
-                        if retries <= 0:
-                            print >>stdout, "Timed out waiting for EC2 instance to listen for ssh connections."
-                            raise TimeoutError()
-                        print >>stdout, "Waiting another %d seconds..." % (LISTEN_POLL_TIME)
-                        time.sleep(LISTEN_POLL_TIME)
-                        continue
-
-                furl = bounce_server(
-                    deploy_config,
-                    publichost,
-                    admin_privkey_path,
-                    privatehost,
-                    stdout,
-                    stderr,
-                )
-
-                # XXX We probably need to rethink this:
-                append_record(FilePath(deploy_config.serverinfopath), instance.launch_time, instance.instance_id,
-                              publichost)
-
-                print >>stderr, "Signup done."
-                d4 = defer.succeed(None)
-                if not deploy_config.oldsecrets:
-                    d4.addCallback(
-                        lambda ign: send_signup_confirmation(
-                            publichost,
-                            deploy_config.customer_email,
-                            furl,
-                            deploy_config.customer_pgpinfo,
-                            stdout,
-                            stderr,
-                        )
-                    )
-                return d4
-            d3.addCallback(_got_sshfp)
-            return d3
-        d2.addCallback(_got_addresses)
-        return d2
-    d.addCallback(_deployed)
+    :param DeploymentConfiguration deploy_config:
+    :param SubscriptionDetails details:
+    """
+    d = smclient.create(details.subscription_id, details)
+    def created(details):
+        d = _wait_for_service(details.subscription_id)
+        d.addCallback(lambda ignored: details)
+        return d
+    d.addCallback(created)
     return d
+
+
+
+def _wait_for_service(subscription_id):
+    # XXX Poll Kubernetes or DNS or something looking for matching resources.
+    # XXX With a timeout and some error logging.
+    return succeed(None)
+
 
 
 def create_log_filepaths(parent_dir, stripe_plan_id, stripe_customer_id, stripe_subscription_id):
@@ -272,3 +234,11 @@ def create_log_filepaths(parent_dir, stripe_plan_id, stripe_customer_id, stripe_
     SSEC2log_fp = abslogdir_fp.child('SSEC2')
     signuplog_fp = abslogdir_fp.child('signup_logs')
     return abslogdir_fp, stripelog_fp, SSEC2log_fp, signuplog_fp
+
+
+activate = partial(
+    activate_ex,
+    just_activate_subscription,
+    send_signup_confirmation,
+    send_notify_failure,
+)
