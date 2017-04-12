@@ -8,7 +8,7 @@ FROM leastauthority/base
 # Install all of the application's Python library requirements.
 COPY requirements.txt /app/code/requirements.txt
 RUN \
-    /app/env/bin/pip --verbose --verbose --verbose install -r /app/code/requirements.txt && \
+    /app/env/bin/pip install -r /app/code/requirements.txt && \
     /app/env/bin/pip check
 
 # Install the application itself.  This is done as late as possible
