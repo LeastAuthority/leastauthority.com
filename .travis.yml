@@ -22,12 +22,11 @@ matrix:
 
     # This builder will build the Nix packages (which happens to run the test
     # suite as well).
-    - env: ENV="packaging"
+    #
+    # tar on trusty doesn't have --exclude-vcs-ignores so disable it here.
+    - env: ENV="packaging" EXCLUDE_VCS_IGNORES=""
       # Force this to run in a VM since the packaging script wants to launch Docker.
       sudo: "required"
-      # We want the version of tar from trusty which has the
-      # --exclude-vcs-ignores option.
-      dist: "trusty"
       # We don't really need any particular language runtime.
       # Maybe the C runtime is lighter than the rest?
       language: "C"

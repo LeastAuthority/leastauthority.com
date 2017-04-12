@@ -5,8 +5,14 @@ LEASTAUTHORITY=${PWD}/$(dirname $(dirname $0))
 NIX_STORE=/nix
 CACHE_VOLUME=nix-cache-implicit-init
 
+# Allow this option to be overridden in environments which have a version of
+# tar too old to support it.
+if [ ! -v EXCLUDE_VCS_IGNORES ]; then
+    EXCLUDE_VCS_IGNORES="--exclude-vcs-ignores"
+fi
+
 # Get a Nix toolchain environment we can use for the next few steps.
-tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs --exclude-vcs-ignores . | docker run \
+tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs ${EXCLUDE_VCS_IGNORES} . | docker run \
        --rm \
        --interactive \
        --volume ${CACHE_VOLUME}:${NIX_STORE} \
