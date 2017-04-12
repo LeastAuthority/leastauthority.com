@@ -6,8 +6,10 @@ NIX_STORE=/nix
 CACHE_VOLUME=nix-cache-implicit-init
 
 # Allow this option to be overridden in environments which have a version of
-# tar too old to support it.
-if [ ! -v EXCLUDE_VCS_IGNORES ]; then
+# tar too old to support it.  bash -v test is nice but sh only has -z.  Note
+# quotes are not required here because the expansion can only result in "" or
+# "x".
+if [ ! -z ${EXCLUDE_VCS_IGNORES+x} ]; then
     EXCLUDE_VCS_IGNORES="--exclude-vcs-ignores"
 fi
 
