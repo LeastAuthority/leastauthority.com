@@ -25,12 +25,12 @@ ARG DEBIAN_FRONTEND=noninteractive
 # We'll do an upgrade because the base Ubuntu image isn't guaranteed
 # to include the latest security updates.  This is counter to best
 # practice recommendations but security updates are important.
-RUN apt-get update && \
-    apt-get install -y unattended-upgrades && \
+RUN apt-get --quiet update && \
+    apt-get --quiet install -y unattended-upgrades && \
     unattended-upgrade --minimal_upgrade_steps && \
 rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get --quiet update && apt-get --quiet install -y \
     python-dev \
     libffi-dev \
     openssl \

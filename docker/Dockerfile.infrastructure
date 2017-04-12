@@ -15,7 +15,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 #
 # XXX Move the mail service elsewhere.
 RUN echo postfix postfix/main_mailer_type select No configuration | debconf-set-selections && \
-    apt-get update && apt-get install -y \
+    apt-get --quiet update && apt-get --quiet install -y \
         postfix \
     && rm -rf /var/lib/apt/lists/*
 
