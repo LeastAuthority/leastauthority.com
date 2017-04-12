@@ -10,17 +10,18 @@
 from __future__ import print_function, unicode_literals
 
 from sys import argv
-from subprocess import check_output
+from subprocess import STDOUT, check_output
 
 from docker import from_env
 
 
 def nixbuild(name):
     # Build it.
-    output = check_output([
-        "nix-build", "-Q", "--show-trace",
-        "/leastauthority.com/docker/{}.nix".format(name),
-    ])
+    expr = "/leastauthority.com/docker/{}.nix".format(name)
+    output = check_output(
+        ["nix-build", "--show-trace", expr],
+        stderr=STDOUT,
+    )
 
     # Get the name of the built artifact.
     image_archive_filename = output.splitlines()[-1]
