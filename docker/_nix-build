@@ -9,7 +9,7 @@
 
 from __future__ import print_function, unicode_literals
 
-from sys import argv
+from sys import argv, stdout
 from subprocess import STDOUT, check_output
 
 from docker import from_env
@@ -37,11 +37,14 @@ def loadimage(image_archive_filename):
 
 def main(names):
     for name in names:
-        print("Building {}.".format(name))
+        report("Building {}...".format(name))
         result = nixbuild(name.decode("utf-8"))
-        print("Build complete.  Loading {}.".format(result))
+        report("Build complete.  Loading {}...".format(result))
         loadimage(result)
-        print("Load complete.")
+        report("Load complete.\n")
 
+def report(s):
+    stdout.write(s)
+    stdout.flush()
 
 main(argv[1:])
