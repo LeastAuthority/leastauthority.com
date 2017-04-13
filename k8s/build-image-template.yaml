@@ -32,14 +32,6 @@ spec:
         component: 'Build'
 
     spec:
-      # We can select a Node for the Pod to be scheduled on.  In this case, we
-      # want to select an arbitrary node so the Nix build cache will get
-      # re-used and we only need to have one instance of it.  This is probably
-      # a temporary constraint.  Eventually it would be nice for the Nix build
-      # cache to be on a proper volume that can just be attached to the right
-      # place.
-      nodeSelector:
-        kubernetes.io/hostname: 'ip-172-20-90-130.ec2.internal'
       # If the container command exits with an error, that's the end.  The Pod
       # should not try to start it for another try.
       restartPolicy: "Never"
