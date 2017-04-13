@@ -62,6 +62,16 @@ class Subscriptions(Resource):
     def getChild(self, name, request):
         return Subscription(self.database, name)
 
+    def render_POST(self, request):
+        payload = loads(request.content.read())
+        request_details = SubscriptionDetails(**payload)
+        response_details = self.database.create_subscription(
+            subscription_id=request_details.subscription_id,
+            details=request_details,
+        )
+        request.setResponseCode(CREATED)
+        return dumps(attr.asdict(response_details))
+
     def render_GET(self, request):
         ids = self.database.list_active_subscription_identifiers()
         subscriptions = list(
@@ -97,15 +107,6 @@ class Subscription(Resource):
         Resource.__init__(self)
         self.database = database
         self.subscription_id = subscription_id
-
-    def render_PUT(self, request):
-        payload = loads(request.content.read())
-        details = self.database.create_subscription(
-            subscription_id=self.subscription_id,
-            details=SubscriptionDetails(**payload),
-        )
-        request.setResponseCode(CREATED)
-        return dumps(attr.asdict(details))
 
     def render_GET(self, request):
         details = self.database.get_subscription(
@@ -346,8 +347,14 @@ class Client(object):
         :return: A ``Deferred`` that fires when the subscription has
         been created.
         """
+        if details.subscription_id != subscription_id:
+            raise ValueError(
+                "subscription_id must equal value in details object; "
+                "{} != {}".format(details.subscription_id, subscription_id)
+            )
+
         d = self.agent.request(
-            b"PUT", self._url(u"v1", u"subscriptions", subscription_id),
+            b"POST", self._url(u"v1", u"subscriptions"),
             bodyProducer=FileBodyProducer(
                 BytesIO(dumps(marshal_subscription(details))),
                 cooperator=self.cooperator,
