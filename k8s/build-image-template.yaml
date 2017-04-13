@@ -48,7 +48,7 @@ spec:
           # customer pods.
           resources:
             limits:
-              cpu: '500m'
+              cpu: '200m'
               memory: '500Mi'
           env:
             # This will have a value substituted by the build driver.
