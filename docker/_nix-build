@@ -37,9 +37,9 @@ def loadimage(image_archive_filename):
 
 def main(names):
     for name in names:
-        report("Building {}...".format(name))
+        report("Building {}...\n".format(name))
         result = nixbuild(name.decode("utf-8"))
-        report("Build complete.  Loading {}...".format(result))
+        report("Build complete.  Loading {}...\n".format(result))
         loadimage(result)
         report("Load complete.\n")
 
