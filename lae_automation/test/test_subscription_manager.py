@@ -25,7 +25,7 @@ from lae_automation.subscription_manager import (
 from lae_util.testtools import TestCase
 
 from .strategies import subscription_id, subscription_details
-from .matchers import AttrsEquals
+from .matchers import AttrsEquals, GoodEquals
 
 
 def partial_subscription_details():
@@ -49,8 +49,8 @@ class SubscriptionManagerTestMixin(object):
     @given(partial_subscription_details())
     def test_round_trip(self, details):
         """
-        A subscription created with a PUT to /v1/subscriptions/<id> can be
-        found in the list retrieved with a GET of /v1/subscriptions.
+        A subscription created with a POST to /v1/subscriptions/ can be found in
+        the list retrieved with a GET of /v1/subscriptions.
         """
         client = self.get_client()
         d = client.create(details.subscription_id, details)
@@ -80,13 +80,17 @@ class SubscriptionManagerTestMixin(object):
     )
     def test_resources_assigned(self, id_a, id_b, details):
         """
-        Some empty fields of the subscription details ``PUT`` are populated and
+        Some empty fields of the subscription details ``POST`` are populated and
         included in the response.
         """
         assume(id_a != id_b)
         client = self.get_client()
-        details_a = self.successResultOf(client.create(id_a, details))
-        details_b = self.successResultOf(client.create(id_b, details))
+        details_a = self.successResultOf(client.create(
+            id_a, attr.assoc(details, subscription_id=id_a),
+        ))
+        details_b = self.successResultOf(client.create(
+            id_b, attr.assoc(details, subscription_id=id_b),
+        ))
 
         # Secrets get populated with some random goodness.
         self.expectThat(details_a.oldsecrets, Not(Is(None)))
@@ -94,19 +98,39 @@ class SubscriptionManagerTestMixin(object):
         self.expectThat(details_a.oldsecrets, Not(Equals(details_b.oldsecrets)))
 
 
-    @given(subscription_id(), partial_subscription_details())
-    def test_deactivate_subscription(self, subscription_id, details):
+    @given(partial_subscription_details())
+    def test_deactivate_subscription(self, details):
         """
         A DELETE to /v1/subscriptions/<id> causes a subscription to be
         deactivated such that it is no longer included in the result
         of a GET to /v1/subscriptions.
         """
         client = self.get_client()
-        self.successResultOf(client.create(subscription_id, details))
-        self.successResultOf(client.delete(subscription_id))
+        self.successResultOf(client.create(details.subscription_id, details))
+        self.successResultOf(client.delete(details.subscription_id))
 
         subscriptions = self.successResultOf(client.list())
         self.assertThat(subscriptions, Equals([]))
+
+
+    @given(subscription_details())
+    def test_load_subscription(self, details):
+        """
+        A PUT to /v1/subscriptions/<id> causes a subscription to be created
+        exactly as specified by the request body - with no secret generation.
+        """
+        client = self.get_client()
+        self.successResultOf(client.load(details))
+        [subscription] = self.successResultOf(client.list())
+        self.assertThat(
+            # The ports don't matter, the server still gets to assign them.
+            attr.assoc(
+                subscription,
+                introducer_port_number=details.introducer_port_number,
+                storage_port_number=details.storage_port_number,
+            ),
+            GoodEquals(details),
+        )
 
 
 
