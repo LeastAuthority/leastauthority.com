@@ -25,7 +25,7 @@ from lae_automation.subscription_manager import (
 from lae_util.testtools import TestCase
 
 from .strategies import subscription_id, subscription_details
-from .matchers import AttrsEquals
+from .matchers import AttrsEquals, GoodEquals
 
 
 def partial_subscription_details():
@@ -111,6 +111,26 @@ class SubscriptionManagerTestMixin(object):
 
         subscriptions = self.successResultOf(client.list())
         self.assertThat(subscriptions, Equals([]))
+
+
+    @given(subscription_details())
+    def test_load_subscription(self, details):
+        """
+        A PUT to /v1/subscriptions/<id> causes a subscription to be created
+        exactly as specified by the request body - with no secret generation.
+        """
+        client = self.get_client()
+        self.successResultOf(client.load(details))
+        [subscription] = self.successResultOf(client.list())
+        self.assertThat(
+            # The ports don't matter, the server still gets to assign them.
+            attr.assoc(
+                subscription,
+                introducer_port_number=details.introducer_port_number,
+                storage_port_number=details.storage_port_number,
+            ),
+            GoodEquals(details),
+        )
 
 
 

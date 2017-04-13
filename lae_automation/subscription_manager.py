@@ -108,6 +108,20 @@ class Subscription(Resource):
         self.database = database
         self.subscription_id = subscription_id
 
+
+    def render_PUT(self, request):
+        payload = loads(request.content.read())
+        request_details = attr.assoc(
+            SubscriptionDetails(**payload),
+            subscription_id=self.subscription_id,
+        )
+        response_details = self.database.load_subscription(
+            details=request_details,
+        )
+        request.setResponseCode(CREATED)
+        return dumps(attr.asdict(response_details))
+
+
     def render_GET(self, request):
         details = self.database.get_subscription(
             subscription_id=self.subscription_id
@@ -190,6 +204,21 @@ class SubscriptionDatabase(object):
             return result
 
 
+    def load_subscription(self, details):
+        a = start_action(
+            action_type=u"subscription-database:load-subscription",
+            id=details.subscription_id,
+            details=attr.asdict(details),
+        )
+        with a:
+            subscription_id = details.subscription_id
+            path = self._subscription_path(subscription_id)
+            details = attr.assoc(details, **self._assign_addresses())
+            state = self._subscription_state(subscription_id, details)
+            self._create(path, dumps(state))
+            return details
+
+
     def create_subscription(self, subscription_id, details):
         a = start_action(
             action_type=u"subscription-database:create-subscription",
@@ -197,8 +226,6 @@ class SubscriptionDatabase(object):
             details=attr.asdict(details),
         )
         with a:
-            path = self._subscription_path(subscription_id)
-            details = attr.assoc(details, **self._assign_addresses())
             if details.oldsecrets:
                 raise Exception(
                     "You supplied secrets (%r) but that's nonsense!" % (
@@ -224,8 +251,7 @@ class SubscriptionDatabase(object):
             )
             legacy = secrets_to_legacy_format(config)
             details = attr.assoc(details, oldsecrets=legacy)
-            state = self._subscription_state(subscription_id, details)
-            self._create(path, dumps(state))
+            details = self.load_subscription(details)
             return details
 
 
@@ -333,19 +359,42 @@ class Client(object):
     def _url(self, *segments):
         return URL.fromText(self.endpoint.decode("utf-8")).child(*segments).asURI().asText().encode("ascii")
 
+    def load(self, details):
+        """
+        Load existing subscription details into the system as an active
+        subscription.
+
+        :param SubscriptionDetails details: The existing subscription details,
+            including node secrets.
+
+        :return: A ``Deferred`` that fires when the subscription has been
+            loaded.
+        """
+        d = self.agent.request(
+            b"PUT", self._url(u"v1", u"subscriptions", details.subscription_id),
+            bodyProducer=FileBodyProducer(
+                BytesIO(dumps(marshal_subscription(details))),
+                cooperator=self.cooperator,
+            ),
+        )
+        d.addCallback(require_code(CREATED))
+        d.addCallback(readBody)
+        d.addCallback(lambda body: SubscriptionDetails(**loads(body)))
+        return d
+
 
     def create(self, subscription_id, details):
         """
         Create a new, active subscription.
 
         :param unicode subscription_id: The unique identifier for this
-        new subscription.
+            new subscription.
 
         :param SubscriptionDetails details: The details of the
-        subscription.
+            subscription.
 
         :return: A ``Deferred`` that fires when the subscription has
-        been created.
+            been created.
         """
         if details.subscription_id != subscription_id:
             raise ValueError(
