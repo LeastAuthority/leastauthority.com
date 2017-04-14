@@ -2,7 +2,6 @@
 
 from __future__ import unicode_literals
 
-from os import devnull
 from sys import argv, stdin
 from json import load
 
@@ -11,12 +10,11 @@ from twisted.python.url import URL
 from twisted.internet.task import react
 from twisted.web.client import Agent
 
-from lae_automation.containers import autopad_b32decode
+from lae_automation.containers import autopad_b32decode, configmap_public_host
 from lae_automation.model import (
-    DeploymentConfiguration,
     SubscriptionDetails,
+    make_external_furl,
 )
-from lae_automation.signup import provision_subscription
 from lae_automation.subscription_manager import network_client
 
 class MigrateOptions(Options):
@@ -25,6 +23,7 @@ class MigrateOptions(Options):
         ("subscribe-api", None, None, "A URL giving the base of the subscription manager API to which to migrate the subscription."),
         ("email", None, None, "The email address associated with this subscription."),
         ("plan-id", None, None, "The product identifier for this subscription."),
+        ("domain", None, None, "The domain on which the subscription is hosted."),
     ]
 
     def postOptions(self):
@@ -33,6 +32,12 @@ class MigrateOptions(Options):
         else:
             self["input"] = open(self["input"], "rt")
         self["subscribe-api"] = URL.fromText(self["subscribe-api"].decode("utf-8"))
+
+
+
+def report_furl(details):
+    print(details.external_introducer_furl)
+
 
 
 @react
@@ -50,29 +55,20 @@ def main(reactor):
     sub = autopad_b32decode(sub).decode("utf-8")
     cus = autopad_b32decode(cus).decode("utf-8")
 
-    deploy_config = DeploymentConfiguration(
-        introducer_image="127.0.0.1:30000/leastauthority/tahoe-introducer:cf04e58",
-        storageserver_image="127.0.0.1:30000/leastauthority/tahoe-storage:cf04e58",
+    old_secrets["publichost"] = configmap_public_host(sub, o["domain"])
+    old_secrets["privatehost"] = "127.0.0.1"
 
-        # I happen to know the rest of these aren't used in the following
-        # codepaths.
-        domain="example.invalid",
-        kubernetes_namespace=None,
-        subscription_manager_endpoint=None,
-        products=[{}],
+    internal_introducer_furl = old_secrets["internal_introducer_furl"]
 
-        s3_access_key_id="invalid key id",
-        s3_secret_key="invalid key",
-
-        ssec2_access_key_id=None,
-        ssec2_secret_path=None,
-        ssec2admin_keypair_name=None,
-        ssec2admin_privkey_path=None,
-
-        monitor_pubkey_path=None,
-        monitor_privkey_path=None,
-
-        secretsfile=open(devnull),
+    # The port in the old furl is garbage because we changed what port things
+    # listen on.  We happen to know the introducer always listens on port
+    # 10000 for now.  The old ip is also garbage because we changed that too.
+    # The tub id and swissnum are good, though, so keep those.
+    old_secrets["internal_introducer_furl"] = make_external_furl(
+        internal_introducer_furl, old_secrets["privatehost"], 10000,
+    )
+    old_secrets["external_introducer_furl"] = make_external_furl(
+        internal_introducer_furl, old_secrets["publichost"], 10000,
     )
 
     details = SubscriptionDetails(
@@ -95,6 +91,6 @@ def main(reactor):
         Agent(reactor),
     )
 
-    return provision_subscription(
-        reactor, deploy_config, details, smclient,
-    )
+    d = smclient.load(details)
+    d.addCallback(report_furl)
+    return d
