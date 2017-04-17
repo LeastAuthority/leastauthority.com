@@ -398,6 +398,8 @@ class Client(object):
         Load existing subscription details into the system as an active
         subscription.
 
+        This issues a ``PUT`` to ``/v1/subscriptions/<id>``.
+
         :param SubscriptionDetails details: The existing subscription details,
             including node secrets.
 
@@ -420,6 +422,8 @@ class Client(object):
     def create(self, subscription_id, details):
         """
         Create a new, active subscription.
+
+        This issues a ``POST`` to ``/v1/subscriptions``.
 
         :param unicode subscription_id: The unique identifier for this
             new subscription.
