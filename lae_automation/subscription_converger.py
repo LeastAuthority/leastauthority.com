@@ -27,6 +27,7 @@ from twisted.internet.defer import (
     Deferred, maybeDeferred, gatherResults, succeed,
 )
 from twisted.internet import task
+from twisted.application.service import MultiService
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options, UsageError
 from twisted.python.filepath import FilePath
@@ -86,7 +87,9 @@ class KubernetesClientOptionsMixin(object):
 
     optFlags = [
         ("k8s-service-account", None, "Use a Kubernetes service account to authenticate to Kubernetes."),
+        ("manhole", None, "Put a manhole in the process for debugging."),
     ]
+
 
 
     def get_kubernetes_service(self, reactor):
@@ -174,6 +177,23 @@ def makeService(options):
         from sys import stdout
         to_file(stdout)
 
+    service = MultiService()
+
+    if options["manhole"]:
+        from twisted.conch.manhole_tap import makeService
+        makeService({
+            "telnetPort": "tcp:8023",
+            "sshPort": None,
+            "namespace": {
+                "service": service,
+                "reactor": reactor,
+                "kubernetes": kubernetes,
+                "client": k8s_client,
+                "aws": aws,
+            },
+            "passwd": "/tmp/converger-manhole-passwd",
+        }).setServiceParent(service)
+
     Message.log(
         event=u"convergence-service:key-notification",
         key_id=access_key_id.decode("ascii"),
@@ -211,10 +231,14 @@ def makeService(options):
         stats_gatherer_furl=None,
     )
 
-    return TimerService(
+    TimerService(
         options["interval"],
-        divert_errors_to_log(converge, u"subscription_converger"), config, subscription_client, k8s, aws,
-    )
+        divert_errors_to_log(converge, u"subscription_converger"),
+        config, subscription_client, k8s, aws,
+    ).setServiceParent(service)
+
+    return service
+
 
 def divert_errors_to_log(f, scope):
     def g(*a, **kw):
