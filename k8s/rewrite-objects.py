@@ -106,7 +106,7 @@ def stub_all_volumes(docs):
         return {u"name": volume[u"name"], u"emptyDir": {}}
 
     return docs.transform(
-        [deployments, u"spec", u"template", u"spec", u"volumes", ny],
+        [deployments(docs), u"spec", u"template", u"spec", u"volumes", ny],
         if_(persistent_volume_claim, to_empty_dir),
     )
 
