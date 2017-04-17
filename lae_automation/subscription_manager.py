@@ -62,7 +62,23 @@ class Subscriptions(Resource):
     def getChild(self, name, request):
         return Subscription(self.database, name)
 
+    def render_POST(self, request):
+        """
+        Create a new subscription from details given by the request.
+        """
+        payload = loads(request.content.read())
+        request_details = SubscriptionDetails(**payload)
+        response_details = self.database.create_subscription(
+            subscription_id=request_details.subscription_id,
+            details=request_details,
+        )
+        request.setResponseCode(CREATED)
+        return dumps(attr.asdict(response_details))
+
     def render_GET(self, request):
+        """
+        Get the subscription identifiers of all active subscriptions.
+        """
         ids = self.database.list_active_subscription_identifiers()
         subscriptions = list(
             marshal_subscription(self.database.get_subscription(sid))
@@ -98,16 +114,32 @@ class Subscription(Resource):
         self.database = database
         self.subscription_id = subscription_id
 
+
     def render_PUT(self, request):
+        """
+        Create an active subscription by loading subscription details from the
+        given request, including node secrets.
+
+        This is essentially a way to load a subscription that was previously
+        created and initialized, rather than creating a brand new
+        subscription.
+        """
         payload = loads(request.content.read())
-        details = self.database.create_subscription(
+        request_details = attr.assoc(
+            SubscriptionDetails(**payload),
             subscription_id=self.subscription_id,
-            details=SubscriptionDetails(**payload),
+        )
+        response_details = self.database.load_subscription(
+            details=request_details,
         )
         request.setResponseCode(CREATED)
-        return dumps(attr.asdict(details))
+        return dumps(attr.asdict(response_details))
+
 
     def render_GET(self, request):
+        """
+        Get the details of the subscription represented by this resource.
+        """
         details = self.database.get_subscription(
             subscription_id=self.subscription_id
         )
@@ -115,6 +147,9 @@ class Subscription(Resource):
         return dumps(marshal_subscription(details))
 
     def render_DELETE(self, request):
+        """
+        Deactivate the subscription represented by this resource.
+        """
         self.database.deactivate_subscription(subscription_id=self.subscription_id)
         request.setResponseCode(NO_CONTENT)
         return b""
@@ -189,15 +224,42 @@ class SubscriptionDatabase(object):
             return result
 
 
+    def load_subscription(self, details):
+        """
+        Load a subscription into the database based on the given details,
+        including secrets.
+
+        This is useful if a subscription was previously created somewhere else
+        and we want to move it to this manager.
+        """
+        a = start_action(
+            action_type=u"subscription-database:load-subscription",
+            id=details.subscription_id,
+            details=attr.asdict(details),
+        )
+        with a:
+            subscription_id = details.subscription_id
+            path = self._subscription_path(subscription_id)
+            details = attr.assoc(details, **self._assign_addresses())
+            state = self._subscription_state(subscription_id, details)
+            self._create(path, dumps(state))
+            return details
+
+
     def create_subscription(self, subscription_id, details):
+        """
+        Create a brand new subscription in the database given some details about
+        it.
+
+        Secrets for the subscription are generated as part of the process and
+        must not be included in the given details.
+        """
         a = start_action(
             action_type=u"subscription-database:create-subscription",
             id=subscription_id,
             details=attr.asdict(details),
         )
         with a:
-            path = self._subscription_path(subscription_id)
-            details = attr.assoc(details, **self._assign_addresses())
             if details.oldsecrets:
                 raise Exception(
                     "You supplied secrets (%r) but that's nonsense!" % (
@@ -223,8 +285,7 @@ class SubscriptionDatabase(object):
             )
             legacy = secrets_to_legacy_format(config)
             details = attr.assoc(details, oldsecrets=legacy)
-            state = self._subscription_state(subscription_id, details)
-            self._create(path, dumps(state))
+            details = self.load_subscription(details)
             return details
 
 
@@ -332,22 +393,55 @@ class Client(object):
     def _url(self, *segments):
         return URL.fromText(self.endpoint.decode("utf-8")).child(*segments).asURI().asText().encode("ascii")
 
+    def load(self, details):
+        """
+        Load existing subscription details into the system as an active
+        subscription.
+
+        This issues a ``PUT`` to ``/v1/subscriptions/<id>``.
+
+        :param SubscriptionDetails details: The existing subscription details,
+            including node secrets.
+
+        :return: A ``Deferred`` that fires when the subscription has been
+            loaded.
+        """
+        d = self.agent.request(
+            b"PUT", self._url(u"v1", u"subscriptions", details.subscription_id),
+            bodyProducer=FileBodyProducer(
+                BytesIO(dumps(marshal_subscription(details))),
+                cooperator=self.cooperator,
+            ),
+        )
+        d.addCallback(require_code(CREATED))
+        d.addCallback(readBody)
+        d.addCallback(lambda body: SubscriptionDetails(**loads(body)))
+        return d
+
 
     def create(self, subscription_id, details):
         """
         Create a new, active subscription.
 
+        This issues a ``POST`` to ``/v1/subscriptions``.
+
         :param unicode subscription_id: The unique identifier for this
-        new subscription.
+            new subscription.
 
         :param SubscriptionDetails details: The details of the
-        subscription.
+            subscription.
 
         :return: A ``Deferred`` that fires when the subscription has
-        been created.
+            been created.
         """
+        if details.subscription_id != subscription_id:
+            raise ValueError(
+                "subscription_id must equal value in details object; "
+                "{} != {}".format(details.subscription_id, subscription_id)
+            )
+
         d = self.agent.request(
-            b"PUT", self._url(u"v1", u"subscriptions", subscription_id),
+            b"POST", self._url(u"v1", u"subscriptions"),
             bodyProducer=FileBodyProducer(
                 BytesIO(dumps(marshal_subscription(details))),
                 cooperator=self.cooperator,
