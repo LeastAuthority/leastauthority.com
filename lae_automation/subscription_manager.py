@@ -63,6 +63,9 @@ class Subscriptions(Resource):
         return Subscription(self.database, name)
 
     def render_POST(self, request):
+        """
+        Create a new subscription from details given by the request.
+        """
         payload = loads(request.content.read())
         request_details = SubscriptionDetails(**payload)
         response_details = self.database.create_subscription(
@@ -73,6 +76,9 @@ class Subscriptions(Resource):
         return dumps(attr.asdict(response_details))
 
     def render_GET(self, request):
+        """
+        Get the subscription identifiers of all active subscriptions.
+        """
         ids = self.database.list_active_subscription_identifiers()
         subscriptions = list(
             marshal_subscription(self.database.get_subscription(sid))
@@ -110,6 +116,14 @@ class Subscription(Resource):
 
 
     def render_PUT(self, request):
+        """
+        Create an active subscription by loading subscription details from the
+        given request, including node secrets.
+
+        This is essentially a way to load a subscription that was previously
+        created and initialized, rather than creating a brand new
+        subscription.
+        """
         payload = loads(request.content.read())
         request_details = attr.assoc(
             SubscriptionDetails(**payload),
@@ -123,6 +137,9 @@ class Subscription(Resource):
 
 
     def render_GET(self, request):
+        """
+        Get the details of the subscription represented by this resource.
+        """
         details = self.database.get_subscription(
             subscription_id=self.subscription_id
         )
@@ -130,6 +147,9 @@ class Subscription(Resource):
         return dumps(marshal_subscription(details))
 
     def render_DELETE(self, request):
+        """
+        Deactivate the subscription represented by this resource.
+        """
         self.database.deactivate_subscription(subscription_id=self.subscription_id)
         request.setResponseCode(NO_CONTENT)
         return b""
