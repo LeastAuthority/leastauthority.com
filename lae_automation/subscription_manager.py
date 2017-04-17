@@ -225,6 +225,13 @@ class SubscriptionDatabase(object):
 
 
     def load_subscription(self, details):
+        """
+        Load a subscription into the database based on the given details,
+        including secrets.
+
+        This is useful if a subscription was previously created somewhere else
+        and we want to move it to this manager.
+        """
         a = start_action(
             action_type=u"subscription-database:load-subscription",
             id=details.subscription_id,
@@ -240,6 +247,13 @@ class SubscriptionDatabase(object):
 
 
     def create_subscription(self, subscription_id, details):
+        """
+        Create a brand new subscription in the database given some details about
+        it.
+
+        Secrets for the subscription are generated as part of the process and
+        must not be included in the given details.
+        """
         a = start_action(
             action_type=u"subscription-database:create-subscription",
             id=subscription_id,
