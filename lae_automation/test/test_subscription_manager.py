@@ -49,8 +49,8 @@ class SubscriptionManagerTestMixin(object):
     @given(partial_subscription_details())
     def test_round_trip(self, details):
         """
-        A subscription created with a POST to /v1/subscriptions/ can be found in
-        the list retrieved with a GET of /v1/subscriptions.
+        A subscription created with ``create`` can be found in the list retrieved
+        with ``list``.
         """
         client = self.get_client()
         d = client.create(details.subscription_id, details)
@@ -80,8 +80,8 @@ class SubscriptionManagerTestMixin(object):
     )
     def test_resources_assigned(self, id_a, id_b, details):
         """
-        Some empty fields of the subscription details ``POST`` are populated and
-        included in the response.
+        Some empty fields of the subscription details given to ``create`` are
+        populated and included in the result.
         """
         assume(id_a != id_b)
         client = self.get_client()
@@ -101,9 +101,8 @@ class SubscriptionManagerTestMixin(object):
     @given(partial_subscription_details())
     def test_deactivate_subscription(self, details):
         """
-        A DELETE to /v1/subscriptions/<id> causes a subscription to be
-        deactivated such that it is no longer included in the result
-        of a GET to /v1/subscriptions.
+        ``delete`` causes a subscription to be deactivated such that it is no
+        longer included in the result of ``list``.
         """
         client = self.get_client()
         self.successResultOf(client.create(details.subscription_id, details))
@@ -116,8 +115,8 @@ class SubscriptionManagerTestMixin(object):
     @given(subscription_details())
     def test_load_subscription(self, details):
         """
-        A PUT to /v1/subscriptions/<id> causes a subscription to be created
-        exactly as specified by the request body - with no secret generation.
+        ``load`` causes a subscription to be created exactly as specified by the
+        given details - with no secret generation.
         """
         client = self.get_client()
         self.successResultOf(client.load(details))
