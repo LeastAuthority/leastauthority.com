@@ -96,6 +96,7 @@ class KubernetesClientOptionsMixin(object):
 
     optFlags = [
         ("k8s-service-account", None, "Use a Kubernetes service account to authenticate to Kubernetes."),
+        ("manhole", None, "Put a manhole in the process for debugging."),
     ]
 
 
@@ -163,6 +164,18 @@ def makeService(options):
         reactor,
         options.get("destinations", []),
     ).setServiceParent(parent)
+
+    if options["manhole"]:
+        from twisted.conch.manhole_tap import makeService
+        makeService({
+            "telnetPort": "tcp:8023",
+            "sshPort": None,
+            "namespace": {
+                "service": parent,
+                "reactor": reactor,
+            },
+            "passwd": "/tmp/converger-manhole-passwd",
+        }).setServiceParent(parent)
 
     agent = Agent(reactor)
     subscription_client = SMClient(
@@ -233,6 +246,7 @@ def _finish_convergence_service(k8s_client, options, subscription_client):
         k8s,
         aws,
     )
+
 
 def divert_errors_to_log(f, scope):
     def g(*a, **kw):
