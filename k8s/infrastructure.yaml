@@ -157,6 +157,114 @@ spec:
 kind: 'Deployment'
 apiVersion: 'extensions/v1beta1'
 metadata:
+  name: 's4-signup'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # The containers write directly to the filesystem but they no longer do so
+  # in a particularly interesting way.  We should eliminate all remaining
+  # direct filesystem usage in the signup process but we can get away with
+  # running a couple replicas even before we do that.
+  replicas: 2
+  strategy:
+    type: 'RollingUpdate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 's4-signup'
+        component: 'Infrastructure'
+        version: '2'
+    spec:
+      volumes:
+      - name: 'web-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-web-pvc'
+      - name: 'flapp-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-flapp-pvc'
+      # Kubernetes manages some of the secrets we require.  Mount
+      # them into the container.
+      - name: 'web-secrets'
+        secret:
+          secretName: 'website-secrets'
+      - name: 'flapp-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          defaultMode: 0444
+          items:
+          - key: 'domain'
+            path: 'domain'
+          # XXX Should allocate some Route53-only keys for this.
+          # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
+          # XXX Maybe I should create _two_ sets of keys...
+          # XXX OTOH There's also IAM roles which might be even better?
+          - key: 'aws-s4.key'
+            path: 'aws.key'
+          - key: 'aws-s4.id'
+            path: 'aws.id'
+
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      # This is the web server.  It serves the subscription signup web
+      # interface.
+      - name: 'web'
+        # This image is hosted by the cluster-private registry.
+        # XXX This avoids `localhost` because different k8s
+        # deployments seem to have different behavior with respect to
+        # localhost resolution for the purposes of image pulls.
+        # Specifically, kops deploys a cluster where localhost
+        # resolves to [::1] where the registry is not available.
+        image: '127.0.0.1:30000/leastauthority/web:1941d38'
+        ports:
+        # We just happen to know this is the ports this container listens on.
+        - containerPort: 8443
+        - containerPort: 8080
+        volumeMounts:
+        # We just happen to know these are the paths the container
+        # wants to use for interesting, persistent state.
+        - mountPath: '/app/data'
+          name: 'web-data'
+        - mountPath: '/app/flapp-data'
+          name: 'flapp-data'
+        - name: 'web-secrets'
+          mountPath: '/app/k8s_secrets'
+          readOnly: true
+        resources:
+          limits:
+            cpu: '100m'
+            memory: '100Mi'
+
+      # This is the flapp server.  It handles signup requests.
+      - name: 'flapp'
+        # See above for explanation of 127.0.0.1
+        image: '127.0.0.1:30000/leastauthority/flapp:1941d38'
+        ports:
+        - containerPort: 3116
+        volumeMounts:
+        - mountPath: '/app/data'
+          name: 'flapp-data'
+        - name: 'flapp-secrets'
+          mountPath: '/app/k8s_secrets'
+          readOnly: true
+        resources:
+          limits:
+            cpu: '20m'
+            memory: '100Mi'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
   name: 's4-infrastructure'
 spec:
   # Keep some old ReplicaSets for older versions of the Deployment around -
@@ -191,20 +299,8 @@ spec:
       - name: 'log-gatherer-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-foolscap-logs-pvc'
-      - name: 'web-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-web-pvc'
-      - name: 'flapp-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-flapp-pvc'
       # Kubernetes manages some of the secrets we require.  Mount
       # them into the container.
-      - name: 'web-secrets'
-        secret:
-          secretName: 'website-secrets'
-      - name: 'flapp-secrets'
-        secret:
-          secretName: 'signup-secrets'
       - name: 'subscription-manager-secrets'
         secret:
           secretName: 'signup-secrets'
@@ -276,52 +372,6 @@ spec:
         volumeMounts:
         - mountPath: '/data'
           name: 'log-gatherer-data'
-        resources:
-          limits:
-            cpu: '20m'
-            memory: '100Mi'
-
-      # This is the web server.  It serves up all the
-      # leastauthority.com content.
-      - name: 'web'
-        # This image is hosted by the cluster-private registry.
-        # XXX This avoids `localhost` because different k8s
-        # deployments seem to have different behavior with respect to
-        # localhost resolution for the purposes of image pulls.
-        # Specifically, kops deploys a cluster where localhost
-        # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/web:1941d38'
-        ports:
-        # We just happen to know this is the ports this container listens on.
-        - containerPort: 8443
-        - containerPort: 8080
-        volumeMounts:
-        # We just happen to know these are the paths the container
-        # wants to use for interesting, persistent state.
-        - mountPath: '/app/data'
-          name: 'web-data'
-        - mountPath: '/app/flapp-data'
-          name: 'flapp-data'
-        - name: 'web-secrets'
-          mountPath: '/app/k8s_secrets'
-          readOnly: true
-        resources:
-          limits:
-            cpu: '100m'
-            memory: '100Mi'
-
-      # This is the flapp server.  It handles signup requests.
-      - name: 'flapp'
-        # See above for explanation of 127.0.0.1
-        image: '127.0.0.1:30000/leastauthority/flapp:1941d38'
-        ports:
-        - containerPort: 3116
-        volumeMounts:
-        - mountPath: '/app/data'
-          name: 'flapp-data'
-        - name: 'flapp-secrets'
-          mountPath: '/app/k8s_secrets'
-          readOnly: true
         resources:
           limits:
             cpu: '20m'
