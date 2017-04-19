@@ -133,6 +133,47 @@ spec:
     targetPort: 'log-gatherer'
     protocol: 'TCP'
 ---
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 'subscription-manager'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+    app: 'subscription-manager'
+    component: 'Infrastructure'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of the s4 app.
+    # This makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 'subscription-manager'
+    component: 'Infrastructure'
+
+  # This service exposes the log gatherer internally only.  Pods
+  # running on the cluster can access it but the public internet
+  # cannot.  ClusterIP is the default service type but we'll spell it
+  # out here just to be clear.
+  type: 'ClusterIP'
+
+  # Tahoe-LAFS and other Foolscap-using applications can publish their
+  # logs to a "log gatherer".  Centralizing the logs in a single place
+  # makes it easier to inspect them later.
+  ports:
+  - name: 'subscription-manager'
+    # Expose the service to the cluster on the normal port.
+    port: 80
+    # We can select the port based on the name of a port of a
+    # container belonging to the service.  It's probably also 3117 but
+    # at least we can avoid duplicating that number one more time
+    # here.
+    targetPort: 'subscription-manager'
+    protocol: 'TCP'
+---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
@@ -392,18 +433,14 @@ spec:
 kind: 'Deployment'
 apiVersion: 'extensions/v1beta1'
 metadata:
-  name: 's4-infrastructure'
+  name: 'subscription-converger'
 spec:
   # Keep some old ReplicaSets for older versions of the Deployment around -
   # but not all of them (as is the default).
   revisionHistoryLimit: 3
 
-  # The containers both write directly to the filesystem.  It's not
-  # safe to have more than one instance running at a time.  So limit
-  # replicas to one and use a pod replacement strategy that destroys
-  # old pods _before_ creating new ones.  Once filesystem access issue
-  # is fixed, we can have horizontal scale-out and rolling updates
-  # instead.
+  # The converger has no persistent local state but running more than one of
+  # them at a time is just as likely to cause problems as to improve anything.
   replicas: 1
   strategy:
     type: 'Recreate'
@@ -415,23 +452,11 @@ spec:
     metadata:
       labels:
         provider: 'LeastAuthority'
-        app: 's4-leftovers'
+        app: 'subscription-converger'
         component: 'Infrastructure'
         version: '2'
     spec:
       volumes:
-      - name: 'subscription-manager-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-subscription-manager-pvc'
-      # Kubernetes manages some of the secrets we require.  Mount
-      # them into the container.
-      - name: 'subscription-manager-secrets'
-        secret:
-          secretName: 'signup-secrets'
-          defaultMode: 0444
-          items:
-          - key: 'domain'
-            path: 'domain'
       - name: 'convergence-secrets'
         secret:
           secretName: 'signup-secrets'
@@ -454,16 +479,6 @@ spec:
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
 
-      # Here is the subscription manager.  It contains the canonical (local)
-      # state for our subscriptions (Stripe is _really_ canonical... TODO!)
-      - name: 'subscription-manager'
-        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
-        volumeMounts:
-        - mountPath: '/app/data'
-          name: 'subscription-manager-data'
-        - mountPath: '/app/k8s_secrets'
-          name: 'subscription-manager-secrets'
-
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
@@ -473,10 +488,71 @@ spec:
           value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
         - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
           value: '127.0.0.1:30000/leastauthority/tahoe-storage:1d72b09'
+        - name: 'LAE_S4_SUBSCRIPTION_MANAGER_URL'
+          value: 'http://subscription-manager/'
         volumeMounts:
         - mountPath: '/app/k8s_secrets'
           name: 'convergence-secrets'
           readOnly: true
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'subscription-manager'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # Subscription manager uses the local filesystem for a database.  So limit
+  # it to just one replica.
+  replicas: 1
+  strategy:
+    type: 'Recreate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 'subscription-manager'
+        component: 'Infrastructure'
+        version: '2'
+    spec:
+      volumes:
+      - name: 'subscription-manager-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-subscription-manager-pvc'
+      # Kubernetes manages some of the secrets we require.  Mount
+      # them into the container.
+      - name: 'subscription-manager-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          defaultMode: 0444
+          items:
+          - key: 'domain'
+            path: 'domain'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+
+      # Here is the subscription manager.  It contains the canonical (local)
+      # state for our subscriptions (Stripe is _really_ canonical... TODO!)
+      - name: 'subscription-manager'
+        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        volumeMounts:
+        - mountPath: '/app/data'
+          name: 'subscription-manager-data'
+        - mountPath: '/app/k8s_secrets'
+          name: 'subscription-manager-secrets'
+        ports:
+        - containerPort: 8000
+          name: 'subscription-manager'
 ---
 # Read about StorageClass at
 # http://blog.kubernetes.io/2016/10/dynamic-provisioning-and-storage-in-kubernetes.html
