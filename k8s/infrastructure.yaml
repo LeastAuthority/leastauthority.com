@@ -21,6 +21,7 @@ spec:
     # infrastructure.  Currently this covers s4 and magic wormhole.  This
     # makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
+    app: 's4-signup'
     component: 'Infrastructure'
 
   # This service exposes network ports via a load balancer - ELB on
@@ -48,6 +49,40 @@ spec:
     port: 80
     targetPort: 8080
     protocol: 'TCP'
+---
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 'wormhole'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+    app: 'wormhole'
+    component: 'Infrastructure'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of LeastAuthority
+    # infrastructure.  Currently this covers s4 and magic wormhole.  This
+    # makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 'wormhole'
+    component: 'Infrastructure'
+
+  # This service exposes network ports via a load balancer - ELB on
+  # AWS.  The load balancer will be configured to spread traffic
+  # across healthy pods in this service.  The load balancer also acts
+  # as the public endpoint for the service.  Without it, the service
+  # is only internally accessible.
+  #
+  # Note that ELB on AWS takes a minute or two to become usable,
+  # probably due to DNS record propagation delay.
+  type: 'LoadBalancer'
+
+  ports:
   # Define ports to allow access to the wormhole server - rendezvous and
   # transit relay.
   - name: 'wormhole-rendezvous'
