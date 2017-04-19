@@ -353,6 +353,45 @@ spec:
 kind: 'Deployment'
 apiVersion: 'extensions/v1beta1'
 metadata:
+  name: 'grid-router'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # The grid router has no persistent state at all.
+  replicas: 2
+  strategy:
+    type: 'RollingUpdate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        # Another name might make more sense here but this is being selected
+        # on by the CUSTOMER_GRID_SERVICE created dynamically.  Let's leave it
+        # alone for now and deal with the necessary upgrade later on.
+        app: 's4'
+        component: 'Infrastructure'
+        version: '2'
+    spec:
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      # Here is the per-customer-grid router.  The service sends all
+      # connections to it and it figures out which pod services the
+      # subscription the connection is related to.
+      - name: 'grid-router'
+        image: '127.0.0.1:30000/leastauthority/grid-router:7a0eadc'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
   name: 's4-infrastructure'
 spec:
   # Keep some old ReplicaSets for older versions of the Deployment around -
@@ -376,7 +415,7 @@ spec:
     metadata:
       labels:
         provider: 'LeastAuthority'
-        app: 's4'
+        app: 's4-leftovers'
         component: 'Infrastructure'
         version: '2'
     spec:
@@ -414,12 +453,6 @@ spec:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
-
-      # Here is the per-customer-grid router.  The service sends all
-      # connections to it and it figures out which pod services the
-      # subscription the connection is related to.
-      - name: 'grid-router'
-        image: '127.0.0.1:30000/leastauthority/grid-router:7a0eadc'
 
       # Here is the subscription manager.  It contains the canonical (local)
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
