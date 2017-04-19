@@ -17,8 +17,9 @@ metadata:
     component: 'Infrastructure'
 spec:
   selector:
-    # Pick up all the other resources that claim to be part of the s4 app.
-    # This makes everything with a matching label part of this service.
+    # Pick up all the other resources that claim to be part of LeastAuthority
+    # infrastructure.  Currently this covers s4 and magic wormhole.  This
+    # makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
     component: 'Infrastructure'
 
