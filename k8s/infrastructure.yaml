@@ -103,14 +103,14 @@ metadata:
   labels:
     # Everything we make and put into k8s will have this label.
     provider: 'LeastAuthority'
-    app: 's4'
+    app: 'foolscap-log-gatherer'
     component: 'Infrastructure'
 spec:
   selector:
     # Pick up all the other resources that claim to be part of the s4 app.
     # This makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
-    app: 's4'
+    app: 'foolscap-log-gatherer'
     component: 'Infrastructure'
 
   # This service exposes the log gatherer internally only.  Pods
@@ -300,6 +300,59 @@ spec:
 kind: 'Deployment'
 apiVersion: 'extensions/v1beta1'
 metadata:
+  name: 'foolscap-log-gatherer'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # The gatherer writes directly to the filesystem.  I assume no attempt has
+  # been made to make it concurrent-safe, though it may be by accident (due to
+  # timestamp-based filenames).  Still, limit this to just one instance.
+  replicas: 1
+  strategy:
+    type: 'Recreate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 'foolscap-log-gatherer'
+        component: 'Infrastructure'
+        version: '1'
+    spec:
+      volumes:
+      - name: 'log-gatherer-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-foolscap-logs-pvc'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      - name: 'foolscap-log-gatherer'
+        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:1941d38'
+        env:
+        - name: 'LAE_GATHERER_HINT'
+          value: 'tcp:s4-logging:3117'
+        ports:
+        - name: 'log-gatherer'
+          containerPort: 3117
+        volumeMounts:
+        - mountPath: '/data'
+          name: 'log-gatherer-data'
+        resources:
+          limits:
+            cpu: '20m'
+            memory: '100Mi'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
   name: 's4-infrastructure'
 spec:
   # Keep some old ReplicaSets for older versions of the Deployment around -
@@ -331,9 +384,6 @@ spec:
       - name: 'subscription-manager-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-subscription-manager-pvc'
-      - name: 'log-gatherer-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-foolscap-logs-pvc'
       # Kubernetes manages some of the secrets we require.  Mount
       # them into the container.
       - name: 'subscription-manager-secrets'
@@ -394,23 +444,6 @@ spec:
         - mountPath: '/app/k8s_secrets'
           name: 'convergence-secrets'
           readOnly: true
-
-      # Here is the Foolscap log gatherer.
-      - name: 'foolscap-log-gatherer'
-        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:1941d38'
-        env:
-        - name: 'LAE_GATHERER_HINT'
-          value: 'tcp:s4-logging:3117'
-        ports:
-        - name: 'log-gatherer'
-          containerPort: 3117
-        volumeMounts:
-        - mountPath: '/data'
-          name: 'log-gatherer-data'
-        resources:
-          limits:
-            cpu: '20m'
-            memory: '100Mi'
 ---
 # Read about StorageClass at
 # http://blog.kubernetes.io/2016/10/dynamic-provisioning-and-storage-in-kubernetes.html
