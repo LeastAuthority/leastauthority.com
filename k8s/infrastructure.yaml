@@ -416,7 +416,7 @@ spec:
         # alone for now and deal with the necessary upgrade later on.
         app: 's4'
         component: 'Infrastructure'
-        version: '2'
+        version: '1'
     spec:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
