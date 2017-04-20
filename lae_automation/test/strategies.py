@@ -342,7 +342,7 @@ def urls():
     )
 
 
-def deployment_configuration():
+def deployment_configurations():
     return strategies.builds(
         model.DeploymentConfiguration,
         domain=domains(),
@@ -368,12 +368,27 @@ def deployment_configuration():
         secretsfile=strategies.just(open(devnull)),
     )
 
+deployment_configuration = deployment_configurations
+
 
 def old_secrets():
+    def same_introducer_furl(config):
+        config["storage"]["introducer_furl"] = config["introducer"]["introducer_furl"]
+        return config
+
     return strategies.fixed_dictionaries({
         "introducer": introducer_configuration(),
         "storage": storage_configuration(),
     }).map(
+        # Each strategy being composed above wants to generate a data
+        # structure with an introducer furl in it.  Real configurations must
+        # have the same value in both data structures, though.  So, do it.
+        #
+        # This reflects the crumminess of our configuration data structures.
+        # Hopefully we can improve those (eg, to reduce redundancy) and then
+        # improve this strategy.
+        same_introducer_furl,
+    ).map(
         server.secrets_to_legacy_format
     ).filter(
         lambda secrets: secrets[u"introducer_node_pem"] != secrets[u"server_node_pem"]

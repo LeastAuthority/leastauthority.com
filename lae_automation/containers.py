@@ -102,7 +102,7 @@ def create_configuration(deploy_config, details):
         bucket_name=details.bucketname,
         publichost=public_host,
         privatehost=private_host,
-        introducer_furl=details.oldsecrets["internal_introducer_furl"],
+        introducer_furl=details.external_introducer_furl,
         # Note we get the keys from the deployment configuration passed to us.
         # oldsecrets has this junk in it, too, but it's unreliable and we want
         # to get rid of that storage location for the information.  Our
