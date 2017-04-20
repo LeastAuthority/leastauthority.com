@@ -34,11 +34,18 @@ class CreateConfigurationTests(TestCase):
         address information on the subscription details.
         """
         config = create_configuration(deploy_config, details)
+        introducer_furl = loads(config.data["introducer.json"])["introducer"]["introducer_furl"]
         self.assertThat(
-            decode_furl(loads(config.data["introducer.json"])["introducer"]["introducer_furl"]),
+            decode_furl(introducer_furl),
             Equals((
                 details.introducer_tub_id,
                 ["{}:{}".format(details.publichost, details.introducer_port_number)],
                 decode_furl(details.external_introducer_furl)[2],
             )),
+        )
+        # There's another copy of that in the storage server's config.  Make
+        # sure it matches.
+        self.assertThat(
+            introducer_furl,
+            Equals(loads(config.data["storage.json"])["storage"]["introducer_furl"]),
         )
