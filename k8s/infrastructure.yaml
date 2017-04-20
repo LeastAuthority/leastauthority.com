@@ -164,14 +164,13 @@ spec:
   # logs to a "log gatherer".  Centralizing the logs in a single place
   # makes it easier to inspect them later.
   ports:
-  - name: 'subscription-manager'
+    # Length limit of 15 on port names.
+  - name: 'subscr-manager'
     # Expose the service to the cluster on the normal port.
     port: 80
-    # We can select the port based on the name of a port of a
-    # container belonging to the service.  It's probably also 3117 but
-    # at least we can avoid duplicating that number one more time
-    # here.
-    targetPort: 'subscription-manager'
+    # We can select the port based on the name of a port of a container
+    # belonging to the service.
+    targetPort: 'subscr-manager'
     protocol: 'TCP'
 ---
 # Read about deployments at
@@ -552,7 +551,8 @@ spec:
           name: 'subscription-manager-secrets'
         ports:
         - containerPort: 8000
-          name: 'subscription-manager'
+          # Length limit of 15 on port names.
+          name: 'subscr-manager'
 ---
 # Read about StorageClass at
 # http://blog.kubernetes.io/2016/10/dynamic-provisioning-and-storage-in-kubernetes.html
