@@ -1,6 +1,7 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
+---
 # Read about services at
 # http://kubernetes.io/docs/user-guide/services/
 kind: 'Service'
@@ -16,10 +17,11 @@ metadata:
     component: 'Infrastructure'
 spec:
   selector:
-    # Pick up all the other resources that claim to be part of the s4 app.
-    # This makes everything with a matching label part of this service.
+    # Pick up all the other resources that claim to be part of LeastAuthority
+    # infrastructure.  Currently this covers s4 and magic wormhole.  This
+    # makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
-    app: 's4'
+    app: 's4-signup'
     component: 'Infrastructure'
 
   # This service exposes network ports via a load balancer - ELB on
@@ -47,7 +49,43 @@ spec:
     port: 80
     targetPort: 8080
     protocol: 'TCP'
-  - name: 'wormhole-relay'
+---
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 'wormhole'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+    app: 'wormhole'
+    component: 'Infrastructure'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of LeastAuthority
+    # infrastructure.  Currently this covers s4 and magic wormhole.  This
+    # makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 'wormhole'
+    component: 'Infrastructure'
+
+  # This service exposes network ports via a load balancer - ELB on
+  # AWS.  The load balancer will be configured to spread traffic
+  # across healthy pods in this service.  The load balancer also acts
+  # as the public endpoint for the service.  Without it, the service
+  # is only internally accessible.
+  #
+  # Note that ELB on AWS takes a minute or two to become usable,
+  # probably due to DNS record propagation delay.
+  type: 'LoadBalancer'
+
+  ports:
+  # Define ports to allow access to the wormhole server - rendezvous and
+  # transit relay.
+  - name: 'wormhole-rendezvous'
     port: 4000
     protocol: 'TCP'
   - name: 'wormhole-transit-relay'
@@ -65,14 +103,14 @@ metadata:
   labels:
     # Everything we make and put into k8s will have this label.
     provider: 'LeastAuthority'
-    app: 's4'
+    app: 'foolscap-log-gatherer'
     component: 'Infrastructure'
 spec:
   selector:
     # Pick up all the other resources that claim to be part of the s4 app.
     # This makes everything with a matching label part of this service.
     provider: 'LeastAuthority'
-    app: 's4'
+    app: 'foolscap-log-gatherer'
     component: 'Infrastructure'
 
   # This service exposes the log gatherer internally only.  Pods
@@ -95,12 +133,52 @@ spec:
     targetPort: 'log-gatherer'
     protocol: 'TCP'
 ---
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 'subscription-manager'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+    app: 'subscription-manager'
+    component: 'Infrastructure'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of the s4 app.
+    # This makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 'subscription-manager'
+    component: 'Infrastructure'
+
+  # This service exposes the log gatherer internally only.  Pods
+  # running on the cluster can access it but the public internet
+  # cannot.  ClusterIP is the default service type but we'll spell it
+  # out here just to be clear.
+  type: 'ClusterIP'
+
+  # Tahoe-LAFS and other Foolscap-using applications can publish their
+  # logs to a "log gatherer".  Centralizing the logs in a single place
+  # makes it easier to inspect them later.
+  ports:
+    # Length limit of 15 on port names.
+  - name: 'subscr-manager'
+    # Expose the service to the cluster on the normal port.
+    port: 80
+    # We can select the port based on the name of a port of a container
+    # belonging to the service.
+    targetPort: 'subscr-manager'
+    protocol: 'TCP'
+---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
 apiVersion: 'extensions/v1beta1'
 metadata:
-  name: 's4-infrastructure'
+  name: 'wormhole'
 spec:
   # Keep some old ReplicaSets for older versions of the Deployment around -
   # but not all of them (as is the default).
@@ -123,17 +201,63 @@ spec:
     metadata:
       labels:
         provider: 'LeastAuthority'
-        app: 's4'
+        app: 'wormhole'
         component: 'Infrastructure'
         version: '1'
     spec:
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      # This is the wormhole relay server.  It will help people get
+      # introduced to their grid, someday.
+      - name: 'wormhole-relay'
+        # This image is hosted by the cluster-private registry.
+        # XXX This avoids `localhost` because different k8s
+        # deployments seem to have different behavior with respect to
+        # localhost resolution for the purposes of image pulls.
+        # Specifically, kops deploys a cluster where localhost
+        # resolves to [::1] where the registry is not available.
+        image: '127.0.0.1:30000/leastauthority/magicwormhole:1941d38'
+        ports:
+        # We just happen to know this is the ports this container listens on.
+        - containerPort: 4000
+        - containerPort: 4001
+        resources:
+          limits:
+            cpu: '10m'
+            memory: '100Mi'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 's4-signup'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # The containers write directly to the filesystem but they no longer do so
+  # in a particularly interesting way.  We should eliminate all remaining
+  # direct filesystem usage in the signup process but we can get away with
+  # running a couple replicas even before we do that.
+  replicas: 2
+  strategy:
+    type: 'RollingUpdate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 's4-signup'
+        component: 'Infrastructure'
+        version: '2'
+    spec:
       volumes:
-      - name: 'subscription-manager-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-subscription-manager-pvc'
-      - name: 'log-gatherer-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-foolscap-logs-pvc'
       - name: 'web-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-web-pvc'
@@ -148,21 +272,10 @@ spec:
       - name: 'flapp-secrets'
         secret:
           secretName: 'signup-secrets'
-      - name: 'subscription-manager-secrets'
-        secret:
-          secretName: 'signup-secrets'
           defaultMode: 0444
           items:
           - key: 'domain'
             path: 'domain'
-      - name: 'convergence-secrets'
-        secret:
-          secretName: 'signup-secrets'
-          defaultMode: 0444
-          items:
-          - key: 'domain'
-            path: 'domain'
-
           # XXX Should allocate some Route53-only keys for this.
           # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
           # XXX Maybe I should create _two_ sets of keys...
@@ -176,56 +289,8 @@ spec:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
-
-      # Here is the per-customer-grid router.  The service sends all
-      # connections to it and it figures out which pod services the
-      # subscription the connection is related to.
-      - name: 'grid-router'
-        image: '127.0.0.1:30000/leastauthority/grid-router:7a0eadc'
-
-      # Here is the subscription manager.  It contains the canonical (local)
-      # state for our subscriptions (Stripe is _really_ canonical... TODO!)
-      - name: 'subscription-manager'
-        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
-        volumeMounts:
-        - mountPath: '/app/data'
-          name: 'subscription-manager-data'
-        - mountPath: '/app/k8s_secrets'
-          name: 'subscription-manager-secrets'
-
-      # Here is the subscription converger.  It talks to the subscription
-      # manager and Kubernetes and keeps them synchronized.
-      - name: 'subscription-converger'
-        image: '127.0.0.1:30000/leastauthority/subscription-converger:b5671da'
-        env:
-        - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
-          value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
-        - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
-          value: '127.0.0.1:30000/leastauthority/tahoe-storage:1d72b09'
-        volumeMounts:
-        - mountPath: '/app/k8s_secrets'
-          name: 'convergence-secrets'
-          readOnly: true
-
-      # Here is the Foolscap log gatherer.
-      - name: 'foolscap-log-gatherer'
-        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:1941d38'
-        env:
-        - name: 'LAE_GATHERER_HINT'
-          value: 'tcp:s4-logging:3117'
-        ports:
-        - name: 'log-gatherer'
-          containerPort: 3117
-        volumeMounts:
-        - mountPath: '/data'
-          name: 'log-gatherer-data'
-        resources:
-          limits:
-            cpu: '20m'
-            memory: '100Mi'
-
-      # This is the web server.  It serves up all the
-      # leastauthority.com content.
+      # This is the web server.  It serves the subscription signup web
+      # interface.
       - name: 'web'
         # This image is hosted by the cluster-private registry.
         # XXX This avoids `localhost` because different k8s
@@ -269,25 +334,225 @@ spec:
           limits:
             cpu: '20m'
             memory: '100Mi'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'foolscap-log-gatherer'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
 
-      # This is the wormhole relay server.  It will help people get
-      # introduced to their grid, someday.
-      - name: 'wormhole-relay'
-        # This image is hosted by the cluster-private registry.
-        # XXX This avoids `localhost` because different k8s
-        # deployments seem to have different behavior with respect to
-        # localhost resolution for the purposes of image pulls.
-        # Specifically, kops deploys a cluster where localhost
-        # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/magicwormhole:1941d38'
+  # The gatherer writes directly to the filesystem.  I assume no attempt has
+  # been made to make it concurrent-safe, though it may be by accident (due to
+  # timestamp-based filenames).  Still, limit this to just one instance.
+  replicas: 1
+  strategy:
+    type: 'Recreate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 'foolscap-log-gatherer'
+        component: 'Infrastructure'
+        version: '1'
+    spec:
+      volumes:
+      - name: 'log-gatherer-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-foolscap-logs-pvc'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      - name: 'foolscap-log-gatherer'
+        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:1941d38'
+        env:
+        - name: 'LAE_GATHERER_HINT'
+          value: 'tcp:s4-logging:3117'
         ports:
-        # We just happen to know this is the ports this container listens on.
-        - containerPort: 4000
-        - containerPort: 4001
+        - name: 'log-gatherer'
+          containerPort: 3117
+        volumeMounts:
+        - mountPath: '/data'
+          name: 'log-gatherer-data'
         resources:
           limits:
-            cpu: '10m'
+            cpu: '20m'
             memory: '100Mi'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'grid-router'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # The grid router has no persistent state at all.
+  replicas: 2
+  strategy:
+    type: 'RollingUpdate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        # Another name might make more sense here but this is being selected
+        # on by the CUSTOMER_GRID_SERVICE created dynamically.  Let's leave it
+        # alone for now and deal with the necessary upgrade later on.
+        app: 's4'
+        component: 'Infrastructure'
+        version: '1'
+    spec:
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      # Here is the per-customer-grid router.  The service sends all
+      # connections to it and it figures out which pod services the
+      # subscription the connection is related to.
+      - name: 'grid-router'
+        image: '127.0.0.1:30000/leastauthority/grid-router:7a0eadc'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'subscription-converger'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # The converger has no persistent local state but running more than one of
+  # them at a time is just as likely to cause problems as to improve anything.
+  replicas: 1
+  strategy:
+    type: 'Recreate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 'subscription-converger'
+        component: 'Infrastructure'
+        version: '2'
+    spec:
+      volumes:
+      - name: 'convergence-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          defaultMode: 0444
+          items:
+          - key: 'domain'
+            path: 'domain'
+
+          # XXX Should allocate some Route53-only keys for this.
+          # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
+          # XXX Maybe I should create _two_ sets of keys...
+          # XXX OTOH There's also IAM roles which might be even better?
+          - key: 'aws-s4.key'
+            path: 'aws.key'
+          - key: 'aws-s4.id'
+            path: 'aws.id'
+
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+
+      # Here is the subscription converger.  It talks to the subscription
+      # manager and Kubernetes and keeps them synchronized.
+      - name: 'subscription-converger'
+        image: '127.0.0.1:30000/leastauthority/subscription-converger:b5671da'
+        env:
+        - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
+          value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
+        - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
+          value: '127.0.0.1:30000/leastauthority/tahoe-storage:1d72b09'
+        - name: 'LAE_S4_SUBSCRIPTION_MANAGER_URL'
+          value: 'http://subscription-manager/'
+        volumeMounts:
+        - mountPath: '/app/k8s_secrets'
+          name: 'convergence-secrets'
+          readOnly: true
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'subscription-manager'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # Subscription manager uses the local filesystem for a database.  So limit
+  # it to just one replica.
+  replicas: 1
+  strategy:
+    type: 'Recreate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 'subscription-manager'
+        component: 'Infrastructure'
+        version: '2'
+    spec:
+      volumes:
+      - name: 'subscription-manager-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-subscription-manager-pvc'
+      # Kubernetes manages some of the secrets we require.  Mount
+      # them into the container.
+      - name: 'subscription-manager-secrets'
+        secret:
+          secretName: 'signup-secrets'
+          defaultMode: 0444
+          items:
+          - key: 'domain'
+            path: 'domain'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+
+      # Here is the subscription manager.  It contains the canonical (local)
+      # state for our subscriptions (Stripe is _really_ canonical... TODO!)
+      - name: 'subscription-manager'
+        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        volumeMounts:
+        - mountPath: '/app/data'
+          name: 'subscription-manager-data'
+        - mountPath: '/app/k8s_secrets'
+          name: 'subscription-manager-secrets'
+        ports:
+        - containerPort: 8000
+          # Length limit of 15 on port names.
+          name: 'subscr-manager'
 ---
 # Read about StorageClass at
 # http://blog.kubernetes.io/2016/10/dynamic-provisioning-and-storage-in-kubernetes.html

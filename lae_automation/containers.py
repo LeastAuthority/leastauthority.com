@@ -315,7 +315,7 @@ CUSTOMER_GRID_SERVICE = v1.Service(
     spec={
 	u"type": u"LoadBalancer",
         # We don't actually want to select the "customer" pods here.  Instead,
-        # want the infrastructure pod that includes the grid router.
+        # want the grid router pod.
 	u"selector": _S4_INFRASTRUCTURE_METADATA.labels,
         u"ports": [
             {u"name": u"introducer", u"protocol": u"TCP", u"port": 10000},

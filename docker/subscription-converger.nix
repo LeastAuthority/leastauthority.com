@@ -18,7 +18,7 @@ pkgs.dockerTools.buildImage {
           "--aws-secret-access-key-path" "/app/k8s_secrets/aws.key"
           "--introducer-image" "\${LAE_S4_TAHOE_INTRODUCER_IMAGE}"
           "--storageserver-image" "\${LAE_S4_TAHOE_STORAGESERVER_IMAGE}"
-          "--endpoint" "http://127.0.0.1:8000/"
+          "--endpoint" "\${LAE_S4_SUBSCRIPTION_MANAGER_URL}"
           "--k8s-service-account"
         ])
       ];
