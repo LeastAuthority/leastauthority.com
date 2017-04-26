@@ -1,16 +1,5 @@
 FROM leastauthority/infrastructure
 
-# As long as we use fabric to initialize SSEC2 instances, we need a
-# writeable known_hosts file.  There is an unfortunate amount of
-# complexity involved in overriding the choice of known_hosts
-# location.  Rather than dealing with that, just redirect the default
-# path to a better location.
-#
-# This is pretty bad.  The good news is that we'll stop using fabric
-# as soon as we replace SSEC2 instances with containers.  Then we can
-# throw this out.
-RUN ln -s /app/data /home/website/.ssh && \
-    chown --no-dereference ${INFRASTRUCTURE_USER_NAME}:${INFRASTRUCTURE_USER_NAME} /home/website/.ssh
 ENV HOME="/home/website"
 
 # Create the flapp server and add the signup command to it.  This is

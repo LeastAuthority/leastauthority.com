@@ -6,14 +6,7 @@
 -- These are transferred to the new EC2 instance in /home/customer/.ssh, and /home/ubuntu/.ssh
 """
 
-from datetime import datetime
-utcnow = datetime.utcnow
-
-from cStringIO import StringIO
-
 from OpenSSL.crypto import FILETYPE_PEM
-
-from fabric import api
 
 from twisted.internet.ssl import KeyPair
 from twisted.python.filepath import FilePath
@@ -26,12 +19,6 @@ from .model import make_external_furl
 
 CONFIGURE_TAHOE_PATH = FilePath(__file__).sibling(b"configure-tahoe")
 
-
-def write(value, remote_path, use_sudo=False, mode=None):
-    # There's an incompletely understood interaction between use_sudo and mode.
-    # It can result in cryptic remote file names when use_sudo is True and
-    # mode is not None.
-    return api.put(StringIO(value), remote_path, use_sudo=use_sudo, mode=mode)
 
 # These are legacy junk that can be cleaned up after the
 # external_introducer_furl in oldsecrets get removed.  Nothing actually _uses_

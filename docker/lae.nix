@@ -404,7 +404,6 @@ rec {
         filepath
         eliot
         stripe
-        Fabric
         attrs
         jinja2
         twisted

@@ -14,7 +14,6 @@ setup(
         "stripe==1.41.1",
         "pem==16.1.0",
         "foolscap",
-        "Fabric",
         "filepath",
         "jinja2",
         "mock",
