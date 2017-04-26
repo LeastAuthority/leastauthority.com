@@ -9,12 +9,12 @@ rec {
     let
       result = pkgs.stdenv.mkDerivation {
         inherit name;
+	inherit contents;
 
 	nativeBuildInputs = [
 	  pkgs.python27
 	];
 
-	contents = contents;
 
 	realBuilder = "${pkgs.python27}/bin/python";
 	args = [ builder ];
