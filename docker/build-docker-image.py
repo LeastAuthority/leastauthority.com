@@ -1,8 +1,7 @@
 from __future__ import print_function, unicode_literals
 
-from io import StringIO
-from json import load, dumps, dump
-from tarfile import TarInfo, TarFile
+from json import load, dump
+from tarfile import TarFile
 from os import environ
 from os.path import join
 from tempfile import NamedTemporaryFile
@@ -21,6 +20,7 @@ def main():
         for content
         in contents
     )
+    config_path = config_id + ".json"
 
     with TarFile(out, "w") as image:
         with NamedTemporaryFile() as config_file:
@@ -28,12 +28,12 @@ def main():
             config_file.seek(0)
             info = image.gettarinfo(
                 name=config_file.name,
-                arcname=config_id + ".json",
+                arcname=config_path,
             )
             image.addfile(info, config_file)
 
         with NamedTemporaryFile() as manifest_file:
-            dump(image_manifest(layers, {}), manifest_file)
+            dump(image_manifest(layers, config_path), manifest_file)
             manifest_file.seek(0)
             info = image.gettarinfo(
                 name=manifest_file.name,
@@ -57,7 +57,7 @@ def main():
 def image_manifest(layers, config):
     return [{
         "Layers": list(
-            layer["id"] + "\\/layer.tar"
+            layer["id"] + "/layer.tar"
             for layer
             in layers
         ),
@@ -91,7 +91,7 @@ def image_config(layers):
             "Image": "sha256:ca817e5c32eaff74ee9dfa6b77c0d030fd8687ca8f6abfba2077268f45e453f8",
             "ArgsEscaped": True,
             "Cmd": None,
-            "Env": None,
+            "Env": [],
             "StdinOnce": False,
             "OpenStdin": False,
             "Tty": False,
@@ -111,8 +111,8 @@ def image_config(layers):
             "Volumes": None,
             "Image": "sha256:ca817e5c32eaff74ee9dfa6b77c0d030fd8687ca8f6abfba2077268f45e453f8",
             "ArgsEscaped": True,
-            "Cmd": None,
-            "Env": None,
+            "Cmd": [],
+            "Env": [],
             "StdinOnce": False,
             "OpenStdin": False,
             "Tty": False,
