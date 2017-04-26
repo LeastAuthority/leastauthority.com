@@ -19,12 +19,13 @@ def main():
 
     mkdir(out)
 
-    with TarFile(join(out, "layer.tar"), "w") as layer:
+    archive_path = join(out, "layer.tar")
+    with TarFile(archive_path, "w") as layer:
         for content in contents.split():
             layer.add(content)
 
     layer_hash = sha256()
-    with open(join(out, "layer.tar"), "r") as layer:
+    with open(archive_path, "r") as layer:
         while True:
             data = layer.read(2 ** 16)
             if data:
