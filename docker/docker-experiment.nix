@@ -3,5 +3,5 @@
 
 docker.buildImage {
   name = "foo";
-  contents = lae;
+  contents = { lae = lae.lae; };
 }
