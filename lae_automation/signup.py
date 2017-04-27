@@ -236,7 +236,8 @@ def _configuration_to_wormhole_code(reactor, configuration):
     print("!Hazzuh")
     done = send(
         reactor,
-        appid=u"s4.leastauthority.com",
+        # This has to agree with anyone who wants to receive this code.
+        appid=u"tahoe-lafs.org/tahoe-lafs/v1",
         relay_url=u"ws://wormhole.leastauthority.com:4000/v1",
         data=json.dumps(configuration),
         code=None,
