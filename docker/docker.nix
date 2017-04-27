@@ -7,14 +7,15 @@ rec {
     contents,
   }:
     let
-      result = pkgs.stdenv.mkDerivation {
+      result = pkgs.stdenv.mkDerivation rec {
         inherit name;
-	inherit contents;
 
 	nativeBuildInputs = [
 	  pkgs.python27
 	];
 
+        referencePath = "references";
+	exportReferencesGraph = [ referencePath contents ];
 
 	realBuilder = "${pkgs.python27}/bin/python";
 	args = [ builder ];
@@ -22,19 +23,6 @@ rec {
       };
     in
       [ result ];
-
-  # Build a single layer which can be composed into a Docker image .tar.gz by
-  # buildImage.
-  buildLayer = name: contents:
-    let
-      baseName = baseNameOf name;
-      result = pyDerivation {
-        name = "docker-layer-${baseName}";
-	builder = ./build-docker-layer.py;
-	contents = contents;
-      };
-    in
-      result;
 
   # Build a Docker image tar.gz which can be loaded into a Docker daemon.
   buildImage = args@{
@@ -47,11 +35,10 @@ rec {
 
     let
       baseName = baseNameOf name;
-      layers = builtins.attrValues (pkgs.lib.mapAttrs buildLayer contents);
       result = pyDerivation {
         name = "docker-image-${baseName}.tar.gz";
 	builder = ./build-docker-image.py;
-	contents = layers;
+	contents = builtins.attrValues contents;
       };
     in
       result;

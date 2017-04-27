@@ -1,28 +1,30 @@
 from __future__ import print_function, unicode_literals
 
 from json import load, dump
+from hashlib import sha256
 from tarfile import TarFile
-from os import environ
+from os import mkdir, environ
 from os.path import join
 from tempfile import NamedTemporaryFile
 
 
 def main():
-    from pprint import pprint
-    pprint(dict(environ))
-
     out = environ["out"]
-    contents = environ["contents"].split()
+    referencePath = environ["referencePath"]
+
+    with open(out, "wb") as image_file:
+        build_docker_image(referencePath, image_file)
+
+
+def build_docker_image(referencePath, image_file):
+    with open(referencePath) as references_file:
+        references = parse_references(references_file)
 
     config_id = "abcdef"
-    layers = list(
-        load(open(join(content, "json")))
-        for content
-        in contents
-    )
+    layers = build_docker_layers(references)
     config_path = config_id + ".json"
 
-    with TarFile(out, "w") as image:
+    with TarFile(fileobj=image_file, mode="w") as image:
         with NamedTemporaryFile() as config_file:
             dump(image_config(layers), config_file)
             config_file.seek(0)
@@ -125,6 +127,93 @@ def image_config(layers):
         },
         "architecture": "amd64"
     }
+
+
+
+def layer_config(layer_id):
+    return {
+        "container_config": {
+            "Labels": None,
+            "OnBuild": None,
+            "Entrypoint": None,
+            "WorkingDir": "",
+            "Volumes": None,
+            "Image": "",
+            "Cmd": None,
+            "Env": None,
+            "StdinOnce": False,
+            "OpenStdin": False,
+            "Tty": False,
+            "AttachStderr": False,
+            "AttachStdout": False,
+            "AttachStdin": False,
+            "User": "",
+            "Domainname": "",
+            "Hostname": ""
+        },
+        "created": "1970-01-01T00:00:00-00:00",
+        "id": layer_id,
+    }
+
+
+
+def parse_references(fobj):
+    references = set()
+    for line in (line.strip() for line in fobj):
+        if line.isdigit() or line.isspace():
+            continue
+        references.add(line)
+    return references
+
+
+
+def build_docker_layers(references):
+    return list(
+        build_docker_layer(derivations)
+        for derivations
+        in group_references(references, max_groups=120)
+    )
+
+
+
+def group_references(references, max_groups):
+    assert len(references) < max_groups
+    return list(
+        [ref]
+        for ref
+        in references
+    )
+
+
+
+def build_docker_layer(derivations, out):
+    mkdir(out)
+
+    archive_path = join(out, "layer.tar")
+    with TarFile(archive_path, "w") as layer:
+        for content in derivations:
+            layer.add(content)
+
+    with open(archive_path, "r") as layer:
+        layer_id = get_layer_id(layer)
+
+    with open(join(out, "VERSION"), "w") as version:
+        version.write("1.0")
+
+    with open(join(out, "json"), "w") as config:
+        dump(layer_config(layer_id), config)
+
+
+def get_layer_id(layer):
+    # https://gist.github.com/aaronlehmann/b42a2eaf633fc949f93b#id-definitions-and-calculations
+    layer_hash = sha256()
+    while True:
+        data = layer.read(2 ** 16)
+        if data:
+            layer_hash.update(data)
+        else:
+            break
+    return layer_hash.hexdigest()
 
 
 
