@@ -234,10 +234,8 @@ def _configuration_to_wormhole_code(reactor, configuration):
     waiting_for_code = Deferred()
 
     def got_code(code):
-        print("Huzzah", code)
         waiting_for_code.callback(_WormholeClaim(code, datetime.now()))
 
-    print("!Hazzuh")
     done = send(
         reactor,
         # This has to agree with anyone who wants to receive this code.
