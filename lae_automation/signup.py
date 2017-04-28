@@ -1,7 +1,7 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
-from base64 import b32encode
+from base64 import b32encode, b64encode
 import json
 from functools import partial
 from datetime import datetime
@@ -14,13 +14,18 @@ from attr import validators
 from eliot import start_action
 from eliot.twisted import DeferredContext
 
+from twisted.python.filepath import FilePath
+from twisted.internet.defer import Deferred, succeed
 from twisted.internet import reactor
 from twisted.web.client import Agent
-from twisted.internet.defer import Deferred, succeed
 
 from lae_automation.model import SubscriptionDetails
 
 from .subscription_manager import Client, network_client
+
+SIGNUP_ICON_PATH = FilePath(__file__).sibling(u"lae-s4-signup-icon.png")
+SIGNUP_ICON_BASE64 = b64encode(SIGNUP_ICON_PATH.getContent())
+
 
 def encode_id(ident):
     return b32encode(ident).rstrip("=").lower()
@@ -209,7 +214,6 @@ class _WormholeSignup(object):
 
 def _claim_to_tahoe_configuration(claim):
     details = claim.details
-    icon_base64 = u""
     return {
         u"version": 1,
         u"nickname": u"Least Authority S4",
@@ -217,7 +221,7 @@ def _claim_to_tahoe_configuration(claim):
         u"shares-needed": u"1",
         u"shares-total": u"1",
         u"shares-happy": u"1",
-        u"icon_base64": icon_base64,
+        u"icon_base64": SIGNUP_ICON_BASE64,
     }
 
 
