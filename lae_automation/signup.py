@@ -207,7 +207,7 @@ class _WormholeSignup(object):
         with a.context():
             d = DeferredContext(self.basic_signup.signup(*args, **kwargs))
             d.addCallback(_claim_to_tahoe_configuration)
-            d.addCallback(partial(_configuration_to_wormhole_code, reactor))
+            d.addCallback(partial(_configuration_to_wormhole_code, self.reactor))
             return d.addActionFinish()
 
 
