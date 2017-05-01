@@ -60,7 +60,7 @@ WORKDIR /app/run
 RUN chown ${WORMHOLE_USER_NAME} /app/run
 
 # Get the app we want to run!
-RUN /app/env/bin/pip install magic-wormhole==0.8.1
+RUN /app/env/bin/pip install magic-wormhole==0.9.2
 
 # Facilitate network connections to the application.
 EXPOSE 4000
