@@ -211,15 +211,13 @@ spec:
       # This is the wormhole relay server.  It will help people get
       # introduced to their grid, someday.
       - name: 'wormhole-relay'
-        # This image is hosted by the cluster-private registry.
-        # XXX This avoids `localhost` because different k8s
-        # deployments seem to have different behavior with respect to
-        # localhost resolution for the purposes of image pulls.
-        # Specifically, kops deploys a cluster where localhost
-        # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/magicwormhole:1941d38'
+        # This image is hosted on Docker Hub.  I hope Kubernetes is good
+        # enough at retrying failed pulls to make this reliable.  We use a
+        # sha256 tag to have more confidence we'll get the image we expect.
+        image: 'leastauthority/magicwormhole:latest'
         ports:
-        # We just happen to know this is the ports this container listens on.
+        # We just happen to know these are the ports this container listens
+        # on.
         - containerPort: 4000
         - containerPort: 4001
         resources:
