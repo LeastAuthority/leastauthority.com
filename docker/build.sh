@@ -26,7 +26,7 @@ tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs ${EXCLUDE_VCS_IGNORES} . | docker 
        "
 
 images="base base-lae-automation infrastructure flapp tahoe-base foolscap-base foolscap-gatherer"
-tahoe_images="tahoe-introducer tahoe-storage magicwormhole"
+tahoe_images="tahoe-introducer tahoe-storage"
 
 for image in ${images}; do
     docker build -t "leastauthority/${image}" -f "${LEASTAUTHORITY}"/docker/Dockerfile."${image}" "${LEASTAUTHORITY}"
