@@ -31,10 +31,8 @@ def configuration(stripe_publishable_api_key):
 
 
 def make_resource(
-        stripe_secret_api_key,
         stripe_publishable_api_key,
-        service_confirmed_path,
-        subscriptions_path,
+        signup, stripe, mailer,
 ):
     resource = Resource()
     resource.putChild("", Redirect("https://leastauthority.com/"))
@@ -52,9 +50,7 @@ def make_resource(
     resource.putChild(
         'submit-subscription',
         SubmitSubscriptionHandler(
-            stripe_secret_api_key,
-            service_confirmed_path,
-            subscriptions_path,
+            signup, mailer, stripe,
         ),
     )
 
