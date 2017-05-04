@@ -25,7 +25,7 @@ tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs ${EXCLUDE_VCS_IGNORES} . | docker 
            /leastauthority.com/docker/_nix-build web grid-router subscription-manager subscription-converger
        "
 
-images="base base-lae-automation infrastructure flapp tahoe-base foolscap-base foolscap-gatherer"
+images="base tahoe-base foolscap-base foolscap-gatherer"
 tahoe_images="tahoe-introducer tahoe-storage"
 
 for image in ${images}; do
