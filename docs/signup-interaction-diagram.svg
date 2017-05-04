@@ -19,13 +19,28 @@
   <defs
      id="defs4">
     <marker
+       inkscape:stockid="Arrow2Lend"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="marker7243"
+       style="overflow:visible;"
+       inkscape:isstock="true">
+      <path
+         id="path7245"
+         style="fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round;stroke:#000000;stroke-opacity:1;fill:#000000;fill-opacity:1"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(1.1) rotate(180) translate(1,0)" />
+    </marker>
+    <marker
        inkscape:isstock="true"
        style="overflow:visible;"
        id="marker7085"
        refX="0.0"
        refY="0.0"
        orient="auto"
-       inkscape:stockid="Arrow2Lend">
+       inkscape:stockid="Arrow2Lend"
+       inkscape:collect="always">
       <path
          transform="scale(1.1) rotate(180) translate(1,0)"
          d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
@@ -263,9 +278,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="1"
-     inkscape:cx="359.00224"
-     inkscape:cy="592.84071"
+     inkscape:zoom="2"
+     inkscape:cx="676.07483"
+     inkscape:cy="560.61216"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -951,5 +966,44 @@
          id="tspan7199"
          x="306.71985"
          y="447.43674">O</tspan></text>
+    <g
+       id="g7228"
+       transform="translate(-233,104)">
+      <rect
+         y="425.60617"
+         x="774.24396"
+         height="37.512115"
+         width="121.3296"
+         id="rect7222"
+         style="opacity:0.17900002;fill:none;stroke:#000000;stroke-width:1.81788087;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text7224"
+         y="448.60803"
+         x="780.41705"
+         style="font-style:normal;font-weight:normal;font-size:14.25056553px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+         xml:space="preserve"><tspan
+           y="448.60803"
+           x="780.41705"
+           id="tspan7226"
+           sodipodi:role="line">Kubernetes API</tspan></text>
+    </g>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#marker7243)"
+       d="m 678,396.3622 c 50.40509,69.53787 19.58022,108.3695 -1,148"
+       id="path7235"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-weight:normal;font-size:21.48158073px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       x="683.8175"
+       y="473.36221"
+       id="text7487"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan7489"
+         x="683.8175"
+         y="473.36221">N</tspan></text>
   </g>
 </svg>
