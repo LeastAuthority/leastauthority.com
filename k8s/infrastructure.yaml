@@ -214,7 +214,7 @@ spec:
         # This image is hosted on Docker Hub.  I hope Kubernetes is good
         # enough at retrying failed pulls to make this reliable.  We use a
         # sha256 tag to have more confidence we'll get the image we expect.
-        image: 'leastauthority/magicwormhole:latest'
+        image: 'leastauthority/magic-wormhole'
         ports:
         # We just happen to know these are the ports this container listens
         # on.
