@@ -53,6 +53,11 @@ def if_(predicate, thunk):
     return xform
 
 
+def and_(*predicates):
+    def combined(value):
+        return all(predicate(value) for predicate in predicates)
+    return combined
+
 
 def owned_by(whom):
     def check_owned_by(image):
@@ -75,6 +80,12 @@ def deployments(docs):
 
 
 
+def has_tag():
+    def has_tag_predicate(value):
+        return u":" in value
+    return has_tag_predicate
+
+
 def rewrite_tags(docs, rev):
     def specified_tag(image):
         return u":".join((image.rsplit(u":", 1)[0], rev))
@@ -88,7 +99,15 @@ def rewrite_tags(docs, rev):
 
     return docs.transform(
         [deployments(docs), u"spec", u"template", u"spec", u"containers", ny, u"image"],
-        if_(owned_by("leastauthority"), specified_tag),
+        if_(
+            and_(
+                owned_by("leastauthority"),
+                # Give us an out from this rewriting.  If no tag is specified
+                # at all, leave it alone.  Sad hack.  Need to do better.
+                has_tag(),
+            ),
+            specified_tag,
+        ),
 
         # There are also a couple environment variables that have an image
         # name in them.
