@@ -182,6 +182,12 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
                         # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                         u"resources": {
                             u"requests": {
+                                # The introducer has a very simple job to do.
+                                # The client doesn't need to interact with it
+                                # very often, either.  This overrides the
+                                # default of 100m which is much too much.
+                                u"cpu": u"5m",
+
                                 # Observed virtual size of the introducer
                                 # around 206MiB.  Observed resident size of
                                 # the introducer around 54MiB.  Normally I
@@ -205,6 +211,15 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
                         # # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                         u"resources": {
                             u"requests": {
+                                # The storage server needs to shuffle bytes
+                                # from the backend to the client.  This is a
+                                # fairly inexpensive operation.  Give this
+                                # container more CPU than the introducer but
+                                # still not much.  Less than the default of
+                                # 100m (which would limit us to 10 storage
+                                # servers per CPU).
+                                "cpu": u"15m",
+
                                 # Observed virtual size of the introducer
                                 # around 299MiB.  Observed resident size of
                                 # the introducer around 64MiB.  I would expect
