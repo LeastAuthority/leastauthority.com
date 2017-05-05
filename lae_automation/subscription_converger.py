@@ -42,6 +42,7 @@ from txaws.route53.model import (
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
+    CONTAINERIZED_SUBSCRIPTION_VERSION,
     autopad_b32decode,
     configmap_name, deployment_name,
     configmap_public_host,
@@ -536,6 +537,8 @@ class _ChangeableDeployments(PClass):
         return (
             subscription.introducer_port_number != intro or
             subscription.storage_port_number != storage
+        ) or (
+            deployment.metadata.labels.version != CONTAINERIZED_SUBSCRIPTION_VERSION
         )
 
 

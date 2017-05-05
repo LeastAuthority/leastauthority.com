@@ -13,6 +13,8 @@ from .server import marshal_tahoe_configuration
 
 from txkube import v1, v1beta1
 
+CONTAINERIZED_SUBSCRIPTION_VERSION = u"2"
+
 # This metadata is associated with everything that is part of S4 which is
 # associated with per-customer resources.  For example, Deployments,
 # ConfigMaps, ReplicaSets, Pods.
@@ -26,7 +28,7 @@ _S4_CUSTOMER_METADATA = v1.ObjectMeta(
 	u"component": u"customer-tahoe-lafs",
         # And version this thing so we know how to interpret whatever else we
         # find in it.
-        u"version": u"1",
+        u"version": CONTAINERIZED_SUBSCRIPTION_VERSION,
     }
 )
 
