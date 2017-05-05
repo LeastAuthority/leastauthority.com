@@ -1,42 +1,22 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
-import time
 from base64 import b32encode
-import json
-from functools import partial
+
+from zope.interface import Interface, implementer
 
 import attr
+from attr import validators
 
 from eliot import start_action
 from eliot.twisted import DeferredContext
 
-from twisted.internet import reactor
-from twisted.web.client import Agent
-from twisted.python.filepath import FilePath
 from twisted.internet.defer import succeed
+from twisted.web.client import Agent
 
-from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
+from lae_automation.model import SubscriptionDetails
 
-from lae_automation.config import Config
-from lae_automation.model import DeploymentConfiguration, SubscriptionDetails
-from lae_util.streams import LoggingStream
-from lae_util.servers import append_record
-
-from .subscription_manager import network_client
-
-from lae_util.timestamp import format_iso_time
-
-EC2_ENDPOINT = 'https://ec2.us-east-1.amazonaws.com/'
-#EC2_ENDPOINT = 'https://ec2.amazonaws.com/'
-
-
-def lookup_product(config, plan_ID):
-    ps = [p for p in config.products if p['plan_ID'] == plan_ID]
-    if len(ps) != 1:
-        raise AssertionError("Product code %r matches %d products." % (plan_ID, len(ps)))
-
-    return ps[0]
+from .subscription_manager import Client, network_client
 
 
 def encode_id(ident):
@@ -47,173 +27,24 @@ def get_bucket_name(subscription_id, customer_id):
     return "lae-%s-%s" % (encode_id(subscription_id), encode_id(customer_id))
 
 
-# TODO Replace activate with this
-def activate_ex(
-        just_activate_subscription,
-        send_signup_confirmation,
-        send_notify_failure,
-        domain,
-        subscription_manager_endpoint,
-        secrets_dir,
-        automation_config_path,
-        server_info_path,
-        stdin,
-        flapp_stdout_path,
-        flapp_stderr_path,
-):
-    append_record(flapp_stdout_path, "Automation script started.")
-    parameters_json = stdin.read()
-    (customer_email,
-     customer_pgpinfo,
-     customer_id,
-     plan_id,
-     subscription_id) = json.loads(parameters_json)
-
-    (abslogdir_fp,
-    stripesecrets_log_fp,
-    SSEC2secrets_log_fp,
-    signup_log_fp) = create_log_filepaths(
-        secrets_dir, plan_id, customer_id, subscription_id,
-    )
-
-    append_record(flapp_stdout_path, "Writing logs to %r." % (abslogdir_fp.path,))
-
-    stripesecrets_log_fp.setContent(parameters_json)
-
-    SSEC2_secretsfile = SSEC2secrets_log_fp.open('a+')
-    signup_logfile = signup_log_fp.open('a+')
-    signup_stdout = LoggingStream(signup_logfile, '>')
-    signup_stderr = LoggingStream(signup_logfile, '')
-
-    def errhandler(err):
-        with flapp_stderr_path.open("a") as fh:
-            err.printTraceback(fh)
-        return err
-
-    with flapp_stderr_path.open("a") as stderr:
-        print >>stderr, "plan_id is %s" % plan_id
-
-    config = Config(automation_config_path.path)
-    product = lookup_product(config, plan_id)
-    fullname = product['plan_name']
-
-    with flapp_stdout_path.open("a") as stdout:
-        print >>stdout, "Signing up customer for %s..." % (fullname,)
-
-    deploy_config = DeploymentConfiguration(
-        domain=domain,
-        kubernetes_namespace=None,
-        subscription_manager_endpoint=subscription_manager_endpoint,
-        products=config.products,
-        s3_access_key_id=config.other["s3_access_key_id"].decode("ascii"),
-        s3_secret_key=FilePath(config.other["s3_secret_path"]).getContent().strip().decode("ascii"),
-
-        # Confusingly, this isn't used in the signup codepath. :/
-        # Instead, the subscription converger has the value passed to it.
-        # This is mostly because updating the product configuration is a pain in the ass.
-        # Fix that and then fix this.
-        introducer_image=u"",
-        storageserver_image=u"",
-
-        log_gatherer_furl=config.other.get("log_gatherer_furl") or None,
-        stats_gatherer_furl=config.other.get("stats_gatherer_furl") or None,
-
-        secretsfile=SSEC2_secretsfile,
-        serverinfopath=server_info_path.path,
-
-        ssec2_access_key_id=config.other.get("ssec2_access_key_id", None),
-        ssec2_secret_path=config.other.get("ssec2_secret_path", None),
-
-        ssec2admin_keypair_name=config.other.get("ssec2admin_keypair_name", None),
-        ssec2admin_privkey_path=config.other.get("ssec2admin_privkey_path", None),
-
-        monitor_pubkey_path=config.other.get("monitor_pubkey_path", None),
-        monitor_privkey_path=config.other.get("monitor_privkey_path", None),
-    )
-    subscription = SubscriptionDetails(
-        bucketname=get_bucket_name(subscription_id, customer_id),
-        oldsecrets=None,
-        customer_email=customer_email,
-        customer_pgpinfo=customer_pgpinfo,
-        product_id=plan_id,
-        customer_id=customer_id,
-        subscription_id=subscription_id,
-
-        introducer_port_number=None,
-        storage_port_number=None,
-    )
-    a = start_action(
-        action_type=u"signup:activate",
-        subscription=attr.asdict(subscription),
-    )
-    with a.context():
-        d = DeferredContext(just_activate_subscription(
-            deploy_config, subscription, None, None,
-        ))
-        def activate_success(details):
-            a = start_action(
-                action_type=u"signup:send-confirmation",
-                subscription=attr.asdict(details),
-            )
-            with a.context():
-                d = DeferredContext(send_signup_confirmation(
-                    details.customer_email, details.external_introducer_furl,
-                    None, signup_stdout, signup_stderr,
-                ))
-                return d.addActionFinish()
-        d.addCallback(activate_success)
-
-        def activate_failure(reason):
-            # XXX Eliot log reason here too
-            a = start_action(action_type=u"signup:send-failure")
-            with a.context():
-                d = DeferredContext(send_notify_failure(
-                    reason, subscription.customer_email, signup_log_fp.path,
-                    signup_stdout, signup_stderr,
-                ))
-                return d.addActionFinish()
-        d.addErrback(activate_failure)
-
-        d.addErrback(errhandler)
-        d.addBoth(lambda ign: signup_logfile.close())
-        return d.addActionFinish()
-
-
-
-def just_activate_subscription(deploy_config, subscription, clock, smclient):
-    if clock is None:
-        clock = reactor
-
-    if smclient is None:
-        endpoint = deploy_config.subscription_manager_endpoint.asText().encode("utf-8")
-        agent = Agent(reactor)
-        smclient = network_client(endpoint, agent)
-
-    a = start_action(action_type=u"signup:provision-subscription")
-    with a.context():
-        d = DeferredContext(
-            provision_subscription(
-                clock, deploy_config, subscription, smclient,
-            ),
-        )
-        return d.addActionFinish()
-
-
-
-def provision_subscription(reactor, deploy_config, details, smclient):
+def provision_subscription(smclient, details):
     """
     Create the subscription state in the SubscriptionManager service.
 
-    :param DeploymentConfiguration deploy_config:
     :param SubscriptionDetails details:
     """
-    d = smclient.create(details.subscription_id, details)
     def created(details):
         d = _wait_for_service(details.subscription_id)
         d.addCallback(lambda ignored: details)
         return d
-    d.addCallback(created)
-    return d
+
+    a = start_action(action_type=u"signup:provision-subscription")
+    with a.context():
+        d = DeferredContext(
+            smclient.create(details.subscription_id, details),
+        )
+        d.addCallback(created)
+        return d.addActionFinish()
 
 
 
@@ -224,21 +55,135 @@ def _wait_for_service(subscription_id):
 
 
 
-def create_log_filepaths(parent_dir, stripe_plan_id, stripe_customer_id, stripe_subscription_id):
-    timestamp = format_iso_time(time.time())
-    fpcleantimestamp = timestamp.replace(':', '')
-    logdirname = "%s-%s" % (fpcleantimestamp, get_bucket_name(stripe_customer_id, stripe_subscription_id)[len('lae-') :])
-    abslogdir_fp = parent_dir.child(stripe_plan_id).child(logdirname)
-    abslogdir_fp.makedirs()
-    stripelog_fp = abslogdir_fp.child('stripe')
-    SSEC2log_fp = abslogdir_fp.child('SSEC2')
-    signuplog_fp = abslogdir_fp.child('signup_logs')
-    return abslogdir_fp, stripelog_fp, SSEC2log_fp, signuplog_fp
+class ISignup(Interface):
+    def signup(customer_email, customer_id, subscription_id, plan_id):
+        """
+        Create a new subscription with the given details.
+
+        :param unicode customer_email: An email address to associate with the
+            subscription.
+
+        :param unicode customer_id: A unique identifier associated with the
+            customer associated with thi s subscription.
+
+        :param unicode subscription_id: A unique identifier to associate with
+            the newly created subscription.
+
+        :param unicode plan_id: The identifier of the service plan to which
+
+        :return Deferred(IClaim): An object detailing how the resources
+            provisioned for the subscription can be claimed.
+        """
 
 
-activate = partial(
-    activate_ex,
-    just_activate_subscription,
-    send_signup_confirmation,
-    send_notify_failure,
-)
+
+class IClaim(Interface):
+    def describe():
+        """
+        Explain the details of this claim in a way that can be rendered into a web
+        page.
+
+        :return: XXX How do we put stuff in web pages?  Jinja2?
+            twisted.web.template?
+        """
+
+
+
+@attr.s(frozen=True)
+class _Provisioner(object):
+    smclient = attr.ib(validator=validators.instance_of(Client))
+    provision_subscription = attr.ib()
+
+    def signup(self, customer_email, customer_id, subscription_id, plan_id):
+        details = SubscriptionDetails(
+            bucketname=get_bucket_name(subscription_id, customer_id),
+            oldsecrets=None,
+            customer_email=customer_email,
+            customer_pgpinfo="",
+            product_id=plan_id,
+            customer_id=customer_id,
+            subscription_id=subscription_id,
+            introducer_port_number=0,
+            storage_port_number=0,
+        )
+        a = start_action(action_type=u"provisioning-signup")
+        with a.context():
+            d = DeferredContext(
+                self.provision_subscription(
+                    self.smclient, details,
+                ),
+            )
+            return d.addActionFinish()
+
+
+
+@implementer(ISignup)
+@attr.s(frozen=True)
+class _EmailSignup(object):
+    reactor = attr.ib()
+    provisioner = attr.ib()
+
+    send_signup_confirmation = attr.ib()
+    send_notify_failure = attr.ib()
+
+    def signup(self, customer_email, customer_id, subscription_id, plan_id):
+        d = self.provisioner.signup(customer_email, customer_id, subscription_id, plan_id)
+        d.addCallback(self._notify_success)
+        d.addCallback(lambda ignored: _EmailClaim())
+        d.addErrback(self._notify_failure, customer_email, customer_id, subscription_id, plan_id)
+        return d
+
+
+    def _notify_success(self, details):
+        from sys import stdout, stderr
+        a = start_action(
+            action_type=u"signup:send-confirmation",
+            subscription=attr.asdict(details),
+        )
+        with a.context():
+            d = DeferredContext(self.send_signup_confirmation(
+                details.customer_email, details.external_introducer_furl,
+                None, stdout, stderr,
+            ))
+            return d.addActionFinish()
+
+
+    def _notify_failure(self, reason, customer_email, customer_id, subscription_id, plan_id):
+        from sys import stdout, stderr
+        # XXX Eliot log reason here too
+        a = start_action(action_type=u"signup:send-failure")
+        with a.context():
+            d = DeferredContext(self.send_notify_failure(
+                reason, customer_email, None,
+                stdout, stderr,
+            ))
+            return d.addActionFinish()
+
+
+
+
+@implementer(IClaim)
+class _EmailClaim(object):
+    description = (
+        u"We'll send you an email with your unique introducer furl within the next hour."
+    )
+    def describe(self):
+        return self.description
+
+
+
+def get_provisioner(reactor, subscription_manager_endpoint, provision_subscription):
+    endpoint = subscription_manager_endpoint.asText().encode("utf-8")
+    agent = Agent(reactor)
+    smclient = network_client(endpoint, agent)
+    return _Provisioner(smclient, provision_subscription)
+
+
+
+def get_signup(reactor, provisioner, send_signup_confirmation, send_notify_failure):
+    return _EmailSignup(
+        reactor,
+        provisioner,
+        send_signup_confirmation,
+        send_notify_failure,
+    )

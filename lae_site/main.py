@@ -24,7 +24,8 @@ from twisted.python.filepath import FilePath
 from lae_site.handlers import make_resource, make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import Stripe, Mailer
 
-from lae_automation.signup import get_signup
+from lae_automation.signup import provision_subscription, get_provisioner, get_signup
+from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 
 root_log = logging.getLogger(__name__)
 
@@ -151,7 +152,16 @@ def main(reactor, *argv):
 def site_for_options(reactor, options):
     resource = make_resource(
         options["stripe-publishable-api-key-path"].getContent().strip(),
-        get_signup(reactor, options["subscription-manager"]),
+        get_signup(
+            reactor,
+            get_provisioner(
+                reactor,
+                options["subscription-manager"],
+                provision_subscription,
+            ),
+            send_signup_confirmation,
+            send_notify_failure,
+        ),
         Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
         Mailer(),
     )

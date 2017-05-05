@@ -1,9 +1,7 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
-from io import BytesIO
 from base64 import b32encode
-from json import dumps
 
 import attr
 
@@ -20,11 +18,11 @@ from foolscap.furl import decode_furl
 from lae_util.testtools import TestCase
 from lae_util.fileutil import make_dirs
 from lae_automation import model, signup
-from lae_automation.signup import activate_ex
+from lae_automation.signup import get_provisioner, get_signup
 
 from lae_automation.subscription_manager import broken_client
 from lae_automation.test.strategies import (
-    port_numbers, emails, old_secrets, deployment_configuration, subscription_details,
+    port_numbers, emails, old_secrets, subscription_details,
     customer_id, subscription_id,
 )
 
@@ -187,14 +185,13 @@ class SignupTests(TestCase):
     def test_subscription_manager_not_listening(self):
         """
         If the subscription manager doesn't accept the new subscription,
-        ``activate_subscribed_service`` returns a ``Deferred`` that
+        ``provision_subscription`` returns a ``Deferred`` that
         fails with the details.
         """
-        deploy_config = deployment_configuration().example()
         details = subscription_details().example()
-        d = signup.just_activate_subscription(
-            deploy_config, details,
-            clock=None, smclient=broken_client(),
+        d = signup.provision_subscription(
+            broken_client(),
+            details,
         )
         self.failureResultOf(d)
 
@@ -222,8 +219,8 @@ class ActivateTests(TestCase):
 
         emails = []
 
-        def just_activate_subscription(
-                deploy_config, subscription, clock, smclient,
+        def provision_subscription(
+                smclient, subscription,
         ):
             return succeed(
                 attr.assoc(
@@ -246,56 +243,20 @@ class ActivateTests(TestCase):
             emails.append((customer_email, "failure", reason))
             return succeed(None)
 
-        root = FilePath(self.mktemp())
-        root.makedirs()
-
-        secrets_path = root.child(u"secrets_path")
-        secrets_path.makedirs()
-
-        s3_key_path = root.child(u"s3.key")
-        s3_key_path.setContent(b"efgh")
-
-        plan_name = u"foo"
         plan_identifier = u"foobar"
 
-        automation_config_path = root.child(u"automation.json")
-        automation_config_path.setContent(dumps({
-            u"products": [{
-                u"amount": 123,
-                u"interval": 321,
-                u"currency": u"USD",
-                u"plan_name": plan_name,
-                u"plan_ID": plan_identifier,
-                u"plan_trial_period_days": 12,
-                u"ami_image_id": u"ami-123",
-                u"instance_size": u"medium",
-                u"statement_description": u"no comment",
-            }],
-            u"s3_access_key_id": u"abcd",
-            u"s3_secret_path": s3_key_path.path,
-        }))
-
-        server_info_path = root.child(u"server-info.csv")
-
-        stdin = BytesIO(dumps([
-            customer_email, None, customer_id, plan_identifier, subscription_id,
-        ]))
-        flapp_stdout_path = root.child(u"flapp.stdout")
-        flapp_stderr_path = root.child(u"flapp.stderr")
-
-        d = activate_ex(
-            just_activate_subscription,
+        reactor = object()
+        signup = get_signup(
+            reactor,
+            get_provisioner(
+                reactor,
+                URL.fromText(u"http://subscription-manager/"),
+                provision_subscription,
+            ),
             send_signup_confirmation,
             send_notify_failure,
-            u"s4.example.com",
-            URL.fromText(u"http://localhost/"),
-            secrets_path,
-            automation_config_path,
-            server_info_path,
-            stdin,
-            flapp_stdout_path,
-            flapp_stderr_path,
         )
+        d = signup.signup(customer_email, customer_id, subscription_id, plan_identifier)
         self.successResultOf(d)
 
         [(recipient, result, rest)] = emails
