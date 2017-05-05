@@ -220,7 +220,7 @@ DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
                                 # still not much.  Less than the default of
                                 # 100m (which would limit us to 10 storage
                                 # servers per CPU).
-                                "cpu": u"15m",
+                                u"cpu": u"15m",
 
                                 # Observed virtual size of the introducer
                                 # around 299MiB.  Observed resident size of
