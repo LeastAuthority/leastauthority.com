@@ -12,7 +12,7 @@ from zope.interface.verify import verifyObject
 import pem
 import attr
 
-from hypothesis import assume, given
+from hypothesis import assume, given, settings
 from hypothesis.strategies import choices, data
 
 from pyrsistent import thaw, pmap, discard
@@ -605,6 +605,27 @@ class SubscriptionConvergenceTests(TestCase):
         # XXX Should probably clear captured Eliot logs here?  Otherwise we
         # get a mix of logs from all the different cases Hypothesis explores.
         return SubscriptionConvergence(self)
+
+
+    @given(data())
+    @settings(max_shrinks=0)
+    def test_service_creation(self, data):
+        """
+        After the Service is created and its LoadBalancer is allocated, the
+        "infrastructure" Route53 stat eis created (eg the introducer domain
+        name).
+
+        This is a regression test derived from ``test_convergence``.  It
+        exercises a case where the Service object was not being discovered
+        properly because the version had been changed in one place and not
+        another.  This led the infrastructure convergence logic to never see
+        the LoadBalancer and so never try to create the Route53 state.  It
+        also led to many failed attempts to re-create the Service.
+        """
+        m = self._machine()
+        m.converge()
+        m.allocate_loadbalancer(data)
+        m.converge()
 
 
 

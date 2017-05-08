@@ -18,20 +18,18 @@ CONTAINERIZED_SUBSCRIPTION_VERSION = u"2"
 # This metadata is associated with everything that is part of S4 which is
 # associated with per-customer resources.  For example, Deployments,
 # ConfigMaps, ReplicaSets, Pods.
-_S4_CUSTOMER_METADATA = v1.ObjectMeta(
-    labels={
-        # Some labels that help us identify stuff belonging to
-        # customer-specific pieces (deployments, configmaps, etc) of the
-        # service.
-	u"provider": u"LeastAuthority",
-	u"app": u"s4",
-	u"component": u"customer-tahoe-lafs",
-        # And version this thing so we know how to interpret whatever else we
-        # find in it.
-        u"version": CONTAINERIZED_SUBSCRIPTION_VERSION,
-    }
-)
+CUSTOMER_METADATA_LABELS = {
+    # Some labels that help us identify stuff belonging to customer-specific
+    # pieces (deployments, configmaps, etc) of the service.
+    u"provider": u"LeastAuthority",
+    u"app": u"s4",
+    u"component": u"customer-tahoe-lafs",
+    # And version this thing so we know how to interpret whatever else we find
+    # in it.
+    u"version": CONTAINERIZED_SUBSCRIPTION_VERSION,
+}
 
+_S4_CUSTOMER_METADATA = v1.ObjectMeta(labels=CUSTOMER_METADATA_LABELS)
 
 
 _S4_INFRASTRUCTURE_METADATA = _S4_CUSTOMER_METADATA.transform(
