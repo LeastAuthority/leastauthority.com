@@ -236,6 +236,9 @@ from lae_automation.subscription_manager import SubscriptionDatabase
 class SubscriptionConvergence(RuleBasedStateMachine):
     def __init__(self, case):
         super(SubscriptionConvergence, self).__init__()
+
+        case.clear_logs()
+
         self.case = case
         self.path = FilePath(mkdtemp().decode("utf-8"))
         self.domain = u"s4.example.com"
