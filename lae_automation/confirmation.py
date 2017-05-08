@@ -49,7 +49,6 @@ NOTIFY_FAILURE_SUBJECT = "A sign-up failed"
 NOTIFY_FAILURE_BODY = """Hello, hard-working support person.
 
 The sign-up process failed for customer <%(customer_email)s>.
-The log filename is '%(logfilename)s'.
 
 I'm sure you'll be able to fix it in no time with your human intellect.
 Good luck!
@@ -103,12 +102,11 @@ def send_signup_confirmation(customer_email, external_introducer_furl, customer_
     return d
 
 
-def send_notify_failure(f, customer_email, logfilename, stdout, stderr):
+def send_notify_failure(f, customer_email, ignored, stdout, stderr):
     print >>stderr, str(f)
 
     content = NOTIFY_FAILURE_BODY % {
                "customer_email": customer_email,
-               "logfilename": logfilename,
               }
     headers = {
                "From": FROM_ADDRESS,

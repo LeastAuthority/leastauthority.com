@@ -62,14 +62,12 @@ class SiteForOptionsTests(TestCase):
 
         options = SiteOptions(MemoryReactor())
         options.parseOptions([
-            b"--signup-furl-path", b"signup.furl",
             b"--stripe-secret-api-key-path", stripe_secret.path,
             b"--stripe-publishable-api-key-path", stripe_publishable.path,
-            b"--subscriptions-path", b"subscriptions.csv",
-            b"--service-confirmed-path", b"confirmed.csv",
             b"--site-logs-path", b"httpd.log",
-            b"--secure-port", "tcp:0",
+            b"--secure-port", b"tcp:0",
+            b"--subscription-manager", b"http://127.0.0.1:8888/",
         ])
-        site = site_for_options(options)
+        site = site_for_options(MemoryReactor(), options)
         # XXX Very weak assertion...
         self.assertThat(site, IsInstance(Site))

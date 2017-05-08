@@ -13,6 +13,7 @@ import sys
 import logging
 
 from twisted.python.log import startLogging
+from twisted.python.url import URL
 from twisted.internet.endpoints import serverFromString
 from twisted.application.internet import StreamServerEndpointService
 from twisted.application.service import MultiService
@@ -21,7 +22,10 @@ from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 
 from lae_site.handlers import make_resource, make_site, make_redirector_site
-from lae_site.handlers.submit_subscription import start
+from lae_site.handlers.submit_subscription import Stripe, Mailer
+
+from lae_automation.signup import provision_subscription, get_provisioner, get_signup
+from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
 
 root_log = logging.getLogger(__name__)
 
@@ -35,14 +39,14 @@ class SiteOptions(Options):
     ]
 
     optParameters = [
-        ("signup-furl-path", None, None, "A path to a file containing the signup furl.", FilePath),
         ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
-        ("subscriptions-path", None, None, "A path to a file to which new subscription details will be appended.", FilePath),
-        ("service-confirmed-path", None, None, "A path to a file to which confirmed-service subscription details will be appended.", FilePath),
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
 
         ("redirect-to-port", None, None, "A TCP port number to which to redirect for the TLS site.", int),
+        ("subscription-manager", None, None, "Base URL of the subscription manager API.",
+         lambda b: URL.fromText(b.decode("utf-8")),
+        ),
     ]
     def __init__(self, reactor):
         Options.__init__(self)
@@ -88,11 +92,9 @@ class SiteOptions(Options):
 
     def postOptions(self):
         required_options = [
-            "signup-furl-path",
             "stripe-secret-api-key-path",
             "stripe-publishable-api-key-path",
-            "service-confirmed-path",
-            "subscriptions-path",
+            "subscription-manager",
             "site-logs-path",
         ]
         for option in required_options:
@@ -131,28 +133,37 @@ def main(reactor, *argv):
 
     startLogging(sys.stdout, setStdout=False)
 
-    signup_furl = o["signup-furl-path"].getContent().strip()
-    d = start(signup_furl)
+    d = Deferred()
+    d.callback(None)
     d.addCallback(
         lambda ignored: start_site(
             reactor,
-            site_for_options(o),
+            site_for_options(reactor, o),
             o["secure-ports"],
             o["insecure-ports"],
             o["redirect-to-port"],
-        )
+        ),
     )
     d.addCallback(lambda ignored: Deferred())
     return d
 
 
 
-def site_for_options(options):
+def site_for_options(reactor, options):
     resource = make_resource(
-        options["stripe-secret-api-key-path"].getContent().strip(),
         options["stripe-publishable-api-key-path"].getContent().strip(),
-        options["service-confirmed-path"],
-        options["subscriptions-path"],
+        get_signup(
+            reactor,
+            get_provisioner(
+                reactor,
+                options["subscription-manager"],
+                provision_subscription,
+            ),
+            send_signup_confirmation,
+            send_notify_failure,
+        ),
+        Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
+        Mailer(),
     )
     site = make_site(resource, options["site-logs-path"])
     return site

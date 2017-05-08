@@ -314,24 +314,7 @@ spec:
         resources:
           limits:
             cpu: '100m'
-            memory: '100Mi'
-
-      # This is the flapp server.  It handles signup requests.
-      - name: 'flapp'
-        # See above for explanation of 127.0.0.1
-        image: '127.0.0.1:30000/leastauthority/flapp:1941d38'
-        ports:
-        - containerPort: 3116
-        volumeMounts:
-        - mountPath: '/app/data'
-          name: 'flapp-data'
-        - name: 'flapp-secrets'
-          mountPath: '/app/k8s_secrets'
-          readOnly: true
-        resources:
-          limits:
-            cpu: '20m'
-            memory: '100Mi'
+            memory: '200Mi'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/

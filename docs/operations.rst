@@ -27,9 +27,7 @@ Overview
 ~~~~~~~~
 
 The service operates as a web server which accepts end-user requests for content and registration.
-Web requests for registration generate a foolscap request to a flapp server responsible for that process.
-The flapp server launches a "full signup" script.
-The signup script submits subscription details to the *subscription manager* which maintains a subscription database.
+Web requests for registration cause the submission of subscription details to the *subscription manager* which maintains a subscription database.
 Separately, a *subscription converger* polls the *subscription manager*.
 It provisions resources (such as Tahoe-LAFS nodes) for new subscriptions it finds there and cleans up resources for no-longer-active subscriptions.
 Each subscription has a large portion of dedicated resources:
@@ -47,19 +45,10 @@ Twisted Web runs in a container serving up static content residing in that same 
 It serves website content specifically related to the signup process
 (the rest of the leastauthority.com website is served elsewhere).
 The container is run by Docker on a Kubernetes worker node on an EC2 instance.
-The server uses filesystem storage to persist access logs and to read state to find the Flapp server.
+The server uses filesystem storage to persist access logs.
 The server also manages the Stripe interaction for billing new signups.
 It is part of the s4-infrastructure pod.
 The server is implemented in ``lae_site``.
-
-Flapp Server
-------------
-
-A Foolscap application server runs in a container handling signup requests from the web server.
-The container is run by Docker on a Kubernetes worker node on an EC2 instance.
-The server uses filesystem storage to persist logs and other signup details.
-It is part of the s4-infrastructure pod.
-The application logic for the signup process is in ``full_signup_docker.sh``.
 
 Grid Router
 -----------
@@ -305,7 +294,7 @@ LeastAuthority.com comprises two Kubernetes services and three persistent volume
 The services::
 
   #. A private Docker registry which hosts the secrets-containing infrastructure images.
-  #. The web and flapp servers which serves the website to users and implements signup.
+  #. The signup server which exposes web-based signup to potential subscribers.
 
 The volumes must be provisioned manually.
 Make sure they are in the same availability zone as the cluster
@@ -320,13 +309,12 @@ Edit ``k8s/registry.yaml``.
 Put the ``VolumeId`` into the ``volumeID`` field of the ``leastauthority-tweaks-kube-registry-pv`` resource.
 If you pick a different volume size, also update the ``storage`` field to match.
 
-Repeat this procedure to create volumes for the web and flapp servers.
-These servers write human-readable logs and signup information to the volumes.
-One GiB each is most likely sufficient.
-Put the ``VolumeId`` values for these volumes into ``infrastructure.yaml``,
-in the ``infrastructure-web-pv`` and ``infrastructure-flapp-pv`` resources.
+Repeat this procedure to create volumes for the web server.
+The web server writes human-readable logs and signup information to its volume.
+One GiB is most likely sufficient.
+Put the ``VolumeId`` value for this volume into ``infrastructure.yaml`` in the ``infrastructure-web-pv`` resource.
 
-You can now deploy the registry and web and flapp servers::
+You can now deploy the registry and web server::
 
   kubectl create -f "k8s/"
 
@@ -368,7 +356,6 @@ Then forward the port (stays in the foreground)::
 Then tag the images so they can be pushed to the registry::
 
   docker tag leastauthority.com/web 127.0.0.1:$port/leastauthority/web
-  docker tag leastauthority.com/flapp 127.0.0.1:$port/leastauthority/flapp
 
 You can also put a tag in these tags (no joke).
 Read more about image tags in the official Docker documentation.
@@ -376,7 +363,6 @@ Read more about image tags in the official Docker documentation.
 *Then* push the images::
 
   docker push 127.0.0.1:$port/leastauthority/web
-  docker push 127.0.0.1:$port/leastauthority/flapp
 
 If you gave them a special tag, be sure to push that tag.
 You are now done with the forwarded port and can kill ``kubectl``.
@@ -467,28 +453,13 @@ This process `should be automated https://github.com/LeastAuthority/leastauthori
 Until it is, the Stripe subscription and AWS resources must be adjusted directly.
 
 #. Cancel the Stripe subscription in the Stripe admin web interface.
-#. Get a shell in the flapp container of the s4-infrastructure pod.
+#. Forward a port to the subscription manager.
 
-   #. ``kubectl get -o json pods -l provider=LeastAuthority,app=s4,component=Infrastructure | jq '.items[].metadata.name'``
-   #. ``kubectl exec -it <pod name> -c flapp -- /bin/bash``
+   #. ``kubectl --context prod port-forward $(kubectl --context prod get pods -o json -l provider=LeastAuthority,app=s4,component=Infrastructure | jp --unquoted "(items[?status.phase=='Running'].metadata.name)[0]") 8000:8000'``
 
-#. Find the customer's directory
+#. Issue a DELETE for the customer's subscription.
 
-   #. ``cd /app/data/secrets``
-   #. ``grep -r <email address> ./``
-
-#. Find the EC2 ``instance_id`` associated with the customer
-
-   #. ``grep instance <customer directory>/signup_logs``
-
-#. Terminate that EC2 instance (AWS S4 customer account) using the AWS Web Console, CLI tools, or other means.
-   e.g.:
-
-   #. ``aws ec2 terminate-instances --instance-ids i-...``
-
-#. Move the customer's directory to the ``cancelled`` directory
-
-   #. ``mv -iv ... /app/data/secrets/cancelled``
+   #. ``curl --request DELETE http://localhost:8000/v1/subscriptions/<subscription id>``
 
 .. _kops: https://github.com/kubernetes/kops
 .. _kubectl: http://kubernetes.io/docs/user-guide/kubectl-overview/
