@@ -42,6 +42,8 @@ from txaws.route53.model import (
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
+    CONTAINERIZED_SUBSCRIPTION_VERSION,
+    CUSTOMER_METADATA_LABELS,
     autopad_b32decode,
     configmap_name, deployment_name,
     configmap_public_host,
@@ -248,13 +250,7 @@ def with_action(action_type):
 
 def _s4_selector(namespace):
     return And([
-        LabelSelector(dict(
-            provider=u"LeastAuthority",
-            app=u"s4",
-            component=u"customer-tahoe-lafs",
-            version=u"1",
-        )),
-        # XXX Need to get this from configuration.
+        LabelSelector(CUSTOMER_METADATA_LABELS),
         NamespaceSelector(namespace),
     ])
 
@@ -536,6 +532,8 @@ class _ChangeableDeployments(PClass):
         return (
             subscription.introducer_port_number != intro or
             subscription.storage_port_number != storage
+        ) or (
+            deployment.metadata.labels.version != CONTAINERIZED_SUBSCRIPTION_VERSION
         )
 
 
