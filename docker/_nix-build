@@ -24,7 +24,7 @@ def nixbuild(name):
             stderr=STDOUT,
         )
     except CalledProcessError as e:
-        report("Building {} failed:".format(name))
+        report("Building {} failed:\n".format(name))
         report(e.output)
         raise SystemExit(e.returncode)
 
