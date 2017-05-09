@@ -10,7 +10,7 @@
 from __future__ import print_function, unicode_literals
 
 from sys import argv, stdout
-from subprocess import STDOUT, check_output
+from subprocess import STDOUT, CalledProcessError, check_output
 
 from docker import from_env
 
@@ -18,10 +18,15 @@ from docker import from_env
 def nixbuild(name):
     # Build it.
     expr = "/leastauthority.com/docker/{}.nix".format(name)
-    output = check_output(
-        ["nix-build", "--show-trace", expr],
-        stderr=STDOUT,
-    )
+    try:
+	output = check_output(
+            ["nix-build", "--show-trace", expr],
+            stderr=STDOUT,
+        )
+    except CalledProcessError as e:
+        report("Building {} failed:".format(name))
+        report(e.output)
+        raise SystemExit(e.returncode)
 
     # Get the name of the built artifact.
     image_archive_filename = output.splitlines()[-1]
