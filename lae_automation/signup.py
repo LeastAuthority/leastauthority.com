@@ -2,6 +2,9 @@
 # See LICENSE for details.
 
 from base64 import b32encode
+import json
+from functools import partial
+from datetime import datetime
 
 from zope.interface import Interface, implementer
 
@@ -11,13 +14,13 @@ from attr import validators
 from eliot import start_action
 from eliot.twisted import DeferredContext
 
-from twisted.internet.defer import succeed
+from twisted.internet import reactor
 from twisted.web.client import Agent
+from twisted.internet.defer import Deferred, succeed
 
 from lae_automation.model import SubscriptionDetails
 
 from .subscription_manager import Client, network_client
-
 
 def encode_id(ident):
     return b32encode(ident).rstrip("=").lower()
@@ -160,8 +163,6 @@ class _EmailSignup(object):
             return d.addActionFinish()
 
 
-
-
 @implementer(IClaim)
 class _EmailClaim(object):
     description = (
@@ -187,3 +188,77 @@ def get_signup(reactor, provisioner, send_signup_confirmation, send_notify_failu
         send_signup_confirmation,
         send_notify_failure,
     )
+
+
+
+@implementer(ISignup)
+@attr.s(frozen=True)
+class _WormholeSignup(object):
+    reactor = attr.ib()
+    basic_signup = attr.ib(validator=validators.provides(ISignup))
+
+    def signup(self, *args, **kwargs):
+        a = start_action(action_type=u"wormhole-signup")
+        with a.context():
+            d = DeferredContext(self.basic_signup.signup(*args, **kwargs))
+            d.addCallback(_claim_to_tahoe_configuration)
+            d.addCallback(partial(_configuration_to_wormhole_code, reactor))
+            return d.addActionFinish()
+
+
+
+def _claim_to_tahoe_configuration(claim):
+    details = claim.details
+    icon_base64 = u""
+    return {
+        u"version": 1,
+        u"nickname": u"Least Authority S4",
+        u"introducer": details.external_introducer_furl,
+        u"shares-needed": u"1",
+        u"shares-total": u"1",
+        u"shares-happy": u"1",
+        u"icon_base64": icon_base64,
+    }
+
+
+
+def _configuration_to_wormhole_code(reactor, configuration):
+    # Put it into a new wormhole
+    # Return a _WormholeClaim with the new wormhole's code.
+    from wormhole.xfer_util import send
+
+    waiting_for_code = Deferred()
+
+    def got_code(code):
+        print("Huzzah", code)
+        waiting_for_code.callback(_WormholeClaim(code, datetime.now()))
+
+    print("!Hazzuh")
+    done = send(
+        reactor,
+        appid=u"s4.leastauthority.com",
+        relay_url=u"ws://wormhole.leastauthority.com:4000/v1",
+        data=json.dumps(configuration),
+        code=None,
+        use_tor=None,
+        on_code=got_code,
+    )
+    done.addBoth(record_wormhole_claim)
+
+    return waiting_for_code
+
+
+
+def record_wormhole_claim(result):
+    print("Wormhole:", result)
+
+
+
+@implementer(IClaim)
+@attr.s(frozen=True)
+class _WormholeClaim(object):
+    code = attr.ib(validator=validators.instance_of(unicode))
+    expires = attr.ib(validator=validators.instance_of(datetime))
+
+    def describe(self):
+        return u"{}, expires {}".format(self.code, self.expires.isoformat())
