@@ -185,7 +185,7 @@ def get_provisioner(reactor, subscription_manager_endpoint, provision_subscripti
 
 
 
-def get_signup(reactor, provisioner, send_signup_confirmation, send_notify_failure):
+def get_email_signup(reactor, provisioner, send_signup_confirmation, send_notify_failure):
     return _EmailSignup(
         reactor,
         provisioner,
@@ -195,24 +195,53 @@ def get_signup(reactor, provisioner, send_signup_confirmation, send_notify_failu
 
 
 
+def get_wormhole_signup(reactor, provisioner, rendezvous_url):
+    """
+    Get an ``ISignup`` which conveys subscription details to the subscriber by
+    sending them through a magic wormhole.
+
+    :param provisioner: The thing which can create a new subscription when a
+        new user signs up.  See ``get_provisioner``.
+
+    :param URL rendezvous_url: The location of the magic wormhole rendezvous
+        server.
+
+    :return: An ``ISignup`` provider.
+    """
+    return _WormholeSignup(
+        reactor,
+        provisioner,
+        rendezvous_url,
+    )
+
+
+
 @implementer(ISignup)
 @attr.s(frozen=True)
 class _WormholeSignup(object):
     reactor = attr.ib()
-    basic_signup = attr.ib(validator=validators.provides(ISignup))
+    provisioner = attr.ib()
+    rendezvous_url = attr.ib()
 
     def signup(self, *args, **kwargs):
         a = start_action(action_type=u"wormhole-signup")
         with a.context():
-            d = DeferredContext(self.basic_signup.signup(*args, **kwargs))
-            d.addCallback(_claim_to_tahoe_configuration)
-            d.addCallback(partial(_configuration_to_wormhole_code, self.reactor))
+            d = DeferredContext(self.provisioner.signup(*args, **kwargs))
+            d.addCallback(_details_to_tahoe_configuration)
+            d.addCallback(self._configuration_to_wormhole_code)
             return d.addActionFinish()
 
 
+    def _configuration_to_wormhole_code(self, configuration):
+        return _configuration_to_wormhole_code(
+            self.reactor,
+            self.rendezvous_url,
+            configuration,
+        )
 
-def _claim_to_tahoe_configuration(claim):
-    details = claim.details
+
+
+def _details_to_tahoe_configuration(details):
     return {
         u"version": 1,
         u"nickname": u"Least Authority S4",
@@ -225,7 +254,7 @@ def _claim_to_tahoe_configuration(claim):
 
 
 
-def _configuration_to_wormhole_code(reactor, configuration):
+def _configuration_to_wormhole_code(reactor, rendezvous_url, configuration):
     # Put it into a new wormhole
     # Return a _WormholeClaim with the new wormhole's code.
     from wormhole.xfer_util import send
@@ -239,7 +268,7 @@ def _configuration_to_wormhole_code(reactor, configuration):
         reactor,
         # This has to agree with anyone who wants to receive this code.
         appid=u"tahoe-lafs.org/tahoe-lafs/v1",
-        relay_url=u"ws://wormhole.leastauthority.com:4000/v1",
+        relay_url=rendezvous_url.asText(),
         data=json.dumps(configuration),
         code=None,
         use_tor=None,
