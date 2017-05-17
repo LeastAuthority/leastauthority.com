@@ -16,7 +16,6 @@ from eliot.twisted import DeferredContext
 
 from twisted.python.filepath import FilePath
 from twisted.internet.defer import Deferred, succeed
-from twisted.internet import reactor
 from twisted.web.client import Agent
 
 from lae_automation.model import SubscriptionDetails
