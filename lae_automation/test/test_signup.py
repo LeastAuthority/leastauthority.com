@@ -26,60 +26,6 @@ from lae_automation.test.strategies import (
     customer_id, subscription_id,
 )
 
-# Vector data for request responses: activate desktop-, verify-, and describeEC2- responses.
-ACCESSKEYID = 'TEST'+'A'*16
-SECRETACCESSKEY = 'TEST'+'A'*36
-REQUESTID = 'TEST'+'A'*32
-
-# Test vector request and response to the make http request: describe instances
-
-# DescribeInstances
-describeEC2instresponse = """<?xml version="1.0" encoding="UTF-8"?>
-<DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2008-12-01/">
-  <requestId>TEST</requestId>
-  <reservationSet>
-    <item>
-      <reservationId>TEST</reservationId>
-      <ownerId>TEST</ownerId>
-      <groupSet><item><groupId>CustomerDefault</groupId></item></groupSet>
-      <instancesSet>
-        <item>
-          <instanceId>TEST</instanceId>
-          <imageId>TEST</imageId>
-          <instanceState><code>TEST</code><name>TEST</name></instanceState>
-          <privateDnsName>TESTinternal</privateDnsName>
-          <dnsName>ec2-50-17-175-164.compute-1.amazonaws.com</dnsName>
-          <reason/>
-          <keyName>TEST</keyName>
-          <amiLaunchIndex>0</amiLaunchIndex>
-          <productCodes/>
-          <instanceType>t1.TEST</instanceType>
-          <launchTime>TEST</launchTime>
-          <placement><availabilityZone>TEST</availabilityZone></placement>
-          <kernelId>TEST</kernelId>
-        </item>
-      </instancesSet>
-    </item>
-  </reservationSet>
-</DescribeInstancesResponse>"""
-
-# CreateTags
-createtagsresponse = """<CreateTagsResponse xmlns="http://ec2.amazonaws.com/doc/2011-11-01/">
-  <requestId>7a62c49f-347e-4fc4-9331-6e8eEXAMPLE</requestId>
-  <return>true</return>
-</CreateTagsResponse>"""
-
-# Get Console
-getconsoleoutputresponse = """<GetConsoleOutputResponse xmlns="http://ec2.amazonaws.com/doc/2013-02-01/">
-  <requestId>59dbff89-35bd-4eac-99ed-be587EXAMPLE</requestId>
-  <instanceId>i-MOCKTEST</instanceId>
-  <timestamp>2010-10-14T01:12:41.000Z</timestamp>
-  <output>MjAxMy0wNC0xMSAyMDozMjoyMiwxMTYgLSBfX2luaXRfXy5weVtXQVJOSU5HXTogVW5oYW5kbGVk\nIG5vbi1tdWx0aXBhcnQgdXNlcmRhdGEgJycNCkdlbmVyYXRpbmcgcHVibGljL3ByaXZhdGUgcnNh\nIGtleSBwYWlyLg0KWW91ciBpZGVudGlmaWNhdGlvbiBoYXMgYmVlbiBzYXZlZCBpbiAvZXRjL3Nz\naC9zc2hfaG9zdF9yc2Ffa2V5Lg0KWW91ciBwdWJsaWMga2V5IGhhcyBiZWVuIHNhdmVkIGluIC9l\ndGMvc3NoL3NzaF9ob3N0X3JzYV9rZXkucHViLg0KVGhlIGtleSBmaW5nZXJwcmludCBpczoNCmI4\nOjgzOmNmOjFkOjk3OjRiOjQ0OjhmOmE3OjA1OjI5OjRlOmY2OjFlOmFmOmRkIHJvb3RAaXAtMTAt\nMTk0LTI5LTM5DQpUaGUga2V5J3MgcmFuZG9tYXJ0IGltYWdlIGlzOg0KKy0tWyBSU0EgMjA0OF0t\nLS0tKw0KfCAgICAgICAgICAgICAgICAgfA0KfCAgICAgICAgICAgLiAgICAgfA0KfCAgICAgICAg\nKyArICAgICAgfA0KfCAgICAgICA9ICsgKyAgICAgfA0KfCAgICAgIC4gUyA9ICsgICAgfA0KfCAg\nICAgLiAuIG8gQiAgICAgfA0KfCAgICAuIG8gLiAqIC4gICAgfA0KfCAgICAgbyBvICsgKyAuICAg\nfA0KfCAgICAgIG8gLiBvIC4gRSAgfA0KKy0tLS0tLS0tLS0tLS0tLS0tKw0KR2VuZXJhdGluZyBw\ndWJsaWMvcHJpdmF0ZSBkc2Ega2V5IHBhaXIuDQpZb3VyIGlkZW50aWZpY2F0aW9uIGhhcyBiZWVu\nIHNhdmVkIGluIC9ldGMvc3NoL3NzaF9ob3N0X2RzYV9rZXkuDQpZb3VyIHB1YmxpYyBrZXkgaGFz\nIGJlZW4gc2F2ZWQgaW4gL2V0Yy9zc2gvc3NoX2hvc3RfZHNhX2tleS5wdWIuDQpUaGUga2V5IGZp\nbmdlcnByaW50IGlzOg0KMjU6ZmQ6Nzk6MjE6MmM6NjI6ZDI6MGQ6NzI6MGE6NGM6NTg6MGI6NmE6\nNWM6MjAgcm9vdEBpcC0xMC0xOTQtMjktMzkNClRoZSBrZXkncyByYW5kb21hcnQgaW1hZ2UgaXM6\nDQorLS1bIERTQSAxMDI0XS0tLS0rDQp8RS5vKisgLiBvICAgICAgICB8DQp8by5vLi5vID0gKyAu\nICAgICB8DQp8Lm8gIC4gbyA9ID0gbyAuICB8DQp8LiAgICAgIG8gKyBvIG8gLiB8DQp8ICAgICAg\nICBTICAgbyAuICB8DQp8ICAgICAgICAgICAgIC4gICB8DQp8ICAgICAgICAgICAgICAgICB8DQp8\nICAgICAgICAgICAgICAgICB8DQp8ICAgICAgICAgICAgICAgICB8DQorLS0tLS0tLS0tLS0tLS0t\nLS0rDQpHZW5lcmF0aW5nIHB1YmxpYy9wcml2YXRlIGVjZHNhIGtleSBwYWlyLg0KWW91ciBpZGVu\ndGlmaWNhdGlvbiBoYXMgYmVlbiBzYXZlZCBpbiAvZXRjL3NzaC9zc2hfaG9zdF9lY2RzYV9rZXku\nDQpZb3VyIHB1YmxpYyBrZXkgaGFzIGJlZW4gc2F2ZWQgaW4gL2V0Yy9zc2gvc3NoX2hvc3RfZWNk\nc2Ffa2V5LnB1Yi4NClRoZSBrZXkgZmluZ2VycHJpbnQgaXM6DQo0MjpjOTowZTpiNTozMzo3NDo1\nZDowMDpkODo1ODowZTo1MDozMjpiNTpiNDoyNiByb290QGlwLTEwLTE5NC0yOS0zOQ0KVGhlIGtl\neSdzIHJhbmRvbWFydCBpbWFnZSBpczoNCistLVtFQ0RTQSAgMjU2XS0tLSsNCnwgICAgKytCPStv\nLm8uICAgIHwNCnwgICAgIEJvTy4gLiAgICAgIHwNCnwgICAgRSBAIC4gICAgICAgIHwNCnwgICAg\nICogbyAgICAgICAgIHwNCnwgICAgICBvIFMgICAgICAgIHwNCnwgICAgICAgLiAgICAgICAgIHwN\nCnwgICAgICAgICAgICAgICAgIHwNCnwgICAgICAgICAgICAgICAgIHwNCnwgICAgICAgICAgICAg\nICAgIHwNCistLS0tLS0tLS0tLS0tLS0tLSsNClNraXBwaW5nIHByb2ZpbGUgaW4gL2V0Yy9hcHBh\ncm1vci5kL2Rpc2FibGU6IHVzci5zYmluLnJzeXNsb2dkDQogKiBTdGFydGluZyBBcHBBcm1vciBw\ncm9maWxlcyAgICAgICAbWzgwRyANG1s3NEdbIE9LIF0NCmxhbmRzY2FwZS1jbGllbnQgaXMgbm90\nIGNvbmZpZ3VyZWQsIHBsZWFzZSBydW4gbGFuZHNjYXBlLWNvbmZpZy4NCkdlbmVyYXRpbmcgbG9j\nYWxlcy4uLgogIGVuX1VTLlVURi04Li4uIGRvbmUKR2VuZXJhdGlvbiBjb21wbGV0ZS4KZWMyOiAK\nZWMyOiAjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj\nIyMjIyMjIyMjCmVjMjogLS0tLS1CRUdJTiBTU0ggSE9TVCBLRVkgRklOR0VSUFJJTlRTLS0tLS0K\nZWMyOiAxMDI0IDI1OmZkOjc5OjIxOjJjOjYyOmQyOjBkOjcyOjBhOjRjOjU4OjBiOjZhOjVjOjIw\nICByb290QGlwLTEwLTE5NC0yOS0zOSAoRFNBKQplYzI6IDI1NiA0MjpjOTowZTpiNTozMzo3NDo1\nZDowMDpkODo1ODowZTo1MDozMjpiNTpiNDoyNiAgcm9vdEBpcC0xMC0xOTQtMjktMzkgKEVDRFNB\nKQplYzI6IDIwNDggYjg6ODM6Y2Y6MWQ6OTc6NGI6NDQ6OGY6YTc6MDU6Mjk6NGU6ZjY6MWU6YWY6\nZGQgIHJvb3RAaXAtMTAtMTk0LTI5LTM5IChSU0EpCmVjMjogLS0tLS1FTkQgU1NIIEhPU1QgS0VZ\nIEZJTkdFUlBSSU5UUy0tLS0tCmVjMjogIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMj\nIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIwotLS0tLUJFR0lOIFNTSCBIT1NUIEtFWSBLRVlT\nLS0tLS0KZWNkc2Etc2hhMi1uaXN0cDI1NiBBQUFBRTJWalpITmhMWE5vWVRJdGJtbHpkSEF5TlRZ\nQUFBQUlibWx6ZEhBeU5UWUFBQUJCQkd6d1l6WjF1eXVDSHJNR3ZHZHQyazFKakRhUTl1R2RGQXM2\nQ3k3dlkyTW95c3IxbmZaVE1KME5BV2I4MlkxZ3I0amZqbUIwY1BtQks4VGcxd2Urb1BvPSByb290\nQGlwLTEwLTE5NC0yOS0zOQpzc2gtcnNhIEFBQUFCM056YUMxeWMyRUFBQUFEQVFBQkFBQUJBUUNn\nb0M4OXZlNjFVaS9VaTVwbklTdmlkWVcvdVVyVFN6MEYwajBjenV6RHlTUGwvUnF4S3VadllRQWp1\nZzZPRW4wT2htbmg0Mmo2RGs0THIwOUg5R0xKVHVEdjJrVE5oUUY5ODBSWFVQcTNOVHlvengxc3A4\nMjRYM3pHK2VQaWlZejJPUUkvQ2YzcjJjQVVxZ2dKakE4d1BhV1NYeXV5cC9MczI4NjFYdnNuUzVp\nSVNueWxwRXVOL09YTkZSbXVKUnpzK2hjazV1ck1Weno1QWRibjl6U0svTkpSUFlTM3FTZnZDTjZw\nWEJ5TGNFSlVFTkNLSUE4MFZSSEtudi9pc0tzY0Fadm1ESkNvclJXWFJ2eEI2eExCMlZuVGJxQlVU\nUWErMHpyemZRU0pEOEMyMlliUGxnd3NGdG4wNzl3T2trYVF0ZC9BaGhQWGZUbEFVbGpBZkMvQiBy\nb290QGlwLTEwLTE5NC0yOS0zOQotLS0tLUVORCBTU0ggSE9TVCBLRVkgS0VZUy0tLS0tCmNsb3Vk\nLWluaXQgYm9vdCBmaW5pc2hlZCBhdCBUaHUsIDExIEFwciAyMDEzIDIwOjMyOjMyICswMDAwLiBV\ncCAyOC4yNCBzZWNvbmRzCg==\n</output>
-</GetConsoleOutputResponse>"""
-
-MOCKSERVERSSHFP = 'b8:83:cf:1d:97:4b:44:8f:a7:05:29:4e:f6:1e:af:dd'
-MOCKHASHEDPUBKEY = """|1|lrzohCU8y8Obch3wa7+gnvEJuI0=|I1GQU+vw3MgMnyvY+SxnhCyArHg= ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCgoC89ve61Ui/Ui5pnISvidYW/uUrTSz0F0j0czuzDySPl/RqxKuZvYQAjug6OEn0Ohmnh42j6Dk4Lr09H9GLJTuDv2kTNhQF980RXUPq3NTyozx1sp824X3zG+ePiiYz2OQI/Cf3r2cAUqggJjA8wPaWSXyuyp/Ls2861XvsnS5iISnylpEuN/OXNFRmuJRzs+hck5urMVzz5Adbn9zSK/NJRPYS3qSfvCN6pXByLcEJUENCKIA80VRHKnv/isKscAZvmDJCorRWXRvxB6xLB2VnTbqBUTQa+0zrzfQSJD8C22YbPlgwsFtn079wOkkaQtd/AhhPXfTlAUljAfC/B"""
-
 # Vector data for the config file data:
 from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
 CONFIGFILEJSON = MOCKJSONCONFIGFILE
