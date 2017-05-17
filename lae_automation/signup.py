@@ -3,7 +3,6 @@
 
 from base64 import b32encode, b64encode
 import json
-from functools import partial
 from datetime import datetime
 
 from zope.interface import Interface, implementer
