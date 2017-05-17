@@ -23,6 +23,8 @@ from twisted.python.filepath import FilePath
 from twisted.internet.defer import Deferred, succeed
 from twisted.web.client import Agent
 
+from wormhole.xfer_util import send
+
 from lae_automation.model import SubscriptionDetails
 
 from .subscription_manager import Client, network_client
@@ -200,7 +202,7 @@ def get_email_signup(reactor, provisioner, send_signup_confirmation, send_notify
 
 
 
-def get_wormhole_signup(reactor, provisioner, rendezvous_url):
+def get_wormhole_signup(reactor, provisioner, rendezvous_url, result_path):
     """
     Get an ``ISignup`` which conveys subscription details to the subscriber by
     sending them through a magic wormhole.
@@ -211,12 +213,16 @@ def get_wormhole_signup(reactor, provisioner, rendezvous_url):
     :param URL rendezvous_url: The location of the magic wormhole rendezvous
         server.
 
+    :param FilePath result_path: The location of a file to which
+        wormhole-related results will be written.
+
     :return: An ``ISignup`` provider.
     """
     return _WormholeSignup(
         reactor,
         provisioner,
         rendezvous_url,
+        result_path,
     )
 
 
@@ -224,26 +230,71 @@ def get_wormhole_signup(reactor, provisioner, rendezvous_url):
 @implementer(ISignup)
 @attr.s(frozen=True)
 class _WormholeSignup(object):
+    """
+    An ``ISignup`` that puts a Tahoe-LAFS configuration blob into a magic
+    wormhole and publishes the wormhole code for receiving it.
+
+    :ivar provisioner: See ``get_wormhole_signup``.
+
+    :ivar rendezvous_url: See ``get_wormhole_signup``.
+
+    :ivar result_path: See ``get_wormhole_signup``.
+    """
     reactor = attr.ib()
     provisioner = attr.ib()
     rendezvous_url = attr.ib()
+    result_path = attr.ib()
 
     def signup(self, *args, **kwargs):
+        """
+        Provision a subscription and return an ``IClaim`` describing how to
+        retrieve the resulting configuration from a magic wormhole server.
+        """
         a = start_action(action_type=u"wormhole-signup")
         with a.context():
             d = DeferredContext(self.provisioner.signup(*args, **kwargs))
-            d.addCallback(_details_to_tahoe_configuration)
-            d.addCallback(self._configuration_to_wormhole_code)
+            d.addCallback(self._details_to_wormhole_code)
             return d.addActionFinish()
 
 
-    def _configuration_to_wormhole_code(self, configuration):
-        return _configuration_to_wormhole_code(
+    def _details_to_wormhole_code(self, details):
+        """
+        Put the configuration details for a subscription into a magic wormhole and
+        return a ``Deferred`` that fires with the wormhole code.
+        """
+        configuration = _details_to_tahoe_configuration(details)
+        wormhole_code, done = _configuration_to_wormhole_code(
             self.reactor,
             self.rendezvous_url,
             configuration,
         )
 
+        done.addCallback(_wormhole_claimed, self.reactor, details)
+        done.addErrback(_wormhole_failed, self.reactor, details)
+        done.addCallback(_record_result, self.result_path)
+        return wormhole_code
+
+
+
+def _wormhole_claimed(ignored, reactor, details):
+    return {
+        u"claim": u"claimed",
+        u"subscription-id": details.subscription_id,
+        u"timestamp": datetime.utcfromtimestamp(reactor.seconds()).isoformat(),
+    }
+
+
+def _wormhole_failed(error, reactor, details):
+    return {
+        u"claim": u"failed", u"subscription-id": details.subscription_id,
+        u"error": error.getTraceback(),
+        u"timestamp": datetime.utcfromtimestamp(reactor.seconds()).isoformat(),
+    }
+
+
+def _record_result(result, result_path):
+    with result_path.open("at") as fObj:
+        fObj.write(json.dumps(result) + u"\n")
 
 
 def _details_to_tahoe_configuration(details):
@@ -260,10 +311,18 @@ def _details_to_tahoe_configuration(details):
 
 
 def _configuration_to_wormhole_code(reactor, rendezvous_url, configuration):
-    # Put it into a new wormhole
-    # Return a _WormholeClaim with the new wormhole's code.
-    from wormhole.xfer_util import send
+    """
+    Serialize ``configuration`` to JSON and put it into a new wormhole created
+    at the server given by ``rendezvous_url``.
 
+    :return (Deferred(IClaim), Deferred): Two Deferreds representing two
+        different events.  The first represents the creation of the magic
+        wormhole.  It fires with a claim that describes the wormhole from
+        which the configuration can be retrieved.  The second represents the
+        complete transfer of the configuration to the client.  It fires with a
+        meaningless success result or a ``Failure`` if something is known to
+        have gone wrong.
+    """
     waiting_for_code = Deferred()
 
     def got_code(code):
@@ -282,14 +341,8 @@ def _configuration_to_wormhole_code(reactor, rendezvous_url, configuration):
         use_tor=None,
         on_code=got_code,
     )
-    done.addBoth(record_wormhole_claim)
 
-    return waiting_for_code
-
-
-
-def record_wormhole_claim(result):
-    print("Wormhole:", result)
+    return waiting_for_code, done
 
 
 

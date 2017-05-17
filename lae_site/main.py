@@ -53,6 +53,10 @@ class SiteOptions(Options):
         ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
+        ("wormhole-result-path", None, None,
+         "A path to a file to which wormhole interaction results will be written.",
+         FilePath,
+        ),
 
         ("redirect-to-port", None, None, "A TCP port number to which to redirect for the TLS site.", int),
         ("subscription-manager", None, None, "Base URL of the subscription manager API.",
@@ -176,12 +180,18 @@ def site_for_options(reactor, options):
     )
 
     if options["signup"] == "wormhole":
+        if options["wormhole-result-path"] is None:
+            raise UsageError("--wormhole-result-path required for wormhole signup.")
         signup = get_wormhole_signup(
-            reactor, provisioner, options["rendezvous-url"],
+            reactor,
+            provisioner,
+            options["rendezvous-url"],
+            options["wormhole-result-path"],
         )
     elif options["signup"] == "email":
         signup = get_email_signup(
-            reactor, provisioner,
+            reactor,
+            provisioner,
             send_signup_confirmation,
             send_notify_failure,
         )
