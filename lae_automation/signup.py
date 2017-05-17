@@ -1,6 +1,12 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
+"""
+This module provides functionality for creating new subscriptions
+("signing up") and conveying the subscription details to the subscription
+owner.
+"""
+
 from base64 import b32encode, b64encode
 import json
 from datetime import datetime
@@ -265,7 +271,10 @@ def _configuration_to_wormhole_code(reactor, rendezvous_url, configuration):
 
     done = send(
         reactor,
-        # This has to agree with anyone who wants to receive this code.
+        # This has to agree with anyone who wants to receive this code.  "v1"
+        # here versions application protocol that runs over wormhole to convey
+        # a configuration payload.  It does not version the configuration
+        # payload itself, which is a self-versioning JSON.
         appid=u"tahoe-lafs.org/tahoe-lafs/v1",
         relay_url=rendezvous_url.asText(),
         data=json.dumps(configuration),
