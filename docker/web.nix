@@ -17,6 +17,7 @@ pkgs.dockerTools.buildImage {
           "-c"
           (pkgs.lib.strings.concatStringsSep " " [
             "/bin/python" "-u" "/${pkgs.python27.sitePackages}/lae_site/main.py"
+	    "--signup=email"
             "--secure-port=ssl:${port}:${cert}:${key}:${chain}"
             "--insecure-port=tcp:8080"
             "--redirect-to-port=\${S4_SERVICE_PORT_HTTPS_SERVER}"
