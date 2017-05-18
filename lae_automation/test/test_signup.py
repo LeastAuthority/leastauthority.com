@@ -15,6 +15,8 @@ from twisted.python.url import URL
 
 from foolscap.furl import decode_furl
 
+from wormhole import xfer_util
+
 from lae_util.testtools import TestCase
 from lae_util.fileutil import make_dirs
 from lae_automation import model, signup
@@ -25,6 +27,8 @@ from lae_automation.test.strategies import (
     port_numbers, emails, old_secrets, subscription_details,
     customer_id, subscription_id,
 )
+
+from .wormholetesting import MemoryWormholeServer
 
 # Vector data for the config file data:
 from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
@@ -221,3 +225,34 @@ class ActivateTests(TestCase):
                 Equals(introducer_port_number),
             ),
         )
+
+
+
+class MemoryWormholeTests(TestCase):
+    """
+    Smoke test for the in-memory ``IWormhole`` implementation used by other
+    application tests.
+    """
+    def test_send_receive(self):
+        appid = "memory-wormhole-tests"
+        url = "ws://foo.invalid/"
+        reactor = object()
+        to_send = u"Hello, world."
+
+        server = MemoryWormholeServer()
+        self.patch(xfer_util, "wormhole", server)
+
+        catch_code = []
+        sending = xfer_util.send(
+            reactor, appid, url, to_send, None, on_code=catch_code.append,
+        )
+        [code] = catch_code
+
+        receiving = xfer_util.receive(
+            reactor, appid, url, code,
+        )
+
+        self.successResultOf(sending)
+        received = self.successResultOf(receiving)
+
+        self.assertThat(received, Equals(to_send))
