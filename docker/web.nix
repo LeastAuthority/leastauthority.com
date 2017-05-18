@@ -17,7 +17,6 @@ pkgs.dockerTools.buildImage {
           "-c"
           (pkgs.lib.strings.concatStringsSep " " [
             "/bin/python" "-u" "/${pkgs.python27.sitePackages}/lae_site/main.py"
-	    "--signup=email"
 	    "--wormhole-result-path=/app/data/logs/wormhole-claims.jsons"
             "--secure-port=ssl:${port}:${cert}:${key}:${chain}"
             "--insecure-port=tcp:8080"

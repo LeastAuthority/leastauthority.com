@@ -67,6 +67,7 @@ class SiteForOptionsTests(TestCase):
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",
+            b"--wormhole-result-path", self.mktemp(),
         ])
         site = site_for_options(MemoryReactor(), options)
         # XXX Very weak assertion...

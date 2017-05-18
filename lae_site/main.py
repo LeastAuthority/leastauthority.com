@@ -21,6 +21,8 @@ from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 
+from wormhole import wormhole
+
 from lae_site.handlers import make_resource, make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import Stripe, Mailer
 
@@ -61,9 +63,6 @@ class SiteOptions(Options):
         ("redirect-to-port", None, None, "A TCP port number to which to redirect for the TLS site.", int),
         ("subscription-manager", None, None, "Base URL of the subscription manager API.",
          urlFromBytes,
-        ),
-        ("signup", None, "email",
-         "Select the style of signup to enable (email, wormhole).",
         ),
         ("rendezvous-url", None, URL.fromText(u"ws://wormhole.leastauthority.com:4000/v1"),
          "The URL of the Wormhole Rendezvous server for wormhole-based signup.",
@@ -119,6 +118,7 @@ class SiteOptions(Options):
             "stripe-publishable-api-key-path",
             "subscription-manager",
             "site-logs-path",
+            "wormhole-result-path",
         ]
         for option in required_options:
             if self[option] is None:
@@ -179,30 +179,32 @@ def site_for_options(reactor, options):
         provision_subscription,
     )
 
-    if options["signup"] == "wormhole":
-        if options["wormhole-result-path"] is None:
-            raise UsageError("--wormhole-result-path required for wormhole signup.")
-        signup = get_wormhole_signup(
-            reactor,
-            provisioner,
-            options["rendezvous-url"],
-            options["wormhole-result-path"],
-        )
-    elif options["signup"] == "email":
-        signup = get_email_signup(
-            reactor,
-            provisioner,
-            send_signup_confirmation,
-            send_notify_failure,
-        )
-    else:
-        raise ValueError(
-            "Don't know about signup configuration {}".format(options["signup"])
-        )
+    def get_signup(style):
+        if style == u"wormhole":
+            return get_wormhole_signup(
+                reactor,
+                provisioner,
+                wormhole,
+                options["rendezvous-url"],
+                options["wormhole-result-path"],
+            )
+        elif style == u"email":
+            return get_email_signup(
+                reactor,
+                provisioner,
+                send_signup_confirmation,
+                send_notify_failure,
+            )
+        else:
+            raise ValueError(
+                "Don't know about signup configuration {}".format(
+                    options["signup"],
+                ),
+            )
 
     resource = make_resource(
         options["stripe-publishable-api-key-path"].getContent().strip(),
-        signup,
+        get_signup,
         Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
         Mailer(),
     )

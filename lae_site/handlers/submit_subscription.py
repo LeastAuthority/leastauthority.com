@@ -12,6 +12,7 @@ from lae_util.send_email import send_plain_email, FROM_ADDRESS
 from lae_site.handlers.web import env
 
 from lae_site.handlers.main import HandlerBase
+from lae_site.handlers.s4_signup_style import S4_SIGNUP_STYLE_COOKIE
 
 PLAN_ID                 = u'S4_consumer_iteration_2_beta1_2014-05-27'
 
@@ -46,13 +47,16 @@ class Mailer(object):
 
 
 class SubmitSubscriptionHandler(HandlerBase):
-    def __init__(self, signup, mailer, stripe):
+    def __init__(self, get_signup, mailer, stripe):
         """
-        :param ISignup signup: A thing which can sign up a new user for us.
+
+        :param get_signup: A one-argument callable which returns an ``ISignup``
+            which can sign up a new user for us.  The argument is the kind of
+            signup desired, ``wormhole`` or ``email``.
         """
         HandlerBase.__init__(self, out=None)
         self._logger_helper(__name__)
-        self._signup = signup
+        self._get_signup = get_signup
         self._mailer = mailer
         self._stripe = stripe
 
@@ -136,7 +140,9 @@ class SubmitSubscriptionHandler(HandlerBase):
 
         # Initiate the provisioning service
         subscription = customer.subscriptions.data[0]
-        d = self._signup.signup(
+        style = (request.getCookie(S4_SIGNUP_STYLE_COOKIE) or "email").decode("ascii")
+        signup = self._get_signup(style)
+        d = signup.signup(
             customer.email.decode("utf-8"),
             customer.id.decode("utf-8"),
             subscription.id.decode("utf-8"),
