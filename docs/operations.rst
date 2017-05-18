@@ -26,6 +26,8 @@ However, for a more complete understanding, see the official Kubernetes document
 Overview
 ~~~~~~~~
 
+.. image:: signup-interaction-diagram.svg
+
 The service operates as a web server which accepts end-user requests for content and registration.
 Web requests for registration cause the submission of subscription details to the *subscription manager* which maintains a subscription database.
 Separately, a *subscription converger* polls the *subscription manager*.
