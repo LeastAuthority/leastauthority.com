@@ -19,11 +19,12 @@ from attr import validators
 from eliot import start_action
 from eliot.twisted import DeferredContext
 
+from twisted.python.monkey import MonkeyPatcher
 from twisted.python.filepath import FilePath
 from twisted.internet.defer import Deferred, succeed
 from twisted.web.client import Agent
 
-from wormhole.xfer_util import send
+from wormhole import xfer_util
 
 from lae_automation.model import SubscriptionDetails
 
@@ -202,13 +203,16 @@ def get_email_signup(reactor, provisioner, send_signup_confirmation, send_notify
 
 
 
-def get_wormhole_signup(reactor, provisioner, rendezvous_url, result_path):
+def get_wormhole_signup(reactor, provisioner, wormhole, rendezvous_url, result_path):
     """
     Get an ``ISignup`` which conveys subscription details to the subscriber by
     sending them through a magic wormhole.
 
     :param provisioner: The thing which can create a new subscription when a
         new user signs up.  See ``get_provisioner``.
+
+    :param wormhole: An object like ``wormhole.wormhole`` to use to create
+        wormholes.
 
     :param URL rendezvous_url: The location of the magic wormhole rendezvous
         server.
@@ -221,6 +225,7 @@ def get_wormhole_signup(reactor, provisioner, rendezvous_url, result_path):
     return _WormholeSignup(
         reactor,
         provisioner,
+        wormhole,
         rendezvous_url,
         result_path,
     )
@@ -236,12 +241,15 @@ class _WormholeSignup(object):
 
     :ivar provisioner: See ``get_wormhole_signup``.
 
+    :ivar wormhole: See ``get_wormhole_signup``.
+
     :ivar rendezvous_url: See ``get_wormhole_signup``.
 
     :ivar result_path: See ``get_wormhole_signup``.
     """
     reactor = attr.ib()
     provisioner = attr.ib()
+    wormhole = attr.ib()
     rendezvous_url = attr.ib()
     result_path = attr.ib()
 
@@ -265,6 +273,7 @@ class _WormholeSignup(object):
         configuration = _details_to_tahoe_configuration(details)
         wormhole_code, done = _configuration_to_wormhole_code(
             self.reactor,
+            self.wormhole,
             self.rendezvous_url,
             configuration,
         )
@@ -310,7 +319,7 @@ def _details_to_tahoe_configuration(details):
 
 
 
-def _configuration_to_wormhole_code(reactor, rendezvous_url, configuration):
+def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configuration):
     """
     Serialize ``configuration`` to JSON and put it into a new wormhole created
     at the server given by ``rendezvous_url``.
@@ -326,31 +335,50 @@ def _configuration_to_wormhole_code(reactor, rendezvous_url, configuration):
     waiting_for_code = Deferred()
 
     def got_code(code):
-        waiting_for_code.callback(_WormholeClaim(code, datetime.now()))
+        # We don't currently expire these at all.
+        expires = _NoExpiration()
+        waiting_for_code.callback(_WormholeClaim(code, expires))
 
-    done = send(
-        reactor,
-        # This has to agree with anyone who wants to receive this code.  "v1"
-        # here versions application protocol that runs over wormhole to convey
-        # a configuration payload.  It does not version the configuration
-        # payload itself, which is a self-versioning JSON.
-        appid=u"tahoe-lafs.org/tahoe-lafs/v1",
-        relay_url=rendezvous_url.asText(),
-        data=json.dumps(configuration),
-        code=None,
-        use_tor=None,
-        on_code=got_code,
-    )
+    patcher = MonkeyPatcher()
+    patcher.addPatch(xfer_util, "wormhole", wormhole)
+    patcher.patch()
+    try:
+        done = xfer_util.send(
+            reactor,
+            # This has to agree with anyone who wants to receive this code.  "v1"
+            # here versions application protocol that runs over wormhole to convey
+            # a configuration payload.  It does not version the configuration
+            # payload itself, which is a self-versioning JSON.
+            appid=u"tahoe-lafs.org/tahoe-lafs/v1",
+            relay_url=rendezvous_url.asText(),
+            data=json.dumps(configuration),
+            code=None,
+            use_tor=None,
+            on_code=got_code,
+        )
+    finally:
+        patcher.restore()
 
     return waiting_for_code, done
 
+
+class _NoExpiration(object):
+    def __unicode__(self):
+        return u""
+
+
+class _TimeBasedExpiration(object):
+    when = attr.ib(validator=validators.instance_of(datetime))
+
+    def __unicode__(self):
+        return u", expires {}".format(self.when.isoformat())
 
 
 @implementer(IClaim)
 @attr.s(frozen=True)
 class _WormholeClaim(object):
     code = attr.ib(validator=validators.instance_of(unicode))
-    expires = attr.ib(validator=validators.instance_of(datetime))
+    expires = attr.ib()
 
     def describe(self):
-        return u"{}, expires {}".format(self.code, self.expires.isoformat())
+        return self.code + unicode(self.expires)

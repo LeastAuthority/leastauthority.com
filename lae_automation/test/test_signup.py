@@ -2,6 +2,7 @@
 # See LICENSE for details.
 
 from base64 import b32encode
+from json import loads
 
 import attr
 
@@ -9,9 +10,10 @@ from hypothesis import given, assume
 
 from testtools.matchers import Equals, AfterPreprocessing
 
-from twisted.internet.defer import succeed
 from twisted.python.filepath import FilePath
 from twisted.python.url import URL
+from twisted.internet.defer import succeed
+from twisted.internet.task import Clock
 
 from foolscap.furl import decode_furl
 
@@ -20,7 +22,11 @@ from wormhole import xfer_util
 from lae_util.testtools import TestCase
 from lae_util.fileutil import make_dirs
 from lae_automation import model, signup
-from lae_automation.signup import get_provisioner, get_signup
+from lae_automation.signup import (
+    get_provisioner,
+    get_wormhole_signup,
+    get_email_signup,
+)
 
 from lae_automation.subscription_manager import broken_client
 from lae_automation.test.strategies import (
@@ -162,8 +168,9 @@ class ActivateTests(TestCase):
             storage_port_number,
     ):
         """
-        The introducer furl included in the activation email points at the server
-        and port identified by the activated subscription detail object.
+        The email signup mechanism sends an activation email including an
+        introducer furl which points at the server and port identified by the
+        activated subscription detail object.
         """
         assume(introducer_port_number != storage_port_number)
 
@@ -196,7 +203,7 @@ class ActivateTests(TestCase):
         plan_identifier = u"foobar"
 
         reactor = object()
-        signup = get_signup(
+        signup = get_email_signup(
             reactor,
             get_provisioner(
                 reactor,
@@ -224,6 +231,75 @@ class ActivateTests(TestCase):
                 get_hint_port,
                 Equals(introducer_port_number),
             ),
+        )
+
+
+    @given(
+        emails(), customer_id(), subscription_id(), old_secrets(),
+        port_numbers(), port_numbers(),
+    )
+    def test_wormhole_tahoe_configuration(
+            self,
+            customer_email,
+            customer_id,
+            subscription_id,
+            old_secrets,
+            introducer_port_number,
+            storage_port_number,
+    ):
+        """
+        The wormhole signup mechanism sends a JSON blob of Tahoe-LAFS
+        configuration via a magic wormhole identified by a wormhole code
+        produced during signup.
+        """
+        assume(introducer_port_number != storage_port_number)
+
+        provisioned = []
+        def provision_subscription(
+                smclient, subscription,
+        ):
+            p = attr.assoc(
+                subscription,
+                introducer_port_number=introducer_port_number,
+                storage_port_number=storage_port_number,
+                oldsecrets=old_secrets,
+            )
+            provisioned.append(p)
+            return succeed(p)
+
+        plan_identifier = u"foobar"
+        reactor = Clock()
+        server = MemoryWormholeServer()
+
+        provisioner = get_provisioner(
+            reactor,
+            URL.fromText(u"http://subscription-manager/"),
+            provision_subscription,
+        )
+
+        signup = get_wormhole_signup(
+            reactor,
+            provisioner,
+            server,
+            URL.fromText(u"ws://foo.invalid/"),
+            FilePath(self.mktemp()),
+        )
+        d = signup.signup(customer_email, customer_id, subscription_id, plan_identifier)
+        wormhole_claim = self.successResultOf(d)
+
+        self.patch(xfer_util, "wormhole", server)
+        d = xfer_util.receive(
+            reactor,
+            u"tahoe-lafs.org/tahoe-lafs/v1",
+            u"ws://foo.invalid/",
+            wormhole_claim.code,
+        )
+
+        received = self.successResultOf(d)
+        received_config = loads(received)
+        self.assertThat(
+            received_config["introducer"],
+            Equals(provisioned[0].external_introducer_furl),
         )
 
 
