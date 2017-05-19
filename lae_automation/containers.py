@@ -326,7 +326,18 @@ def create_deployment(deploy_config, details):
 # http://blog.kubernetes.io/2016/09/high-performance-network-policies-kubernetes.html
 S4_CUSTOMER_GRID_NAME = u"s4-customer-grids"
 CUSTOMER_GRID_SERVICE = v1.Service(
-    metadata=_S4_CUSTOMER_METADATA.set(u"name", S4_CUSTOMER_GRID_NAME),
+    metadata=_S4_CUSTOMER_METADATA.set(
+        u"name", S4_CUSTOMER_GRID_NAME,
+    ).set(
+        u"annotations", {
+            # The default idle timeout in both Kubernetes (1.5.x) and AWS
+            # appears to be 60 seconds.  That's annoyingly low for Tahoe-LAFS
+            # connections.  Let's raise it a bit.
+            #
+            # https://github.com/LeastAuthority/LeastAuthoritarians/issues/191
+            u"service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout": u"3600",
+        },
+    ),
     spec={
 	u"type": u"LoadBalancer",
         # We don't actually want to select the "customer" pods here.  Instead,
