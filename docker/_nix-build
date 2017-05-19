@@ -10,27 +10,57 @@
 from __future__ import print_function, unicode_literals
 
 from sys import argv, stdout
-from subprocess import STDOUT, CalledProcessError, check_output
+from datetime import datetime
+from subprocess import PIPE, STDOUT, CalledProcessError, Popen
 
 from docker import from_env
 
 
-def nixbuild(name):
+def nixbuild(name, progress):
+    image_archive_filename = name + ".tar.gz"
+
     # Build it.
     expr = "/leastauthority.com/docker/{}.nix".format(name)
+    build_command = [
+        "nix-build",
+
+        # When things fail, this gives more details about where.
+        "--show-trace",
+
+        # Set the name of the file into which the derivation is written.
+        # We rely on this later to load the result in to Docker.
+        "--out-link", image_archive_filename,
+
+        # Point at the file containing the expression to derive.
+        expr,
+    ]
+    collected_output = []
     try:
-	output = check_output(
-            ["nix-build", "--show-trace", expr],
-            stderr=STDOUT,
-        )
+	for output in check_incremental_output(build_command, stderr=STDOUT):
+            collected_output.append(output)
+            progress(output)
     except CalledProcessError as e:
         report("Building {} failed:\n".format(name))
-        report(e.output)
+        report(relevant_output("".join(collected_output)))
         raise SystemExit(e.returncode)
 
-    # Get the name of the built artifact.
-    image_archive_filename = output.splitlines()[-1]
     return image_archive_filename
+
+
+
+def relevant_output(output):
+    return "\n".join(output.splitlines()[-100:]) + "\n"
+
+
+
+def check_incremental_output(command, *args, **kwargs):
+    process = Popen(command, *args, stdout=PIPE, **kwargs)
+    for line in process.stdout:
+        yield line
+    returncode = process.wait()
+    if returncode != 0:
+        raise CalledProcessError(returncode, command)
+
 
 
 def loadimage(image_archive_filename):
@@ -40,16 +70,49 @@ def loadimage(image_archive_filename):
         client.images.load(image_archive.read())
 
 
-def main(names):
+
+def buildimage(names, progress):
     for name in names:
         report("Building {}...\n".format(name))
-        result = nixbuild(name.decode("utf-8"))
-        report("Build complete.  Loading {}...\n".format(result))
-        loadimage(result)
-        report("Load complete.\n")
+        result = nixbuild(name.decode("utf-8"), progress)
+        report("Build complete.\n")
+        yield result
+
+
 
 def report(s):
     stdout.write(s)
     stdout.flush()
+
+
+
+PROGRESS_REPORTERS = {
+    True: report,
+    False: lambda output: report(datetime.now().isoformat() + "\n"),
+}
+
+
+def main(argv):
+    try:
+        argv.remove("--verbose")
+    except ValueError:
+        verbose = False
+    else:
+        verbose = True
+    try:
+        argv.remove("--load")
+    except ValueError:
+        load = False
+    else:
+        load = True
+
+    progress = PROGRESS_REPORTERS[verbose]
+    for path in buildimage(argv, progress):
+        if load:
+            report("Loading {}...\n".format(path))
+            loadimage(path)
+            report("Load complete.\n")
+
+
 
 main(argv[1:])
