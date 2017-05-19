@@ -424,7 +424,9 @@ rec {
       builtins.filterSource goodSource ./..;
 
     checkPhase = ''
-      ./test-tools/run-testing
+      # Try building with as many cores as Nix says we have to use, or just 1
+      # if Nix doesn't seem to be telling us anything.
+      ./test-tools/run-testing -j $NIX_BUILD_CORES
     '';
 
     meta = {

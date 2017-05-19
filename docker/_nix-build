@@ -31,6 +31,10 @@ def nixbuild(name, progress):
         # We rely on this later to load the result in to Docker.
         "--out-link", image_archive_filename,
 
+        # Go fast!  0 value means that nix will figure out how many cores
+        # there are and use that many.
+        "--cores", "0",
+
         # Point at the file containing the expression to derive.
         expr,
     ]
