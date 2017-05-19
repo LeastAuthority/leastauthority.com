@@ -5,6 +5,8 @@ pkgs.dockerTools.buildImage {
   name = "leastauthority/web";
   fromImage = lae.s4-common-image;
   config = {
+    Env = lae.s4-common-image.buildArgs.config.Env;
+    EntryPoint = ["/bin/dash" "-c"];
     Cmd =
       let
         port = "8443";
@@ -13,8 +15,6 @@ pkgs.dockerTools.buildImage {
         chain = "extraCertChain=/app/k8s_secrets/website-chain.pem";
       in
         [
-          "/bin/dash"
-          "-c"
           (pkgs.lib.strings.concatStringsSep " " [
             "/bin/python" "-u" "/${pkgs.python27.sitePackages}/lae_site/main.py"
 	    "--wormhole-result-path=/app/data/logs/wormhole-claims.jsons"

@@ -17,14 +17,14 @@ matrix:
   # Each included item will be a builder.
   include:
     # This builder will run our test suite directly.
-    - env: ENV="testing" WAIT="10"
+    - env: ENV="testing"
       language: "python"
 
     # This builder will build the Nix packages (which happens to run the test
     # suite as well).
     #
     # tar on trusty doesn't have --exclude-vcs-ignores so disable it here.
-    - env: ENV="packaging" EXCLUDE_VCS_IGNORES="" WAIT="60"
+    - env: ENV="packaging" EXCLUDE_VCS_IGNORES=""
       # Force this to run in a VM since the packaging script wants to launch Docker.
       sudo: "required"
       # We don't really need any particular language runtime.
@@ -37,4 +37,4 @@ install:
 
 # Run its test suite.
 script:
-  - "travis_wait ${WAIT} ./test-tools/run-${ENV}"
+  - "./test-tools/run-${ENV}"
