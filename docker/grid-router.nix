@@ -5,9 +5,9 @@ pkgs.dockerTools.buildImage {
   name = "leastauthority/grid-router";
   fromImage = lae.s4-common-image;
   config = {
+    Env = lae.s4-common-image.buildArgs.config.Env;
+    EntryPoint = ["/bin/dash" "-c"];
     Cmd = [
-      "/bin/dash"
-      "-c"
       (pkgs.lib.strings.concatStringsSep " " [
         "/bin/twist" "s4-grid-router"
 	"--k8s-service-account"

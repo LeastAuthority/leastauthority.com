@@ -424,7 +424,9 @@ rec {
       builtins.filterSource goodSource ./..;
 
     checkPhase = ''
-      ./test-tools/run-testing
+      # Try building with as many cores as Nix says we have to use, or just 1
+      # if Nix doesn't seem to be telling us anything.
+      ./test-tools/run-testing -j $NIX_BUILD_CORES
     '';
 
     meta = {
@@ -434,12 +436,6 @@ rec {
 
   s4-common-image = pkgs.dockerTools.buildImage {
       name = "leastauthority/s4-common";
-      runAsRoot = ''
-        #!${pkgs.stdenv.shell}
-        ${pkgs.dockerTools.shadowSetup}
-        groupadd --system lae
-        useradd --system --gid lae --home-dir /app/data lae
-      '';
       config = {
         Env = [
           # pkgs.cacert below provides this file.  The simple ca certificate
