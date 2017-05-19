@@ -23,7 +23,7 @@ tar cf - -C "${LEASTAUTHORITY}" --exclude-vcs ${EXCLUDE_VCS_IGNORES} . | docker 
            mkdir /leastauthority.com
            tar xf - -C /leastauthority.com
            nix-channel --remove nixpkgs
-           nix-channel --add https://nixos.org/channels/nixos-16.09
+           nix-channel --add https://nixos.org/channels/nixos-16.09 nixpkgs
            nix-channel --update
            /leastauthority.com/docker/_nix-build web grid-router subscription-manager subscription-converger
        "
