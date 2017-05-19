@@ -434,12 +434,6 @@ rec {
 
   s4-common-image = pkgs.dockerTools.buildImage {
       name = "leastauthority/s4-common";
-      runAsRoot = ''
-        #!${pkgs.stdenv.shell}
-        ${pkgs.dockerTools.shadowSetup}
-        groupadd --system lae
-        useradd --system --gid lae --home-dir /app/data lae
-      '';
       config = {
         Env = [
           # pkgs.cacert below provides this file.  The simple ca certificate
