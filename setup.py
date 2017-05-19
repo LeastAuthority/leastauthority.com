@@ -31,7 +31,7 @@ setup(
         "txkube[dev]==0.1.0",
 
         # For the test suite.
-        "hypothesis==3.6.0",
+        "hypothesis==3.6.1",
         "testtools==2.2.0",
         "fixtures==3.0.0",
         "deepdiff==3.1.2",
