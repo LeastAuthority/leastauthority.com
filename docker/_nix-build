@@ -10,7 +10,7 @@
 from __future__ import print_function, unicode_literals
 
 from sys import argv, stdout
-from datetime import datetime
+from datetime import datetime, timedelta
 from subprocess import PIPE, STDOUT, CalledProcessError, Popen
 
 from docker import from_env
@@ -41,6 +41,7 @@ def nixbuild(name, progress):
     collected_output = []
     try:
 	for output in check_incremental_output(build_command, stderr=STDOUT):
+            output = output.decode("utf-8", "replace")
             collected_output.append(output)
             progress(output)
     except CalledProcessError as e:
@@ -85,14 +86,33 @@ def buildimage(names, progress):
 
 
 def report(s):
-    stdout.write(s)
+    stdout.write(s.encode("utf-8"))
     stdout.flush()
 
 
 
+class _LimitedReporting(object):
+    def __init__(self, interval, report):
+        self.interval = interval
+        self.last_report = datetime.now() - self.interval
+        self._report = report
+
+    def report(self, what):
+        now = datetime.now()
+        if now - self.last_report > self.interval:
+            self.last_report = now
+            return self._report(what)
+        return None
+
+
+_rate_limited_reporter = _LimitedReporting(
+    interval=timedelta(seconds=2),
+    report=lambda output: report(datetime.now().isoformat() + " build progress\n"),
+)
+
 PROGRESS_REPORTERS = {
     True: report,
-    False: lambda output: report(datetime.now().isoformat() + "\n"),
+    False: _rate_limited_reporter.report,
 }
 
 
