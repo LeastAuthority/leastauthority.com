@@ -21,13 +21,26 @@ from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 
+from wormhole import wormhole
+
 from lae_site.handlers import make_resource, make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import Stripe, Mailer
 
-from lae_automation.signup import provision_subscription, get_provisioner, get_signup
-from lae_automation.confirmation import send_signup_confirmation, send_notify_failure
+from lae_automation.signup import (
+    provision_subscription,
+    get_provisioner,
+    get_email_signup,
+    get_wormhole_signup,
+)
+from lae_automation.confirmation import (
+    send_signup_confirmation, send_notify_failure,
+)
 
 root_log = logging.getLogger(__name__)
+
+def urlFromBytes(b):
+    return URL.fromText(b.decode("utf-8"))
+
 
 class SiteOptions(Options):
     optFlags = [
@@ -42,12 +55,21 @@ class SiteOptions(Options):
         ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
+        ("wormhole-result-path", None, None,
+         "A path to a file to which wormhole interaction results will be written.",
+         FilePath,
+        ),
 
         ("redirect-to-port", None, None, "A TCP port number to which to redirect for the TLS site.", int),
         ("subscription-manager", None, None, "Base URL of the subscription manager API.",
-         lambda b: URL.fromText(b.decode("utf-8")),
+         urlFromBytes,
+        ),
+        ("rendezvous-url", None, URL.fromText(u"ws://wormhole.leastauthority.com:4000/v1"),
+         "The URL of the Wormhole Rendezvous server for wormhole-based signup.",
+         urlFromBytes,
         ),
     ]
+
     def __init__(self, reactor):
         Options.__init__(self)
         self.reactor = reactor
@@ -96,6 +118,7 @@ class SiteOptions(Options):
             "stripe-publishable-api-key-path",
             "subscription-manager",
             "site-logs-path",
+            "wormhole-result-path",
         ]
         for option in required_options:
             if self[option] is None:
@@ -150,18 +173,38 @@ def main(reactor, *argv):
 
 
 def site_for_options(reactor, options):
+    provisioner = get_provisioner(
+        reactor,
+        options["subscription-manager"],
+        provision_subscription,
+    )
+
+    def get_signup(style):
+        if style == u"wormhole":
+            return get_wormhole_signup(
+                reactor,
+                provisioner,
+                wormhole,
+                options["rendezvous-url"],
+                options["wormhole-result-path"],
+            )
+        elif style == u"email":
+            return get_email_signup(
+                reactor,
+                provisioner,
+                send_signup_confirmation,
+                send_notify_failure,
+            )
+        else:
+            raise ValueError(
+                "Don't know about signup configuration {}".format(
+                    options["signup"],
+                ),
+            )
+
     resource = make_resource(
         options["stripe-publishable-api-key-path"].getContent().strip(),
-        get_signup(
-            reactor,
-            get_provisioner(
-                reactor,
-                options["subscription-manager"],
-                provision_subscription,
-            ),
-            send_signup_confirmation,
-            send_notify_failure,
-        ),
+        get_signup,
         Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
         Mailer(),
     )

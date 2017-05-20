@@ -26,6 +26,8 @@ setup(
 
         "txAWS==0.3.0",
 
+        "magic-wormhole==0.9.2",
+
         # If we had a dev extra ourselves, the [dev] part of this would
         # probably be better placed there.
         "txkube[dev]==0.1.0",

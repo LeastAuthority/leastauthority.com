@@ -388,6 +388,41 @@ rec {
     '';
   };
 
+  magic-wormhole = pythonPackages.buildPythonPackage rec {
+    name = "magic-wormhole-${version}";
+    version = "0.9.2";
+
+    src = pkgs.fetchurl rec {
+      url = "mirror://pypi/m/magic-wormhole/${name}.tar.gz";
+      sha256 = "1cqnkxv0x7km3mfs57r7vvf36bay21d9bn1z5kcm31i7afsd9bhl";
+    };
+
+
+    buildInputs = [ pkgs.nettools pkgs.glibcLocales ];
+    propagatedBuildInputs = with pythonPackages; [
+      spake2
+      pynacl
+      six
+      pyopenssl16_2_0
+      service-identity
+      twisted
+      autobahn
+      hkdf
+      tqdm
+      click
+      humanize
+      ipaddress
+    ];
+
+    patchPhase = ''
+      sed -i -e "s|'ifconfig'|'${pkgs.nettools}/bin/ifconfig'|" src/wormhole/ipaddrs.py
+      sed -i -e "s|if (os.path.dirname(os.path.abspath(wormhole))|if not os.path.abspath(wormhole).startswith('/nix/store') and (os.path.dirname(os.path.abspath(wormhole))|" src/wormhole/test/test_scripts.py
+      # XXX: disable one test due to warning:
+      # setlocale: LC_ALL: cannot change locale (en_US.UTF-8)
+      sed -i -e "s|def test_text_subprocess|def skip_test_text_subprocess|" src/wormhole/test/test_scripts.py
+    '';
+  };
+
   lae = pythonPackages.buildPythonPackage rec {
     name = "s4-${version}";
     version = "1.0.0";
@@ -410,6 +445,7 @@ rec {
         txaws030
         tahoe_lafs
         txkube010
+        magic-wormhole
       ];
 
     src =

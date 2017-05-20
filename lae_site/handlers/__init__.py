@@ -8,6 +8,7 @@ from twisted.python.filepath import FilePath
 
 from lae_site.handlers.web import JinjaHandler
 from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
+from lae_site.handlers.s4_signup_style import S4SignupStyle
 
 from lae_site import __file__ as _lae_root
 
@@ -32,7 +33,7 @@ def configuration(stripe_publishable_api_key):
 
 def make_resource(
         stripe_publishable_api_key,
-        signup, stripe, mailer,
+        get_signup, stripe, mailer,
 ):
     resource = Resource()
     resource.putChild("", Redirect("https://leastauthority.com/"))
@@ -43,6 +44,7 @@ def make_resource(
         'configuration',
         configuration(stripe_publishable_api_key),
     )
+    resource.putChild("s4-signup-style", S4SignupStyle())
     resource.putChild(
         "s4-subscription-form",
         JinjaHandler("s4-subscription-form.html"),
@@ -50,7 +52,7 @@ def make_resource(
     resource.putChild(
         'submit-subscription',
         SubmitSubscriptionHandler(
-            signup, mailer, stripe,
+            get_signup, mailer, stripe,
         ),
     )
 

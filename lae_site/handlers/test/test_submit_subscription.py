@@ -105,7 +105,9 @@ class FullSignupTests(TestCase):
         self.mailer = MemoryMailer()
         self.stripe = PositiveStripe()
 
-        resource = SubmitSubscriptionHandler(self.signup, self.mailer, self.stripe)
+        resource = SubmitSubscriptionHandler(
+            lambda style: self.signup, self.mailer, self.stripe,
+        )
         root = Resource()
         root.putChild(b"", resource)
 
