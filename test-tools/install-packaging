@@ -1,4 +1,8 @@
 #!/bin/sh -ex
 
-# The Nix install steps are currently all handled by travis-ci itself owing to
-# the `language: "nix"` declaration in .travis.yml.
+# The Nix build takes place inside a Docker container.  That means we don't
+# have any Nix- or build-related installation work to do here.
+
+# We will install https://github.com/praekeltfoundation/docker-ci-deploy to
+# help us push the built artifacts to Docker Hub, though.
+pip install docker-ci-deploy
