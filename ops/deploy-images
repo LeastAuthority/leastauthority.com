@@ -19,7 +19,7 @@ REPOS="web grid-router subscription-manager subscription-converger tahoe-introdu
 
 for repo in ${REPOS}; do
     docker-ci-deploy \
-	--dry-run \
+	--tag staging \
 	--version "${VERSION}" \
 	--version-semver \
 	"${ORGANIZATION}"/"${repo}"
