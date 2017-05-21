@@ -12,6 +12,11 @@ sudo: false
 notifications:
   email: false
 
+env:
+  global:
+    # To generate: travis encrypt 'DOCKER_PASS=...'
+    - secure: "eEdVHmRXHAiOCHdn3Ltk4Pz6df9rf+s5mnbMDa1p7YqFZJNIXinzgCALYpJWlT9fmEQf3P2hTfLHeDKC6yipm7vOJywaHq4QHa7xL6u1SbcbS93xX1XeKXlSt7E3Meqq0ghkaB88G/+FgFpYYVzg/ZyjmpspzTNLJERe0zEX3lg="
+
 # Configure more than one builder.
 matrix:
   # Each included item will be a builder.
@@ -23,16 +28,12 @@ matrix:
     # This builder will build the Nix packages (which happens to run the test
     # suite as well).
     - env:
-        # Global environment gets merged into all other environments in this
-        # matrix item.
-        global:
-          # Docker Hub credentials.
-          - DOCKER_USER="leastauthorityci"
-          # To generate: travis encrypt 'DOCKER_PASS=...'
-          - secure: "eEdVHmRXHAiOCHdn3Ltk4Pz6df9rf+s5mnbMDa1p7YqFZJNIXinzgCALYpJWlT9fmEQf3P2hTfLHeDKC6yipm7vOJywaHq4QHa7xL6u1SbcbS93xX1XeKXlSt7E3Meqq0ghkaB88G/+FgFpYYVzg/ZyjmpspzTNLJERe0zEX3lg="
-        matrix:
-          # tar on trusty doesn't have --exclude-vcs-ignores so disable it here.
-          - ENV="packaging" EXCLUDE_VCS_IGNORES=""
+        # tar on trusty doesn't have --exclude-vcs-ignores so disable it here.
+        - >-
+          ENV="packaging"
+          EXCLUDE_VCS_IGNORES=""
+          DOCKER_USER="leastauthorityci"
+
       # Force this to run in a VM since the packaging script wants to launch Docker.
       sudo: "required"
       # We don't really need any particular language runtime.
