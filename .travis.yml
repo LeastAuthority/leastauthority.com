@@ -22,14 +22,33 @@ matrix:
 
     # This builder will build the Nix packages (which happens to run the test
     # suite as well).
-    #
-    # tar on trusty doesn't have --exclude-vcs-ignores so disable it here.
-    - env: ENV="packaging" EXCLUDE_VCS_IGNORES=""
+    - env:
+        # Global environment gets merged into all other environments in this
+        # matrix item.
+        global:
+          # Docker Hub credentials.
+          - DOCKER_USER="leastauthorityci"
+          # To generate: travis encrypt 'DOCKER_PASS=...'
+          - secure: "eEdVHmRXHAiOCHdn3Ltk4Pz6df9rf+s5mnbMDa1p7YqFZJNIXinzgCALYpJWlT9fmEQf3P2hTfLHeDKC6yipm7vOJywaHq4QHa7xL6u1SbcbS93xX1XeKXlSt7E3Meqq0ghkaB88G/+FgFpYYVzg/ZyjmpspzTNLJERe0zEX3lg="
+        matrix:
+          # tar on trusty doesn't have --exclude-vcs-ignores so disable it here.
+          - ENV="packaging" EXCLUDE_VCS_IGNORES=""
       # Force this to run in a VM since the packaging script wants to launch Docker.
       sudo: "required"
       # We don't really need any particular language runtime.
       # Maybe the C runtime is lighter than the rest?
       language: "C"
+
+      # If new images are built, deploy them.
+      before_deploy:
+        - "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
+
+      deploy:
+        on:
+          branch: "master"
+        provider: "script"
+        script: "./ops/deploy-images"
+
 
 # Install leastauthority.com's dependencies.
 install:
