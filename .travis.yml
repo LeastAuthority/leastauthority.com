@@ -46,7 +46,7 @@ matrix:
 
       deploy:
         on:
-          branch: "master"
+          branch: "537.ci-builds-images"
         provider: "script"
         script: "./ops/deploy-images"
 

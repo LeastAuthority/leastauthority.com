@@ -10,15 +10,16 @@
 #    $ docker login ..
 #    $ deploy-packaging
 
-REV=$(git rev-parse --short HEAD)
-VERSION=$(python setup.py --version)
+REV="$(git rev-parse --short HEAD)"
+VERSION="$(python setup.py --version)"
 
-ORGANIZATION=leastauthority
+ORGANIZATION="leastauthority"
 
 REPOS="web grid-router subscription-manager subscription-converger tahoe-introducer tahoe-storage"
 
 for repo in ${REPOS}; do
     docker-ci-deploy \
+	--dry-run \
 	--version "${VERSION}" \
 	--version-semver \
 	--tag latest \
