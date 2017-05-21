@@ -425,7 +425,7 @@ rec {
 
   lae = pythonPackages.buildPythonPackage rec {
     name = "s4-${version}";
-    version = "1.0.0";
+    version = "2.0";
 
     buildInputs =
       with pythonPackages;

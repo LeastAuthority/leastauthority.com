@@ -2,6 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="leastauthority.com",
+    version="2.0",
     zip_safe=False,
     packages=find_packages(),
     py_modules=["twisted.plugins.lae_dropin"],
