@@ -22,6 +22,5 @@ for repo in ${REPOS}; do
 	--dry-run \
 	--version "${VERSION}" \
 	--version-semver \
-	--tag latest \
 	"${ORGANIZATION}"/"${repo}"
 done
