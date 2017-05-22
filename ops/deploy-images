@@ -19,7 +19,6 @@ REPOS="web grid-router subscription-manager subscription-converger foolscap-gath
 
 for repo in ${REPOS}; do
     docker-ci-deploy \
-	--tag staging \
 	--version "${VERSION}" \
 	--version-semver \
 	"${ORGANIZATION}"/"${repo}"

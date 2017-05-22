@@ -42,7 +42,7 @@ matrix:
 
       deploy:
         on:
-          branch: "537.ci-builds-images"
+          branch: "master"
         provider: "script"
         script: "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} && ./ops/deploy-images"
 
