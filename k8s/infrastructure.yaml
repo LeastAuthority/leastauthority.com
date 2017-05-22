@@ -290,13 +290,7 @@ spec:
       # This is the web server.  It serves the subscription signup web
       # interface.
       - name: 'web'
-        # This image is hosted by the cluster-private registry.
-        # XXX This avoids `localhost` because different k8s
-        # deployments seem to have different behavior with respect to
-        # localhost resolution for the purposes of image pulls.
-        # Specifically, kops deploys a cluster where localhost
-        # resolves to [::1] where the registry is not available.
-        image: '127.0.0.1:30000/leastauthority/web:1941d38'
+        image: 'leastauthority/web:2.0'
         ports:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 8443
@@ -354,7 +348,7 @@ spec:
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
       - name: 'foolscap-log-gatherer'
-        image: '127.0.0.1:30000/leastauthority/foolscap-gatherer:1941d38'
+        image: 'leastauthority/foolscap-gatherer:2.0'
         env:
         - name: 'LAE_GATHERER_HINT'
           value: 'tcp:s4-logging:3117'
@@ -406,7 +400,7 @@ spec:
       # connections to it and it figures out which pod services the
       # subscription the connection is related to.
       - name: 'grid-router'
-        image: '127.0.0.1:30000/leastauthority/grid-router:7a0eadc'
+        image: 'leastauthority/grid-router:2.0'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -462,12 +456,12 @@ spec:
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
-        image: '127.0.0.1:30000/leastauthority/subscription-converger:b5671da'
+        image: 'leastauthority/subscription-converger:2.0'
         env:
         - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
-          value: '127.0.0.1:30000/leastauthority/tahoe-introducer:1d72b09'
+          value: 'leastauthority/tahoe-introducer:2.0'
         - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
-          value: '127.0.0.1:30000/leastauthority/tahoe-storage:1d72b09'
+          value: 'leastauthority/tahoe-storage:2.0'
         - name: 'LAE_S4_SUBSCRIPTION_MANAGER_URL'
           value: 'http://subscription-manager/'
         volumeMounts:
@@ -524,7 +518,7 @@ spec:
       # Here is the subscription manager.  It contains the canonical (local)
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
       - name: 'subscription-manager'
-        image: '127.0.0.1:30000/leastauthority/subscription-manager:b5671da'
+        image: 'leastauthority/subscription-manager:2.0'
         volumeMounts:
         - mountPath: '/app/data'
           name: 'subscription-manager-data'
