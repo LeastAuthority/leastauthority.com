@@ -40,15 +40,11 @@ matrix:
       # Maybe the C runtime is lighter than the rest?
       language: "C"
 
-      # If new images are built, deploy them.
-      before_deploy:
-        - "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
-
       deploy:
         on:
           branch: "537.ci-builds-images"
         provider: "script"
-        script: "./ops/deploy-images"
+        script: "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} && ./ops/deploy-images"
 
 
 # Install leastauthority.com's dependencies.
