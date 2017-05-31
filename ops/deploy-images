@@ -1,0 +1,25 @@
+#!/bin/sh -ex
+
+# This simple script tags the local LAE S4 Docker images which currently have
+# the `latest` tag with several other interesting tags and pushes them to
+# Docker Hub.
+#
+# Usage:
+#
+#    $ # ... build some docker images ...
+#    $ docker login ..
+#    $ deploy-packaging
+
+REV="$(git rev-parse --short HEAD)"
+VERSION="$(python setup.py --version)"
+
+ORGANIZATION="leastauthority"
+
+REPOS="web grid-router subscription-manager subscription-converger foolscap-gatherer tahoe-introducer tahoe-storage"
+
+for repo in ${REPOS}; do
+    docker-ci-deploy \
+	--version "${VERSION}" \
+	--version-semver \
+	"${ORGANIZATION}"/"${repo}"
+done
