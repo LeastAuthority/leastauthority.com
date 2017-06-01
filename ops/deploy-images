@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/usr/bin/env python
 
 # This simple script tags the local LAE S4 Docker images which currently have
 # the `latest` tag with several other interesting tags and pushes them to
@@ -8,18 +8,56 @@
 #
 #    $ # ... build some docker images ...
 #    $ docker login ..
-#    $ deploy-packaging
+#    $ deploy-images
 
-REV="$(git rev-parse --short HEAD)"
-VERSION="$(python setup.py --version)"
+from os import environ
+from subprocess import check_output
 
-ORGANIZATION="leastauthority"
+ORGANIZATION = "leastauthority"
+REPOS = [
+    "web",
+    "grid-router",
+    "subscription-manager",
+    "subscription-converger",
+    "foolscap-gatherer",
+    "tahoe-introducer",
+    "tahoe-storage",
+]
 
-REPOS="web grid-router subscription-manager subscription-converger foolscap-gatherer tahoe-introducer tahoe-storage"
 
-for repo in ${REPOS}; do
-    docker-ci-deploy "$@" \
-	--version "${VERSION}" \
-	--version-semver \
-	"${ORGANIZATION}"/"${repo}"
-done
+# https://docs.travis-ci.com/user/environment-variables/#Convenience-Variables
+def pull_request_branch(environ):
+    return environ["TRAVIS_PULL_REQUEST_BRANCH"]
+
+
+def pull_request_number(environ):
+    if environ["TRAVIS_PULL_REQUEST"] == "false":
+        return None
+    return environ["TRAVIS_PULL_REQUEST"]
+
+
+def git_branch_name(environ):
+    return pull_request_branch(environ) or environ["TRAVIS_BRANCH"]
+
+
+def main():
+    tags = filter(None, [
+        pull_request_number(environ),
+        git_branch_name(environ),
+    ])
+
+    version = check_output(["python", "setup.py", "--version"])
+
+    deploy = [
+        "docker-ci-deploy",
+	"--version", version,
+        "--version-semver",
+    ]
+    for tag in tags:
+        deploy.extend(["--tag", tag])
+
+    for repo in REPOS:
+        check_output(deploy + ["{}/{}".format(ORGANIZATION, repo)])
+
+
+main()
