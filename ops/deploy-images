@@ -48,16 +48,18 @@ def main():
 
     version = check_output(["python", "setup.py", "--version"]).strip()
 
-    deploy = [
-        "docker-ci-deploy",
+    deploy = "docker-ci-deploy"
+    tags = []
+    for tag in tags:
+        tags.extend(["--tag", tag])
+    args = [
 	"--version", version,
         "--version-semver",
     ]
-    for tag in tags:
-        deploy.extend(["--tag", tag])
+    command = [deploy] + tags + args
 
     for repo in REPOS:
-        check_output(deploy + ["{}/{}".format(ORGANIZATION, repo)])
+        check_output(command + ["{}/{}".format(ORGANIZATION, repo)])
 
 
 main()
