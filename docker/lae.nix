@@ -108,12 +108,12 @@ rec {
     doCheck = false;
   };
 
-  pyrsistent0_12_0 = pythonPackages.pyrsistent.override rec {
-    name = "pyrsistent-0.12.0";
+  pyrsistent0_12_2 = pythonPackages.pyrsistent.override rec {
+    name = "pyrsistent-0.12.2";
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/p/pyrsistent/${name}.tar.gz";
-      sha256 = "1k7kjj1nyzyk1jfiawlg16s1nsmypwmfqsq9yc3iba1m6jq9rq9p";
+      sha256 = "0pp8d3kz21c4lzsxzaz34g9zsngrjb8fp0qs3wgf0j62k7cr71ia";
     };
 
     # Test suite requires an old version of Hypothesis :(
@@ -126,7 +126,7 @@ rec {
 
     propagatedBuildInputs =
       with pythonPackages;
-      [ six zope_interface pyrsistent0_12_0 ];
+      [ six zope_interface pyrsistent0_12_2 ];
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/e/eliot/${name}.tar.gz";
@@ -279,7 +279,7 @@ rec {
         attrs
         dateutil
         incremental
-        pyrsistent0_12_0
+        pyrsistent0_12_2
         constantly
         pyopenssl16_2_0
         pem
@@ -349,6 +349,44 @@ rec {
     };
   };
 
+  txkube_master = pythonPackages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "txkube";
+    version = "0.2.0.dev0";
+
+    buildInputs =
+      with pythonPackages;
+      [ testtools220 hypothesis fixtures300 eliot-tree ];
+
+    propagatedBuildInputs =
+      with pythonPackages; [
+        zope_interface
+        attrs
+        pyrsistent0_12_2
+        incremental
+        service-identity
+        pyopenssl16_2_0
+        twisted
+        pem
+        eliot
+        dateutil
+        pykube
+        treq
+        pyyaml
+        klein
+      ];
+
+    src = pkgs.fetchurl {
+      url = "https://github.com/LeastAuthority/txkube/archive/master.zip";
+      sha256 = "0k26dnv0ydfa5bpwgpcx9sn45rygzf5x1knsncfxirbwlqss05gf";
+    };
+
+    checkPhase = ''
+      trial txkube
+    '';
+  };
+
+
   txkube010 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txkube";
@@ -362,7 +400,7 @@ rec {
       with pythonPackages; [
         zope_interface
         attrs
-        pyrsistent0_12_0
+        pyrsistent0_12_2
         incremental
         service-identity
         pyopenssl16_2_0
@@ -444,7 +482,7 @@ rec {
         twisted
         txaws030
         tahoe_lafs
-        txkube010
+        txkube_master
         magic-wormhole
       ];
 
