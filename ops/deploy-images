@@ -10,6 +10,8 @@
 #    $ docker login ..
 #    $ deploy-images
 
+from __future__ import print_function
+
 from os import environ
 from subprocess import check_output
 
@@ -59,7 +61,9 @@ def main():
     command = [deploy] + tags + args
 
     for repo in REPOS:
-        check_output(command + ["{}/{}".format(ORGANIZATION, repo)])
+        complete_command = command + ["{}/{}".format(ORGANIZATION, repo)]
+        print(complete_command)
+        print(check_output(complete_command))
 
 
 main()
