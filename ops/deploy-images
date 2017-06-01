@@ -43,22 +43,23 @@ def git_branch_name(environ):
 
 
 def main():
-    tags = filter(None, [
+    tag_names = filter(None, [
         pull_request_number(environ),
         git_branch_name(environ),
     ])
+    print("Tagging with {}".format(" ".join(tag_names)))
 
     version = check_output(["python", "setup.py", "--version"]).strip()
 
     deploy = "docker-ci-deploy"
-    tags = []
-    for tag in tags:
-        tags.extend(["--tag", tag])
+    tag_args = []
+    for tag in tag_names:
+        tag_args.extend(["--tag", tag])
     args = [
 	"--version", version,
         "--version-semver",
     ]
-    command = [deploy] + tags + args
+    command = [deploy] + tag_args + args
 
     for repo in REPOS:
         complete_command = command + ["{}/{}".format(ORGANIZATION, repo)]
