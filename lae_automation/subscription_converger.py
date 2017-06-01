@@ -39,6 +39,8 @@ from txaws.route53.model import (
     Name, CNAME, RRSetKey, RRSet, delete_rrset, create_rrset, upsert_rrset,
 )
 
+from lae_util.service import AsynchronousService
+
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
@@ -150,16 +152,40 @@ class Options(_Options, KubernetesClientOptionsMixin):
             self["endpoint"] = self["endpoint"][:-1]
 
 
+
 def makeService(options):
     # Boo global reactor
     # https://twistedmatrix.com/trac/ticket/9063
     from twisted.internet import reactor
     agent = Agent(reactor)
-    subscription_client = SMClient(endpoint=options["endpoint"], agent=agent, cooperator=task)
+    subscription_client = SMClient(
+        endpoint=options["endpoint"],
+        agent=agent,
+        cooperator=task,
+    )
+
+    if options["eliot-to-stdout"]:
+        # XXX not exactly the right place for this
+        from eliot import to_file
+        from sys import stdout
+        to_file(stdout)
 
     kubernetes = options.get_kubernetes_service(reactor)
 
-    k8s_client = kubernetes.client()
+    def get_k8s_client():
+        d = kubernetes.versioned_client()
+        d.addCallback(
+            _finish_convergence_service,
+            options,
+            subscription_client,
+        )
+        return d
+
+    return AsynchronousService(get_k8s_client)
+
+
+
+def _finish_convergence_service(k8s_client, options, subscription_client):
     k8s = KubeClient(k8s=k8s_client)
 
     access_key_id = FilePath(options["aws-access-key-id-path"]).getContent().strip()
@@ -169,12 +195,6 @@ def makeService(options):
         access_key=access_key_id,
         secret_key=secret_access_key,
     ))
-
-    if options["eliot-to-stdout"]:
-        # XXX not exactly the right place for this
-        from eliot import to_file
-        from sys import stdout
-        to_file(stdout)
 
     Message.log(
         event=u"convergence-service:key-notification",
@@ -215,7 +235,11 @@ def makeService(options):
 
     return TimerService(
         options["interval"],
-        divert_errors_to_log(converge, u"subscription_converger"), config, subscription_client, k8s, aws,
+        divert_errors_to_log(converge, u"subscription_converger"),
+        config,
+        subscription_client,
+        k8s,
+        aws,
     )
 
 def divert_errors_to_log(f, scope):

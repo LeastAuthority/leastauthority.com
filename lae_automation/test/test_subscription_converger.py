@@ -223,7 +223,8 @@ class MakeServiceTests(TestCase):
             b"--k8s-config", config.path,
             b"--no-eliot-to-stdout",
         ])
-        verifyObject(IService, makeService(options))
+        service = makeService(options)
+        verifyObject(IService, service)
 
 
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
