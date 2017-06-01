@@ -377,8 +377,8 @@ rec {
       ];
 
     src = pkgs.fetchurl {
-      url = "https://github.com/LeastAuthority/txkube/archive/b279b06bc6fdf3f5ce540320fa9137164c865981.zip";
-      sha256 = "0v5v8sn3x8vn96awz7nx7r6va2d41gx89wjcdmvwsrcqplaxv7vx";
+      url = "https://github.com/LeastAuthority/txkube/archive/130fdb4d6c108f784fa6ecd953cbc4a1783425cf.zip";
+      sha256 = "0sk6x43w39za5kxpgfmwsn8hnscp527l6lcxk06j2whh05vs1q0n";
     };
 
     checkPhase = ''
