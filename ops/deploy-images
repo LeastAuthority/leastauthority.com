@@ -46,7 +46,7 @@ def main():
         git_branch_name(environ),
     ])
 
-    version = check_output(["python", "setup.py", "--version"])
+    version = check_output(["python", "setup.py", "--version"]).strip()
 
     deploy = [
         "docker-ci-deploy",
