@@ -18,7 +18,7 @@ ORGANIZATION="leastauthority"
 REPOS="web grid-router subscription-manager subscription-converger foolscap-gatherer tahoe-introducer tahoe-storage"
 
 for repo in ${REPOS}; do
-    docker-ci-deploy \
+    docker-ci-deploy "$@" \
 	--version "${VERSION}" \
 	--version-semver \
 	"${ORGANIZATION}"/"${repo}"

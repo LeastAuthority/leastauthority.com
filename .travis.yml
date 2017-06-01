@@ -41,10 +41,14 @@ matrix:
       language: "C"
 
       deploy:
-        on:
-          branch: "master"
-        provider: "script"
-        script: "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} && ./ops/deploy-images"
+        - on:
+            branch: "master"
+          provider: "script"
+          script: "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} && ./ops/deploy-images"
+        - on:
+            branch: "staging"
+          provider: "script"
+          script: "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} && ./ops/deploy-images --tag staging"
 
 
 # Install leastauthority.com's dependencies.
