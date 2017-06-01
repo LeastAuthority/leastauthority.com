@@ -45,7 +45,6 @@ matrix:
             all_branches: true
           provider: "script"
           script: "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} && ./ops/deploy-images"
-"
 
 
 # Install leastauthority.com's dependencies.
