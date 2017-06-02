@@ -2,7 +2,7 @@
 , lae ? import ./lae.nix {} }:
 
 pkgs.dockerTools.buildImage {
-  name = "leastauthority/s4-common";
+  name = "leastauthority/s4-common-image";
   config = {
     Env = [
       # pkgs.cacert below provides this file.  The simple ca certificate
