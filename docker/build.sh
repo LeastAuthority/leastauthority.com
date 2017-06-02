@@ -25,8 +25,7 @@ tar xf - -C /leastauthority.com
 nix-channel --remove nixpkgs
 nix-channel --add https://nixos.org/channels/nixos-17.03 nixpkgs
 nix-channel --update
-/leastauthority.com/docker/_nix-build $@ \
-    s4-common-image grid-router subscription-manager subscription-converger
+/leastauthority.com/docker/_nix-build $@ s4-common-image
 "
 
 # Get a Nix toolchain environment we can use for the next few steps.

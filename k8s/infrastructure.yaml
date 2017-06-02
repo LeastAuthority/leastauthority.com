@@ -429,8 +429,19 @@ spec:
       # connections to it and it figures out which pod services the
       # subscription the connection is related to.
       - name: 'grid-router'
-        image: 'leastauthority/grid-router:2.0'
+        image: 'leastauthority/s4-common-image:2.0'
         imagePullPolicy: 'Always'
+        command:
+          - '/bin/twist'
+          - 's4-grid-router'
+          - '--k8s-service-account'
+          - '--kubernetes-namespace'
+          - '$(POD_KUBERNETES_NAMESPACE)'
+        env:
+          - name: 'POD_KUBERNETES_NAMESPACE'
+            valueFrom:
+              fieldRef:
+                fieldPath: 'metadata.namespace'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -466,9 +477,6 @@ spec:
           secretName: 'signup-secrets'
           defaultMode: 0444
           items:
-          - key: 'domain'
-            path: 'domain'
-
           # XXX Should allocate some Route53-only keys for this.
           # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
           # XXX Maybe I should create _two_ sets of keys...
@@ -486,15 +494,32 @@ spec:
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
-        image: 'leastauthority/subscription-converger:2.0'
+        image: 'leastauthority/s4-common-image:2.0'
         imagePullPolicy: 'Always'
+        command:
+          - '/bin/twist'
+          - 's4-subscription-converger'
+          - '--domain'
+          - '$(S4_DOMAIN)'
+          - '--kubernetes-namespace'
+          - '$(POD_KUBERNETES_NAMESPACE)'
+          - '--aws-access-key-id-path=/app/k8s_secrets/aws.id'
+          - '--aws-secret-access-key-path=/app/k8s_secrets/aws.key'
+          - '--introducer-image=leastauthority/tahoe-introducer:2.0'
+          - '--storageserver-image=leastauthority/tahoe-storage:2.0'
+          - '--endpoint=http://subscription-manager/'
+          - '--k8s-service-account'
+        workingDir: '/app/run'
         env:
-        - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
-          value: 'leastauthority/tahoe-introducer:2.0'
-        - name: 'LAE_S4_TAHOE_STORAGESERVER_IMAGE'
-          value: 'leastauthority/tahoe-storage:2.0'
-        - name: 'LAE_S4_SUBSCRIPTION_MANAGER_URL'
-          value: 'http://subscription-manager/'
+          - name: 'S4_DOMAIN'
+            valueFrom:
+              secretKeyRef:
+                name: 'signup-secrets'
+                key: 'domain'
+          - name: 'POD_KUBERNETES_NAMESPACE'
+            valueFrom:
+              fieldRef:
+                fieldPath: 'metadata.namespace'
         volumeMounts:
         - mountPath: '/app/k8s_secrets'
           name: 'convergence-secrets'
@@ -532,15 +557,6 @@ spec:
       - name: 'subscription-manager-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-subscription-manager-pvc'
-      # Kubernetes manages some of the secrets we require.  Mount
-      # them into the container.
-      - name: 'subscription-manager-secrets'
-        secret:
-          secretName: 'signup-secrets'
-          defaultMode: 0444
-          items:
-          - key: 'domain'
-            path: 'domain'
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -549,13 +565,28 @@ spec:
       # Here is the subscription manager.  It contains the canonical (local)
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
       - name: 'subscription-manager'
-        image: 'leastauthority/subscription-manager:2.0'
+        image: 'leastauthority/s4-common-image:2.0'
         imagePullPolicy: 'Always'
+        command:
+          - '/bin/twist'
+          - 's4-subscription-manager'
+          - '--domain'
+          - '$(S4_DOMAIN)'
+          - '--state-path'
+          - '/app/data/subscriptions'
+          - '--listen-address'
+          - 'tcp:8000'
+        env:
+          - name: 'S4_DOMAIN'
+            valueFrom:
+              secretKeyRef:
+                name: 'signup-secrets'
+                key: 'domain'
+        workingDir: '/app/run'
+
         volumeMounts:
         - mountPath: '/app/data'
           name: 'subscription-manager-data'
-        - mountPath: '/app/k8s_secrets'
-          name: 'subscription-manager-secrets'
         ports:
         - containerPort: 8000
           # Length limit of 15 on port names.
