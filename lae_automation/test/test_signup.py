@@ -59,7 +59,6 @@ class TestSignupModule(TestCase):
         make_dirs(self.mockconfigdir.path)
         self.SIGNUPSPATH = 'mock_signups.csv'
         self.CONFIGFILEPATH = 'init_test_config.json'
-        self.SERVERINFOPATH = 'mock_serverinfo.csv'
         self.EC2SECRETPATH = 'mock_ec2_secret'
         self.S3SECRETPATH = 'mock_s3_secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
@@ -74,7 +73,6 @@ class TestSignupModule(TestCase):
 
         FilePath(self.SIGNUPSPATH).setContent('')
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
-        FilePath(self.SERVERINFOPATH).setContent('')
         FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
         FilePath(self.S3SECRETPATH).setContent(MOCKS3SECRETCONTENTS)
         FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
@@ -90,7 +88,6 @@ class TestSignupModule(TestCase):
             storageserver_image=u"tahoe-storageserver",
 
             secretsfile=open(self.MSECRETSFILE, "a+b"),
-            serverinfopath=self.SERVERINFOPATH,
         )
         self.SUBSCRIPTION = model.SubscriptionDetails(
             bucketname="lae-" + self.MENCODED_IDS,

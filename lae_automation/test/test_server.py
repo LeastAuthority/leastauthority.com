@@ -57,7 +57,6 @@ class NewTahoeConfigurationTests(TestCase):
             storageserver_image=u"tahoe-storageserver",
 
             secretsfile=fdopen(mkstemp()[0], "w"),
-            serverinfopath=None,
 
             log_gatherer_furl=log_gatherer_furl,
             stats_gatherer_furl=stats_gatherer_furl,

@@ -51,8 +51,6 @@ class DeploymentConfiguration(object):
     storageserver_image = attr.ib(validator=attr.validators.instance_of(unicode))
 
     secretsfile = attr.ib(validator=attr.validators.instance_of(file))
-    serverinfopath = attr.ib(default="../serverinfo.csv")
-
 
     log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
     stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
@@ -69,7 +67,6 @@ class NullDeploymentConfiguration(object):
     storageserver_image = None
 
     secretsfile = open("/dev/full", "a")
-    serverinfopath = "/dev/full"
 
     log_gatherer_furl = None
     stats_gatherer_furl = None
