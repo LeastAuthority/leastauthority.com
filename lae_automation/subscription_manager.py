@@ -360,6 +360,9 @@ class Options(_Options):
         required(self, "state-path")
         required(self, "listen-address")
         self["state-path"] = FilePath(self["state-path"].decode("utf-8"))
+        # Populated from a configuration file which can easily contain extra
+        # trailing whitespace (like a newline).  Clean it up.
+        self["domain"] = self["domain"].strip()
 
 
 def makeService(options):
