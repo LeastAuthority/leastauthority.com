@@ -59,9 +59,6 @@ class NewTahoeConfigurationTests(TestCase):
             secretsfile=fdopen(mkstemp()[0], "w"),
             serverinfopath=None,
 
-            ssec2admin_keypair_name=None,
-            ssec2admin_privkey_path=None,
-
             monitor_pubkey_path=None,
             monitor_privkey_path=None,
 

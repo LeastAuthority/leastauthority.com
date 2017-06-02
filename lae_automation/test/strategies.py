@@ -355,9 +355,6 @@ def deployment_configurations():
         introducer_image=strategies.just(u"tahoe-introducer:latest"),
         storageserver_image=strategies.just(u"tahoe-storageserver:latest"),
 
-        ssec2admin_keypair_name=aws_keypair_name(),
-        ssec2admin_privkey_path=absolute_path(),
-
         monitor_pubkey_path=absolute_path(),
         monitor_privkey_path=absolute_path(),
 

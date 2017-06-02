@@ -45,8 +45,6 @@ ZEROPRODUCT = {
   "ec2_secret_path":      "mock_ec2_secret",
   "s3_access_key_id":     u"TESTS3S3S3S3S3S3S3S3",
   "s3_secret_path":       "mock_s3_secret",
-  "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem",
   "monitor_pubkey_path":  "MONITORKEYS.pub",
   "monitor_privkey_path": "MONITORKEYS.pem"
 }
@@ -92,9 +90,6 @@ class TestSignupModule(TestCase):
 
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
-
-            ssec2admin_keypair_name=ZEROPRODUCT["admin_keypair_name"],
-            ssec2admin_privkey_path=ZEROPRODUCT["admin_privkey_path"],
 
             monitor_pubkey_path=ZEROPRODUCT["monitor_pubkey_path"],
             monitor_privkey_path=ZEROPRODUCT["monitor_privkey_path"],

@@ -1,6 +1,4 @@
 MOCKJSONCONFIGFILE = """{
-  "ssec2admin_keypair_name":  "ADMINKEYS",
-  "ssec2admin_privkey_path":  "ADMINKEYS.pem",
   "s3_access_key_id":         "TESTS3S3S3S3S3S3S3S3",
   "s3_secret_path":           "mock_s3_secret",
 
