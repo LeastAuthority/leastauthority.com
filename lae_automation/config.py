@@ -21,19 +21,7 @@ class Config(object):
             configFile = self.DEFAULT_CONFIG_PATH
 
         config = self._load_config_json(configFile)
-
         assert isinstance(config, dict)
-        assert "products" in config, config
-        self.products = config.pop("products")
-        assert isinstance(self.products, list)
-        for value in self.products:
-            assert isinstance(value, dict), value
-            for field in ("amount", "interval", "currency", "plan_name", "plan_ID",
-                          "plan_trial_period_days", "ami_image_id", "instance_size", "statement_description"):
-                assert field in value, value
-                value[field] = str(value[field])
-                assert isinstance(value[field], str), value
-
         self.other = config
 
     @staticmethod

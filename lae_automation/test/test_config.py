@@ -8,18 +8,15 @@ from lae_automation.config import Config
 
 
 # Test vectors:
-from lae_automation.test.test_vectors import MOCK_VALID_PRODUCTS, MOCK_VALID_PLAN_ID, MOCKJSONCONFIGFILE
-
-VALID_PRODUCTS = MOCK_VALID_PRODUCTS
+from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
 
 VALID_CONFIG = MOCKJSONCONFIGFILE
 
 UNKNOWN_OPTION_CONFIG = """
 {
-  "unknown": "xxx",
-%s
+  "unknown": "xxx"
 }
-""" % (VALID_PRODUCTS,)
+"""
 
 INVALID_EMPTY_CONFIG = "{}"
 
@@ -31,9 +28,7 @@ INVALID_WRONG_KEY_CONFIG = """
 
 class ConfigTests (TestCase):
     def test_unexceptional_load(self):
-        config = self._load_from_string( VALID_CONFIG )
-
-        self._assert_valid_config(config)
+        self._load_from_string( VALID_CONFIG )
 
 
     def test_missing_required_key(self):
@@ -54,10 +49,6 @@ class ConfigTests (TestCase):
             f.write(VALID_CONFIG)
 
         self._assert_valid_config(Config(temp))
-
-
-    def _assert_valid_config(self, config):
-        self.failUnlessEqual(MOCK_VALID_PLAN_ID, config.products[0]["plan_ID"])
 
 
     @staticmethod

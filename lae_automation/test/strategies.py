@@ -349,7 +349,6 @@ def deployment_configurations():
         kubernetes_namespace=kubernetes_namespaces(),
         subscription_manager_endpoint=urls(),
 
-        products=strategies.just([{"foo": "bar"}]),
         s3_access_key_id=aws_access_key_id(),
         s3_secret_key=aws_secret_key(),
 

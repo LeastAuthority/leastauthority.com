@@ -50,7 +50,6 @@ class NewTahoeConfigurationTests(TestCase):
             domain=u"testing.com",
             kubernetes_namespace=u"testing",
             subscription_manager_endpoint=URL.fromText(u"http://localhost/"),
-            products=[{}],
             s3_access_key_id=s3_access_key_id,
             s3_secret_key=s3_secret_key,
 

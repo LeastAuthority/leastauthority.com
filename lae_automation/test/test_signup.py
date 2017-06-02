@@ -41,7 +41,6 @@ from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
 CONFIGFILEJSON = MOCKJSONCONFIGFILE
 
 ZEROPRODUCT = {
-  "products": [],
   "ec2_access_key_id":    "TESTEC2EC2EC2EC2EC2E",
   "ec2_secret_path":      "mock_ec2_secret",
   "s3_access_key_id":     u"TESTS3S3S3S3S3S3S3S3",
@@ -88,7 +87,6 @@ class TestSignupModule(TestCase):
             domain=u"s4.example.com",
             kubernetes_namespace=u"testing",
             subscription_manager_endpoint=URL.fromText(u"http://localhost/"),
-            products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
 
@@ -117,15 +115,6 @@ class TestSignupModule(TestCase):
             subscription_id=self.MSUBSCRIPTION_ID,
             introducer_port_number=12345,
             storage_port_number=12346,
-        )
-
-    def test_no_products(self):
-        invalid = attr.asdict(self.DEPLOYMENT_CONFIGURATION)
-        invalid["products"] = []
-        self.assertRaises(
-            ValueError,
-            model.DeploymentConfiguration,
-            **invalid
         )
 
     def test_get_bucket_name(self):

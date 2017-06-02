@@ -190,7 +190,6 @@ def makeService(options):
         kubernetes_namespace=options["kubernetes-namespace"].decode("ascii"),
         subscription_manager_endpoint=URL.fromText(options["endpoint"].decode("ascii")),
 
-        products=[{}],
         s3_access_key_id=access_key_id.decode("ascii"),
         s3_secret_key=secret_access_key.decode("ascii"),
 

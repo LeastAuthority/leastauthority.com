@@ -13,10 +13,6 @@ from foolscap.furl import decode_furl, encode_furl
 
 from lae_util.validators import all
 
-def _validate_products(instance, attribute, value):
-    if len(value) == 0:
-        raise ValueError("At least one product is required.")
-
 validate_furl = all(
     attr.validators.instance_of(str),
     lambda inst, attr, value: decode_furl(value),
@@ -45,7 +41,6 @@ class DeploymentConfiguration(object):
         validator=attr.validators.optional(attr.validators.instance_of(URL)),
     )
 
-    products = attr.ib(validator=_validate_products)
     s3_access_key_id = attr.ib(validator=attr.validators.instance_of(unicode))
     s3_secret_key = attr.ib(repr=False, validator=attr.validators.instance_of(unicode))
 
@@ -75,7 +70,6 @@ class NullDeploymentConfiguration(object):
     private_host = None
     kubernetes_namespace = None
     subscription_manager_endpoint = None
-    products = ()
     s3_access_key_id = None
     s3_secret_key = None
     introducer_image = None
