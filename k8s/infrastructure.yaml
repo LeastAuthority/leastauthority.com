@@ -215,6 +215,7 @@ spec:
         # enough at retrying failed pulls to make this reliable.  We use a
         # sha256 tag to have more confidence we'll get the image we expect.
         image: 'leastauthority/magic-wormhole'
+        imagePullPolicy: 'Always'
         ports:
         # We just happen to know these are the ports this container listens
         # on.
@@ -291,6 +292,7 @@ spec:
       # interface.
       - name: 'web'
         image: 'leastauthority/web:2.0'
+        imagePullPolicy: 'Always'
         ports:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 8443
@@ -349,6 +351,7 @@ spec:
       containers:
       - name: 'foolscap-log-gatherer'
         image: 'leastauthority/foolscap-gatherer:2.0'
+        imagePullPolicy: 'Always'
         env:
         - name: 'LAE_GATHERER_HINT'
           value: 'tcp:s4-logging:3117'
@@ -401,6 +404,7 @@ spec:
       # subscription the connection is related to.
       - name: 'grid-router'
         image: 'leastauthority/grid-router:2.0'
+        imagePullPolicy: 'Always'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -457,6 +461,7 @@ spec:
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
         image: 'leastauthority/subscription-converger:2.0'
+        imagePullPolicy: 'Always'
         env:
         - name: 'LAE_S4_TAHOE_INTRODUCER_IMAGE'
           value: 'leastauthority/tahoe-introducer:2.0'
@@ -519,6 +524,7 @@ spec:
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
       - name: 'subscription-manager'
         image: 'leastauthority/subscription-manager:2.0'
+        imagePullPolicy: 'Always'
         volumeMounts:
         - mountPath: '/app/data'
           name: 'subscription-manager-data'
