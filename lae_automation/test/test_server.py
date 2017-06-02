@@ -50,24 +50,11 @@ class NewTahoeConfigurationTests(TestCase):
             domain=u"testing.com",
             kubernetes_namespace=u"testing",
             subscription_manager_endpoint=URL.fromText(u"http://localhost/"),
-            products=[{}],
             s3_access_key_id=s3_access_key_id,
             s3_secret_key=s3_secret_key,
 
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
-
-            secretsfile=fdopen(mkstemp()[0], "w"),
-            serverinfopath=None,
-
-            ssec2_access_key_id=None,
-            ssec2_secret_path=None,
-
-            ssec2admin_keypair_name=None,
-            ssec2admin_privkey_path=None,
-
-            monitor_pubkey_path=None,
-            monitor_privkey_path=None,
 
             log_gatherer_furl=log_gatherer_furl,
             stats_gatherer_furl=stats_gatherer_furl,

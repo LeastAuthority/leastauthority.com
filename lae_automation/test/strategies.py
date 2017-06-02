@@ -349,23 +349,11 @@ def deployment_configurations():
         kubernetes_namespace=kubernetes_namespaces(),
         subscription_manager_endpoint=urls(),
 
-        products=strategies.just([{"foo": "bar"}]),
         s3_access_key_id=aws_access_key_id(),
         s3_secret_key=aws_secret_key(),
 
         introducer_image=strategies.just(u"tahoe-introducer:latest"),
         storageserver_image=strategies.just(u"tahoe-storageserver:latest"),
-
-        ssec2_access_key_id=aws_access_key_id(),
-        ssec2_secret_path=absolute_path(),
-
-        ssec2admin_keypair_name=aws_keypair_name(),
-        ssec2admin_privkey_path=absolute_path(),
-
-        monitor_pubkey_path=absolute_path(),
-        monitor_privkey_path=absolute_path(),
-
-        secretsfile=strategies.just(open(devnull)),
     )
 
 deployment_configuration = deployment_configurations

@@ -41,15 +41,10 @@ from lae_automation.test.test_vectors import MOCKJSONCONFIGFILE
 CONFIGFILEJSON = MOCKJSONCONFIGFILE
 
 ZEROPRODUCT = {
-  "products": [],
   "ec2_access_key_id":    "TESTEC2EC2EC2EC2EC2E",
   "ec2_secret_path":      "mock_ec2_secret",
   "s3_access_key_id":     u"TESTS3S3S3S3S3S3S3S3",
   "s3_secret_path":       "mock_s3_secret",
-  "admin_keypair_name":   "ADMINKEYS",
-  "admin_privkey_path":   "ADMINKEYS.pem",
-  "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem"
 }
 
 MOCKEC2SECRETCONTENTS = 'EC2'*13+'E'
@@ -64,7 +59,6 @@ class TestSignupModule(TestCase):
         make_dirs(self.mockconfigdir.path)
         self.SIGNUPSPATH = 'mock_signups.csv'
         self.CONFIGFILEPATH = 'init_test_config.json'
-        self.SERVERINFOPATH = 'mock_serverinfo.csv'
         self.EC2SECRETPATH = 'mock_ec2_secret'
         self.S3SECRETPATH = 'mock_s3_secret'
         self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
@@ -74,12 +68,10 @@ class TestSignupModule(TestCase):
         self.MCUSTOMER_ID = u'cus_x14Charactersx'
         self.MSUBSCRIPTION_ID = u'sub_x14Characterx'
         self.MPLAN_ID = 'XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX'
-        self.MSECRETSFILE = 'MSECRETSFILE'
         self.MENCODED_IDS = 'on2wex3yge2eg2dbojqwg5dfoj4a-mn2xgx3yge2eg2dbojqwg5dfojzxq'
 
         FilePath(self.SIGNUPSPATH).setContent('')
         FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
-        FilePath(self.SERVERINFOPATH).setContent('')
         FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
         FilePath(self.S3SECRETPATH).setContent(MOCKS3SECRETCONTENTS)
         FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
@@ -88,24 +80,11 @@ class TestSignupModule(TestCase):
             domain=u"s4.example.com",
             kubernetes_namespace=u"testing",
             subscription_manager_endpoint=URL.fromText(u"http://localhost/"),
-            products=[{"description": "stuff"}],
             s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
             s3_secret_key=MOCKS3SECRETCONTENTS,
 
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
-
-            ssec2_access_key_id=ZEROPRODUCT["s3_access_key_id"],
-            ssec2_secret_path=self.S3SECRETPATH,
-
-            ssec2admin_keypair_name=ZEROPRODUCT["admin_keypair_name"],
-            ssec2admin_privkey_path=ZEROPRODUCT["admin_privkey_path"],
-
-            monitor_pubkey_path=ZEROPRODUCT["monitor_pubkey_path"],
-            monitor_privkey_path=ZEROPRODUCT["monitor_privkey_path"],
-
-            secretsfile=open(self.MSECRETSFILE, "a+b"),
-            serverinfopath=self.SERVERINFOPATH,
         )
         self.SUBSCRIPTION = model.SubscriptionDetails(
             bucketname="lae-" + self.MENCODED_IDS,
@@ -117,15 +96,6 @@ class TestSignupModule(TestCase):
             subscription_id=self.MSUBSCRIPTION_ID,
             introducer_port_number=12345,
             storage_port_number=12346,
-        )
-
-    def test_no_products(self):
-        invalid = attr.asdict(self.DEPLOYMENT_CONFIGURATION)
-        invalid["products"] = []
-        self.assertRaises(
-            ValueError,
-            model.DeploymentConfiguration,
-            **invalid
         )
 
     def test_get_bucket_name(self):

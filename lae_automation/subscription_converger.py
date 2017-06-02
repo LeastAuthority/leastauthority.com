@@ -190,24 +190,11 @@ def makeService(options):
         kubernetes_namespace=options["kubernetes-namespace"].decode("ascii"),
         subscription_manager_endpoint=URL.fromText(options["endpoint"].decode("ascii")),
 
-        products=[{}],
         s3_access_key_id=access_key_id.decode("ascii"),
         s3_secret_key=secret_access_key.decode("ascii"),
 
         introducer_image=options["introducer-image"].decode("ascii"),
         storageserver_image=options["storageserver-image"].decode("ascii"),
-
-        ssec2_access_key_id=None,
-        ssec2_secret_path=None,
-
-        ssec2admin_keypair_name=None,
-        ssec2admin_privkey_path=None,
-
-        monitor_pubkey_path=None,
-        monitor_privkey_path=None,
-
-        secretsfile=open(u"/dev/full", "w"),
-        serverinfopath=None,
 
         log_gatherer_furl=None,
         stats_gatherer_furl=None,

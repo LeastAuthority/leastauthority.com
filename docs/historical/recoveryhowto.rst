@@ -46,16 +46,6 @@ deploy_EC2_instance:
 
 * *instancename*: customer_email found in signup_logs.
 
-append_record:
-~~~~~~~~~~~~~~
-
-* *"serverinfo.csv"*: string literal
-
-* *instance.launch_time*: in signup_logs, search for string "launch_time"
-
-* *instance.instance_id*: in signup_logs, search for string "instance_id"
-
-* *publichost*: AA
 
 send_signup_confirmation:
 ~~~~~~~~~~~~~~~~~~~~~~~~~

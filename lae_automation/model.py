@@ -13,10 +13,6 @@ from foolscap.furl import decode_furl, encode_furl
 
 from lae_util.validators import all
 
-def _validate_products(instance, attribute, value):
-    if len(value) == 0:
-        raise ValueError("At least one product is required.")
-
 validate_furl = all(
     attr.validators.instance_of(str),
     lambda inst, attr, value: decode_furl(value),
@@ -45,26 +41,14 @@ class DeploymentConfiguration(object):
         validator=attr.validators.optional(attr.validators.instance_of(URL)),
     )
 
-    products = attr.ib(validator=_validate_products)
+    # Tahoe-LAFS is configured with these keys, allowing it to talk to S3 and
+    # store and retrieve shares.
     s3_access_key_id = attr.ib(validator=attr.validators.instance_of(unicode))
     s3_secret_key = attr.ib(repr=False, validator=attr.validators.instance_of(unicode))
 
     # Docker images to run per-subscription containers.
     introducer_image = attr.ib(validator=attr.validators.instance_of(unicode))
     storageserver_image = attr.ib(validator=attr.validators.instance_of(unicode))
-
-    ssec2_access_key_id = attr.ib()
-    ssec2_secret_path = attr.ib()
-
-    ssec2admin_keypair_name = attr.ib()
-    ssec2admin_privkey_path = attr.ib()
-
-    monitor_pubkey_path = attr.ib()
-    monitor_privkey_path = attr.ib()
-
-    secretsfile = attr.ib(validator=attr.validators.instance_of(file))
-    serverinfopath = attr.ib(default="../serverinfo.csv")
-
 
     log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
     stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
@@ -75,23 +59,10 @@ class NullDeploymentConfiguration(object):
     private_host = None
     kubernetes_namespace = None
     subscription_manager_endpoint = None
-    products = ()
     s3_access_key_id = None
     s3_secret_key = None
     introducer_image = None
     storageserver_image = None
-
-    ssec2_access_key_id = None
-    ssec2_secret_path = None
-
-    ssec2admin_keypair_name = None
-    ssec2admin_privkey_path = None
-
-    monitor_pubkey_path = None
-    monitor_privkey_path = None
-
-    secretsfile = open("/dev/full", "a")
-    serverinfopath = "/dev/full"
 
     log_gatherer_furl = None
     stats_gatherer_furl = None
