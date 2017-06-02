@@ -291,8 +291,27 @@ spec:
       # This is the web server.  It serves the subscription signup web
       # interface.
       - name: 'web'
-        image: 'leastauthority/web:2.0'
+        image: 'leastauthority/s4-common-image:2.0'
         imagePullPolicy: 'Always'
+        command:
+          - '/bin/python'
+          - '-u'
+          - '-m'
+          - 'lae_site.main'
+        args:
+          - '--wormhole-result-path=/app/data/logs/wormhole-claims.jsons'
+          - "--secure-port=ssl\
+              :8443\
+              :certKey=/app/k8s_secrets/website-cert.pem\
+              :privateKey=/app/k8s_secrets/website-key.pem\
+              :extraCertChain=/app/k8s_secrets/website-chain.pem"
+          - '--insecure-port=tcp:8080'
+          - '--redirect-to-port=$(S4_SERVICE_PORT_HTTPS_SERVER)'
+          - '--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key'
+          - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
+          - '--site-logs-path=/app/data/logs/sitelogs'
+          - '--subscription-manager=http://subscription-manager/'
+        workingDir: '/app/run'
         ports:
         # We just happen to know this is the ports this container listens on.
         - containerPort: 8443
