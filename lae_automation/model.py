@@ -41,15 +41,14 @@ class DeploymentConfiguration(object):
         validator=attr.validators.optional(attr.validators.instance_of(URL)),
     )
 
+    # Tahoe-LAFS is configured with these keys, allowing it to talk to S3 and
+    # store and retrieve shares.
     s3_access_key_id = attr.ib(validator=attr.validators.instance_of(unicode))
     s3_secret_key = attr.ib(repr=False, validator=attr.validators.instance_of(unicode))
 
     # Docker images to run per-subscription containers.
     introducer_image = attr.ib(validator=attr.validators.instance_of(unicode))
     storageserver_image = attr.ib(validator=attr.validators.instance_of(unicode))
-
-    ssec2_access_key_id = attr.ib()
-    ssec2_secret_path = attr.ib()
 
     ssec2admin_keypair_name = attr.ib()
     ssec2admin_privkey_path = attr.ib()
@@ -74,9 +73,6 @@ class NullDeploymentConfiguration(object):
     s3_secret_key = None
     introducer_image = None
     storageserver_image = None
-
-    ssec2_access_key_id = None
-    ssec2_secret_path = None
 
     ssec2admin_keypair_name = None
     ssec2admin_privkey_path = None
