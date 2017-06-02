@@ -50,8 +50,6 @@ class DeploymentConfiguration(object):
     introducer_image = attr.ib(validator=attr.validators.instance_of(unicode))
     storageserver_image = attr.ib(validator=attr.validators.instance_of(unicode))
 
-    secretsfile = attr.ib(validator=attr.validators.instance_of(file))
-
     log_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
     stats_gatherer_furl = attr.ib(default=None, validator=attr.validators.optional(validate_furl))
 
@@ -65,8 +63,6 @@ class NullDeploymentConfiguration(object):
     s3_secret_key = None
     introducer_image = None
     storageserver_image = None
-
-    secretsfile = open("/dev/full", "a")
 
     log_gatherer_furl = None
     stats_gatherer_furl = None

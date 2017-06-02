@@ -68,7 +68,6 @@ class TestSignupModule(TestCase):
         self.MCUSTOMER_ID = u'cus_x14Charactersx'
         self.MSUBSCRIPTION_ID = u'sub_x14Characterx'
         self.MPLAN_ID = 'XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX'
-        self.MSECRETSFILE = 'MSECRETSFILE'
         self.MENCODED_IDS = 'on2wex3yge2eg2dbojqwg5dfoj4a-mn2xgx3yge2eg2dbojqwg5dfojzxq'
 
         FilePath(self.SIGNUPSPATH).setContent('')
@@ -86,8 +85,6 @@ class TestSignupModule(TestCase):
 
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
-
-            secretsfile=open(self.MSECRETSFILE, "a+b"),
         )
         self.SUBSCRIPTION = model.SubscriptionDetails(
             bucketname="lae-" + self.MENCODED_IDS,

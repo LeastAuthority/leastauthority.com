@@ -196,8 +196,6 @@ def makeService(options):
         introducer_image=options["introducer-image"].decode("ascii"),
         storageserver_image=options["storageserver-image"].decode("ascii"),
 
-        secretsfile=open(u"/dev/full", "w"),
-
         log_gatherer_furl=None,
         stats_gatherer_furl=None,
     )

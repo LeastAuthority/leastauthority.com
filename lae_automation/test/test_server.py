@@ -56,8 +56,6 @@ class NewTahoeConfigurationTests(TestCase):
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
 
-            secretsfile=fdopen(mkstemp()[0], "w"),
-
             log_gatherer_furl=log_gatherer_furl,
             stats_gatherer_furl=stats_gatherer_furl,
         )

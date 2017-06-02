@@ -354,8 +354,6 @@ def deployment_configurations():
 
         introducer_image=strategies.just(u"tahoe-introducer:latest"),
         storageserver_image=strategies.just(u"tahoe-storageserver:latest"),
-
-        secretsfile=strategies.just(open(devnull)),
     )
 
 deployment_configuration = deployment_configurations
