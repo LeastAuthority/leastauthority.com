@@ -45,8 +45,6 @@ ZEROPRODUCT = {
   "ec2_secret_path":      "mock_ec2_secret",
   "s3_access_key_id":     u"TESTS3S3S3S3S3S3S3S3",
   "s3_secret_path":       "mock_s3_secret",
-  "monitor_pubkey_path":  "MONITORKEYS.pub",
-  "monitor_privkey_path": "MONITORKEYS.pem"
 }
 
 MOCKEC2SECRETCONTENTS = 'EC2'*13+'E'
@@ -90,9 +88,6 @@ class TestSignupModule(TestCase):
 
             introducer_image=u"tahoe-introducer",
             storageserver_image=u"tahoe-storageserver",
-
-            monitor_pubkey_path=ZEROPRODUCT["monitor_pubkey_path"],
-            monitor_privkey_path=ZEROPRODUCT["monitor_privkey_path"],
 
             secretsfile=open(self.MSECRETSFILE, "a+b"),
             serverinfopath=self.SERVERINFOPATH,

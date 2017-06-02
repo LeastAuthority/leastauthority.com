@@ -50,9 +50,6 @@ class DeploymentConfiguration(object):
     introducer_image = attr.ib(validator=attr.validators.instance_of(unicode))
     storageserver_image = attr.ib(validator=attr.validators.instance_of(unicode))
 
-    monitor_pubkey_path = attr.ib()
-    monitor_privkey_path = attr.ib()
-
     secretsfile = attr.ib(validator=attr.validators.instance_of(file))
     serverinfopath = attr.ib(default="../serverinfo.csv")
 
@@ -70,9 +67,6 @@ class NullDeploymentConfiguration(object):
     s3_secret_key = None
     introducer_image = None
     storageserver_image = None
-
-    monitor_pubkey_path = None
-    monitor_privkey_path = None
 
     secretsfile = open("/dev/full", "a")
     serverinfopath = "/dev/full"
