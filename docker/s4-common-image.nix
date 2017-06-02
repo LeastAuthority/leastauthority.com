@@ -1,8 +1,7 @@
 { pkgs ? import <nixpkgs> {}
 , lae ? import ./lae.nix {} }:
 
-
-s4-common-image = pkgs.dockerTools.buildImage {
+pkgs.dockerTools.buildImage {
   name = "leastauthority/s4-common";
   config = {
     Env = [
@@ -22,4 +21,4 @@ s4-common-image = pkgs.dockerTools.buildImage {
       postBuild = "\${out}/bin/twistd --help > /dev/null";
     })
   ];
-};
+}
