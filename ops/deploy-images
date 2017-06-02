@@ -1,4 +1,4 @@
-#!/bin/sh -ex
+#!/usr/bin/env python
 
 # This simple script tags the local LAE S4 Docker images which currently have
 # the `latest` tag with several other interesting tags and pushes them to
@@ -8,18 +8,73 @@
 #
 #    $ # ... build some docker images ...
 #    $ docker login ..
-#    $ deploy-packaging
+#    $ deploy-images
 
-REV="$(git rev-parse --short HEAD)"
-VERSION="$(python setup.py --version)"
+from __future__ import print_function
 
-ORGANIZATION="leastauthority"
+from os import environ
+from subprocess import check_output
 
-REPOS="web grid-router subscription-manager subscription-converger foolscap-gatherer tahoe-introducer tahoe-storage"
+ORGANIZATION = "leastauthority"
+REPOS = [
+    "web",
+    "grid-router",
+    "subscription-manager",
+    "subscription-converger",
+    "foolscap-gatherer",
+    "tahoe-introducer",
+    "tahoe-storage",
+]
 
-for repo in ${REPOS}; do
-    docker-ci-deploy \
-	--version "${VERSION}" \
-	--version-semver \
-	"${ORGANIZATION}"/"${repo}"
-done
+
+# https://docs.travis-ci.com/user/environment-variables/#Convenience-Variables
+def pull_request_branch(environ):
+    return environ["TRAVIS_PULL_REQUEST_BRANCH"]
+
+
+def git_branch_name(environ):
+    return environ["TRAVIS_BRANCH"]
+
+
+TAG_BUILDERS = {
+    # If it's a build for pull request, get the branch of the pull request.
+    "pull_request": pull_request_branch,
+    # If it's a build for a push request, get the branch that was pushed to.
+    "push": git_branch_name,
+}
+
+
+def main():
+    event_type = environ["TRAVIS_EVENT_TYPE"]
+    try:
+        tag_builder = TAG_BUILDERS[event_type]
+    except KeyError:
+        print("Skipping push for event type {!r}".format(event_type))
+        return
+
+    tag_names = [tag_builder(environ)]
+    print("Tagging with {}".format(" ".join(tag_names)))
+
+    version = check_output(["python", "setup.py", "--version"]).strip()
+
+    deploy = "docker-ci-deploy"
+    tag_args = []
+    for tag in tag_names:
+        tag_args.extend(["--tag", tag])
+    args = [
+	"--version", version,
+        "--version-semver",
+    ]
+
+    if environ.get("CONTINUOUS_INTEGRATION") != "true":
+        args.append("--dry-run")
+
+    command = [deploy] + tag_args + args
+
+    for repo in REPOS:
+        complete_command = command + ["{}/{}".format(ORGANIZATION, repo)]
+        print(complete_command)
+        print(check_output(complete_command))
+
+
+main()
