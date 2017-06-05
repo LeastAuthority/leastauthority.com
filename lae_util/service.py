@@ -50,6 +50,7 @@ class AsynchronousService(object):
             d = self._d = DeferredContext(self._factory())
             d.addCallback(self._created)
             d.addErrback(self._failed)
+            d.addActionFinish()
 
 
     def stopService(self):
