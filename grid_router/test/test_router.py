@@ -68,6 +68,7 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         self.client = self.case.successResultOf(
             self.kubernetes.versioned_client()
         )
+        self.model = self.client.model
 
         self.deploy_config = NullDeploymentConfiguration()
         # Set a few dummy values that we know create_deployment requires.
@@ -144,7 +145,7 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         )
         deployment = create_deployment(self.deploy_config, details)
         self.deployments.append(deployment)
-        pod = derive_pod(deployment, ip)
+        pod = derive_pod(self.model, deployment, ip)
         self.case.successResultOf(self.client.create(pod))
 
         self.pods[pod] = (ip, storage_pem, storage_port, intro_pem, intro_port)
@@ -224,7 +225,7 @@ class GridRouterTests(TestCase):
         reactor = object()
         service = _GridRouterService(reactor)
         deployment = create_deployment(deploy_config, details)
-        pod = derive_pod(deployment, ip)
+        pod = derive_pod(self.model, deployment, ip)
         service.set_pods([pod])
         mapping = service.route_mapping()
         self.assertThat(
@@ -253,7 +254,7 @@ class GridRouterTests(TestCase):
         reactor = FakeReactor(network, clock)
         service = _GridRouterService(reactor)
         deployment = create_deployment(deploy_config, details)
-        pod = derive_pod(deployment, ip)
+        pod = derive_pod(self.model, deployment, ip)
         service.set_pods([pod])
         factory = service.factory()
         protocol = factory.buildProtocol(None)

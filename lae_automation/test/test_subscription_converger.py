@@ -257,6 +257,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
         self.subscription_client = memory_client(self.database.path, self.domain)
         self.kubernetes = memory_kubernetes()
+        self.kube_model = self.kubernetes.model
         self.kube_client = KubeClient(k8s=self.kubernetes.client())
         self.aws_region = FakeAWSServiceRegion(
             access_key="access_key_id",
@@ -370,7 +371,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.kubernetes._state_changed(
                 self.kubernetes._state.create(
                     u"replicasets",
-                    derive_replicaset(deployment),
+                    derive_replicaset(self.kube_model, deployment),
                 ),
             )
             self.has_replicaset.add(deployment.metadata.annotations[u"subscription"])
@@ -396,7 +397,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.kubernetes._state_changed(
                 self.kubernetes._state.create(
                     u"pods",
-                    derive_pod(deployment, data.draw(addresses)),
+                    derive_pod(self.kube_model, deployment, data.draw(addresses)),
                 ),
             )
             self.has_pod.add(deployment.metadata.annotations[u"subscription"])

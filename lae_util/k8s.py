@@ -7,11 +7,9 @@ Kubernetes-related functionality used across multiple Python packages.
 
 from functools import partial
 
-from txkube import v1, v1beta1
-
-def derive_pod(deployment, podIP):
+def derive_pod(model, deployment, podIP):
     # This is roughly how a Deployment creates a Pod... I suppose.
-    return v1.Pod(
+    return model.v1.Pod(
         metadata=deployment.metadata.transform(
             [u"name"],
             u"{}-{}".format(deployment.metadata.name, hex(id(deployment))),
@@ -19,21 +17,21 @@ def derive_pod(deployment, podIP):
         spec=deployment.spec.template.spec,
         # This is a cheat.  We can't really set the status.  But the
         # in-memory Kubernetes won't set it either so we'd better do it.
-        status=v1.PodStatus(
+        status=model.v1.PodStatus(
             podIP=podIP,
         ),
     )
 
 
-def derive_replicaset(deployment):
-    return v1beta1.ReplicaSet(
-        metadata=v1.ObjectMeta(
+def derive_replicaset(model, deployment):
+    return model.v1beta1.ReplicaSet(
+        metadata=model.v1.ObjectMeta(
             name=u"{}-{}".format(deployment.metadata.name, u"randomsuffix"),
             namespace=deployment.metadata.namespace,
             labels=deployment.metadata.labels,
             annotations=deployment.metadata.annotations,
         ),
-        spec=v1beta1.ReplicaSetSpec(
+        spec=model.v1beta1.ReplicaSetSpec(
             selector=deployment.spec.selector,
             template=deployment.spec.template,
         ),
