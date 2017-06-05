@@ -57,7 +57,6 @@ from .signup import get_bucket_name
 from .kubeclient import KubeClient, And, LabelSelector, NamespaceSelector
 
 from txkube import (
-    v1, v1beta1,
     network_kubernetes, authenticate_with_serviceaccount,
     network_kubernetes_from_context,
 )
@@ -274,9 +273,7 @@ def get_customer_grid_service(k8s, namespace):
             services = list(services)
             action.add_success_fields(service_count=len(services))
             if services:
-                # Work around
-                # https://github.com/LeastAuthority/txkube/issues/94
-                return v1.Service.create(services[0].serialize())
+                return services[0]
             return None
         d.addCallback(got_services)
         return d.addActionFinish()
@@ -559,7 +556,7 @@ def _converge_deployments(actual, config, subscriptions, k8s, aws):
         _ChangeableDeployments(deployments=actual.deployments),
     )
     def delete(sid):
-        return k8s.delete(v1beta1.Deployment(
+        return k8s.delete(k8s.model.v1beta1.Deployment(
             metadata=dict(
                 namespace=config.kubernetes_namespace,
                 name=deployment_name(sid),
@@ -584,7 +581,7 @@ def _converge_replicasets(actual, config, subscriptions, k8s, aws):
             deletes.append(replicaset.metadata)
 
     def delete(metadata):
-        return k8s.delete(v1beta1.ReplicaSet(metadata=metadata))
+        return k8s.delete(k8s.model.v1beta1.ReplicaSet(metadata=metadata))
 
     return list(partial(delete, metadata) for metadata in deletes)
 
@@ -600,7 +597,7 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
             deletes.append(pod.metadata)
 
     def delete(metadata):
-        return k8s.delete(v1.Pod(metadata=metadata))
+        return k8s.delete(k8s.model.v1.Pod(metadata=metadata))
 
     return list(partial(delete, metadata) for metadata in deletes)
 
@@ -629,7 +626,7 @@ def _converge_configmaps(actual, config, subscriptions, k8s, aws):
         _ChangeableConfigMaps(configmaps=actual.configmaps),
     )
     def delete(sid):
-        return k8s.delete(v1.ConfigMap(
+        return k8s.delete(k8s.model.v1.ConfigMap(
             metadata=dict(
                 namespace=config.kubernetes_namespace,
                 name=configmap_name(sid),
