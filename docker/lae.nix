@@ -377,8 +377,8 @@ rec {
       ];
 
     src = pkgs.fetchurl {
-      url = "https://github.com/LeastAuthority/txkube/archive/07ee68a9573ccf525c79ed1069a7d95ff56be791.zip";
-      sha256 = "1hhdxp6bjngd537f6hn9zp8b6rh44fm06acliw2aljdkzkm26hy1";
+      url = "https://github.com/LeastAuthority/txkube/archive/d17d479eb208bbf35ee7abce20e01f97fc050edf.zip";
+      sha256 = "0zl01krj4cn26vlrdhjscwpb3k53nxilhdbczy2n7dgzs1avggid";
     };
 
     checkPhase = ''
@@ -387,10 +387,10 @@ rec {
   };
 
 
-  txkube010 = pythonPackages.buildPythonPackage rec {
+  txkube020 = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txkube";
-    version = "0.1.0";
+    version = "0.2.0";
 
     buildInputs =
       with pythonPackages;
@@ -417,7 +417,7 @@ rec {
     format = "wheel";
 
     src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/36/53/cdba3d10f1284b1bcf7971855fbd8844dda17cdf9ce7db3d02e6858575b0/txkube-0.1.0-py2-none-any.whl";
+      url = "https://pypi.python.org/packages/4c/d4/0b78aa519be8596ef236b190582b72835e9c9a4d228d490c498663bd5807/txkube-0.2.0-py2-none-any.whl";
       sha256 = "1bfakg5skal9ba47zpshq5mxvw6h0ahjbzdz0mcinaxzn0qa9ag0";
     };
 
@@ -482,7 +482,7 @@ rec {
         twisted
         txaws030
         tahoe_lafs
-        txkube_master
+        txkube020
         magic-wormhole
       ];
 
