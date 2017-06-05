@@ -378,7 +378,7 @@ rec {
 
     src = pkgs.fetchurl {
       url = "https://github.com/LeastAuthority/txkube/archive/d17d479eb208bbf35ee7abce20e01f97fc050edf.zip";
-      sha256 = "0zl01krj4cn26vlrdhjscwpb3k53nxilhdbczy2n7dgzs1avggid";
+      sha256 = "1hhdxp6bjngd537f6hn9zp8b6rh44fm06acliw2aljdkzkm26hy1";
     };
 
     checkPhase = ''
@@ -418,7 +418,7 @@ rec {
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/4c/d4/0b78aa519be8596ef236b190582b72835e9c9a4d228d490c498663bd5807/txkube-0.2.0-py2-none-any.whl";
-      sha256 = "1bfakg5skal9ba47zpshq5mxvw6h0ahjbzdz0mcinaxzn0qa9ag0";
+      sha256 = "0zl01krj4cn26vlrdhjscwpb3k53nxilhdbczy2n7dgzs1avggid";
     };
 
     checkPhase = ''
