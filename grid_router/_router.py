@@ -35,6 +35,7 @@ from eliot import (
 )
 from eliot.twisted import DeferredContext
 
+from lae_util.service import AsynchronousService
 from lae_automation.kubeclient import KubeClient
 from lae_automation.subscription_converger import (
     KubernetesClientOptionsMixin, get_customer_grid_pods, divert_errors_to_log,
@@ -79,21 +80,35 @@ def makeService(options, reactor=None):
         needs.
 
     :return IService: A service which is capable of accepting Foolscap
-    connections and routing/proxying them to the appropriate destination.
+        connections and routing/proxying them to the appropriate destination.
     """
     if reactor is None:
         # Boo global reactor
         # https://twistedmatrix.com/trac/ticket/9063
         from twisted.internet import reactor
-    service = grid_router_service(
-        reactor,
-        options.get_kubernetes_service(reactor).client(),
-        options["kubernetes-namespace"].decode("ascii"),
-        options["interval"],
-    )
+
+    parent = _GridRouterParent()
+
     if options["eliot-to-stdout"]:
-        _EliotLogging().setServiceParent(service)
-    return service
+        _EliotLogging().setServiceParent(parent)
+
+    def make_service():
+        kubernetes = options.get_kubernetes_service(reactor)
+        d = kubernetes.versioned_client()
+        d.addCallback(
+            lambda client: grid_router_service(
+                reactor,
+                client,
+                options["kubernetes-namespace"].decode("ascii"),
+                options["interval"],
+            )
+        )
+        return d
+
+    service = AsynchronousService(make_service)
+    service.setServiceParent(parent)
+
+    return parent
 
 
 
@@ -102,6 +117,7 @@ def grid_router_service(reactor, k8s, kubernetes_namespace, interval):
     Create an ``IService`` which can route connections to the correct grid.
     """
     service = _GridRouterParent()
+    service.setName(_GridRouterService.name)
 
     router = _GridRouterService(reactor)
     router.setServiceParent(service)
