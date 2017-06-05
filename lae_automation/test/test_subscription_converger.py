@@ -158,7 +158,7 @@ class ConvergeHelperTests(TestCase):
         self.expectThat(service, Is(None))
 
         # If it does exist, we should get it!
-        self.successResultOf(client.create(new_service(u"default")))
+        self.successResultOf(client.create(new_service(u"default", client.k8s.model)))
         service = self.successResultOf(get_customer_grid_service(client, u"default"))
         # A weak assertion working around
         # https://github.com/LeastAuthority/txkube/issues/94
@@ -333,17 +333,16 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             and service.status is None
         ]
         assume([] != services)
-        model = self.kubernetes._state.model
         for service in services:
             self.kubernetes._state_changed(self.kubernetes._state.replace(
                 u"services",
                 service,
                 service.set(
                     u"status",
-                    model.v1.ServiceStatus(
-                        loadBalancer=model.v1.LoadBalancerStatus(
+                    self.kube_model.v1.ServiceStatus(
+                        loadBalancer=self.kube_model.v1.LoadBalancerStatus(
                             ingress=[
-                                model.v1.LoadBalancerIngress(
+                                self.kube_model.v1.LoadBalancerIngress(
                                     hostname=data.draw(domains()),
                                 ),
                             ],
@@ -466,7 +465,11 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def check_configmaps(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
             assert_that(
-                create_configuration(config, database.get_subscription(sid)),
+                create_configuration(
+                    config,
+                    database.get_subscription(sid),
+                    self.kube_model,
+                ),
                 GoodEquals(k8s_state.configmaps.item_by_name(configmap_name(sid))),
             )
 
@@ -525,7 +528,11 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def check_deployments(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
             actual = k8s_state.deployments.item_by_name(deployment_name(sid))
-            reference = create_deployment(config, database.get_subscription(sid))
+            reference = create_deployment(
+                config,
+                database.get_subscription(sid),
+                self.kube_model,
+            )
             def drop_transients(deployment):
                 simplified = deployment.transform(
                     [u"metadata", u"annotations", u"deployment.kubernetes.io/revision"], discard,
@@ -539,7 +546,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             )
 
     def check_service(self, database, config, subscriptions, k8s_state, aws):
-        expected = new_service(config.kubernetes_namespace)
+        expected = new_service(config.kubernetes_namespace, self.kube_model)
         actual = k8s_state.services.item_by_name(expected.metadata.name)
         # Don't actually care about the status.  That belongs to the server
         # anyway.
@@ -618,7 +625,7 @@ class SubscriptionConvergenceTests(TestCase):
     def test_service_creation(self, data):
         """
         After the Service is created and its LoadBalancer is allocated, the
-        "infrastructure" Route53 stat eis created (eg the introducer domain
+        "infrastructure" Route53 state is created (eg the introducer domain
         name).
 
         This is a regression test derived from ``test_convergence``.  It

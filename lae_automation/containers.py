@@ -11,8 +11,6 @@ from pyrsistent import ny
 
 from .server import marshal_tahoe_configuration
 
-from txkube import v1, v1beta1
-
 CONTAINERIZED_SUBSCRIPTION_VERSION = u"2"
 
 # This metadata is associated with everything that is part of S4 which is
@@ -29,18 +27,17 @@ CUSTOMER_METADATA_LABELS = {
     u"version": CONTAINERIZED_SUBSCRIPTION_VERSION,
 }
 
-_S4_CUSTOMER_METADATA = v1.ObjectMeta(labels=CUSTOMER_METADATA_LABELS)
 
 
-_S4_INFRASTRUCTURE_METADATA = _S4_CUSTOMER_METADATA.transform(
-    [u"labels", u"component"], u"Infrastructure",
-)
+def _s4_customer_metadata(model):
+    return model.v1.ObjectMeta(labels=CUSTOMER_METADATA_LABELS)
 
 
 
-CONFIGMAP_TEMPLATE = v1.ConfigMap(
-    metadata=_S4_CUSTOMER_METADATA,
-)
+def _s4_infrastructure_metadata(model):
+    return _s4_customer_metadata(model).transform(
+        [u"labels", u"component"], u"Infrastructure",
+    )
 
 
 
@@ -77,11 +74,15 @@ def configmap_public_host(subscription_id, domain):
 
 
 
-def create_configuration(deploy_config, details):
+def create_configuration(deploy_config, details, model):
     """
     Create the Kubernetes configuration resource necessary to provide
     service to the given subscription.
     """
+    configmap_template = model.v1.ConfigMap(
+        metadata=_s4_customer_metadata(model),
+    )
+
     name = configmap_name(details.subscription_id)
     metadata = subscription_metadata(details)
     public_host = configmap_public_host(details.subscription_id, deploy_config.domain)
@@ -114,7 +115,7 @@ def create_configuration(deploy_config, details):
         stats_gatherer_furl=deploy_config.stats_gatherer_furl,
     )
 
-    return CONFIGMAP_TEMPLATE.transform(
+    return configmap_template.transform(
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
         # Assign it a unique identifier the deployment can use to refer to it.
         [u"metadata", u"name"], name,
@@ -130,112 +131,113 @@ def create_configuration(deploy_config, details):
     )
 
 
-DEPLOYMENT_TEMPLATE = v1beta1.Deployment(
-    metadata=_S4_CUSTOMER_METADATA,
-    status=None,
-    spec={
-	u"replicas": 1,
-        u"selector": {
-            u"matchExpressions": None,
-            u"matchLabels": None,
-        },
-        # Don't keep an arbitrarily large amount of history around.
-        u"revisionHistoryLimit": 2,
-	u"template": {
-	    u"metadata": _S4_CUSTOMER_METADATA,
-	    u"spec": {
-		u"volumes": [
-		    {
-			u"name": u"introducer-config-volume",
-			u"configMap": {
-			    u"items": [
-				{
-				    u"key": u"introducer.json",
-				    u"path": u"introducer.json"
-				}
-			    ]
-			}
-		    },
-		    {
-			u"name": u"storage-config-volume",
-			u"configMap": {
-			    u"items": [
-				{
-				    u"key": u"storage.json",
-				    u"path": u"storage.json"
-				}
-			    ]
-			}
-		    }
-		],
-		u"containers": [
-		    {
-                        # The image is filled in at instantiation time.
-			u"name": u"introducer",
-			u"volumeMounts": [
-			    {
-				u"name": u"introducer-config-volume",
-				u"mountPath": u"/app/config"
+def _deployment_template(model):
+    return model.v1beta1.Deployment(
+        metadata=_s4_customer_metadata(model),
+        status=None,
+        spec={
+	    u"replicas": 1,
+            u"selector": {
+                u"matchExpressions": None,
+                u"matchLabels": None,
+            },
+            # Don't keep an arbitrarily large amount of history around.
+            u"revisionHistoryLimit": 2,
+	    u"template": {
+	        u"metadata": _s4_customer_metadata(model),
+	        u"spec": {
+		    u"volumes": [
+		        {
+			    u"name": u"introducer-config-volume",
+			    u"configMap": {
+			        u"items": [
+				    {
+				        u"key": u"introducer.json",
+				        u"path": u"introducer.json"
+				    }
+			        ]
 			    }
-			],
-                        u"ports": [],
-                        # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
-                        u"resources": {
-                            u"requests": {
-                                # The introducer has a very simple job to do.
-                                # The client doesn't need to interact with it
-                                # very often, either.  This overrides the
-                                # default of 100m which is much too much.
-                                u"cpu": u"5m",
-
-                                # Observed virtual size of the introducer
-                                # around 206MiB.  Observed resident size of
-                                # the introducer around 54MiB.  Normally I
-                                # don't think the working set size of the
-                                # introducer should change much - it does very
-                                # little work.
-                                u"memory": u"64Mi",
-                            },
-                        },
-		    },
-		    {
-                        # The image is filled in at instantiation time.
-			u"name": u"storageserver",
-			u"volumeMounts": [
-			    {
-				u"name": u"storage-config-volume",
-				u"mountPath": u"/app/config"
+		        },
+		        {
+			    u"name": u"storage-config-volume",
+			    u"configMap": {
+			        u"items": [
+				    {
+				        u"key": u"storage.json",
+				        u"path": u"storage.json"
+				    }
+			        ]
 			    }
-			],
-                        u"ports": [],
-                        # # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
-                        u"resources": {
-                            u"requests": {
-                                # The storage server needs to shuffle bytes
-                                # from the backend to the client.  This is a
-                                # fairly inexpensive operation.  Give this
-                                # container more CPU than the introducer but
-                                # still not much.  Less than the default of
-                                # 100m (which would limit us to 10 storage
-                                # servers per CPU).
-                                u"cpu": u"15m",
+		        }
+		    ],
+		    u"containers": [
+		        {
+                            # The image is filled in at instantiation time.
+			    u"name": u"introducer",
+			    u"volumeMounts": [
+			        {
+				    u"name": u"introducer-config-volume",
+				    u"mountPath": u"/app/config"
+			        }
+			    ],
+                            u"ports": [],
+                            # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+                            u"resources": {
+                                u"requests": {
+                                    # The introducer has a very simple job to do.
+                                    # The client doesn't need to interact with it
+                                    # very often, either.  This overrides the
+                                    # default of 100m which is much too much.
+                                    u"cpu": u"5m",
 
-                                # Observed virtual size of the introducer
-                                # around 299MiB.  Observed resident size of
-                                # the introducer around 64MiB.  I would expect
-                                # the working set size of the storage server
-                                # to vary more than that of the introducer.
-                                # It handles buffering of more data flowing
-                                # between clients and S3.
-                                u"memory": u"128Mi",
+                                    # Observed virtual size of the introducer
+                                    # around 206MiB.  Observed resident size of
+                                    # the introducer around 54MiB.  Normally I
+                                    # don't think the working set size of the
+                                    # introducer should change much - it does very
+                                    # little work.
+                                    u"memory": u"64Mi",
+                                },
                             },
-                        },
-		    }
-		]
+		        },
+		        {
+                            # The image is filled in at instantiation time.
+			    u"name": u"storageserver",
+			    u"volumeMounts": [
+			        {
+				    u"name": u"storage-config-volume",
+				    u"mountPath": u"/app/config"
+			        }
+			    ],
+                            u"ports": [],
+                            # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
+                            u"resources": {
+                                u"requests": {
+                                    # The storage server needs to shuffle bytes
+                                    # from the backend to the client.  This is a
+                                    # fairly inexpensive operation.  Give this
+                                    # container more CPU than the introducer but
+                                    # still not much.  Less than the default of
+                                    # 100m (which would limit us to 10 storage
+                                    # servers per CPU).
+                                    u"cpu": u"15m",
+
+                                    # Observed virtual size of the introducer
+                                    # around 299MiB.  Observed resident size of
+                                    # the introducer around 64MiB.  I would expect
+                                    # the working set size of the storage server
+                                    # to vary more than that of the introducer.
+                                    # It handles buffering of more data flowing
+                                    # between clients and S3.
+                                    u"memory": u"128Mi",
+                                },
+                            },
+		        }
+		    ]
+	        }
 	    }
-	}
-    }
-)
+        }
+    )
 
 
 
@@ -249,7 +251,7 @@ def deployment_name(subscription_id):
 
 
 
-def create_deployment(deploy_config, details):
+def create_deployment(deploy_config, details, model):
     name = deployment_name(details.subscription_id)
     configmap = configmap_name(details.subscription_id)
 
@@ -262,7 +264,7 @@ def create_deployment(deploy_config, details):
     intro_name = u"introducer"
     storage_name = u"storage"
 
-    deployment = DEPLOYMENT_TEMPLATE.transform(
+    deployment = _deployment_template(model).transform(
         # Make sure it ends up in our namespace.
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
 
@@ -296,10 +298,10 @@ def create_deployment(deploy_config, details):
         # a v1.Service, we need to make them unique across all pods the
         # service is going to select.  That's all pods for customer grids.
         ["spec", "template", "spec", "containers", 0, "ports", 0],
-        v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
+        model.v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
 
         ["spec", "template", "spec", "containers", 1, "ports", 0],
-        v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
+        model.v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
 
         # Some other metadata to make inspecting this stuff a little easier.
         # First added to the pod template...
@@ -325,33 +327,37 @@ def create_deployment(deploy_config, details):
 # Some background on performance of many-ports Services:
 # http://blog.kubernetes.io/2016/09/high-performance-network-policies-kubernetes.html
 S4_CUSTOMER_GRID_NAME = u"s4-customer-grids"
-CUSTOMER_GRID_SERVICE = v1.Service(
-    metadata=_S4_CUSTOMER_METADATA.set(
-        u"name", S4_CUSTOMER_GRID_NAME,
-    ).set(
-        u"annotations", {
-            # The default idle timeout in both Kubernetes (1.5.x) and AWS
-            # appears to be 60 seconds.  That's annoyingly low for Tahoe-LAFS
-            # connections.  Let's raise it a bit.
-            #
-            # https://github.com/LeastAuthority/LeastAuthoritarians/issues/191
-            u"service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout": u"3600",
-        },
-    ),
-    spec={
-	u"type": u"LoadBalancer",
-        # We don't actually want to select the "customer" pods here.  Instead,
-        # want the grid router pod.
-	u"selector": _S4_INFRASTRUCTURE_METADATA.labels,
-        u"ports": [
-            {u"name": u"introducer", u"protocol": u"TCP", u"port": 10000},
-            {u"name": u"storage", u"protocol": u"TCP", u"port": 10001},
-        ],
-    }
-)
 
-def new_service(namespace):
-    return CUSTOMER_GRID_SERVICE.transform(
+def _customer_grid_service(model):
+    return model.v1.Service(
+        metadata=_s4_customer_metadata(model).set(
+            u"name", S4_CUSTOMER_GRID_NAME,
+        ).set(
+            u"annotations", {
+                # The default idle timeout in both Kubernetes (1.5.x) and AWS
+                # appears to be 60 seconds.  That's annoyingly low for Tahoe-LAFS
+                # connections.  Let's raise it a bit.
+                #
+                # https://github.com/LeastAuthority/LeastAuthoritarians/issues/191
+                u"service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout": u"3600",
+            },
+        ),
+        spec={
+	    u"type": u"LoadBalancer",
+            # We don't actually want to select the "customer" pods here.  Instead,
+            # want the grid router pod.
+	    u"selector": _s4_infrastructure_metadata(model).labels,
+            u"ports": [
+                {u"name": u"introducer", u"protocol": u"TCP", u"port": 10000},
+                {u"name": u"storage", u"protocol": u"TCP", u"port": 10001},
+            ],
+        }
+    )
+
+
+
+def new_service(namespace, model):
+    return _customer_grid_service(model).transform(
         [u"metadata", u"namespace"], namespace,
     )
 

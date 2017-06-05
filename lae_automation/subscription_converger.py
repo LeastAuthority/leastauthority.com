@@ -47,9 +47,11 @@ from .containers import (
     CONTAINERIZED_SUBSCRIPTION_VERSION,
     CUSTOMER_METADATA_LABELS,
     autopad_b32decode,
-    configmap_name, deployment_name,
+    configmap_name,
+    deployment_name,
     configmap_public_host,
-    create_configuration, create_deployment,
+    create_configuration,
+    create_deployment,
     new_service,
 )
 from .initialize import create_user_bucket
@@ -508,7 +510,7 @@ def _converge_s3(actual, config, subscription, k8s, aws):
 def _converge_service(actual, config, subscriptions, k8s, aws):
     create_service = (actual.service is None)
     if create_service:
-        service = new_service(config.kubernetes_namespace)
+        service = new_service(config.kubernetes_namespace, k8s.k8s.model)
         # Create it if it was missing.
         return [lambda: k8s.create(service)]
 
@@ -556,14 +558,14 @@ def _converge_deployments(actual, config, subscriptions, k8s, aws):
         _ChangeableDeployments(deployments=actual.deployments),
     )
     def delete(sid):
-        return k8s.delete(k8s.model.v1beta1.Deployment(
+        return k8s.delete(k8s.k8s.model.v1beta1.Deployment(
             metadata=dict(
                 namespace=config.kubernetes_namespace,
                 name=deployment_name(sid),
             ),
         ))
     def create(subscription):
-        return k8s.create(create_deployment(config, subscription))
+        return k8s.create(create_deployment(config, subscription, k8s.k8s.model))
 
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
@@ -581,7 +583,7 @@ def _converge_replicasets(actual, config, subscriptions, k8s, aws):
             deletes.append(replicaset.metadata)
 
     def delete(metadata):
-        return k8s.delete(k8s.model.v1beta1.ReplicaSet(metadata=metadata))
+        return k8s.delete(k8s.k8s.model.v1beta1.ReplicaSet(metadata=metadata))
 
     return list(partial(delete, metadata) for metadata in deletes)
 
@@ -597,7 +599,7 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
             deletes.append(pod.metadata)
 
     def delete(metadata):
-        return k8s.delete(k8s.model.v1.Pod(metadata=metadata))
+        return k8s.delete(k8s.k8s.model.v1.Pod(metadata=metadata))
 
     return list(partial(delete, metadata) for metadata in deletes)
 
@@ -626,14 +628,14 @@ def _converge_configmaps(actual, config, subscriptions, k8s, aws):
         _ChangeableConfigMaps(configmaps=actual.configmaps),
     )
     def delete(sid):
-        return k8s.delete(k8s.model.v1.ConfigMap(
+        return k8s.delete(k8s.k8s.model.v1.ConfigMap(
             metadata=dict(
                 namespace=config.kubernetes_namespace,
                 name=configmap_name(sid),
             ),
         ))
     def create(subscription):
-        return k8s.create(create_configuration(config, subscription))
+        return k8s.create(create_configuration(config, subscription, k8s.k8s.model))
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
     return deletes + creates

@@ -41,7 +41,7 @@ from lae_util.k8s import derive_pod
 from .. import Options, makeService
 from .._router import _GridRouterService
 
-from txkube import memory_kubernetes
+from txkube import memory_kubernetes, v1_5_model as model
 
 
 
@@ -143,7 +143,11 @@ class GridRouterStateMachine(RuleBasedStateMachine):
             introducer_port_number=intro_port,
             storage_port_number=storage_port,
         )
-        deployment = create_deployment(self.deploy_config, details)
+        deployment = create_deployment(
+            self.deploy_config,
+            details,
+            self.model,
+        )
         self.deployments.append(deployment)
         pod = derive_pod(self.model, deployment, ip)
         self.case.successResultOf(self.client.create(pod))
@@ -224,8 +228,8 @@ class GridRouterTests(TestCase):
     def test_pods_to_routes(self, ip, deploy_config, details):
         reactor = object()
         service = _GridRouterService(reactor)
-        deployment = create_deployment(deploy_config, details)
-        pod = derive_pod(self.model, deployment, ip)
+        deployment = create_deployment(deploy_config, details, model)
+        pod = derive_pod(model, deployment, ip)
         service.set_pods([pod])
         mapping = service.route_mapping()
         self.assertThat(
@@ -253,8 +257,8 @@ class GridRouterTests(TestCase):
         clock = Clock()
         reactor = FakeReactor(network, clock)
         service = _GridRouterService(reactor)
-        deployment = create_deployment(deploy_config, details)
-        pod = derive_pod(self.model, deployment, ip)
+        deployment = create_deployment(deploy_config, details, model)
+        pod = derive_pod(model, deployment, ip)
         service.set_pods([pod])
         factory = service.factory()
         protocol = factory.buildProtocol(None)
