@@ -68,7 +68,7 @@ from .strategies import (
 )
 from ..kubeclient import KubeClient
 
-from txkube import v1, memory_kubernetes
+from txkube import memory_kubernetes
 
 def is_lower():
     return MatchesPredicate(
@@ -332,16 +332,17 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             and service.status is None
         ]
         assume([] != services)
+        model = self.kubernetes._state.model
         for service in services:
             self.kubernetes._state_changed(self.kubernetes._state.replace(
                 u"services",
                 service,
                 service.set(
                     u"status",
-                    v1.ServiceStatus(
-                        loadBalancer=v1.LoadBalancerStatus(
+                    model.v1.ServiceStatus(
+                        loadBalancer=model.v1.LoadBalancerStatus(
                             ingress=[
-                                v1.LoadBalancerIngress(
+                                model.v1.LoadBalancerIngress(
                                     hostname=data.draw(domains()),
                                 ),
                             ],
