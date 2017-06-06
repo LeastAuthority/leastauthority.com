@@ -108,12 +108,12 @@ rec {
     doCheck = false;
   };
 
-  pyrsistent0_12_0 = pythonPackages.pyrsistent.override rec {
-    name = "pyrsistent-0.12.0";
+  pyrsistent0_12_2 = pythonPackages.pyrsistent.override rec {
+    name = "pyrsistent-0.12.2";
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/p/pyrsistent/${name}.tar.gz";
-      sha256 = "1k7kjj1nyzyk1jfiawlg16s1nsmypwmfqsq9yc3iba1m6jq9rq9p";
+      sha256 = "0pp8d3kz21c4lzsxzaz34g9zsngrjb8fp0qs3wgf0j62k7cr71ia";
     };
 
     # Test suite requires an old version of Hypothesis :(
@@ -126,7 +126,7 @@ rec {
 
     propagatedBuildInputs =
       with pythonPackages;
-      [ six zope_interface pyrsistent0_12_0 ];
+      [ six zope_interface pyrsistent0_12_2 ];
 
     src = pkgs.fetchurl {
       url = "mirror://pypi/e/eliot/${name}.tar.gz";
@@ -279,7 +279,7 @@ rec {
         attrs
         dateutil
         incremental
-        pyrsistent0_12_0
+        pyrsistent0_12_2
         constantly
         pyopenssl16_2_0
         pem
@@ -349,10 +349,10 @@ rec {
     };
   };
 
-  txkube010 = pythonPackages.buildPythonPackage rec {
+  txkube_master = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "txkube";
-    version = "0.1.0";
+    version = "0.2.0.dev0";
 
     buildInputs =
       with pythonPackages;
@@ -362,7 +362,45 @@ rec {
       with pythonPackages; [
         zope_interface
         attrs
-        pyrsistent0_12_0
+        pyrsistent0_12_2
+        incremental
+        service-identity
+        pyopenssl16_2_0
+        twisted
+        pem
+        eliot
+        dateutil
+        pykube
+        treq
+        pyyaml
+        klein
+      ];
+
+    src = pkgs.fetchurl {
+      url = "https://github.com/LeastAuthority/txkube/archive/d17d479eb208bbf35ee7abce20e01f97fc050edf.zip";
+      sha256 = "1hhdxp6bjngd537f6hn9zp8b6rh44fm06acliw2aljdkzkm26hy1";
+    };
+
+    checkPhase = ''
+      trial txkube
+    '';
+  };
+
+
+  txkube020 = pythonPackages.buildPythonPackage rec {
+    name = "${pname}-${version}";
+    pname = "txkube";
+    version = "0.2.0";
+
+    buildInputs =
+      with pythonPackages;
+      [ testtools220 hypothesis fixtures300 eliot-tree ];
+
+    propagatedBuildInputs =
+      with pythonPackages; [
+        zope_interface
+        attrs
+        pyrsistent0_12_2
         incremental
         service-identity
         pyopenssl16_2_0
@@ -379,8 +417,8 @@ rec {
     format = "wheel";
 
     src = pkgs.fetchurl {
-      url = "https://pypi.python.org/packages/36/53/cdba3d10f1284b1bcf7971855fbd8844dda17cdf9ce7db3d02e6858575b0/txkube-0.1.0-py2-none-any.whl";
-      sha256 = "1bfakg5skal9ba47zpshq5mxvw6h0ahjbzdz0mcinaxzn0qa9ag0";
+      url = "https://pypi.python.org/packages/4c/d4/0b78aa519be8596ef236b190582b72835e9c9a4d228d490c498663bd5807/txkube-0.2.0-py2-none-any.whl";
+      sha256 = "0zl01krj4cn26vlrdhjscwpb3k53nxilhdbczy2n7dgzs1avggid";
     };
 
     checkPhase = ''
@@ -444,7 +482,7 @@ rec {
         twisted
         txaws030
         tahoe_lafs
-        txkube010
+        txkube020
         magic-wormhole
       ];
 

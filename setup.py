@@ -31,7 +31,7 @@ setup(
 
         # If we had a dev extra ourselves, the [dev] part of this would
         # probably be better placed there.
-        "txkube[dev]==0.1.0",
+        "txkube[dev]",
 
         # For the test suite.
         "hypothesis==3.6.1",

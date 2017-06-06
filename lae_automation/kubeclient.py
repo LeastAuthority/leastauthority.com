@@ -8,7 +8,7 @@ import attr.validators
 
 from txkube import (
     IKubernetesClient,
-    v1, v1beta1, network_kubernetes, authenticate_with_serviceaccount,
+    network_kubernetes, authenticate_with_serviceaccount,
 )
 
 @attr.s(frozen=True)
@@ -71,19 +71,19 @@ class KubeClient(object):
         return self.k8s.list(kind).addCallback(select, selector)
 
     def get_configmaps(self, selector=NullSelector()):
-        return self.select(v1.ConfigMap, selector)
+        return self.select(self.k8s.model.v1.ConfigMap, selector)
 
     def get_services(self, selector=NullSelector()):
-        return self.select(v1.Service, selector)
+        return self.select(self.k8s.model.v1.Service, selector)
 
     def get_deployments(self, selector=NullSelector()):
-        return self.select(v1beta1.Deployment, selector)
+        return self.select(self.k8s.model.v1beta1.Deployment, selector)
 
     def get_replicasets(self, selector=NullSelector()):
-        return self.select(v1beta1.ReplicaSet, selector)
+        return self.select(self.k8s.model.v1beta1.ReplicaSet, selector)
 
     def get_pods(self, selector=NullSelector()):
-        return self.select(v1.Pod, selector)
+        return self.select(self.k8s.model.v1.Pod, selector)
 
     def delete(self, obj):
         return self.k8s.delete(obj)

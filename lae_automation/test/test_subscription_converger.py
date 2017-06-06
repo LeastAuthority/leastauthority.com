@@ -68,7 +68,7 @@ from .strategies import (
 )
 from ..kubeclient import KubeClient
 
-from txkube import v1, memory_kubernetes
+from txkube import memory_kubernetes
 
 def is_lower():
     return MatchesPredicate(
@@ -158,7 +158,7 @@ class ConvergeHelperTests(TestCase):
         self.expectThat(service, Is(None))
 
         # If it does exist, we should get it!
-        self.successResultOf(client.create(new_service(u"default")))
+        self.successResultOf(client.create(new_service(u"default", client.k8s.model)))
         service = self.successResultOf(get_customer_grid_service(client, u"default"))
         # A weak assertion working around
         # https://github.com/LeastAuthority/txkube/issues/94
@@ -223,7 +223,8 @@ class MakeServiceTests(TestCase):
             b"--k8s-config", config.path,
             b"--no-eliot-to-stdout",
         ])
-        verifyObject(IService, makeService(options))
+        service = makeService(options)
+        verifyObject(IService, service)
 
 
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
@@ -256,6 +257,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
         self.subscription_client = memory_client(self.database.path, self.domain)
         self.kubernetes = memory_kubernetes()
+        self.kube_model = self.kubernetes.model
         self.kube_client = KubeClient(k8s=self.kubernetes.client())
         self.aws_region = FakeAWSServiceRegion(
             access_key="access_key_id",
@@ -337,10 +339,10 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                 service,
                 service.set(
                     u"status",
-                    v1.ServiceStatus(
-                        loadBalancer=v1.LoadBalancerStatus(
+                    self.kube_model.v1.ServiceStatus(
+                        loadBalancer=self.kube_model.v1.LoadBalancerStatus(
                             ingress=[
-                                v1.LoadBalancerIngress(
+                                self.kube_model.v1.LoadBalancerIngress(
                                     hostname=data.draw(domains()),
                                 ),
                             ],
@@ -368,7 +370,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.kubernetes._state_changed(
                 self.kubernetes._state.create(
                     u"replicasets",
-                    derive_replicaset(deployment),
+                    derive_replicaset(self.kube_model, deployment),
                 ),
             )
             self.has_replicaset.add(deployment.metadata.annotations[u"subscription"])
@@ -394,7 +396,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.kubernetes._state_changed(
                 self.kubernetes._state.create(
                     u"pods",
-                    derive_pod(deployment, data.draw(addresses)),
+                    derive_pod(self.kube_model, deployment, data.draw(addresses)),
                 ),
             )
             self.has_pod.add(deployment.metadata.annotations[u"subscription"])
@@ -463,7 +465,11 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def check_configmaps(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
             assert_that(
-                create_configuration(config, database.get_subscription(sid)),
+                create_configuration(
+                    config,
+                    database.get_subscription(sid),
+                    self.kube_model,
+                ),
                 GoodEquals(k8s_state.configmaps.item_by_name(configmap_name(sid))),
             )
 
@@ -522,7 +528,11 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def check_deployments(self, database, config, subscriptions, k8s_state, aws):
         for sid in subscriptions:
             actual = k8s_state.deployments.item_by_name(deployment_name(sid))
-            reference = create_deployment(config, database.get_subscription(sid))
+            reference = create_deployment(
+                config,
+                database.get_subscription(sid),
+                self.kube_model,
+            )
             def drop_transients(deployment):
                 simplified = deployment.transform(
                     [u"metadata", u"annotations", u"deployment.kubernetes.io/revision"], discard,
@@ -536,7 +546,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             )
 
     def check_service(self, database, config, subscriptions, k8s_state, aws):
-        expected = new_service(config.kubernetes_namespace)
+        expected = new_service(config.kubernetes_namespace, self.kube_model)
         actual = k8s_state.services.item_by_name(expected.metadata.name)
         # Don't actually care about the status.  That belongs to the server
         # anyway.
@@ -615,7 +625,7 @@ class SubscriptionConvergenceTests(TestCase):
     def test_service_creation(self, data):
         """
         After the Service is created and its LoadBalancer is allocated, the
-        "infrastructure" Route53 stat eis created (eg the introducer domain
+        "infrastructure" Route53 state is created (eg the introducer domain
         name).
 
         This is a regression test derived from ``test_convergence``.  It

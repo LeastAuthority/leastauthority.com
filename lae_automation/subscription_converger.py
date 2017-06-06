@@ -39,15 +39,19 @@ from txaws.route53.model import (
     Name, CNAME, RRSetKey, RRSet, delete_rrset, create_rrset, upsert_rrset,
 )
 
+from lae_util.service import AsynchronousService
+
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
 from .containers import (
     CONTAINERIZED_SUBSCRIPTION_VERSION,
     CUSTOMER_METADATA_LABELS,
     autopad_b32decode,
-    configmap_name, deployment_name,
+    configmap_name,
+    deployment_name,
     configmap_public_host,
-    create_configuration, create_deployment,
+    create_configuration,
+    create_deployment,
     new_service,
 )
 from .initialize import create_user_bucket
@@ -55,7 +59,6 @@ from .signup import get_bucket_name
 from .kubeclient import KubeClient, And, LabelSelector, NamespaceSelector
 
 from txkube import (
-    v1, v1beta1,
     network_kubernetes, authenticate_with_serviceaccount,
     network_kubernetes_from_context,
 )
@@ -150,16 +153,40 @@ class Options(_Options, KubernetesClientOptionsMixin):
             self["endpoint"] = self["endpoint"][:-1]
 
 
+
 def makeService(options):
     # Boo global reactor
     # https://twistedmatrix.com/trac/ticket/9063
     from twisted.internet import reactor
     agent = Agent(reactor)
-    subscription_client = SMClient(endpoint=options["endpoint"], agent=agent, cooperator=task)
+    subscription_client = SMClient(
+        endpoint=options["endpoint"],
+        agent=agent,
+        cooperator=task,
+    )
+
+    if options["eliot-to-stdout"]:
+        # XXX not exactly the right place for this
+        from eliot import to_file
+        from sys import stdout
+        to_file(stdout)
 
     kubernetes = options.get_kubernetes_service(reactor)
 
-    k8s_client = kubernetes.client()
+    def get_k8s_client():
+        d = kubernetes.versioned_client()
+        d.addCallback(
+            _finish_convergence_service,
+            options,
+            subscription_client,
+        )
+        return d
+
+    return AsynchronousService(get_k8s_client)
+
+
+
+def _finish_convergence_service(k8s_client, options, subscription_client):
     k8s = KubeClient(k8s=k8s_client)
 
     access_key_id = FilePath(options["aws-access-key-id-path"]).getContent().strip()
@@ -169,12 +196,6 @@ def makeService(options):
         access_key=access_key_id,
         secret_key=secret_access_key,
     ))
-
-    if options["eliot-to-stdout"]:
-        # XXX not exactly the right place for this
-        from eliot import to_file
-        from sys import stdout
-        to_file(stdout)
 
     Message.log(
         event=u"convergence-service:key-notification",
@@ -202,7 +223,11 @@ def makeService(options):
 
     return TimerService(
         options["interval"],
-        divert_errors_to_log(converge, u"subscription_converger"), config, subscription_client, k8s, aws,
+        divert_errors_to_log(converge, u"subscription_converger"),
+        config,
+        subscription_client,
+        k8s,
+        aws,
     )
 
 def divert_errors_to_log(f, scope):
@@ -250,9 +275,7 @@ def get_customer_grid_service(k8s, namespace):
             services = list(services)
             action.add_success_fields(service_count=len(services))
             if services:
-                # Work around
-                # https://github.com/LeastAuthority/txkube/issues/94
-                return v1.Service.create(services[0].serialize())
+                return services[0]
             return None
         d.addCallback(got_services)
         return d.addActionFinish()
@@ -487,7 +510,7 @@ def _converge_s3(actual, config, subscription, k8s, aws):
 def _converge_service(actual, config, subscriptions, k8s, aws):
     create_service = (actual.service is None)
     if create_service:
-        service = new_service(config.kubernetes_namespace)
+        service = new_service(config.kubernetes_namespace, k8s.k8s.model)
         # Create it if it was missing.
         return [lambda: k8s.create(service)]
 
@@ -535,14 +558,14 @@ def _converge_deployments(actual, config, subscriptions, k8s, aws):
         _ChangeableDeployments(deployments=actual.deployments),
     )
     def delete(sid):
-        return k8s.delete(v1beta1.Deployment(
+        return k8s.delete(k8s.k8s.model.v1beta1.Deployment(
             metadata=dict(
                 namespace=config.kubernetes_namespace,
                 name=deployment_name(sid),
             ),
         ))
     def create(subscription):
-        return k8s.create(create_deployment(config, subscription))
+        return k8s.create(create_deployment(config, subscription, k8s.k8s.model))
 
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
@@ -560,7 +583,7 @@ def _converge_replicasets(actual, config, subscriptions, k8s, aws):
             deletes.append(replicaset.metadata)
 
     def delete(metadata):
-        return k8s.delete(v1beta1.ReplicaSet(metadata=metadata))
+        return k8s.delete(k8s.k8s.model.v1beta1.ReplicaSet(metadata=metadata))
 
     return list(partial(delete, metadata) for metadata in deletes)
 
@@ -576,7 +599,7 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
             deletes.append(pod.metadata)
 
     def delete(metadata):
-        return k8s.delete(v1.Pod(metadata=metadata))
+        return k8s.delete(k8s.k8s.model.v1.Pod(metadata=metadata))
 
     return list(partial(delete, metadata) for metadata in deletes)
 
@@ -605,14 +628,14 @@ def _converge_configmaps(actual, config, subscriptions, k8s, aws):
         _ChangeableConfigMaps(configmaps=actual.configmaps),
     )
     def delete(sid):
-        return k8s.delete(v1.ConfigMap(
+        return k8s.delete(k8s.k8s.model.v1.ConfigMap(
             metadata=dict(
                 namespace=config.kubernetes_namespace,
                 name=configmap_name(sid),
             ),
         ))
     def create(subscription):
-        return k8s.create(create_configuration(config, subscription))
+        return k8s.create(create_configuration(config, subscription, k8s.k8s.model))
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
     return deletes + creates

@@ -15,6 +15,8 @@ from foolscap.furl import decode_furl
 
 from testtools.matchers import Equals
 
+from txkube import v1_5_model as model
+
 from lae_util.testtools import TestCase
 
 from .strategies import deployment_configurations, subscription_details
@@ -33,7 +35,7 @@ class CreateConfigurationTests(TestCase):
         introducer tub id and swissnum and a connection hint derived from the
         address information on the subscription details.
         """
-        config = create_configuration(deploy_config, details)
+        config = create_configuration(deploy_config, details, model)
         introducer_furl = loads(config.data["introducer.json"])["introducer"]["introducer_furl"]
         self.assertThat(
             decode_furl(introducer_furl),
