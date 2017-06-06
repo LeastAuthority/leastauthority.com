@@ -382,6 +382,13 @@ spec:
   strategy:
     type: 'RollingUpdate'
 
+  selector:
+    matchLabels:
+      provider: 'LeastAuthority'
+      app: 's4'
+      component: 'Infrastructure'
+      version: '2'
+
   # This is a pod spec template.  The deployment uses it to create new pods
   # sometimes (for example, when starting up for the first time, upgrading, or
   # doing horizontal scale-out).
