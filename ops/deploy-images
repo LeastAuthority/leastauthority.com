@@ -17,10 +17,7 @@ from subprocess import check_output
 
 ORGANIZATION = "leastauthority"
 REPOS = [
-    "web",
-    "grid-router",
-    "subscription-manager",
-    "subscription-converger",
+    "s4-common-image",
     "foolscap-gatherer",
     "tahoe-introducer",
     "tahoe-storage",

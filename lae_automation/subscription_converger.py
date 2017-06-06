@@ -147,6 +147,7 @@ class Options(_Options, KubernetesClientOptionsMixin):
         KubernetesClientOptionsMixin.postOptions(self)
         if self["domain"] is None:
             raise UsageError("--domain is required")
+        self["domain"] = self["domain"].strip()
         if self["endpoint"] is None:
             raise UsageError("--endpoint is required")
         if self["endpoint"].endswith("/"):
