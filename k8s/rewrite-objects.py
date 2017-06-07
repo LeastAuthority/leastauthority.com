@@ -14,13 +14,16 @@ from twisted.python.usage import UsageError, Options
 class RewriteOptions(Options):
     optParameters = [
         ("tag", None, None,
-         "Rewrite leastauthority.com image tags to the given value "
+         "Rewrite leastauthority.com image tags to the given value.",
+        ),
+        ("git-tag", None, None,
+         "Rewrite leastauthority.com image tags to the given value."
          "(interpreted by git rev-parse).",
         ),
     ]
 
     optFlags = [
-        ("volumes", None, "Replace PersistentVolumeClaims with emptyDirs."),
+        ("no-volumes", None, "Replace PersistentVolumeClaims with emptyDirs."),
     ]
 
 
@@ -34,11 +37,13 @@ def main(argv):
 
     docs = freeze(list(safe_load_all(stdin)))
 
-    if o["tag"] is not None:
-        tag = check_output(["git", "rev-parse", "--short", o["tag"]]).strip()
+    if o["git-tag"] is not None:
+        tag = check_output(["git", "rev-parse", "--short", o["git-tag"]]).strip()
         docs = rewrite_tags(docs, tag)
+    elif o["tag"] is not None:
+        docs = rewrite_tags(docs, o["tag"])
 
-    if o["volumes"]:
+    if o["no-volumes"]:
         docs = stub_all_volumes(docs)
 
     stdout.write(safe_dump_all(thaw(docs)))
