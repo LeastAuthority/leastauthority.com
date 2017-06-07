@@ -287,7 +287,31 @@ Credentials for the dashboard can be found (and modified) in the "kubecfg"::
 Upgrade Kubernetes
 ~~~~~~~~~~~~~~~~~~
 
-See https://github.com/kubernetes/kops/blob/master/docs/upgrade.md
+For full and proper details and documentation,
+see the `kops documentation <https://github.com/kubernetes/kops/blob/master/docs/upgrade.md>`_
+
+The general idea is along the lines of:
+
+.. code-block::
+
+  $ NAME=k8s-staging.leastauthority.com
+  $ export KOPS_FEATURE_FLAGS="+DrainAndValidateRollingUpdate"
+  $ kops edit cluster $NAME
+    ... change kubernetesVersion ...
+  $ kops update cluster $NAME
+  $ kops update cluster $NAME --yes
+  $ kops rolling-update cluster $NAME
+  $ kops rolling-update cluster $NAME --yes
+
+There are some problems with this approach.
+
+  * Downtime between when non-redundant pods are evicted from a node being rolled and when they manage to start up on another node.
+  * Insufficient capacity to schedule all pods during update when the cluster is down by a node.
+  * Thundering herd as many pods are evicted at once in relatively small clusters.
+  * Infrastructure pods are on the same footing as customer deployment pods.
+    * should one or the other be prioritized?
+  * drain refuses to touch stateful containers!
+
 
 Deploy LeastAuthority.com (From Scratch)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
