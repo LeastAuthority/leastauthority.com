@@ -84,7 +84,7 @@ class SiteOptions(Options):
         try:
             return serverFromString(self.reactor, description)
         except Exception as e:
-            print(e)
+            import pdb; pdb.set_trace()
             raise UsageError(
                 u"Could not parse {label} value {description}: {error}".format(
                     label=label,
