@@ -76,7 +76,7 @@ class SiteOptions(Options):
         self["secure-ports"] = []
         self["insecure-ports"] = []
 
-    def _parse_endpoint(self, description):
+    def _parse_endpoint(self, label, description):
         """
         Parse a Twisted endpoint description string into an endpoint or
         convert the parse error into a raised L{UsageError}.
@@ -85,7 +85,8 @@ class SiteOptions(Options):
             return serverFromString(self.reactor, description)
         except Exception as e:
             raise UsageError(
-                u"Could not parse {description}: {error}".format(
+                u"Could not parse {label} value {description}: {error}".format(
+                    label=label,
                     description=description,
                     error=str(e),
                     )
@@ -98,7 +99,7 @@ class SiteOptions(Options):
         website will be served here.  This option must be used at
         least once.
         """
-        endpoint = self._parse_endpoint(endpoint_description)
+        endpoint = self._parse_endpoint(u"secure-port", endpoint_description)
         self["secure-ports"].append(endpoint)
 
     def opt_insecure_port(self, endpoint_description):
@@ -109,7 +110,7 @@ class SiteOptions(Options):
         location where the website can be accessed.  This option may
         be used zero or more times.
         """
-        endpoint = self._parse_endpoint(endpoint_description)
+        endpoint = self._parse_endpoint(u"insecure-port", endpoint_description)
         self["insecure-ports"].append(endpoint)
 
     def postOptions(self):
