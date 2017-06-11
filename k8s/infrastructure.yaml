@@ -267,23 +267,21 @@ spec:
       # them into the container.
       - name: 'web-secrets'
         secret:
-          secretName: 'website-secrets'
-      - name: 'flapp-secrets'
-        secret:
-          secretName: 'signup-secrets'
+          secretName: 's4'
           defaultMode: 0444
           items:
-          - key: 'domain'
-            path: 'domain'
-          # XXX Should allocate some Route53-only keys for this.
-          # XXX Woops nope also need S3 because I decided to use these for tahoe-lafs s3 cloud backend too.
-          # XXX Maybe I should create _two_ sets of keys...
-          # XXX OTOH There's also IAM roles which might be even better?
-          - key: 'aws-s4.key'
-            path: 'aws.key'
-          - key: 'aws-s4.id'
-            path: 'aws.id'
-
+          - key: 'website-cert.pem'
+            path: 'cert.pem'
+          - key: 'website-chain.pem'
+            path: 'chain.pem'
+          - key: 'website-key.pem'
+            path: 'key.pem'
+          - key: 'smtp.password'
+            path: 'smtp.password'
+          - key: 'stripe-private.key'
+            path: 'stripe-private.key'
+          - key: 'stripe-publishable.key'
+            path: 'stripe-publishable.key'
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -302,9 +300,9 @@ spec:
           - '--wormhole-result-path=/app/data/logs/wormhole-claims.jsons'
           - "--secure-port=ssl\
               :8443\
-              :certKey=/app/k8s_secrets/website-cert.pem\
-              :privateKey=/app/k8s_secrets/website-key.pem\
-              :extraCertChain=/app/k8s_secrets/website-chain.pem"
+              :certKey=/app/k8s_secrets/cert.pem\
+              :privateKey=/app/k8s_secrets/key.pem\
+              :extraCertChain=/app/k8s_secrets/chain.pem"
           - '--insecure-port=tcp:8080'
           - '--redirect-to-port=$(S4_SERVICE_PORT_HTTPS_SERVER)'
           - '--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key'
@@ -474,7 +472,7 @@ spec:
       volumes:
       - name: 'convergence-secrets'
         secret:
-          secretName: 'signup-secrets'
+          secretName: 's4'
           defaultMode: 0444
           items:
           # XXX Should allocate some Route53-only keys for this.
@@ -514,7 +512,7 @@ spec:
           - name: 'S4_DOMAIN'
             valueFrom:
               secretKeyRef:
-                name: 'signup-secrets'
+                name: 's4'
                 key: 'domain'
           - name: 'POD_KUBERNETES_NAMESPACE'
             valueFrom:
@@ -580,7 +578,7 @@ spec:
           - name: 'S4_DOMAIN'
             valueFrom:
               secretKeyRef:
-                name: 'signup-secrets'
+                name: 's4'
                 key: 'domain'
         workingDir: '/app/run'
 
