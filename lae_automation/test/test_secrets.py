@@ -9,6 +9,7 @@ from __future__ import unicode_literals
 
 from yaml import safe_load
 
+from testtools import skipUnless
 from testtools.matchers import AfterPreprocessing, Equals
 
 from lae_util.testtools import TestCase
@@ -26,9 +27,10 @@ class SecretsFileTests(TestCase):
     """
     Tests for the files in the repository which contain the S4 secrets.
     """
-    if not (STAGING.exists() and PRODUCTION.exists()):
-        skip = "Staging and production secrets missing."
-
+    @skipUnless(
+        STAGING.exists() and PRODUCTION.exists(),
+        "Staging and production secrets missing.",
+    )
     def test_same_staging_and_production_structure(self):
         """
         The staging and production secrets files have the same overall structure
