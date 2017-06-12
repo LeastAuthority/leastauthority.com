@@ -435,6 +435,8 @@ spec:
           - '--k8s-service-account'
           - '--kubernetes-namespace'
           - '$(POD_KUBERNETES_NAMESPACE)'
+          - '--eliot-destination'
+          - 'fluentd:http://fluentd/grid-router'
         env:
           - name: 'POD_KUBERNETES_NAMESPACE'
             valueFrom:
