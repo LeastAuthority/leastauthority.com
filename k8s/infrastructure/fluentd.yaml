@@ -54,7 +54,7 @@ data:
       # Use a local file to buffer events before writing them to S3.
       buffer_type file
       # This is the path to the buffer file.
-      buffer_path /var/run/fluent/s3
+      buffer_path /tmp/fluent/s3
 
       # Even though the buffer is a file, flush it to S3 at shutdown.  The
       # container has no persistent storage.
