@@ -24,6 +24,7 @@ from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint, serverFromString
 from twisted.application.service import MultiService, Service
 from twisted.application.internet import StreamServerEndpointService, TimerService
+from twisted.web.client import Agent
 
 from foolscap.tokens import BananaError, NegotiationError
 from foolscap.util import isSubstring
@@ -36,6 +37,7 @@ from eliot import (
 from eliot.twisted import DeferredContext
 
 from lae_util.service import AsynchronousService
+from lae_util.fluentd_destination import FluentdDestination
 from lae_automation.kubeclient import KubeClient
 from lae_automation.subscription_converger import (
     KubernetesClientOptionsMixin, get_customer_grid_pods, divert_errors_to_log,
@@ -55,18 +57,34 @@ class Options(_Options, KubernetesClientOptionsMixin):
 
     def __init__(self):
         _Options.__init__(self)
-        self["eliot-to-stdout"] = True
+        self["destinations"] = []
 
 
-    def opt_no_eliot_to_stdout(self):
+    def opt_eliot_destination(self, description):
         """
-        Do not dump Eliot logs to stdout.
+        Add an Eliot logging destination.
         """
-        self["eliot-to-stdout"] = False
+        self["destinations"].append(
+            _parse_destination_description(description)
+        )
 
 
     def postOptions(self):
         KubernetesClientOptionsMixin.postOptions(self)
+
+
+
+def _parse_destination_description(description):
+    if description == "stdout":
+        return lambda reactor: FileDestination(sys.stdout)
+    if description.startswith("fluentd:"):
+        return lambda reactor: FluentdDestination(
+            agent=Agent(reactor),
+            fluentd_url=description[len("fluentd:"):],
+        )
+    raise ValueError(
+        "Unknown destination description: {}".format(description)
+    )
 
 
 
@@ -89,8 +107,11 @@ def makeService(options, reactor=None):
 
     parent = _GridRouterParent()
 
-    if options["eliot-to-stdout"]:
-        _EliotLogging().setServiceParent(parent)
+    _EliotLogging(destinations=list(
+        get_destination(reactor)
+        for get_destination
+        in options["destinations"]
+    )).setServiceParent(parent)
 
     def make_service():
         kubernetes = options.get_kubernetes_service(reactor)
@@ -155,18 +176,23 @@ class _GridRouterParent(MultiService):
 class _EliotLogging(Service):
     """
     A service which adds stdout as an Eliot destination while it is running.
-
-    :ivar _destination: The Eliot destination which will is added by this
-        service.
     """
-    _destination = FileDestination(sys.stdout)
+    def __init__(self, destinations):
+        """
+        :param list destinations: The Eliot destinations which will is added by this
+            service.
+        """
+        self.destinations = destinations
+
 
     def startService(self):
-        add_destination(self._destination)
+        for dest in self.destinations:
+            add_destination(dest)
 
 
     def stopService(self):
-        remove_destination(self._destination)
+        for dest in self.destinations:
+            remove_destination(dest)
 
 
 
