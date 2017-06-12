@@ -1,0 +1,148 @@
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 'fluentd'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of the monitoring
+    # system.
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+
+  type: 'NodePort'
+
+  ports:
+  # expose fluentd http so the http input plugin will be usable.
+  - name: 'http-server'
+    port: 80
+    targetPort: 80
+    protocol: 'TCP'
+---
+kind: 'ConfigMap'
+apiVersion: 'v1'
+metadata:
+  name: 'fluent-configuration'
+data:
+  configuration: |
+    <source>
+      @type http
+      port 8000
+      bind 0.0.0.0
+    </source>
+    <match s4-signup>
+      @type s3
+
+      # Get the key id and secret key from somewhere else, somewhere more
+      # secret-y.
+      @include /fluentd/secrets/s3.conf
+
+      # Write the logs to this bucket.
+      s3_bucket com.leastauthority.fluentd
+      s3_region us-east-1
+
+      # Write them into / in the bucket
+      path /
+
+      # Use a local file to buffer events before writing them to S3.
+      buffer_type file
+      # This is the path to the buffer file.
+      buffer_path /var/run/fluent/s3
+
+      # Even though the buffer is a file, flush it to S3 at shutdown.  The
+      # container has no persistent storage.
+      flush_at_shutdown true
+
+      # This controls how often the buffer is flushed to S3.  Whenever this
+      # data format string would change, the buffer is flushed and a new one
+      # started.
+      time_slice_format %Y%m%d%H
+
+      # But wait a little while after the change over to collect straggler
+      # events that belong in the old timeslice but just haven't arrived yet.
+      time_slice_wait 10m
+
+      # Use UTC as the timezone for logged timestamps.
+      utc
+
+      # Write JSON to the log.  Include some identifying metadata in each
+      # event.
+      format json
+      include_time_key
+      time_key fluent_time
+      include_tag_key
+      tag_key fluent_tag
+    </match>
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'fluentd'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # We'll configure Fluentd with output plugins that don't rely on the local
+  # filesystem.  So it will be safe to have multiple replicas for
+  # availability/performance/whatever.
+  replicas: 2
+  strategy:
+    type: 'RollingUpdate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        component: 'Monitoring'
+        version: '1'
+    spec:
+      volumes:
+      - name: 'fluent-configuration'
+        configMap:
+          name: 'fluent-configuration'
+          items:
+            - key: 'configuration'
+              path: 'fluentd.conf'
+      - name: 'fluent-secrets'
+        secret:
+          secretName: 's4'
+          defaultMode: 0444
+          items:
+          - key: 'fluent-s3.conf'
+            path: 's3.conf'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      - name: 'fluentd'
+        imagePullPolicy: 'Always'
+        # We have a range of options for controlling the version:
+        # v0.12.36, v0.12, stable, latest
+        image: 'fluent/fluentd:v0.12'
+        env:
+        - name: 'FLUENTD_CONF'
+          value: 'fluentd.conf'
+        - name: 'FLUENTD_OPT'
+          value: '--no-supervisor'
+        volumeMounts:
+          - mountPath: '/fluentd/etc'
+            name: 'fluent-configuration'
+          - mountPath: '/fluentd/secrets'
+            name: 'fluent-secrets'
+        resources:
+          limits:
+            cpu: '100m'
+            memory: '200Mi'
