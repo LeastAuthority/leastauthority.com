@@ -11,7 +11,7 @@ from attr.validators import provides, instance_of
 from twisted.python.url import URL
 from twisted.web.iweb import IAgent
 from twisted.web.client import FileBodyProducer
-
+from twisted.web.http_headers import Headers
 
 @attr.s(frozen=True)
 class FluentdDestination(object):
@@ -22,7 +22,7 @@ class FluentdDestination(object):
         self.agent.request(
             b"POST",
             self.fluentd_url.asURI().asText().encode("ascii"),
-            None,
+            Headers({"Content-Type":["application/x-www-form-urlencoded"]}),
             FileBodyProducer(BytesIO(b"json=" + dumps(message))),
         )
 
