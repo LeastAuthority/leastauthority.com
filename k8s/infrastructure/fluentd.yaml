@@ -92,10 +92,7 @@ spec:
   # but not all of them (as is the default).
   revisionHistoryLimit: 3
 
-  # We'll configure Fluentd with output plugins that don't rely on the local
-  # filesystem.  So it will be safe to have multiple replicas for
-  # availability/performance/whatever.
-  replicas: 2
+  replicas: 1
   strategy:
     type: 'RollingUpdate'
 
