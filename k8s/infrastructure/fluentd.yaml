@@ -37,7 +37,7 @@ data:
       port 8000
       bind 0.0.0.0
     </source>
-    <match {s4-signup,grid-router}>
+    <match {signup,grid-router,subscription-mananger,subscription-converger}>
       @type s3
 
       # Get the key id and secret key from somewhere else, somewhere more
