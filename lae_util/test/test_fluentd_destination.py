@@ -18,7 +18,9 @@ from twisted.web.resource import Resource
 from twisted.web.server import Site
 from twisted.web.client import Agent
 from twisted.internet.task import deferLater
-from twisted.trial.unittest import TestCase
+from twisted.trial.unittest import TestCase as AsyncTestCase
+
+from lae_util.testtools import TestCase
 
 from ..fluentd_destination import (
     FluentdDestination,
@@ -38,7 +40,7 @@ class Collector(Resource):
 
 
 
-class FluentdDestinationTests(TestCase):
+class FluentdDestinationTests(AsyncTestCase):
     def test_posted(self):
         root = Resource()
         collector = Collector()
