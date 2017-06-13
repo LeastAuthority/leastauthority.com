@@ -23,7 +23,7 @@ spec:
   # expose fluentd http so the http input plugin will be usable.
   - name: 'http-server'
     port: 80
-    targetPort: 80
+    targetPort: 8000
     protocol: 'TCP'
 ---
 kind: 'ConfigMap'
