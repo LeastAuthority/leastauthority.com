@@ -221,7 +221,6 @@ class MakeServiceTests(TestCase):
             b"--kubernetes", b"kubernetes",
             b"--k8s-context", u"testing",
             b"--k8s-config", config.path,
-            b"--no-eliot-to-stdout",
         ])
         service = makeService(options)
         verifyObject(IService, service)

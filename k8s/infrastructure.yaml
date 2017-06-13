@@ -509,6 +509,8 @@ spec:
           - '--storageserver-image=leastauthority/tahoe-storage:2.0'
           - '--endpoint=http://subscription-manager/'
           - '--k8s-service-account'
+          - '--eliot-destination'
+          - 'fluentd:http://fluentd/subscription-converger'
         workingDir: '/app/run'
         env:
           - name: 'S4_DOMAIN'
