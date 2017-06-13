@@ -138,10 +138,6 @@ class Options(_Options, KubernetesClientOptionsMixin):
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
     ]
 
-    def __init__(self):
-        _Options.__init__(self)
-        self["destinations"] = []
-
     opt_eliot_destination = opt_eliot_destination
 
     def postOptions(self):
@@ -165,7 +161,7 @@ def makeService(options):
 
     eliot_logging_service(
         reactor,
-        options["destinations"],
+        options.get("destinations", []),
     ).setServiceParent(parent)
 
     agent = Agent(reactor)

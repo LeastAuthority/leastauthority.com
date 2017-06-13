@@ -44,7 +44,7 @@ def opt_eliot_destination(self, description):
     """
     Add an Eliot logging destination.
     """
-    self["destinations"].append(
+    self.setdefault("destinations", []).append(
         _parse_destination_description(description)
     )
 

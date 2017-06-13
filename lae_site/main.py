@@ -80,7 +80,6 @@ class SiteOptions(Options):
         self.reactor = reactor
         self["secure-ports"] = []
         self["insecure-ports"] = []
-        self["destinations"] = []
 
 
     opt_eliot_destination = opt_eliot_destination
@@ -164,7 +163,7 @@ def main(reactor, *argv):
 
     eliot_logging_service(
         reactor,
-        o["destinations"],
+        o.get("destinations", []),
     ).startService()
 
     logging.basicConfig(

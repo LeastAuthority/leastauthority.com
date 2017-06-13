@@ -362,11 +362,6 @@ class Options(_Options):
         ("listen-address", "l", None, "Endpoint on which the server should listen."),
     ]
 
-    def __init__(self):
-        _Options.__init__(self)
-        # For opt_eliot_destination
-        self["destinations"] = []
-
     opt_eliot_destination = opt_eliot_destination
 
     def postOptions(self):
@@ -390,7 +385,7 @@ def makeService(options):
 
     eliot_logging_service(
         reactor,
-        options["destinations"],
+        options.get("destinations", []),
     ).setServiceParent(parent)
 
     make_dirs(options["state-path"].path)
