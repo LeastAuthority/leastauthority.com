@@ -128,7 +128,7 @@ spec:
         imagePullPolicy: 'Always'
         # We have a range of options for controlling the version:
         # v0.12.36, v0.12, stable, latest
-        image: 'leastauthority/fluentd:552.fluentd.1'
+        image: 'leastauthority/fluentd'
         env:
         - name: 'FLUENTD_CONF'
           value: 'fluentd.conf'
