@@ -12,8 +12,11 @@ from attr.validators import provides, instance_of
 from twisted.python.url import URL
 from twisted.application.service import Service
 from twisted.web.iweb import IAgent
-from twisted.web.client import Agent
-from twisted.web.client import FileBodyProducer
+from twisted.web.client import (
+    HTTPConnectionPool,
+    Agent,
+    FileBodyProducer,
+)
 from twisted.web.http_headers import Headers
 
 from eliot import (
@@ -24,6 +27,10 @@ from eliot import (
 
 @attr.s(frozen=True)
 class FluentdDestination(object):
+    """
+    ``FluentdDestination`` is an Eliot log destination which sends logs to a
+    Fluentd via the HTTP input plugin.
+    """
     agent = attr.ib(validator=provides(IAgent))
     fluentd_url = attr.ib(validator=instance_of(URL))
 
@@ -55,7 +62,10 @@ def _parse_destination_description(description):
         return lambda reactor: FileDestination(stdout)
     if description.startswith("fluentd:"):
         return lambda reactor: FluentdDestination(
-            agent=Agent(reactor),
+            # Construct the pool ourselves with the default of using
+            # persistent connections to override Agent's default of not using
+            # persistent connections.
+            agent=Agent(reactor, pool=HTTPConnectionPool(reactor)),
             fluentd_url=URL.fromText(
                 description[len("fluentd:"):].decode("ascii"),
             )
