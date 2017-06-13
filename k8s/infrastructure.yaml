@@ -309,6 +309,8 @@ spec:
           - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
           - '--site-logs-path=/app/data/logs/sitelogs'
           - '--subscription-manager=http://subscription-manager/'
+          - '--eliot-destination'
+          - 'fluentd:http://fluentd/signup'
         workingDir: '/app/run'
         ports:
         # We just happen to know this is the ports this container listens on.

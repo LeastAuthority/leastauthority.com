@@ -23,6 +23,11 @@ from twisted.python.filepath import FilePath
 
 from wormhole import wormhole
 
+from lae_util.fluentd_destination import (
+    opt_eliot_destination,
+    eliot_logging_service,
+)
+
 from lae_site.handlers import make_resource, make_site, make_redirector_site
 from lae_site.handlers.submit_subscription import Stripe, Mailer
 
@@ -75,6 +80,11 @@ class SiteOptions(Options):
         self.reactor = reactor
         self["secure-ports"] = []
         self["insecure-ports"] = []
+        self["destinations"] = []
+
+
+    opt_eliot_destination = opt_eliot_destination
+
 
     def _parse_endpoint(self, label, description):
         """
@@ -92,6 +102,7 @@ class SiteOptions(Options):
                     )
                 )
 
+
     def opt_secure_port(self, endpoint_description):
         """
         A Twisted endpoint description string describing an address at
@@ -101,6 +112,7 @@ class SiteOptions(Options):
         """
         endpoint = self._parse_endpoint(u"secure-port", endpoint_description)
         self["secure-ports"].append(endpoint)
+
 
     def opt_insecure_port(self, endpoint_description):
         """
@@ -112,6 +124,7 @@ class SiteOptions(Options):
         """
         endpoint = self._parse_endpoint(u"insecure-port", endpoint_description)
         self["insecure-ports"].append(endpoint)
+
 
     def postOptions(self):
         required_options = [
@@ -141,12 +154,18 @@ class SiteOptions(Options):
             p.makedirs()
 
 
+
 def main(reactor, *argv):
     o = SiteOptions(reactor)
     try:
         o.parseOptions(argv)
     except UsageError as e:
         raise SystemExit(str(e))
+
+    eliot_logging_service(
+        reactor,
+        o["destinations"],
+    ).startService()
 
     logging.basicConfig(
         stream = sys.stdout,
