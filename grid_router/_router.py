@@ -12,20 +12,16 @@ This module is used with ``twisted.application.service.ServiceMaker`` in
 expose this code via ``twist`` and ``twistd``.
 """
 
-import sys
-
 from twisted.python.log import msg
 # Rename this so we can have a module attribute named Options.  Stick with the
 # attribute-import style (as opposed to just importing ``usage``) to get early
 # warning of mistakes.
 from twisted.python.usage import Options as _Options
-from twisted.python.url import URL
 from twisted.internet.defer import Deferred
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint, serverFromString
-from twisted.application.service import MultiService, Service
+from twisted.application.service import MultiService
 from twisted.application.internet import StreamServerEndpointService, TimerService
-from twisted.web.client import Agent
 
 from foolscap.tokens import BananaError, NegotiationError
 from foolscap.util import isSubstring
@@ -33,12 +29,16 @@ from foolscap.util import isSubstring
 from pyrsistent import freeze, pmap, pset
 
 from eliot import (
-    Message, start_action, FileDestination, add_destination, remove_destination,
+    Message,
+    start_action,
 )
 from eliot.twisted import DeferredContext
 
 from lae_util.service import AsynchronousService
-from lae_util.fluentd_destination import FluentdDestination
+from lae_util.fluentd_destination import (
+    eliot_logging_service,
+    opt_eliot_destination,
+)
 from lae_automation.kubeclient import KubeClient
 from lae_automation.subscription_converger import (
     KubernetesClientOptionsMixin, get_customer_grid_pods, divert_errors_to_log,
@@ -58,36 +58,13 @@ class Options(_Options, KubernetesClientOptionsMixin):
 
     def __init__(self):
         _Options.__init__(self)
+        # For opt_eliot_destination
         self["destinations"] = []
 
-
-    def opt_eliot_destination(self, description):
-        """
-        Add an Eliot logging destination.
-        """
-        self["destinations"].append(
-            _parse_destination_description(description)
-        )
-
+    opt_eliot_destination = opt_eliot_destination
 
     def postOptions(self):
         KubernetesClientOptionsMixin.postOptions(self)
-
-
-
-def _parse_destination_description(description):
-    if description == "stdout":
-        return lambda reactor: FileDestination(sys.stdout)
-    if description.startswith("fluentd:"):
-        return lambda reactor: FluentdDestination(
-            agent=Agent(reactor),
-            fluentd_url=URL.fromText(
-                description[len("fluentd:"):].decode("ascii"),
-            )
-        )
-    raise ValueError(
-        "Unknown destination description: {}".format(description)
-    )
 
 
 
@@ -110,11 +87,10 @@ def makeService(options, reactor=None):
 
     parent = _GridRouterParent()
 
-    _EliotLogging(destinations=list(
-        get_destination(reactor)
-        for get_destination
-        in options["destinations"]
-    )).setServiceParent(parent)
+    eliot_logging_service(
+        reactor,
+        options["destinations"],
+    ).setServiceParent(parent)
 
     def make_service():
         kubernetes = options.get_kubernetes_service(reactor)
@@ -173,29 +149,6 @@ class _GridRouterParent(MultiService):
         :see: ``_GridRouterService.route_mapping``
         """
         return self.getServiceNamed(_GridRouterService.name).route_mapping()
-
-
-
-class _EliotLogging(Service):
-    """
-    A service which adds stdout as an Eliot destination while it is running.
-    """
-    def __init__(self, destinations):
-        """
-        :param list destinations: The Eliot destinations which will is added by this
-            service.
-        """
-        self.destinations = destinations
-
-
-    def startService(self):
-        for dest in self.destinations:
-            add_destination(dest)
-
-
-    def stopService(self):
-        for dest in self.destinations:
-            remove_destination(dest)
 
 
 

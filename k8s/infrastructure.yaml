@@ -576,6 +576,8 @@ spec:
           - '/app/data/subscriptions'
           - '--listen-address'
           - 'tcp:8000'
+          - '--eliot-destination'
+          - 'fluentd:http://fluentd/grid-router'
         env:
           - name: 'S4_DOMAIN'
             valueFrom:

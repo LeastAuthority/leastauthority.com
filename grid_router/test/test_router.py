@@ -8,10 +8,8 @@ Tests for ``grid_router``.
 from socket import AF_INET, socket
 
 from testtools.matchers import (
-    MatchesStructure,
     AfterPreprocessing,
     Equals,
-    IsInstance,
 )
 
 from hypothesis import given, assume
@@ -19,7 +17,6 @@ from hypothesis.strategies import choices
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
 from twisted.python.log import msg
-from twisted.python.url import URL
 from twisted.trial.unittest import TestCase as AsyncTestCase
 from twisted.internet.address import IPv4Address
 from twisted.internet.interfaces import IReactorTCP, IReactorTime
@@ -28,7 +25,6 @@ from twisted.internet.endpoints import AdoptedStreamServerEndpoint, TCP4ServerEn
 from twisted.test.proto_helpers import StringTransport, MemoryReactor
 from twisted.python.components import proxyForInterface
 from twisted.internet.task import Clock, deferLater
-from twisted.web.client import Agent
 
 from pyrsistent import freeze
 
@@ -46,7 +42,7 @@ from lae_automation.model import NullDeploymentConfiguration, SubscriptionDetail
 from lae_util.k8s import derive_pod
 
 from .. import Options, makeService
-from .._router import _GridRouterService, _parse_destination_description
+from .._router import _GridRouterService
 
 from txkube import memory_kubernetes, v1_5_model as model
 
@@ -60,20 +56,6 @@ class FakeReactor(
         self._tcp = _tcp
         self._time = _time
 
-
-
-class  ParseDestinationDescriptionTests(TestCase):
-    def test_fluentd_destination(self):
-        reactor = object()
-        self.assertThat(
-            _parse_destination_description("fluentd:http://foo/bar")(reactor),
-            MatchesStructure(
-                agent=IsInstance(Agent),
-                fluentd_url=Equals(
-                    URL(scheme=u"http", host=u"foo", path=[u"bar"]),
-                ),
-            )
-        )
 
 
 class GridRouterStateMachine(RuleBasedStateMachine):

@@ -25,6 +25,7 @@ from twisted.internet import task as theCooperator
 from twisted.web.client import FileBodyProducer, readBody
 from twisted.python.usage import Options as _Options, UsageError
 from twisted.python.filepath import FilePath
+from twisted.application.service import MultiService
 from twisted.application.internet import StreamServerEndpointService
 from twisted.internet.endpoints import serverFromString
 
@@ -36,6 +37,11 @@ from lae_util import validators as my_validators
 from lae_util.fileutil import make_dirs
 from lae_util.memoryagent import MemoryAgent
 from lae_util.uncooperator import Uncooperator
+from lae_util.fluentd_destination import (
+    opt_eliot_destination,
+    eliot_logging_service,
+)
+
 
 def create(path):
     flags = (
@@ -356,6 +362,13 @@ class Options(_Options):
         ("listen-address", "l", None, "Endpoint on which the server should listen."),
     ]
 
+    def __init__(self):
+        _Options.__init__(self)
+        # For opt_eliot_destination
+        self["destinations"] = []
+
+    opt_eliot_destination = opt_eliot_destination
+
     def postOptions(self):
         required(self, "state-path")
         required(self, "listen-address")
@@ -369,7 +382,16 @@ def makeService(options):
     """
     Make a new subscription manager ``IService``.
     """
+    # Boo global reactor
+    # https://twistedmatrix.com/trac/ticket/9063
     from twisted.internet import reactor
+
+    parent = MultiService()
+
+    eliot_logging_service(
+        reactor,
+        options["destinations"],
+    ).setServiceParent(parent)
 
     make_dirs(options["state-path"].path)
     site = Site(make_resource(
@@ -377,10 +399,13 @@ def makeService(options):
         options["domain"].decode("ascii"),
     ))
 
-    return StreamServerEndpointService(
+    StreamServerEndpointService(
         serverFromString(reactor, options["listen-address"]),
         site,
-    )
+    ).setServiceParent(parent)
+
+    return parent
+
 
 
 def decode_subscription(fields):

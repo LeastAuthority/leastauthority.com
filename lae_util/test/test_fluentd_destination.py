@@ -1,5 +1,17 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
+"""
+Tests for ``lae_util.fluentd_destination``.
+"""
 
 from __future__ import unicode_literals
+
+from testtools.matchers import (
+    MatchesStructure,
+    Equals,
+    IsInstance,
+)
 
 from twisted.python.url import URL
 from twisted.web.resource import Resource
@@ -8,7 +20,10 @@ from twisted.web.client import Agent
 from twisted.internet.task import deferLater
 from twisted.trial.unittest import TestCase
 
-from ..fluentd_destination import FluentdDestination
+from ..fluentd_destination import (
+    FluentdDestination,
+    _parse_destination_description,
+)
 
 
 class Collector(Resource):
@@ -55,3 +70,18 @@ class FluentdDestinationTests(TestCase):
             self.assertEquals(collector.collected, [b'json={"hello": "world"}'])
 
         return deferLater(reactor, 0.1, check)
+
+
+
+class  ParseDestinationDescriptionTests(TestCase):
+    def test_fluentd_destination(self):
+        reactor = object()
+        self.assertThat(
+            _parse_destination_description("fluentd:http://foo/bar")(reactor),
+            MatchesStructure(
+                agent=IsInstance(Agent),
+                fluentd_url=Equals(
+                    URL(scheme=u"http", host=u"foo", path=[u"bar"]),
+                ),
+            )
+        )
