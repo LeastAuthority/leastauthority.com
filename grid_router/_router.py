@@ -19,6 +19,7 @@ from twisted.python.log import msg
 # attribute-import style (as opposed to just importing ``usage``) to get early
 # warning of mistakes.
 from twisted.python.usage import Options as _Options
+from twisted.python.url import URL
 from twisted.internet.defer import Deferred
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint, serverFromString
@@ -80,7 +81,9 @@ def _parse_destination_description(description):
     if description.startswith("fluentd:"):
         return lambda reactor: FluentdDestination(
             agent=Agent(reactor),
-            fluentd_url=description[len("fluentd:"):],
+            fluentd_url=URL.fromText(
+                description[len("fluentd:"):].decode("ascii"),
+            )
         )
     raise ValueError(
         "Unknown destination description: {}".format(description)
