@@ -8,7 +8,10 @@ Eliot-related functionality.
 from __future__ import absolute_import, unicode_literals
 
 from json import loads
-
+from logging import (
+    INFO,
+    Handler,
+)
 import attr
 from attr.validators import optional, provides
 
@@ -39,3 +42,28 @@ class TwistedLoggerToEliotObserver(object):
 
     # The actual ILogObserver interface uses this.
     __call__ = _observe
+
+
+
+class _StdlibLoggingToEliotHandler(Handler):
+    def __init__(self, logger=None):
+        Handler.__init__(self)
+        self.logger = logger
+
+
+    def emit(self, record):
+        Message.new(**vars(record)).write(self.logger)
+
+
+
+def stdlib_logging_to_eliot_configuration(stdlib_logger, eliot_logger=None):
+    """
+    Add a handler to ``stdlib_logger`` which will relay events to
+    ``eliot_logger`` (or the default Eliot logger if ``eliot_logger`` is
+    ``None``).
+    """
+    handler = _StdlibLoggingToEliotHandler(eliot_logger)
+    handler.set_name("eliot")
+    handler.setLevel(INFO)
+    stdlib_logger.addHandler(handler)
+    return lambda: stdlib_logger.removeHandler(handler)
