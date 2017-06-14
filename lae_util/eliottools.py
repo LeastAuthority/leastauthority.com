@@ -34,8 +34,9 @@ class TwistedLoggerToEliotObserver(object):
         flattened = loads(eventAsJSON(event))
         # We get a timestamp from Eliot.
         flattened.pop("log_time")
-        # This is never serializable anyway.
-        flattened.pop("log_logger")
+        # This is never serializable anyway.  "Legacy" log events (from
+        # twisted.python.log) don't have this so make it optional.
+        flattened.pop("log_logger", None)
 
         Message.new(**flattened).write(self.logger)
 
