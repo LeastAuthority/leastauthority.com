@@ -20,7 +20,7 @@ setup(
         "mock",
         "pyOpenSSL",
         "simplejson",
-        "twisted[tls]",
+        "twisted[tls]>=17.5",
         "service_identity",
         "attrs",
         "eliot==0.12.0",
