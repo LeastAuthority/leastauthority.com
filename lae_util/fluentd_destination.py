@@ -5,11 +5,13 @@ Fluentd support for Eliot.
 from sys import stdout
 from io import BytesIO
 from json import dumps
+from logging import getLogger
 
 import attr
 from attr.validators import provides, instance_of
 
 from twisted.python.url import URL
+from twisted.logger import globalLogPublisher
 from twisted.application.service import Service
 from twisted.web.iweb import IAgent
 from twisted.web.client import (
@@ -23,6 +25,11 @@ from eliot import (
     FileDestination,
     add_destination,
     remove_destination,
+)
+
+from .eliottools import (
+    TwistedLoggerToEliotObserver,
+    stdlib_logging_to_eliot_configuration,
 )
 
 @attr.s(frozen=True)
@@ -89,11 +96,17 @@ class _EliotLogging(Service):
 
 
     def startService(self):
+        self.stdlib_cleanup = stdlib_logging_to_eliot_configuration(getLogger())
+        self.twisted_observer = TwistedLoggerToEliotObserver()
+        globalLogPublisher.addObserver(self.twisted_observer)
+
         for dest in self.destinations:
             add_destination(dest)
 
 
     def stopService(self):
+        self.stdlib_cleanup()
+        globalLogPublisher.removeObserver(self.twisted_observer)
         for dest in self.destinations:
             remove_destination(dest)
 
