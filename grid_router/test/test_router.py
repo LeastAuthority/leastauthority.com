@@ -7,7 +7,10 @@ Tests for ``grid_router``.
 
 from socket import AF_INET, socket
 
-from testtools.matchers import AfterPreprocessing, Equals
+from testtools.matchers import (
+    AfterPreprocessing,
+    Equals,
+)
 
 from hypothesis import given, assume
 from hypothesis.strategies import choices
@@ -95,7 +98,6 @@ class GridRouterStateMachine(RuleBasedStateMachine):
             b"--kubernetes-namespace", self.deploy_config.kubernetes_namespace.encode("ascii"),
             b"--k8s-service-account",
             b"--kubernetes", b"http://127.0.0.1:1234/",
-            b"--no-eliot-to-stdout",
         ])
         self.service = makeService(options, self.reactor)
 

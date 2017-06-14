@@ -27,6 +27,7 @@ from twisted.internet.defer import (
     Deferred, maybeDeferred, gatherResults, succeed,
 )
 from twisted.internet import task
+from twisted.application.service import MultiService
 from twisted.application.internet import TimerService
 from twisted.python.usage import Options as _Options, UsageError
 from twisted.python.filepath import FilePath
@@ -40,6 +41,10 @@ from txaws.route53.model import (
 )
 
 from lae_util.service import AsynchronousService
+from lae_util.fluentd_destination import (
+    opt_eliot_destination,
+    eliot_logging_service,
+)
 
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
@@ -133,15 +138,7 @@ class Options(_Options, KubernetesClientOptionsMixin):
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
     ]
 
-    def __init__(self):
-        _Options.__init__(self)
-        self["eliot-to-stdout"] = True
-
-    def opt_no_eliot_to_stdout(self):
-        """
-        Do not dump Eliot logs to stdout.
-        """
-        self["eliot-to-stdout"] = False
+    opt_eliot_destination = opt_eliot_destination
 
     def postOptions(self):
         KubernetesClientOptionsMixin.postOptions(self)
@@ -159,18 +156,20 @@ def makeService(options):
     # Boo global reactor
     # https://twistedmatrix.com/trac/ticket/9063
     from twisted.internet import reactor
+
+    parent = MultiService()
+
+    eliot_logging_service(
+        reactor,
+        options.get("destinations", []),
+    ).setServiceParent(parent)
+
     agent = Agent(reactor)
     subscription_client = SMClient(
         endpoint=options["endpoint"],
         agent=agent,
         cooperator=task,
     )
-
-    if options["eliot-to-stdout"]:
-        # XXX not exactly the right place for this
-        from eliot import to_file
-        from sys import stdout
-        to_file(stdout)
 
     kubernetes = options.get_kubernetes_service(reactor)
 
@@ -183,7 +182,11 @@ def makeService(options):
         )
         return d
 
-    return AsynchronousService(get_k8s_client)
+    AsynchronousService(
+        get_k8s_client
+    ).setServiceParent(parent)
+
+    return parent
 
 
 

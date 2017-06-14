@@ -12,8 +12,6 @@ This module is used with ``twisted.application.service.ServiceMaker`` in
 expose this code via ``twist`` and ``twistd``.
 """
 
-import sys
-
 from twisted.python.log import msg
 # Rename this so we can have a module attribute named Options.  Stick with the
 # attribute-import style (as opposed to just importing ``usage``) to get early
@@ -22,7 +20,7 @@ from twisted.python.usage import Options as _Options
 from twisted.internet.defer import Deferred
 from twisted.internet.protocol import Factory, Protocol
 from twisted.internet.endpoints import TCP4ClientEndpoint, serverFromString
-from twisted.application.service import MultiService, Service
+from twisted.application.service import MultiService
 from twisted.application.internet import StreamServerEndpointService, TimerService
 
 from foolscap.tokens import BananaError, NegotiationError
@@ -31,11 +29,16 @@ from foolscap.util import isSubstring
 from pyrsistent import freeze, pmap, pset
 
 from eliot import (
-    Message, start_action, FileDestination, add_destination, remove_destination,
+    Message,
+    start_action,
 )
 from eliot.twisted import DeferredContext
 
 from lae_util.service import AsynchronousService
+from lae_util.fluentd_destination import (
+    eliot_logging_service,
+    opt_eliot_destination,
+)
 from lae_automation.kubeclient import KubeClient
 from lae_automation.subscription_converger import (
     KubernetesClientOptionsMixin, get_customer_grid_pods, divert_errors_to_log,
@@ -53,17 +56,7 @@ class Options(_Options, KubernetesClientOptionsMixin):
         ),
     ]
 
-    def __init__(self):
-        _Options.__init__(self)
-        self["eliot-to-stdout"] = True
-
-
-    def opt_no_eliot_to_stdout(self):
-        """
-        Do not dump Eliot logs to stdout.
-        """
-        self["eliot-to-stdout"] = False
-
+    opt_eliot_destination = opt_eliot_destination
 
     def postOptions(self):
         KubernetesClientOptionsMixin.postOptions(self)
@@ -89,8 +82,10 @@ def makeService(options, reactor=None):
 
     parent = _GridRouterParent()
 
-    if options["eliot-to-stdout"]:
-        _EliotLogging().setServiceParent(parent)
+    eliot_logging_service(
+        reactor,
+        options.get("destinations", []),
+    ).setServiceParent(parent)
 
     def make_service():
         kubernetes = options.get_kubernetes_service(reactor)
@@ -149,24 +144,6 @@ class _GridRouterParent(MultiService):
         :see: ``_GridRouterService.route_mapping``
         """
         return self.getServiceNamed(_GridRouterService.name).route_mapping()
-
-
-
-class _EliotLogging(Service):
-    """
-    A service which adds stdout as an Eliot destination while it is running.
-
-    :ivar _destination: The Eliot destination which will is added by this
-        service.
-    """
-    _destination = FileDestination(sys.stdout)
-
-    def startService(self):
-        add_destination(self._destination)
-
-
-    def stopService(self):
-        remove_destination(self._destination)
 
 
 
