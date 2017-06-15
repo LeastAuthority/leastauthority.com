@@ -29,12 +29,21 @@ rec {
     };
   };
 
+  twisted17_5_0 = pythonPackages.twisted.override rec {
+    name = "Twisted-${version}";
+    version = "17.5.0";
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/T/Twisted/${name}.tar.bz2";
+      sha256 = "1sh2h23nnizcdyrl2rn7zxijglikxwz7z7grqpvq496zy2aa967i";
+    };
+  };
+
   filepath = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "filepath";
     version = "0.1";
 
-    buildInputs = [ pythonPackages.twisted ];
+    buildInputs = [ twisted17_5_0 ];
 
     src = pkgs.fetchurl {
       url = "https://pypi.python.org/packages/eb/0f/3c5ebbfd6fa6904181ecece2b6737d797a033479a193984e7e84c1d84185/${name}.tar.gz";
@@ -62,7 +71,7 @@ rec {
       pythonPackages.pytest
       pythonPackages.pyopenssl
       pythonPackages.incremental
-      pythonPackages.twisted
+      twisted17_5_0
     ];
 
     src = pkgs.fetchurl {
@@ -206,7 +215,7 @@ rec {
   foolscap = pythonPackages.foolscap.override {
     propagatedBuildInputs =
     with pythonPackages;
-    [ mock twisted pyopenssl16_2_0 service-identity ];
+    [ mock twisted17_5_0 pyopenssl16_2_0 service-identity ];
   };
 
   tahoe_lafs = pythonPackages.buildPythonPackage rec {
@@ -233,7 +242,7 @@ rec {
         pycryptopp
         service-identity
         foolscap
-        twisted
+        twisted17_5_0
         (nevow.override {
             postInstall = null;
           })
@@ -284,7 +293,7 @@ rec {
         pyopenssl16_2_0
         pem
         service-identity
-        twisted
+        twisted17_5_0
         lxml
       ];
 
@@ -366,7 +375,7 @@ rec {
         incremental
         service-identity
         pyopenssl16_2_0
-        twisted
+        twisted17_5_0
         pem
         eliot
         dateutil
@@ -404,7 +413,7 @@ rec {
         incremental
         service-identity
         pyopenssl16_2_0
-        twisted
+        twisted17_5_0
         pem
         eliot
         dateutil
@@ -443,7 +452,7 @@ rec {
       six
       pyopenssl16_2_0
       service-identity
-      twisted
+      twisted17_5_0
       autobahn
       hkdf
       tqdm
@@ -479,7 +488,7 @@ rec {
         stripe
         attrs
         jinja2
-        twisted
+        twisted17_5_0
         txaws030
         tahoe_lafs
         txkube020
