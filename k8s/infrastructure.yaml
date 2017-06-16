@@ -330,6 +330,25 @@ spec:
           limits:
             cpu: '100m'
             memory: '200Mi'
+
+      # This is a kind of sidecar for tailing the web server's log and
+      # shipping it off to the Fluentd server.
+      - name: 'web-logs'
+        # This version doesn't match our fluentd (as selected in our
+        # Dockerfile) but it looks like fluent-bit:0.12 isn't final yet.
+        image: 'fluent/fluent-bit:0.11'
+        command:
+        - '/fluent-bit/bin/fluent-bit'
+        - '-i'
+        - 'tail'
+        - '-p'
+        - 'path=/app/log/site.log'
+        - '-o'
+        - 'http://fluentd/signup'
+        resources:
+          limits:
+            cpu: '10m'
+            memory: '30Mi'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
