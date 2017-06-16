@@ -7,7 +7,10 @@ Tests for ``lae_util.fluentd_destination``.
 
 from __future__ import unicode_literals
 
+from sys import stdout
 import logging
+
+from eliot import FileDestination
 
 from testtools.matchers import (
     MatchesStructure,
@@ -79,10 +82,45 @@ class FluentdDestinationTests(AsyncTestCase):
 
 
 class  ParseDestinationDescriptionTests(TestCase):
-    def test_fluentd_destination(self):
+    def test_stdout(self):
+        """
+        A ``file:`` description with a path of ``-`` causes logs to be written to
+        stdout.
+        """
         reactor = object()
         self.assertThat(
-            _parse_destination_description("fluentd:http://foo/bar")(reactor),
+            _parse_destination_description("file:-")(reactor),
+            Equals(FileDestination(stdout)),
+        )
+
+
+    def test_regular_file(self):
+        """
+        A ``file:`` description with any path other than ``-`` causes logs to be
+        written to a file with that name.
+        """
+        reactor = object()
+        path = self.mktemp()
+
+        self.assertThat(
+            _parse_destination_description("file:{}".format(path))(reactor),
+            MatchesStructure(
+                file=MatchesStructure(
+                    name=Equals(path),
+                    mode=Equals("a"),
+                ),
+            ),
+        )
+
+
+    def test_fluentd_http(self):
+        """
+        A ``fluentd_http:`` description causes logs to be sent to a Fluentd server's
+        http input plugin at the given URL.
+        """
+        reactor = object()
+        self.assertThat(
+            _parse_destination_description("fluentd_http:http://foo/bar")(reactor),
             MatchesStructure(
                 agent=IsInstance(Agent),
                 fluentd_url=Equals(
