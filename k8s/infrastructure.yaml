@@ -310,7 +310,7 @@ spec:
           - '--site-logs-path=/app/data/logs/sitelogs'
           - '--subscription-manager=http://subscription-manager/'
           - '--eliot-destination'
-          - 'fluentd:http://fluentd/signup'
+          - 'file:/app/log/site.log'
         workingDir: '/app/run'
         ports:
         # We just happen to know this is the ports this container listens on.
@@ -438,7 +438,7 @@ spec:
           - '--kubernetes-namespace'
           - '$(POD_KUBERNETES_NAMESPACE)'
           - '--eliot-destination'
-          - 'fluentd:http://fluentd/grid-router'
+          - 'file:/app/log/router.log'
         env:
           - name: 'POD_KUBERNETES_NAMESPACE'
             valueFrom:
@@ -512,7 +512,7 @@ spec:
           - '--endpoint=http://subscription-manager/'
           - '--k8s-service-account'
           - '--eliot-destination'
-          - 'fluentd:http://fluentd/subscription-converger'
+          - 'file:/app/log/converger.log'
         workingDir: '/app/run'
         env:
           - name: 'S4_DOMAIN'
@@ -581,7 +581,7 @@ spec:
           - '--listen-address'
           - 'tcp:8000'
           - '--eliot-destination'
-          - 'fluentd:http://fluentd/subscription-manager'
+          - 'file:/app/log/manager.log'
         env:
           - name: 'S4_DOMAIN'
             valueFrom:
