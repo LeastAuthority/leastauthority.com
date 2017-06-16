@@ -7,6 +7,8 @@ Tests for ``lae_util.fluentd_destination``.
 
 from __future__ import unicode_literals
 
+import logging
+
 from testtools.matchers import (
     MatchesStructure,
     Equals,
@@ -25,6 +27,7 @@ from lae_util.testtools import TestCase
 from ..fluentd_destination import (
     FluentdDestination,
     _parse_destination_description,
+    _EliotLogging,
 )
 
 
@@ -87,3 +90,37 @@ class  ParseDestinationDescriptionTests(TestCase):
                 ),
             )
         )
+
+
+
+class EliotLoggingTests(TestCase):
+    """
+    Tests for ``_EliotLogging``.
+    """
+    def test_stdlib_event_relayed(self):
+        """
+        An event logged using the stdlib logging module is delivered to the Eliot
+        destination.
+        """
+        collected = []
+        service = _EliotLogging([collected.append])
+        service.startService()
+        self.addCleanup(service.stopService)
+
+        logging.critical("oh no")
+        self.assertThat(len(collected), Equals(1))
+
+
+    def test_twisted_event_relayed(self):
+        """
+        An event logged with a ``twisted.logger.Logger`` is delivered to the Eliot
+        destination.
+        """
+        collected = []
+        service = _EliotLogging([collected.append])
+        service.startService()
+        self.addCleanup(service.stopService)
+
+        from twisted.logger import Logger
+        Logger().critical("oh no")
+        self.assertThat(len(collected), Equals(1))
