@@ -113,6 +113,8 @@ class RedirectToHTTPS(Resource):
 
 
 def make_redirector_site(port):
+    # XXX It would be good to combine this with make_site so we didn't end up
+    # with http logs in multiple places.  Not sure how to do that though.
     site = Site(RedirectToHTTPS(port))
     site.displayTracebacks = False
     return site
