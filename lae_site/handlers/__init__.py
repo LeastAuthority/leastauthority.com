@@ -60,8 +60,23 @@ def make_resource(
 
 
 
+def json_access_log(timestamp, request):
+    return dumps(dict(
+        timestamp=timestamp,
+        ip=request.getClientIP() or None,
+        method=request.method,
+        uri=request.uri,
+        protocol=request.clientproto,
+        code=request.code,
+        length=request.sentLength or None,
+        referrer=request.getHeader(b"referer") or None,
+        agent=request.getHeader(b"user-agent") or None,
+    ))
+
+
+
 def make_site(resource, site_logs_path):
-    site = Site(resource, logPath=site_logs_path.path)
+    site = Site(resource, logPath=site_logs_path.path, logFormatter=json_access_log)
     site.displayTracebacks = False
     return site
 
