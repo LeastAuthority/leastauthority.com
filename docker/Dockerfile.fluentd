@@ -1,3 +1,5 @@
+# We have a range of options for controlling the version: v0.12.36, v0.12,
+# stable, latest
 FROM fluent/fluentd:v0.12-debian
 
 # Essentially copy/paste Fluentd docs to install the s3 output plugin.
