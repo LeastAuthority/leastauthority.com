@@ -237,11 +237,7 @@ spec:
   # but not all of them (as is the default).
   revisionHistoryLimit: 3
 
-  # The containers write directly to the filesystem but they no longer do so
-  # in a particularly interesting way.  We should eliminate all remaining
-  # direct filesystem usage in the signup process but we can get away with
-  # running a couple replicas even before we do that.
-  replicas: 2
+  replicas: 1
   strategy:
     type: 'RollingUpdate'
 
