@@ -120,6 +120,8 @@ spec:
           items:
           - key: 'fluent-s3.conf'
             path: 's3.conf'
+      - name: 'fluent-buffer-space'
+        emptyDir:
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -137,6 +139,8 @@ spec:
             name: 'fluent-configuration'
           - mountPath: '/fluentd/secrets'
             name: 'fluent-secrets'
+          - mountPath: '/tmp/fluent'
+            name: 'fluent-buffer-space'
         resources:
           limits:
             cpu: '100m'
