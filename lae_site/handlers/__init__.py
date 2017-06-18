@@ -1,4 +1,5 @@
 from json import dumps
+from time import strptime
 
 from twisted.web.server import Site
 from twisted.web.static import File, Data
@@ -61,6 +62,7 @@ def make_resource(
 
 
 def json_access_log(timestamp, request):
+    timestamp = strptime(timestamp, "[%d/%b/%Y:H:%M:%S %z]")
     return dumps(dict(
         timestamp=timestamp,
         ip=request.getClientIP() or None,
