@@ -1,5 +1,5 @@
 from json import dumps
-from time import strptime
+from datetime import datetime
 
 from twisted.web.server import Site
 from twisted.web.static import File, Data
@@ -61,24 +61,34 @@ def make_resource(
 
 
 
-def json_access_log(timestamp, request):
-    timestamp = strptime(timestamp, "[%d/%b/%Y:H:%M:%S %z]")
-    return dumps(dict(
-        timestamp=timestamp,
-        ip=request.getClientIP() or None,
-        method=request.method,
-        uri=request.uri,
-        protocol=request.clientproto,
-        code=request.code,
-        length=request.sentLength or None,
-        referrer=request.getHeader(b"referer") or None,
-        agent=request.getHeader(b"user-agent") or None,
-    ))
+class _LogFormatter(object):
+    def __init__(self, now):
+        self.now = now
+
+
+    def json_access_log(self, timestamp, request):
+        # Just ignore the given timestamp.  It's in an awful format.
+        timestamp = self.now()
+        return dumps(dict(
+            timestamp=timestamp.isoformat(),
+            ip=request.getClientIP() or None,
+            method=request.method,
+            uri=request.uri,
+            protocol=request.clientproto,
+            code=request.code,
+            length=request.sentLength or None,
+            referrer=request.getHeader(b"referer") or None,
+            agent=request.getHeader(b"user-agent") or None,
+        ))
 
 
 
 def make_site(resource, site_logs_path):
-    site = Site(resource, logPath=site_logs_path.path, logFormatter=json_access_log)
+    site = Site(
+        resource,
+        logPath=site_logs_path.path,
+        logFormatter=_LogFormatter(datetime.utcnow).json_access_log,
+    )
     site.displayTracebacks = False
     return site
 
