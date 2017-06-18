@@ -558,6 +558,7 @@ spec:
         imagePullPolicy: 'Always'
         command:
           - '/bin/twist'
+          - '--log-format=text'
           - 's4-grid-router'
           - '--k8s-service-account'
           - '--kubernetes-namespace'
@@ -666,6 +667,7 @@ spec:
         imagePullPolicy: 'Always'
         command:
           - '/bin/twist'
+          - '--log-format=text'
           - 's4-subscription-converger'
           - '--domain'
           - '$(S4_DOMAIN)'
@@ -775,6 +777,7 @@ spec:
         imagePullPolicy: 'Always'
         command:
           - '/bin/twist'
+          - '--log-format=text'
           - 's4-subscription-manager'
           - '--domain'
           - '$(S4_DOMAIN)'
