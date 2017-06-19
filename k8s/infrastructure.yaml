@@ -428,7 +428,7 @@ spec:
         image: 'fluent/fluent-bit:0.11'
         command:
         - '/fluent-bit/bin/fluent-bit'
-        - '-vv'
+        - '-v'
         - '--parser=/app/etc/fluent-bit.parser'
         - '--config=/app/etc/fluent-bit.conf'
         volumeMounts:
@@ -586,7 +586,7 @@ spec:
         image: 'fluent/fluent-bit:0.11'
         command:
         - '/fluent-bit/bin/fluent-bit'
-        - '-vv'
+        - '-v'
         - '--parser=/app/etc/fluent-bit.parser'
         - '--config=/app/etc/fluent-bit.conf'
         volumeMounts:
@@ -707,7 +707,7 @@ spec:
         image: 'fluent/fluent-bit:0.11'
         command:
         - '/fluent-bit/bin/fluent-bit'
-        - '-vv'
+        - '-v'
         - '--parser=/app/etc/fluent-bit.parser'
         - '--config=/app/etc/fluent-bit.conf'
         volumeMounts:
@@ -813,7 +813,7 @@ spec:
         image: 'fluent/fluent-bit:0.11'
         command:
         - '/fluent-bit/bin/fluent-bit'
-        - '-vv'
+        - '-v'
         - '--parser=/app/etc/fluent-bit.parser'
         - '--config=/app/etc/fluent-bit.conf'
         volumeMounts:
