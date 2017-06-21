@@ -37,6 +37,9 @@ class FluentdDestination(object):
     """
     ``FluentdDestination`` is an Eliot log destination which sends logs to a
     Fluentd via the HTTP input plugin.
+
+    .. WARNING:: Combining this with ``_EliotLogging`` will immediately ruin
+       your day.
     """
     agent = attr.ib(validator=provides(IAgent))
     fluentd_url = attr.ib(validator=instance_of(URL))
@@ -64,23 +67,40 @@ def opt_eliot_destination(self, description):
 
 
 
-def _parse_destination_description(description):
-    if description == "stdout":
-        return lambda reactor: FileDestination(stdout)
-    if description.startswith("fluentd:"):
+class _DestinationParser(object):
+    def parse(self, description):
+        description = description.decode("ascii")
+
+        kind, args = description.split(":", 1)
+        try:
+            parser = getattr(self, "_parse_{}".format(kind))
+        except AttributeError:
+            raise ValueError(
+                "Unknown destination description: {}".format(description)
+            )
+        else:
+            return parser(kind, args)
+
+
+    def _parse_file(self, kind, args):
+        if args == "-":
+            get_file = lambda: stdout
+        else:
+            get_file = lambda: open(args, "a")
+        return lambda reactor: FileDestination(get_file())
+
+
+    def _parse_fluentd_http(self, kind, args):
         return lambda reactor: FluentdDestination(
             # Construct the pool ourselves with the default of using
             # persistent connections to override Agent's default of not using
             # persistent connections.
             agent=Agent(reactor, pool=HTTPConnectionPool(reactor)),
-            fluentd_url=URL.fromText(
-                description[len("fluentd:"):].decode("ascii"),
-            )
+            fluentd_url=URL.fromText(args),
         )
-    raise ValueError(
-        "Unknown destination description: {}".format(description)
-    )
 
+
+_parse_destination_description = _DestinationParser().parse
 
 
 class _EliotLogging(Service):

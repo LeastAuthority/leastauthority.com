@@ -26,3 +26,10 @@ from ._retry import (
     get_default_retry_steps,
     decorate_methods,
 )
+
+def patch():
+    from .twisted_8860 import detect, patch
+    detect() and patch()
+
+patch()
+del patch

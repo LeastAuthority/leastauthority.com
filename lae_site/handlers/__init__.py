@@ -1,4 +1,5 @@
 from json import dumps
+from datetime import datetime
 
 from twisted.web.server import Site
 from twisted.web.static import File, Data
@@ -60,8 +61,34 @@ def make_resource(
 
 
 
+class _LogFormatter(object):
+    def __init__(self, now):
+        self.now = now
+
+
+    def json_access_log(self, timestamp, request):
+        # Just ignore the given timestamp.  It's in an awful format.
+        timestamp = self.now()
+        return dumps(dict(
+            timestamp=timestamp.isoformat(),
+            ip=request.getClientIP() or None,
+            method=request.method,
+            uri=request.uri,
+            protocol=request.clientproto,
+            code=request.code,
+            length=request.sentLength or None,
+            referrer=request.getHeader(b"referer") or None,
+            agent=request.getHeader(b"user-agent") or None,
+        ))
+
+
+
 def make_site(resource, site_logs_path):
-    site = Site(resource, logPath=site_logs_path.path)
+    site = Site(
+        resource,
+        logPath=site_logs_path.path,
+        logFormatter=_LogFormatter(datetime.utcnow).json_access_log,
+    )
     site.displayTracebacks = False
     return site
 
@@ -98,6 +125,8 @@ class RedirectToHTTPS(Resource):
 
 
 def make_redirector_site(port):
+    # XXX It would be good to combine this with make_site so we didn't end up
+    # with http logs in multiple places.  Not sure how to do that though.
     site = Site(RedirectToHTTPS(port))
     site.displayTracebacks = False
     return site
