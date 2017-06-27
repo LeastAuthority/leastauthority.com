@@ -74,6 +74,8 @@ spec:
     spec:
       # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
       securityContext:
+        # This gets the wormhole-server-data volume mount owned by the same
+        # uid as the wormhole server runs as, letting it write a db into it.
         fsGroup: 1000
 
       volumes:
@@ -103,6 +105,8 @@ spec:
         - containerPort: 4000
         - containerPort: 4001
         volumeMounts:
+        # A volume for the persistent relay server state which allows it to
+        # continue some connection attempts across restarts.
         - mountPath: '/app/data'
           name: 'wormhole-server-data'
         resources:
