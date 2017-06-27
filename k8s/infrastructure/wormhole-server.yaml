@@ -1,0 +1,136 @@
+# Read about services at
+# http://kubernetes.io/docs/user-guide/services/
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  # http://kubernetes.io/docs/user-guide/identifiers/
+  name: 'wormhole'
+  # http://kubernetes.io/docs/user-guide/labels/
+  labels:
+    # Everything we make and put into k8s will have this label.
+    provider: 'LeastAuthority'
+    app: 'wormhole'
+    component: 'Infrastructure'
+spec:
+  selector:
+    # Pick up all the other resources that claim to be part of LeastAuthority
+    # infrastructure.  Currently this covers s4 and magic wormhole.  This
+    # makes everything with a matching label part of this service.
+    provider: 'LeastAuthority'
+    app: 'wormhole'
+    component: 'Infrastructure'
+
+  # This service exposes network ports via a load balancer - ELB on
+  # AWS.  The load balancer will be configured to spread traffic
+  # across healthy pods in this service.  The load balancer also acts
+  # as the public endpoint for the service.  Without it, the service
+  # is only internally accessible.
+  #
+  # Note that ELB on AWS takes a minute or two to become usable,
+  # probably due to DNS record propagation delay.
+  type: 'LoadBalancer'
+
+  ports:
+  # Define ports to allow access to the wormhole server - rendezvous and
+  # transit relay.
+  - name: 'wormhole-rendezvous'
+    port: 4000
+    protocol: 'TCP'
+  - name: 'wormhole-transit-relay'
+    port: 4001
+    protocol: 'TCP'
+---
+# Read about deployments at
+# http://kubernetes.io/docs/user-guide/deployments/
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'wormhole'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  # The containers both write directly to the filesystem.  It's not
+  # safe to have more than one instance running at a time.  So limit
+  # replicas to one and use a pod replacement strategy that destroys
+  # old pods _before_ creating new ones.  Once filesystem access issue
+  # is fixed, we can have horizontal scale-out and rolling updates
+  # instead.
+  replicas: 1
+  strategy:
+    type: 'Recreate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        app: 'wormhole'
+        component: 'Infrastructure'
+        version: '1'
+    spec:
+      # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+      securityContext:
+        # This gets the wormhole-server-data volume mount owned by the same
+        # uid as the wormhole server runs as, letting it write a db into it.
+        fsGroup: 1000
+
+      volumes:
+      - name: 'wormhole-server-data'
+        persistentVolumeClaim:
+          claimName: 'infrastructure-wormhole-server-pvc'
+
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      # This is the wormhole relay server.  It will help people get
+      # introduced to their grid, someday.
+      - name: 'wormhole-relay'
+        # This image is hosted on Docker Hub.  I hope Kubernetes is good
+        # enough at retrying failed pulls to make this reliable.  We use the
+        # implicit latest tag because magic-wormhole is a moving target right
+        # now.  Hopefully it doesn't break.
+        image: 'magicwormhole/magic-wormhole'
+        imagePullPolicy: 'Always'
+        args:
+        - '--rendezvous=tcp:4000'
+        - '--transit=tcp:4001'
+        - '--relay-database-path=/app/data/relay.sqlite'
+        ports:
+        # We just happen to know these are the ports this container listens
+        # on.
+        - containerPort: 4000
+        - containerPort: 4001
+        volumeMounts:
+        # A volume for the persistent relay server state which allows it to
+        # continue some connection attempts across restarts.
+        - mountPath: '/app/data'
+          name: 'wormhole-server-data'
+        resources:
+          limits:
+            cpu: '10m'
+            memory: '100Mi'
+---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-wormhole-server-pvc'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+  annotations:
+    # This enables dynamic provisioning of the volume.  See
+    # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
+    volume.beta.kubernetes.io/storage-class: 'normal'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '1G'
