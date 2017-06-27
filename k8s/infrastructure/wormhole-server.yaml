@@ -89,7 +89,7 @@ spec:
         # now.  Hopefully it doesn't break.
         image: 'magicwormhole/magic-wormhole'
         imagePullPolicy: 'Always'
-        command:
+        args:
         - '--rendezvous=tcp:4000'
         - '--transit=tcp:4001'
         - '--relay-database-path=/data/relay.sqlite'
