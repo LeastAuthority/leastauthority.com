@@ -87,7 +87,7 @@ spec:
         # enough at retrying failed pulls to make this reliable.  We use the
         # implicit latest tag because magic-wormhole is a moving target right
         # now.  Hopefully it doesn't break.
-        image: 'leastauthority/magic-wormhole'
+        image: 'magicwormhole/magic-wormhole'
         imagePullPolicy: 'Always'
         command:
         - '--rendezvous=tcp:4000'
