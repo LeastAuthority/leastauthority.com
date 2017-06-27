@@ -96,14 +96,14 @@ spec:
         args:
         - '--rendezvous=tcp:4000'
         - '--transit=tcp:4001'
-        - '--relay-database-path=/data/relay.sqlite'
+        - '--relay-database-path=/app/data/relay.sqlite'
         ports:
         # We just happen to know these are the ports this container listens
         # on.
         - containerPort: 4000
         - containerPort: 4001
         volumeMounts:
-        - mountPath: '/data'
+        - mountPath: '/app/data'
           name: 'wormhole-server-data'
         resources:
           limits:
