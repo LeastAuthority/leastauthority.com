@@ -53,7 +53,7 @@ data:
       metrics_path /metrics
     </source>
 
-    # Double the source event so we can both record everything and apply
+    # Duplicate the source event so we can both record everything and apply
     # metrics processing.
     <match>
       @type copy
@@ -63,7 +63,11 @@ data:
       </store>
       <store>
         @type relabel
-        @label @METRICS
+        @label @METRICS_SIGNUP
+      </store>
+      <store>
+        @type relabel
+        @label @METRICS_ERRORS
       </store>
     </match>
 
@@ -125,7 +129,28 @@ data:
       </match>
     </label>
 
-    <label @METRICS>
+    <label @METRICS_ERRORS>
+      # Scrape Twisted error event metrics out of the log stream and expose it
+      # to Prometheus.
+      <filter **>
+        @type where
+        # Match Twisted-style log events for Deferreds with no final errback.
+        where log_namespace = 'twisted.internet.defer' AND log_format = 'Unhandled error in Deferred:'
+      </filter>
+
+      # Take the output of the error filter and turn it into a Prometheus
+      # metric.
+      <filter **>
+        @type prometheus
+        <metric>
+          name s4_unhandled_error_counter
+          type counter
+          desc Total S4 Unhandled Errors
+        </metric>
+      </filter>
+    </label>
+
+    <label @METRICS_SIGNUP>
       # Scrape S4 signup metrics out of the log stream and expose it to
       # Prometheus.
       <filter signup>
