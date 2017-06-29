@@ -14,6 +14,7 @@ RUN buildDeps="sudo make gcc g++ libc-dev ruby-dev" \
  && sudo gem install \
         fluent-plugin-s3 \
         fluent-plugin-exclude-filter \
+        fluent-plugin-prometheus \
  && sudo gem sources --clear-all \
  && SUDO_FORCE_REMOVE=yes \
     apt-get purge -y --auto-remove \
