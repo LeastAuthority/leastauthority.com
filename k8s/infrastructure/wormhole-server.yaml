@@ -11,6 +11,21 @@ metadata:
     provider: 'LeastAuthority'
     app: 'wormhole'
     component: 'Infrastructure'
+
+  annotations:
+    # The default idle timeout in both Kubernetes (1.5.x) and AWS appears to
+    # be 60 seconds.  That's annoyingly low for the magic-wormhole
+    # connections.  We don't know how long it will take a user to come pick up
+    # the code.  magic-wormhole turns on a 60 second keepalive ping so any ELB
+    # timeout safely above that should keep the connection open until we're
+    # actually done with it.
+    #
+    # Ultimately we need some kind of retry logic so we can give the user
+    # another opportunity if they miss the first chance for some reason.
+    #
+    # https://github.com/LeastAuthority/leastauthority.com/issues/494
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: '120'
+
 spec:
   selector:
     # Pick up all the other resources that claim to be part of LeastAuthority
