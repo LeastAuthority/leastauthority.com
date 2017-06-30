@@ -21,7 +21,7 @@ from eliot.twisted import DeferredContext
 
 from twisted.python.monkey import MonkeyPatcher
 from twisted.python.filepath import FilePath
-from twisted.internet.defer import Deferred, succeed
+from twisted.internet.defer import Deferred, succeed, inlineCallbacks
 from twisted.web.client import Agent
 
 from wormhole import xfer_util
@@ -30,8 +30,7 @@ from lae_automation.model import SubscriptionDetails
 
 from .subscription_manager import Client, network_client
 
-SIGNUP_ICON_PATH = FilePath(__file__).sibling(u"lae-s4-signup-icon.png")
-SIGNUP_ICON_BASE64 = b64encode(SIGNUP_ICON_PATH.getContent())
+SIGNUP_ICON_URL = u'https://github.com/LeastAuthority/leastauthority.com/raw/master/lae_automation/lae-s4-signup-icon.png'
 
 
 def encode_id(ident):
@@ -315,7 +314,7 @@ def _details_to_tahoe_configuration(details):
         u"shares-needed": u"1",
         u"shares-total": u"1",
         u"shares-happy": u"1",
-        u"icon_base64": SIGNUP_ICON_BASE64,
+        u"icon_url": SIGNUP_ICON_URL,
     }
 
 
@@ -333,32 +332,53 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
         meaningless success result or a ``Failure`` if something is known to
         have gone wrong.
     """
-    waiting_for_code = Deferred()
+
+    wh = wormhole.create(
+        # This has to agree with anyone who wants to receive this code.  "v1"
+        # here versions application protocol that runs over wormhole to convey
+        # a configuration payload.  It does not version the configuration
+        # payload itself, which is a self-versioning JSON.
+        appid=u"tahoe-lafs.org/tahoe-lafs/v1",
+        relay_url=rendezvous_url.asText(),
+        reactor=reactor,
+        tor=None,
+    )
+
+    # this, or set_code or input_code must be called before .get_code()
+    wh.allocate_code()
+    waiting_for_code = wh.get_code()
 
     def got_code(code):
         # We don't currently expire these at all.
         expires = _NoExpiration()
-        waiting_for_code.callback(_WormholeClaim(code, expires))
+        return _WormholeClaim(code, expires)
+    waiting_for_code.addCallback(got_code)
 
-    patcher = MonkeyPatcher()
-    patcher.addPatch(xfer_util, "wormhole", wormhole)
-    patcher.patch()
-    try:
-        done = xfer_util.send(
-            reactor,
-            # This has to agree with anyone who wants to receive this code.  "v1"
-            # here versions application protocol that runs over wormhole to convey
-            # a configuration payload.  It does not version the configuration
-            # payload itself, which is a self-versioning JSON.
-            appid=u"tahoe-lafs.org/tahoe-lafs/v1",
-            relay_url=rendezvous_url.asText(),
-            data=json.dumps(configuration),
-            code=None,
-            use_tor=None,
-            on_code=got_code,
-        )
-    finally:
-        patcher.restore()
+    @inlineCallbacks
+    def do_transfer(_):
+        welcome = yield wh.get_welcome()
+        # we're connected to the wormhole server; send our
+        # introduction message
+        intro = {u"abilities": {"server-v1": {}}}
+        wh.send(json.dumps(intro))
+
+        # await the client's introduction
+        client_intro = yield wh.get_message()
+        client_intro = json.loads(client_intro)
+
+        if u'abilities' not in client_intro:
+            raise Exception("Expected 'abilities' in client introduction")
+        if u'client-v1' not in client_intro['abilities']:
+            raise Exception("Expected 'client-v1' in client abilities")
+
+        # a correctly-versioned client has opened a wormhole to us;
+        # give them the configuration JSON
+        wh.send(json.dumps(configuration))
+
+        # close down cleanly
+        yield wh.close()
+    done = succeed(None)
+    done.addCallback(do_transfer)
 
     return waiting_for_code, done
 

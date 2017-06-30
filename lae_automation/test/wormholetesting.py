@@ -24,13 +24,13 @@ class MemoryWormholeServer(object):
         self._apps = {}
 
 
-    def create(self, appid, relay_url, reactor, tor_manager):
+    def create(self, appid, relay_url, reactor, tor=None):
         """
         Create a wormhole.  It will be able to connect to other wormholes created
         by this ``MemoryWormholeServer`` instance (and constrained by the
         normal appid/relay_url rules).
         """
-        if tor_manager is not None:
+        if tor is not None:
             raise ValueError("Cannot deal with Tor right now.")
 
         key = (relay_url, appid)
@@ -163,6 +163,11 @@ class _MemoryWormhole(object):
                 "This implementation requires allocate_code before when_code."
             )
         return succeed(self._code)
+    get_code = when_code
+
+
+    def get_welcome(self):
+        return succeed('welcome')
 
 
     def send(self, payload):
@@ -176,8 +181,12 @@ class _MemoryWormhole(object):
                 "before when_received."
             )
         d = self._view.wormhole_by_code(self._code, exclude=self)
-        d.addCallback(lambda wormhole: wormhole._payload.get())
+
+        def got_wormhole(wormhole):
+            return wormhole._payload.get()
+        d.addCallback(got_wormhole)
         return d
+    get_message = when_received
 
 
     def close(self):
