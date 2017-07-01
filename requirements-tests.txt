@@ -3,6 +3,7 @@ deepdiff==3.3.0
 extras==1.0.0
 fixtures==3.0.0
 funcsigs==1.0.2
+grafanalib==0.1.2
 hypothesis==3.11.6
 jsonpickle==0.9.4
 linecache2==1.0.0

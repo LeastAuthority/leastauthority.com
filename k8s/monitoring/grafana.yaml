@@ -1,0 +1,179 @@
+# Derived from https://github.com/mithrandi/my-kube/blob/4d8662630afa8d88b34bb3c2e11d0c7f9b6532a1/grafana
+# Apache 2.0 License
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  name: 'grafana'
+  labels:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+    service: 'grafana'
+spec:
+  type: 'LoadBalancer'
+  ports:
+  - name: 'web'
+    port: 80
+    targetPort: 3000
+    protocol: 'TCP'
+  selector:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+    service: 'grafana'
+---
+apiVersion: 'extensions/v1beta1'
+kind: 'Deployment'
+metadata:
+  name: 'grafana'
+  labels:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+    service: 'grafana'
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        provider: 'LeastAuthority'
+        component: 'Monitoring'
+        service: 'grafana'
+    spec:
+      volumes:
+      # Give it some scratch space to work with.  It doesn't need any
+      # persistent storage.  We put the dashboard configuration elsewhere and
+      # we use a different data store for all our actual data.
+      - name: 'grafana-storage'
+        emptyDir:
+
+      # Take the ConfigMap that defines the dashboards and turn it into a
+      # volume we can expose to the watcher.
+      - name: 'grafana-dashboards'
+        configMap:
+          name: 'grafana-dashboards'
+
+      containers:
+      # The Grafana container runs Grafana!  Which does the fancy graphing.
+      - name: 'grafana'
+        image: 'grafana/grafana:4.3.2'
+        env:
+        # See http://docs.grafana.org/installation/configuration/ for details
+        # of how environment variables configure Grafana.
+        - name: 'GF_SECURITY_ADMIN_USER'
+          valueFrom:
+            secretKeyRef:
+              name: 's4' # TODO: Separate secrets resource for this stuff?
+              key: 'grafana-admin-username'
+        - name: 'GF_SECURITY_ADMIN_PASSWORD'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'grafana-admin-password'
+
+        # No, please no self-service Grafana accounts.
+        - name: 'GF_USERS_ALLOW_SIGN_UP'
+          value: 'false'
+
+        # No, please no self-service Grafana organizations.
+        - name: 'GF_USERS_ALLOW_ORG_CREATE'
+          value: 'false'
+
+        # No anonymous access either.
+        - name: 'GF_AUTH_ANONYMOUS_ENABLED'
+          value: 'false'
+
+        # We'll use OAuth2, we don't want a Grafana sign in form at all.
+        - name: 'GF_AUTH_DISABLE_LOGIN_FORM'
+          value: 'true'
+
+        # Grafana must know its own hostname to successfully use an OAuth2
+        # provider (to generate the correct callback URL).
+        - name: 'GF_SERVER_ROOT_URL'
+          value: 'http://graphs.leastauthority.com/'
+
+        # Turn on GitHub-backed OAuth2-based login.
+        - name: 'GF_AUTH_GITHUB_ENABLED'
+          value: 'true'
+
+        # Client ID and secret are found on the LeastAuthority org settings
+        # under "OAuth Apps".
+        - name: 'GF_AUTH_GITHUB_CLIENT_ID'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'grafana-github-client-id'
+        - name: 'GF_AUTH_GITHUB_CLIENT_SECRET'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'grafana-github-client-secret'
+
+          # We must provide read:org if we want org-restricted access.
+          #
+          # We must provide user:email for Grafana's OAuth2 support to work at
+          # all.
+        - name: 'GF_AUTH_GITHUB_SCOPES'
+          value: 'read:org,user:email'
+
+        - name: 'GF_AUTH_GITHUB_AUTH_URL'
+          value: 'https://github.com/login/oauth/authorize'
+        - name: 'GF_AUTH_GITHUB_TOKEN_URL'
+          value: 'https://github.com/login/oauth/access_token'
+        - name: 'GF_AUTH_GITHUB_API_URL'
+          value: 'https://api.github.com/user'
+        # Let access control be determined on GitHub by who belongs to the
+        # right team (monitoring) and organization (LeastAuthority).
+        - name: 'GF_AUTH_GITHUB_TEAM_IDS'
+          value: '' # TODO Put a team here
+        - name: 'GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS'
+          value: 'LeastAuthority'
+
+        # - name: 'GF_USERS_AUTO_ASSIGN_ORG_ROLE'
+        #   value: 'Admin'
+
+        volumeMounts:
+        - name: 'grafana-storage'
+          mountPath: '/var/grafana-storage'
+        ports:
+        - name: 'web'
+          containerPort: 3000
+        resources:
+          requests:
+            memory: '100Mi'
+            cpu: '10m'
+          limits:
+            memory: '200Mi'
+            cpu: '200m'
+
+      # Grafana watcher is a side-car that looks for dashboard configuration
+      # changes and reconfigures Grafana with them when they are detected.
+      - name: 'grafana-watcher'
+        image: 'quay.io/coreos/grafana-watcher:v0.0.4'
+        args:
+          - '--watch-dir=/var/grafana-dashboards'
+          - '--grafana-url=http://grafana:3000/'
+        env:
+
+        # First tell it how to gain admin access to Grafana.
+        - name: 'GRAFANA_USER'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'grafana-admin-username'
+        - name: 'GRAFANA_PASSWORD'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'grafana-admin-password'
+
+        volumeMounts:
+        # Put the dashboard configuration volume into the place we told the
+        # watcher it could find that information.
+        - name: 'grafana-dashboards'
+          mountPath: '/var/grafana-dashboards'
+
+        resources:
+          requests:
+            memory: '16Mi'
+            cpu: '10m'
+          limits:
+            memory: '32Mi'
+            cpu: '100m'
