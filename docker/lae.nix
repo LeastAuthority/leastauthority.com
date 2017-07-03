@@ -197,16 +197,101 @@ rec {
     [ cryptography pyasn1 idna ];
   };
 
+  idna2_5 = pythonPackages.idna.override rec {
+    version = "2.5";
+    name = "idna-${version}";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/i/idna/${name}.tar.gz";
+      sha256 = "0frxgmgi234lr9hylg62j69j4ik5zhg0wz05w5dhyacbjfnrl68n";
+    };
+  };
+
+  cryptography_vectors1_9 = pythonPackages.cryptography_vectors.override rec {
+    name = "cryptography_vectors-${version}";
+    version = "1.9";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/c/cryptography-vectors/${name}.tar.gz";
+      sha256 = "1wvq1p1viam1diz9x6d61x1bsy6cninv7cjgd35x9ffig9r6gxxv";
+    };
+  };
+
+  cryptography1_9 = pythonPackages.cryptography.override rec {
+    name = "cryptography-${version}";
+    version = "1.9";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/c/cryptography/${name}.tar.gz";
+      sha256 = "10j8r1s29f4h59kp3mla14g588rm7qpn90nrczijk03i49q3662m";
+    };
+
+    buildInputs = [
+      idna2_5
+      cryptography_vectors1_9
+
+      pkgs.openssl
+      pythonPackages.pretend
+      pythonPackages.iso8601
+      pythonPackages.pyasn1
+      pythonPackages.pytest_29
+      pythonPackages.py
+      pythonPackages.hypothesis
+      pythonPackages.pytz
+    ];
+
+    propagatedBuildInputs = [
+      idna2_5
+
+      pythonPackages.six
+      pythonPackages.ipaddress
+      pythonPackages.pyasn1
+      pythonPackages.cffi
+      pythonPackages.pyasn1-modules
+      pythonPackages.pytz
+      pythonPackages.enum34
+    ];
+  };
+
+  pyopenssl17_1_0 = pythonPackages.buildPythonPackage rec {
+    name = "pyopenssl-${version}";
+    version = "17.1.0";
+
+    src = pkgs.fetchurl {
+      url = "mirror://pypi/p/pyOpenSSL/pyOpenSSL-${version}.tar.gz";
+      sha256 = "0qwmqhfsq84ydir9dz273ypmlcvs7v71m1jns0sd4k0h6lfsa82s";
+    };
+
+    preCheck = ''
+      sed -i 's/test_set_default_verify_paths/noop/' tests/test_ssl.py
+    '';
+
+    checkPhase = ''
+      runHook preCheck
+      export LANG="en_US.UTF-8";
+      py.test;
+      runHook postCheck
+    '';
+
+    buildInputs =
+    with pythonPackages;
+    [ pkgs.openssl pytest pkgs.glibcLocales ];
+
+    propagatedBuildInputs =
+    with pythonPackages;
+    [ cryptography1_9 pyasn1 idna2_5 ];
+  };
+
   service-identity = pythonPackages.service-identity.override {
     propagatedBuildInputs = with pythonPackages; [
-      characteristic pyasn1 pyasn1-modules pyopenssl16_2_0 idna attrs
+      characteristic pyasn1 pyasn1-modules pyopenssl17_1_0 idna2_5 attrs
     ];
   };
 
   foolscap = pythonPackages.foolscap.override {
     propagatedBuildInputs =
     with pythonPackages;
-    [ mock twisted pyopenssl16_2_0 service-identity ];
+    [ mock twisted pyopenssl17_1_0 service-identity ];
   };
 
   tahoe_lafs = pythonPackages.buildPythonPackage rec {
@@ -229,7 +314,7 @@ rec {
         dateutil
         zfec
         pycrypto
-        pyopenssl16_2_0
+        pyopenssl17_1_0
         pycryptopp
         service-identity
         foolscap
@@ -281,7 +366,7 @@ rec {
         incremental
         pyrsistent0_12_2
         constantly
-        pyopenssl16_2_0
+        pyopenssl17_1_0
         pem
         service-identity
         twisted
@@ -365,7 +450,7 @@ rec {
         pyrsistent0_12_2
         incremental
         service-identity
-        pyopenssl16_2_0
+        pyopenssl17_1_0
         twisted
         pem
         eliot
@@ -403,7 +488,7 @@ rec {
         pyrsistent0_12_2
         incremental
         service-identity
-        pyopenssl16_2_0
+        pyopenssl17_1_0
         twisted
         pem
         eliot
@@ -441,7 +526,7 @@ rec {
       spake2
       pynacl
       six
-      pyopenssl16_2_0
+      pyopenssl17_1_0
       service-identity
       twisted
       autobahn
@@ -473,7 +558,7 @@ rec {
       with pythonPackages; [
         pem
         deepdiff
-        pyopenssl16_2_0
+        pyopenssl17_1_0
         filepath
         eliot
         stripe
