@@ -11,7 +11,12 @@ filepath
 jinja2
 mock
 simplejson
+
 twisted[tls]!=17.1.0
+# twisted install_requires automat setup_requires m2r which pypi2nix doesn't
+# pick up for some reason.
+m2r
+
 attrs==16.3.0
 eliot==0.12.0
 bitmath==1.3.1.2
@@ -29,9 +34,7 @@ deepdiff==3.1.0
 # It's really convenient to have around.
 eliot-tree
 
-# A dependency of tahoe-lafs.  Force a specific version so we use the binary
-# wheel we built.
-pycryptopp==0.7.1.869544967005693312591928092448767568728501330214.post0.dev0
+pycryptopp==0.7.1.869544967005693312591928092448767568728501330214
 
 # So we can generate tahoe configuration parameters.
 tahoe-lafs==1.11.0

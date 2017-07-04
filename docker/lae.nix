@@ -197,13 +197,22 @@ rec {
     [ cryptography pyasn1 idna ];
   };
 
-  idna2_5 = pythonPackages.idna.override rec {
-    version = "2.5";
-    name = "idna-${version}";
-
+  idna2_5 = pythonPackages.idna.override {
+    format = "wheel";
     src = pkgs.fetchurl {
-      url = "mirror://pypi/i/idna/${name}.tar.gz";
-      sha256 = "0frxgmgi234lr9hylg62j69j4ik5zhg0wz05w5dhyacbjfnrl68n";
+      url = "https://pypi.python.org/packages/11/7d/9bbbd7bb35f34b0169542487d2a8859e44306bb2e6a4455d491800a5621f/idna-2.5-py2.py3-none-any.whl";
+      sha256 = "0w5vx22q78h2cdnsf465xc62rqnllsdx4xd8kv9zxjyhssgp06fc";
+    };
+  };
+
+  asn1crypto =  pythonPackages.buildPythonPackage rec {
+    name = "asn1crypto";
+    version = "0.22.0";
+
+    format = "wheel";
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/97/ba/7e8117d8efcee589f4d96dd2b2eb1d997f96d27d214cf2b7134ad8acf6ab/${name}-${version}-py2.py3-none-any.whl";
+      sha256 = "15x01gddb3pidhbx5ir7v6d02h84qafrqzpk66ivkkfgxygm0cnj";
     };
   };
 
@@ -228,12 +237,12 @@ rec {
 
     buildInputs = [
       idna2_5
+      asn1crypto
       cryptography_vectors1_9
 
       pkgs.openssl
       pythonPackages.pretend
       pythonPackages.iso8601
-      pythonPackages.pyasn1
       pythonPackages.pytest_29
       pythonPackages.py
       pythonPackages.hypothesis
@@ -242,12 +251,11 @@ rec {
 
     propagatedBuildInputs = [
       idna2_5
+      asn1crypto
 
       pythonPackages.six
       pythonPackages.ipaddress
-      pythonPackages.pyasn1
       pythonPackages.cffi
-      pythonPackages.pyasn1-modules
       pythonPackages.pytz
       pythonPackages.enum34
     ];
@@ -264,6 +272,7 @@ rec {
 
     preCheck = ''
       sed -i 's/test_set_default_verify_paths/noop/' tests/test_ssl.py
+      sed -i 's/test_fallback_default_verify_paths/noop/' tests/test_ssl.py
     '';
 
     checkPhase = ''
@@ -275,7 +284,7 @@ rec {
 
     buildInputs =
     with pythonPackages;
-    [ pkgs.openssl pytest pkgs.glibcLocales ];
+    [ pkgs.openssl pytest pkgs.glibcLocales pretend ];
 
     propagatedBuildInputs =
     with pythonPackages;
