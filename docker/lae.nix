@@ -182,10 +182,6 @@ rec {
     '';
 
     checkPhase = ''
-      runHook preCheck
-      export LANG="en_US.UTF-8";
-      py.test;
-      runHook postCheck
     '';
 
     buildInputs =
