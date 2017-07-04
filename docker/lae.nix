@@ -60,7 +60,7 @@ rec {
       pythonPackages.coverage
       pythonPackages.pretend
       pythonPackages.pytest
-      pythonPackages.pyopenssl
+      pyopenssl16_2_0
       pythonPackages.incremental
       pythonPackages.twisted
     ];
