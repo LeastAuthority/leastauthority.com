@@ -176,7 +176,8 @@ rec {
       url = "mirror://pypi/p/pyOpenSSL/pyOpenSSL-${version}.tar.gz";
       sha256 = "0vji4yrfshs15xpczbhzhasnjrwcarsqg87n98ixnyafnyxs6ybp";
     };
-
+    doCheck = false;
+    
     preCheck = ''
       sed -i 's/test_set_default_verify_paths/noop/' tests/test_ssl.py
     '';
