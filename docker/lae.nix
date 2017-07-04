@@ -60,7 +60,7 @@ rec {
       pythonPackages.coverage
       pythonPackages.pretend
       pythonPackages.pytest
-      pyopenssl16_2_0
+      pythonPackages.pyopenssl
       pythonPackages.incremental
       pythonPackages.twisted
     ];
@@ -168,44 +168,6 @@ rec {
     '';
   };
 
-  pyopenssl16_2_0 = pythonPackages.buildPythonPackage rec {
-    name = "pyopenssl-${version}";
-    version = "16.2.0";
-
-    src = pkgs.fetchurl {
-      url = "mirror://pypi/p/pyOpenSSL/pyOpenSSL-${version}.tar.gz";
-      sha256 = "0vji4yrfshs15xpczbhzhasnjrwcarsqg87n98ixnyafnyxs6ybp";
-    };
-    doCheck = false;
-    
-    preCheck = ''
-      sed -i 's/test_set_default_verify_paths/noop/' tests/test_ssl.py
-    '';
-
-    checkPhase = ''
-    '';
-
-    buildInputs =
-    with pythonPackages;
-    [ pkgs.openssl pytest pkgs.glibcLocales ];
-
-    propagatedBuildInputs =
-    with pythonPackages;
-    [ cryptography pyasn1 idna ];
-  };
-
-  service-identity = pythonPackages.service-identity.override {
-    propagatedBuildInputs = with pythonPackages; [
-      characteristic pyasn1 pyasn1-modules pyopenssl16_2_0 idna attrs
-    ];
-  };
-
-  foolscap = pythonPackages.foolscap.override {
-    propagatedBuildInputs =
-    with pythonPackages;
-    [ mock twisted pyopenssl16_2_0 service-identity ];
-  };
-
   tahoe_lafs = pythonPackages.buildPythonPackage rec {
     name = "${pname}-${version}";
     pname = "tahoe-lafs";
@@ -226,7 +188,7 @@ rec {
         dateutil
         zfec
         pycrypto
-        pyopenssl16_2_0
+        pyopenssl
         pycryptopp
         service-identity
         foolscap
@@ -278,7 +240,7 @@ rec {
         incremental
         pyrsistent0_12_2
         constantly
-        pyopenssl16_2_0
+        pyopenssl
         pem
         service-identity
         twisted
@@ -362,7 +324,7 @@ rec {
         pyrsistent0_12_2
         incremental
         service-identity
-        pyopenssl16_2_0
+        pyopenssl
         twisted
         pem
         eliot
@@ -400,7 +362,7 @@ rec {
         pyrsistent0_12_2
         incremental
         service-identity
-        pyopenssl16_2_0
+        pyopenssl
         twisted
         pem
         eliot
@@ -438,7 +400,7 @@ rec {
       spake2
       pynacl
       six
-      pyopenssl16_2_0
+      pyopenssl
       service-identity
       twisted
       autobahn
@@ -470,7 +432,7 @@ rec {
       with pythonPackages; [
         pem
         deepdiff
-        pyopenssl16_2_0
+        pyopenssl
         filepath
         eliot
         stripe
