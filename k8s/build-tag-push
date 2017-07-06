@@ -8,7 +8,7 @@ SERVER="127.0.0.1:${SERVER_PORT}"
 microservices="web grid-router tahoe-introducer tahoe-storage foolscap-gatherer subscription-manager subscription-converger"
 
 # Build the images.
-./leastauthority.com/docker/build.sh --verbose --load
+./leastauthority.com/docker/build.sh
 
 # Tag them in the way expected by the deployment configuration and
 # with the tag given in the environment.

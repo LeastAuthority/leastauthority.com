@@ -25,28 +25,6 @@ matrix:
     - env: ENV="testing"
       language: "python"
 
-    # This builder will build the Nix packages (which happens to run the test
-    # suite as well).
-    - env:
-        # tar on trusty doesn't have --exclude-vcs-ignores so disable it here.
-        - >-
-          ENV="packaging"
-          EXCLUDE_VCS_IGNORES=""
-          DOCKER_USER="leastauthorityci"
-
-      # Force this to run in a VM since the packaging script wants to launch Docker.
-      sudo: "required"
-      # We don't really need any particular language runtime.
-      # Maybe the C runtime is lighter than the rest?
-      language: "C"
-
-      deploy:
-        - on:
-            all_branches: true
-          provider: "script"
-          script: "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS} && ./ops/deploy-images"
-
-
 # Install leastauthority.com's dependencies.
 install:
   - "./test-tools/install-${ENV}"
