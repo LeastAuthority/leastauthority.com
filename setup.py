@@ -17,7 +17,6 @@ setup(
         "foolscap",
         "filepath",
         "jinja2",
-        "mock",
         "simplejson",
         "twisted[tls]",
         "attrs",
@@ -27,17 +26,19 @@ setup(
 
         "magic-wormhole",
 
-        # If we had a dev extra ourselves, the [dev] part of this would
-        # probably be better placed there.
-        "txkube[dev]",
-
-        # For the test suite.
-        "hypothesis",
-        "testtools",
-        "fixtures",
-        "deepdiff",
+        "txkube",
 
         # So we can generate tahoe configuration parameters.
         "tahoe-lafs",
     ],
+    extras_require={
+        "dev": [
+            "mock",
+            "txkube[dev]",
+            "hypothesis",
+            "testtools",
+            "fixtures",
+            "deepdiff",
+        ],
+    },
 )
