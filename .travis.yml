@@ -31,5 +31,4 @@ install:
 
 # Run its test suite.
 script:
-  - "pip install .[dev]"
   - "./test-tools/run-${ENV}"

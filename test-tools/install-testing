@@ -1,4 +1,5 @@
 #!/bin/sh
 
 pip install --upgrade pip
-pip install --requirement requirements.txt --requirement requirements-tests.txt
+pip install --requirement requirements.txt
+pip install --upgrade --requirement requirements-tests.txt
