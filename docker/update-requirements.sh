@@ -29,6 +29,9 @@ pypi2nix \
     --extra-build-inputs libxml2 \
     --extra-build-inputs libxslt \
 \
+    `# upstream unittest2 cannot be built into a wheel but our forked version can be` \
+    --extra-env PIP_FIND_LINKS=${LEASTAUTHORITY}/wheelhouse \
+\
     --requirements requirements.txt
 "
 
