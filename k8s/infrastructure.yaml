@@ -283,7 +283,7 @@ spec:
         image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
-          - '/bin/python'
+          - '/app/env/bin/python'
           - '-u'
           - '-m'
           - 'lae_site.main'
@@ -462,7 +462,7 @@ spec:
         image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
-          - '/bin/twist'
+          - '/app/env/bin/twist'
           - '--log-format=text'
           - 's4-grid-router'
           - '--k8s-service-account'
@@ -571,7 +571,7 @@ spec:
         image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
-          - '/bin/twist'
+          - '/app/env/bin/twist'
           - '--log-format=text'
           - 's4-subscription-converger'
           - '--domain'
@@ -681,7 +681,7 @@ spec:
         image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
-          - '/bin/twist'
+          - '/app/env/bin/twist'
           - '--log-format=text'
           - 's4-subscription-manager'
           - '--domain'
