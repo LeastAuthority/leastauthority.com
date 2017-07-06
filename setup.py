@@ -4,7 +4,8 @@ setup(
     name="leastauthority.com",
     version="2.0",
     zip_safe=False,
-    packages=find_packages(),
+    package_dir={"": "src"},
+    packages=find_packages(where="src"),
     py_modules=["twisted.plugins.lae_dropin"],
     include_package_data=True,
     dependency_links=[
