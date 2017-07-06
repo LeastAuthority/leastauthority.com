@@ -27,7 +27,6 @@ incremental==17.5.0
 ipaddress==1.0.18
 Jinja2==2.9.6
 klein==17.2.0
-leastauthority.com==2.0
 lxml==3.8.0
 magic-wormhole==0.10.2
 MarkupSafe==1.0
