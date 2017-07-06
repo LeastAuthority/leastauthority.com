@@ -2,7 +2,7 @@
 
 LEASTAUTHORITY=${PWD}/$(dirname $(dirname $0))
 
-images="base s4-common-image tahoe-base foolscap-base foolscap-gatherer"
+images="base s4-common tahoe-base foolscap-base foolscap-gatherer"
 tahoe_images="tahoe-introducer tahoe-storage"
 
 for image in ${images}; do

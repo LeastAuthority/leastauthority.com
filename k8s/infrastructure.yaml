@@ -280,7 +280,7 @@ spec:
       # This is the web server.  It serves the subscription signup web
       # interface.
       - name: 'web'
-        image: 'leastauthority/s4-common-image:2.0'
+        image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
           - '/bin/python'
@@ -459,7 +459,7 @@ spec:
       # connections to it and it figures out which pod services the
       # subscription the connection is related to.
       - name: 'grid-router'
-        image: 'leastauthority/s4-common-image:2.0'
+        image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
           - '/bin/twist'
@@ -568,7 +568,7 @@ spec:
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
-        image: 'leastauthority/s4-common-image:2.0'
+        image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
           - '/bin/twist'
@@ -678,7 +678,7 @@ spec:
       # Here is the subscription manager.  It contains the canonical (local)
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
       - name: 'subscription-manager'
-        image: 'leastauthority/s4-common-image:2.0'
+        image: 'leastauthority/s4-common:2.0'
         imagePullPolicy: 'Always'
         command:
           - '/bin/twist'
