@@ -1,4 +1,4 @@
 #!/bin/sh
 
 pip install --upgrade pip
-pip install --process-dependency-links .
+pip install --requirement requirements.txt --requirement requirements-tests.txt
