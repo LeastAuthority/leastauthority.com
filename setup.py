@@ -12,34 +12,32 @@ setup(
     ],
     install_requires=[
         "python-dateutil",
-        "stripe==1.41.1",
-        "pem==16.1.0",
+        "stripe",
+        "pem",
         "foolscap",
         "filepath",
         "jinja2",
         "mock",
-        "pyOpenSSL",
         "simplejson",
-        "twisted!=17.1.0",
-        "service_identity",
+        "twisted[tls]",
         "attrs",
-        "eliot==0.12.0",
+        "eliot",
 
-        "txAWS==0.3.0",
+        "txAWS",
 
-        "magic-wormhole==0.9.2",
+        "magic-wormhole",
 
         # If we had a dev extra ourselves, the [dev] part of this would
         # probably be better placed there.
         "txkube[dev]",
 
         # For the test suite.
-        "hypothesis==3.6.1",
-        "testtools==2.2.0",
-        "fixtures==3.0.0",
-        "deepdiff==3.1.2",
+        "hypothesis",
+        "testtools",
+        "fixtures",
+        "deepdiff",
 
         # So we can generate tahoe configuration parameters.
-        "tahoe-lafs==1.11.0",
+        "tahoe-lafs",
     ],
 )
