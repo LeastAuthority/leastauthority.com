@@ -5,7 +5,6 @@ from base64 import b32encode
 from json import loads
 
 import attr
-import wormhole
 
 from hypothesis import given, assume
 
@@ -13,7 +12,7 @@ from testtools.matchers import Equals, AfterPreprocessing
 
 from twisted.python.filepath import FilePath
 from twisted.python.url import URL
-from twisted.internet.defer import succeed, inlineCallbacks
+from twisted.internet.defer import succeed
 from twisted.internet.task import Clock
 
 from foolscap.furl import decode_furl
@@ -293,7 +292,6 @@ class MemoryWormholeTests(TestCase):
     application tests.
     """
 
-    @inlineCallbacks
     def test_send_receive(self):
         appid = "memory-wormhole-tests"
         url = "ws://foo.invalid/"
@@ -301,18 +299,17 @@ class MemoryWormholeTests(TestCase):
         to_send = u"Hello, world."
 
         server = MemoryWormholeServer()
-        self.patch(wormhole, "wormhole", server)
 
-        wh_a = wormhole.wormhole.create(appid, url, reactor)
-        wh_b = wormhole.wormhole.create(appid, url, reactor)
+        wh_a = server.create(appid, url, reactor)
+        wh_b = server.create(appid, url, reactor)
 
         wh_a.allocate_code()
-        code = yield wh_a.get_code()
+        code = self.successResultOf(wh_a.get_code())
 
         to_send = 'this is a message'
         wh_a.send_message(to_send)
         wh_b.set_code(code)
 
-        received = yield wh_b.get_message()
+        received = self.successResultOf(wh_b.get_message())
 
         self.assertThat(received, Equals(to_send))
