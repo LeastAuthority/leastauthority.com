@@ -24,7 +24,7 @@ ipaddress==1.0.18
 Jinja2==2.9.6
 klein==17.2.0
 lxml==3.8.0
-magic-wormhole==0.9.2
+magic-wormhole==0.10.2
 MarkupSafe==1.0
 Nevow==0.14.2
 oauth2client==4.1.2

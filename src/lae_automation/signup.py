@@ -7,7 +7,7 @@ This module provides functionality for creating new subscriptions
 owner.
 """
 
-from base64 import b32encode, b64encode
+from base64 import b32encode
 import json
 from datetime import datetime
 
@@ -16,22 +16,17 @@ from zope.interface import Interface, implementer
 import attr
 from attr import validators
 
-from eliot import start_action
+from eliot import Message, start_action
 from eliot.twisted import DeferredContext
 
-from twisted.python.monkey import MonkeyPatcher
-from twisted.python.filepath import FilePath
-from twisted.internet.defer import Deferred, succeed
+from twisted.internet.defer import succeed
 from twisted.web.client import Agent
-
-from wormhole import xfer_util
 
 from lae_automation.model import SubscriptionDetails
 
 from .subscription_manager import Client, network_client
 
-SIGNUP_ICON_PATH = FilePath(__file__).sibling(u"lae-s4-signup-icon.png")
-SIGNUP_ICON_BASE64 = b64encode(SIGNUP_ICON_PATH.getContent())
+SIGNUP_ICON_URL = u'https://s4.leastauthority.com/static/img/s4-wormhole-signup-icon.png'
 
 
 def encode_id(ident):
@@ -227,8 +222,7 @@ def get_wormhole_signup(reactor, provisioner, wormhole, rendezvous_url, result_p
     return _WormholeSignup(
         reactor,
         provisioner,
-        # 0.9.2 compatibility
-        getattr(wormhole, "wormhole", wormhole),
+        wormhole,
         rendezvous_url,
         result_path,
     )
@@ -317,8 +311,84 @@ def _details_to_tahoe_configuration(details):
         u"shares-needed": u"1",
         u"shares-total": u"1",
         u"shares-happy": u"1",
-        u"icon_base64": SIGNUP_ICON_BASE64,
+        u"icon_url": SIGNUP_ICON_URL,
     }
+
+
+
+def _get_wormhole(reactor, wormhole, rendezvous_url):
+    """
+    Make a new magic wormhole which will talk to the given rendezvous server.
+    """
+    return wormhole.create(
+        # This has to agree with anyone who wants to receive this code.  "v1"
+        # here versions application protocol that runs over wormhole to convey
+        # a configuration payload.  It does not version the configuration
+        # payload itself, which is a self-versioning JSON.
+        appid=u"tahoe-lafs.org/tahoe-lafs/v1",
+        relay_url=rendezvous_url.asText(),
+        reactor=reactor,
+    )
+
+
+
+def _get_claim(wormhole):
+    """
+    Get a ``_WormholeClaim`` using the given magic wormhole.
+    """
+    # this, or set_code or input_code must be called before .get_code()
+    a = start_action(action_type=u"signup:wormhole:get-claim")
+    with a.context():
+        wormhole.allocate_code()
+        waiting_for_code = DeferredContext(wormhole.get_code())
+
+        def got_code(code):
+            # We don't currently expire these at all.
+            expires = _NoExpiration()
+            Message.log(event=u"code-allocated")
+            return _WormholeClaim(code, expires)
+        waiting_for_code.addCallback(got_code)
+        return waiting_for_code.addActionFinish()
+
+
+
+def _transfer_configuration(wormhole, configuration):
+    """
+    Perform the sending side of the Tahoe-LAFS invite/join configuration
+    transfer protocol.
+    """
+    exchange = DeferredContext(wormhole.get_welcome())
+    def got_welcome(ignored):
+        # we're connected to the wormhole server; send our introduction
+        # message
+        intro = {u"abilities": {u"server-v1": {}}}
+        Message.log(server_intro=intro)
+        wormhole.send_message(json.dumps(intro))
+
+        # await the client's introduction
+        d = DeferredContext(wormhole.get_message())
+        d.addCallback(json.loads)
+        return d.result
+    exchange.addCallback(got_welcome)
+
+    def got_intro(client_intro):
+        Message.log(client_intro=client_intro)
+        if u'abilities' not in client_intro:
+            raise Exception("Expected 'abilities' in client introduction")
+        if u'client-v1' not in client_intro['abilities']:
+            raise Exception("Expected 'client-v1' in client abilities")
+
+        # a correctly-versioned client has opened a wormhole to us;
+        # give them the configuration JSON
+        Message.log(event=u"send-configuration")
+        wormhole.send_message(json.dumps(configuration))
+    exchange.addCallback(got_intro)
+
+    def sent_config(ignored):
+        # close down cleanly
+        return wormhole.close()
+    exchange.addCallback(sent_config)
+    return exchange
 
 
 
@@ -335,34 +405,16 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
         meaningless success result or a ``Failure`` if something is known to
         have gone wrong.
     """
-    waiting_for_code = Deferred()
+    a = start_action(action_type=u"signup:configuration-to-wormhole")
 
-    def got_code(code):
-        # We don't currently expire these at all.
-        expires = _NoExpiration()
-        waiting_for_code.callback(_WormholeClaim(code, expires))
-
-    patcher = MonkeyPatcher()
-    patcher.addPatch(xfer_util, "wormhole", wormhole)
-    patcher.patch()
-    try:
-        done = xfer_util.send(
-            reactor,
-            # This has to agree with anyone who wants to receive this code.  "v1"
-            # here versions application protocol that runs over wormhole to convey
-            # a configuration payload.  It does not version the configuration
-            # payload itself, which is a self-versioning JSON.
-            appid=u"tahoe-lafs.org/tahoe-lafs/v1",
-            relay_url=rendezvous_url.asText(),
-            data=json.dumps(configuration),
-            code=None,
-            use_tor=None,
-            on_code=got_code,
+    with a.context():
+        wh = _get_wormhole(reactor, wormhole, rendezvous_url)
+        claim_deferred = _get_claim(wh)
+        done_deferred = _transfer_configuration(wh, configuration)
+        return (
+            claim_deferred,
+            DeferredContext(done_deferred).addActionFinish(),
         )
-    finally:
-        patcher.restore()
-
-    return waiting_for_code, done
 
 
 class _NoExpiration(object):

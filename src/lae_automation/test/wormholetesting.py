@@ -3,17 +3,15 @@ An in-memory implementation of some of the magic-wormhole interfaces for
 use by automated tests.
 """
 
+from sys import stderr
+
 from itertools import count
 
-from zope.interface import Interface, implementer
+from zope.interface import implementer
 
 from twisted.internet.defer import DeferredQueue, Deferred, succeed
 
-try:
-    from wormhole._interfaces import IWormhole
-except ImportError:
-    # 0.9.2 compatibility
-    IWormhole = Interface
+from wormhole._interfaces import IWormhole
 
 
 class MemoryWormholeServer(object):
@@ -24,13 +22,18 @@ class MemoryWormholeServer(object):
         self._apps = {}
 
 
-    def create(self, appid, relay_url, reactor, tor_manager):
+    def create(
+            self,
+            appid, relay_url, reactor,
+            versions={}, delegate=None, journal=None, tor=None, timing=None,
+            stderr=stderr,
+    ):
         """
         Create a wormhole.  It will be able to connect to other wormholes created
         by this ``MemoryWormholeServer`` instance (and constrained by the
         normal appid/relay_url rules).
         """
-        if tor_manager is not None:
+        if tor is not None:
             raise ValueError("Cannot deal with Tor right now.")
 
         key = (relay_url, appid)
@@ -41,8 +44,17 @@ class MemoryWormholeServer(object):
         return _WormholeServerView(self, key)
 
 
-    # 0.9.2 compatibility
-    __call__ = create
+
+def _verify():
+    # Poor man's interface verification.
+    from inspect import getargspec
+    from wormhole.wormhole import create
+    a = getargspec(create)
+    b = getargspec(MemoryWormholeServer.create)
+    # I know it has a `self` argument at the beginning.  That's okay.
+    b = b._replace(args=b.args[1:])
+    assert a == b, "{} != {}".format(a, b)
+_verify()
 
 
 
@@ -163,9 +175,14 @@ class _MemoryWormhole(object):
                 "This implementation requires allocate_code before when_code."
             )
         return succeed(self._code)
+    get_code = when_code
 
 
-    def send(self, payload):
+    def get_welcome(self):
+        return succeed('welcome')
+
+
+    def send_message(self, payload):
         self._payload.put(payload)
 
 
@@ -176,8 +193,12 @@ class _MemoryWormhole(object):
                 "before when_received."
             )
         d = self._view.wormhole_by_code(self._code, exclude=self)
-        d.addCallback(lambda wormhole: wormhole._payload.get())
+
+        def got_wormhole(wormhole):
+            return wormhole._payload.get()
+        d.addCallback(got_wormhole)
         return d
+    get_message = when_received
 
 
     def close(self):

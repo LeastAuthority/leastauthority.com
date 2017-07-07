@@ -17,8 +17,6 @@ from twisted.internet.task import Clock
 
 from foolscap.furl import decode_furl
 
-from wormhole import xfer_util
-
 from lae_util.testtools import TestCase
 from lae_util.fileutil import make_dirs
 from lae_automation import model, signup
@@ -257,13 +255,27 @@ class ActivateTests(TestCase):
         d = signup.signup(customer_email, customer_id, subscription_id, plan_identifier)
         wormhole_claim = self.successResultOf(d)
 
-        self.patch(xfer_util, "wormhole", server)
-        d = xfer_util.receive(
-            reactor,
+        wh = server.create(
             u"tahoe-lafs.org/tahoe-lafs/v1",
             u"ws://foo.invalid/",
-            wormhole_claim.code,
+            reactor,
         )
+
+        wh.set_code(wormhole_claim.code)
+        d = wh.when_code()
+
+        def foo(x):
+            wh.send_message('{"abilities": {"client-v1": {}}}')
+            return wh.get_message()
+        d.addCallback(foo)
+
+        def bar(arg):
+            self.assertEqual(
+                loads(arg),
+                {"abilities": {"server-v1":{}}}
+            )
+            return wh.get_message()
+        d.addCallback(bar)
 
         received = self.successResultOf(d)
         received_config = loads(received)
@@ -279,6 +291,7 @@ class MemoryWormholeTests(TestCase):
     Smoke test for the in-memory ``IWormhole`` implementation used by other
     application tests.
     """
+
     def test_send_receive(self):
         appid = "memory-wormhole-tests"
         url = "ws://foo.invalid/"
@@ -286,19 +299,17 @@ class MemoryWormholeTests(TestCase):
         to_send = u"Hello, world."
 
         server = MemoryWormholeServer()
-        self.patch(xfer_util, "wormhole", server)
 
-        catch_code = []
-        sending = xfer_util.send(
-            reactor, appid, url, to_send, None, on_code=catch_code.append,
-        )
-        [code] = catch_code
+        wh_a = server.create(appid, url, reactor)
+        wh_b = server.create(appid, url, reactor)
 
-        receiving = xfer_util.receive(
-            reactor, appid, url, code,
-        )
+        wh_a.allocate_code()
+        code = self.successResultOf(wh_a.get_code())
 
-        self.successResultOf(sending)
-        received = self.successResultOf(receiving)
+        to_send = 'this is a message'
+        wh_a.send_message(to_send)
+        wh_b.set_code(code)
+
+        received = self.successResultOf(wh_b.get_message())
 
         self.assertThat(received, Equals(to_send))
