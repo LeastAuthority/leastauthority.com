@@ -226,8 +226,7 @@ def get_wormhole_signup(reactor, provisioner, wormhole, rendezvous_url, result_p
     return _WormholeSignup(
         reactor,
         provisioner,
-        # 0.9.2 compatibility
-        getattr(wormhole, "wormhole", wormhole),
+        wormhole,
         rendezvous_url,
         result_path,
     )
