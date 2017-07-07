@@ -13,3 +13,4 @@ testtools==2.3.0
 traceback2==1.4.0
 unittest2==1.1.0
 txkube[dev]==0.2.0
+eliot-tree==17.0.0
