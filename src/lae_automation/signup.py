@@ -16,10 +16,10 @@ from zope.interface import Interface, implementer
 import attr
 from attr import validators
 
-from eliot import start_action
+from eliot import Message, start_action
 from eliot.twisted import DeferredContext
 
-from twisted.internet.defer import succeed, inlineCallbacks
+from twisted.internet.defer import succeed
 from twisted.web.client import Agent
 
 from lae_automation.model import SubscriptionDetails
@@ -316,6 +316,72 @@ def _details_to_tahoe_configuration(details):
 
 
 
+def _get_wormhole(reactor, wormhole, rendezvous_url):
+    return wormhole.create(
+        # This has to agree with anyone who wants to receive this code.  "v1"
+        # here versions application protocol that runs over wormhole to convey
+        # a configuration payload.  It does not version the configuration
+        # payload itself, which is a self-versioning JSON.
+        appid=u"tahoe-lafs.org/tahoe-lafs/v1",
+        relay_url=rendezvous_url.asText(),
+        reactor=reactor,
+    )
+
+
+
+def _get_claim(wormhole):
+    # this, or set_code or input_code must be called before .get_code()
+    a = start_action(action_type=u"signup:wormhole:get-claim")
+    with a.context():
+        wormhole.allocate_code()
+        waiting_for_code = DeferredContext(wormhole.get_code())
+
+        def got_code(code):
+            # We don't currently expire these at all.
+            expires = _NoExpiration()
+            Message.log(event=u"code-allocated")
+            return _WormholeClaim(code, expires)
+        waiting_for_code.addCallback(got_code)
+        return waiting_for_code.addActionFinish()
+
+
+
+def _transfer_configuration(wormhole, configuration):
+    exchange = DeferredContext(wormhole.get_welcome())
+    def got_welcome(ignored):
+        # we're connected to the wormhole server; send our introduction
+        # message
+        intro = {u"abilities": {u"server-v1": {}}}
+        Message.log(server_intro=intro)
+        wormhole.send(json.dumps(intro))
+
+        # await the client's introduction
+        d = DeferredContext(wormhole.get_message())
+        d.addCallback(json.loads)
+        return d.result
+    exchange.addCallback(got_welcome)
+
+    def got_intro(client_intro):
+        Message.log(client_intro=client_intro)
+        if u'abilities' not in client_intro:
+            raise Exception("Expected 'abilities' in client introduction")
+        if u'client-v1' not in client_intro['abilities']:
+            raise Exception("Expected 'client-v1' in client abilities")
+
+        # a correctly-versioned client has opened a wormhole to us;
+        # give them the configuration JSON
+        Message.log(event=u"send-configuration")
+        wormhole.send(json.dumps(configuration))
+    exchange.addCallback(got_intro)
+
+    def sent_config(ignored):
+        # close down cleanly
+        return wormhole.close()
+    exchange.addCallback(sent_config)
+    return exchange
+
+
+
 def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configuration):
     """
     Serialize ``configuration`` to JSON and put it into a new wormhole created
@@ -329,53 +395,16 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
         meaningless success result or a ``Failure`` if something is known to
         have gone wrong.
     """
+    a = start_action(action_type=u"signup:configuration-to-wormhole")
 
-    wh = wormhole.create(
-        # This has to agree with anyone who wants to receive this code.  "v1"
-        # here versions application protocol that runs over wormhole to convey
-        # a configuration payload.  It does not version the configuration
-        # payload itself, which is a self-versioning JSON.
-        appid=u"tahoe-lafs.org/tahoe-lafs/v1",
-        relay_url=rendezvous_url.asText(),
-        reactor=reactor,
-    )
-
-    # this, or set_code or input_code must be called before .get_code()
-    wh.allocate_code()
-    waiting_for_code = wh.get_code()
-
-    def got_code(code):
-        # We don't currently expire these at all.
-        expires = _NoExpiration()
-        return _WormholeClaim(code, expires)
-    waiting_for_code.addCallback(got_code)
-
-    @inlineCallbacks
-    def do_transfer():
-        yield wh.get_welcome()
-        # we're connected to the wormhole server; send our
-        # introduction message
-        intro = {u"abilities": {u"server-v1": {}}}
-        wh.send(json.dumps(intro))
-
-        # await the client's introduction
-        client_intro = yield wh.get_message()
-        client_intro = json.loads(client_intro)
-
-        if u'abilities' not in client_intro:
-            raise Exception("Expected 'abilities' in client introduction")
-        if u'client-v1' not in client_intro['abilities']:
-            raise Exception("Expected 'client-v1' in client abilities")
-
-        # a correctly-versioned client has opened a wormhole to us;
-        # give them the configuration JSON
-        wh.send(json.dumps(configuration))
-
-        # close down cleanly
-        yield wh.close()
-    done = do_transfer()
-
-    return waiting_for_code, done
+    with a.context():
+        wh = _get_wormhole(reactor, wormhole, rendezvous_url)
+        claim_deferred = _get_claim(wh)
+        done_deferred = _transfer_configuration(wh, configuration)
+        return (
+            claim_deferred,
+            DeferredContext(done_deferred).addActionFinish(),
+        )
 
 
 class _NoExpiration(object):
