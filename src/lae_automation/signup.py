@@ -222,6 +222,8 @@ def get_wormhole_signup(reactor, provisioner, wormhole, rendezvous_url, result_p
 
     :return: An ``ISignup`` provider.
     """
+    if not result_path.parent().isdir():
+        result_path.parent().makedirs()
     return _WormholeSignup(
         reactor,
         provisioner,

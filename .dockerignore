@@ -1,2 +1,10 @@
 .git
+.hypothesis
+_trial_temp
+dist
+docs
+docker
+k8s
+.travis.yml
+.gitignore
 *.pyc

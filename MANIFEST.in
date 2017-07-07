@@ -1,11 +1,11 @@
 # Templates for the website.
-graft lae_site/templates
+graft src/lae_site/templates
 
 # Other static content for the website.  Stylesheets and more.
-graft lae_site/static
+graft src/lae_site/static
 
 # Distributed via magic-wormhole-based S4 signup process.
-include lae_automation/lae-s4-signup-icon.png
+include src/lae_automation/lae-s4-signup-icon.png
 
 # Helper for starting tahoe-lafs with configuration from our system.
-include lae_automation/configure-tahoe
+include src/lae_automation/configure-tahoe
