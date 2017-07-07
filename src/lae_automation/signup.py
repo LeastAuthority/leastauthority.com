@@ -30,7 +30,7 @@ from lae_automation.model import SubscriptionDetails
 
 from .subscription_manager import Client, network_client
 
-SIGNUP_ICON_URL = u'https://github.com/LeastAuthority/leastauthority.com/raw/master/lae_automation/lae-s4-signup-icon.png'
+SIGNUP_ICON_URL = u'https://s4.leastauthority.com/static/img/s4-wormhole-signup-icon.png'
 
 
 def encode_id(ident):
