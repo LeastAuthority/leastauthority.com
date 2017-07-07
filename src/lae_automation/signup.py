@@ -317,6 +317,9 @@ def _details_to_tahoe_configuration(details):
 
 
 def _get_wormhole(reactor, wormhole, rendezvous_url):
+    """
+    Make a new magic wormhole which will talk to the given rendezvous server.
+    """
     return wormhole.create(
         # This has to agree with anyone who wants to receive this code.  "v1"
         # here versions application protocol that runs over wormhole to convey
@@ -330,6 +333,9 @@ def _get_wormhole(reactor, wormhole, rendezvous_url):
 
 
 def _get_claim(wormhole):
+    """
+    Get a ``_WormholeClaim`` using the given magic wormhole.
+    """
     # this, or set_code or input_code must be called before .get_code()
     a = start_action(action_type=u"signup:wormhole:get-claim")
     with a.context():
@@ -347,6 +353,10 @@ def _get_claim(wormhole):
 
 
 def _transfer_configuration(wormhole, configuration):
+    """
+    Perform the sending side of the Tahoe-LAFS invite/join configuration
+    transfer protocol.
+    """
     exchange = DeferredContext(wormhole.get_welcome())
     def got_welcome(ignored):
         # we're connected to the wormhole server; send our introduction
