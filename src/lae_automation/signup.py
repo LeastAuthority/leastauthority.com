@@ -338,7 +338,6 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
         appid=u"tahoe-lafs.org/tahoe-lafs/v1",
         relay_url=rendezvous_url.asText(),
         reactor=reactor,
-        tor=None,
     )
 
     # this, or set_code or input_code must be called before .get_code()
@@ -356,7 +355,7 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
         yield wh.get_welcome()
         # we're connected to the wormhole server; send our
         # introduction message
-        intro = {u"abilities": {"server-v1": {}}}
+        intro = {u"abilities": {u"server-v1": {}}}
         wh.send(json.dumps(intro))
 
         # await the client's introduction
@@ -374,8 +373,7 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
 
         # close down cleanly
         yield wh.close()
-    done = succeed(None)
-    done.addCallback(do_transfer)
+    done = do_transfer()
 
     return waiting_for_code, done
 
