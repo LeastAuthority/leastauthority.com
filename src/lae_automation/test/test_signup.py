@@ -266,7 +266,7 @@ class ActivateTests(TestCase):
         d = wh.when_code()
 
         def foo(x):
-            wh.send('{"abilities": {"client-v1": {}}}')
+            wh.send_message('{"abilities": {"client-v1": {}}}')
             return wh.get_message()
         d.addCallback(foo)
 
@@ -310,7 +310,7 @@ class MemoryWormholeTests(TestCase):
         code = yield wh_a.get_code()
 
         to_send = 'this is a message'
-        wh_a.send(to_send)
+        wh_a.send_message(to_send)
         wh_b.set_code(code)
 
         received = yield wh_b.get_message()

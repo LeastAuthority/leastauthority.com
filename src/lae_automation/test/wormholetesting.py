@@ -182,7 +182,7 @@ class _MemoryWormhole(object):
         return succeed('welcome')
 
 
-    def send(self, payload):
+    def send_message(self, payload):
         self._payload.put(payload)
 
 

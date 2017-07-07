@@ -353,7 +353,7 @@ def _transfer_configuration(wormhole, configuration):
         # message
         intro = {u"abilities": {u"server-v1": {}}}
         Message.log(server_intro=intro)
-        wormhole.send(json.dumps(intro))
+        wormhole.send_message(json.dumps(intro))
 
         # await the client's introduction
         d = DeferredContext(wormhole.get_message())
@@ -371,7 +371,7 @@ def _transfer_configuration(wormhole, configuration):
         # a correctly-versioned client has opened a wormhole to us;
         # give them the configuration JSON
         Message.log(event=u"send-configuration")
-        wormhole.send(json.dumps(configuration))
+        wormhole.send_message(json.dumps(configuration))
     exchange.addCallback(got_intro)
 
     def sent_config(ignored):
