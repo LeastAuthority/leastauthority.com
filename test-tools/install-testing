@@ -3,3 +3,4 @@
 pip install --upgrade pip
 pip install --requirement requirements.txt
 pip install --upgrade --requirement requirements-tests.txt
+pip install --no-index .[dev]
