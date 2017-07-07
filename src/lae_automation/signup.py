@@ -7,7 +7,7 @@ This module provides functionality for creating new subscriptions
 owner.
 """
 
-from base64 import b32encode, b64encode
+from base64 import b32encode
 import json
 from datetime import datetime
 
@@ -19,12 +19,8 @@ from attr import validators
 from eliot import start_action
 from eliot.twisted import DeferredContext
 
-from twisted.python.monkey import MonkeyPatcher
-from twisted.python.filepath import FilePath
-from twisted.internet.defer import Deferred, succeed, inlineCallbacks
+from twisted.internet.defer import succeed, inlineCallbacks
 from twisted.web.client import Agent
-
-from wormhole import xfer_util
 
 from lae_automation.model import SubscriptionDetails
 
@@ -357,7 +353,7 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
 
     @inlineCallbacks
     def do_transfer(_):
-        welcome = yield wh.get_welcome()
+        yield wh.get_welcome()
         # we're connected to the wormhole server; send our
         # introduction message
         intro = {u"abilities": {"server-v1": {}}}
