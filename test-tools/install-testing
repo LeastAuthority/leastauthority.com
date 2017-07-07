@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -x
 
 pip install --upgrade pip
 pip install --requirement requirements.txt
