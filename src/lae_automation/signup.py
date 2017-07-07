@@ -351,7 +351,7 @@ def _configuration_to_wormhole_code(reactor, wormhole, rendezvous_url, configura
     waiting_for_code.addCallback(got_code)
 
     @inlineCallbacks
-    def do_transfer(_):
+    def do_transfer():
         yield wh.get_welcome()
         # we're connected to the wormhole server; send our
         # introduction message
