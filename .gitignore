@@ -23,3 +23,6 @@ leastauthority.com.egg-info
 
 # telepresence log file
 telepresence.log
+
+# distutils gunk
+leastauthority.com.egg-info/
