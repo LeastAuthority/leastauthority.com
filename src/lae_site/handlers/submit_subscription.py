@@ -162,7 +162,7 @@ def signed_up(claim, request):
         tmpl.render({
             "productfullname": "Simple Secure Storage Service",
             "productname":"S4",
-            "claim": claim.describe(),
+            "activationinfo": claim.describe(env),
         }).encode('utf-8'),
     )
     request.finish()
