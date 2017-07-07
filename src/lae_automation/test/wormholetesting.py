@@ -3,17 +3,15 @@ An in-memory implementation of some of the magic-wormhole interfaces for
 use by automated tests.
 """
 
+from sys import stderr
+
 from itertools import count
 
-from zope.interface import Interface, implementer
+from zope.interface import implementer
 
 from twisted.internet.defer import DeferredQueue, Deferred, succeed
 
-try:
-    from wormhole._interfaces import IWormhole
-except ImportError:
-    # 0.9.2 compatibility
-    IWormhole = Interface
+from wormhole._interfaces import IWormhole
 
 
 class MemoryWormholeServer(object):
@@ -24,7 +22,12 @@ class MemoryWormholeServer(object):
         self._apps = {}
 
 
-    def create(self, appid, relay_url, reactor, tor=None):
+    def create(
+            self,
+            appid, relay_url, reactor,
+            versions={}, delegate=None, journal=None, tor=None, timing=None,
+            stderr=stderr,
+    ):
         """
         Create a wormhole.  It will be able to connect to other wormholes created
         by this ``MemoryWormholeServer`` instance (and constrained by the
@@ -41,8 +44,17 @@ class MemoryWormholeServer(object):
         return _WormholeServerView(self, key)
 
 
-    # 0.9.2 compatibility
-    __call__ = create
+
+def _verify():
+    # Poor man's interface verification.
+    from inspect import getargspec
+    from wormhole.wormhole import create
+    a = getargspec(create)
+    b = getargspec(MemoryWormholeServer.create)
+    # I know it has a `self` argument at the beginning.  That's okay.
+    b = b._replace(args=b.args[1:])
+    assert a == b, "{} != {}".format(a, b)
+_verify()
 
 
 
