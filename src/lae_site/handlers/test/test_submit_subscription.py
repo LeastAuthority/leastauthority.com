@@ -24,7 +24,7 @@ class TrivialClaim(object):
     subscription_id = attr.ib()
     plan_id = attr.ib()
 
-    def describe(self):
+    def describe(self, env):
         return "You subscribed."
 
 
