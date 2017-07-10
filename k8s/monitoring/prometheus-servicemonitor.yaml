@@ -11,7 +11,7 @@ metadata:
   name: 's4'
   labels:
     provider: 'LeastAuthority'
-    componnet: 'Monitoring'
+    component: 'Monitoring'
 spec:
   selector:
     # Select the Fluentd server.
