@@ -451,7 +451,7 @@ Monitor Status of the Service
 
 .. _monitor-lae:
 
-See `the monitoring system <https://monitoring.leastauthority.com/>`_.
+See `these graphs <https://graphs.leastauthority.com/>`_.
 
 React to Increased Load
 ~~~~~~~~~~~~~~~~~~~~~~~
