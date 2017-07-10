@@ -126,6 +126,10 @@ spec:
         - name: 'GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS'
           value: 'LeastAuthority'
 
+        # This was helpful when setting up Grafana for the first time.  It
+        # makes everyone who logs in an admin.  Admin can see more things in
+        # the web ui (eg broken data sources).  It's not really a good idea in
+        # general for the obvious reasons.
         # - name: 'GF_USERS_AUTO_ASSIGN_ORG_ROLE'
         #   value: 'Admin'
 
