@@ -7,7 +7,7 @@ spec:
   serviceMonitorSelector:
     matchLabels:
       provider: 'LeastAuthority'
-      componnet: 'Monitoring'
+      component: 'Monitoring'
   version: 'v1.7.0'
   resources:
     requests:
