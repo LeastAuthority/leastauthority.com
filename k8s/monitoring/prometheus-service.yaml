@@ -1,0 +1,15 @@
+#https://coreos.com/operators/prometheus/docs/latest/user-guides/getting-started.html
+
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  name: 'prometheus'
+spec:
+  type: 'LoadBalancer'
+  ports:
+  - name: 'web'
+    port: 80
+    targetPort: 9090
+    protocol: 'TCP'
+  selector:
+    prometheus: 'prometheus'

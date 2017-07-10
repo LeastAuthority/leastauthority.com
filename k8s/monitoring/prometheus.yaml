@@ -1,0 +1,14 @@
+# https://coreos.com/operators/prometheus/docs/latest/user-guides/getting-started.html
+apiVersion: 'monitoring.coreos.com/v1alpha1'
+kind: 'Prometheus'
+metadata:
+  name: 'prometheus'
+spec:
+  serviceMonitorSelector:
+    matchLabels:
+      provider: 'LeastAuthority'
+      componnet: 'Monitoring'
+  version: 'v1.7.0'
+  resources:
+    requests:
+      memory: '400Mi'

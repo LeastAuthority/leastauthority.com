@@ -25,6 +25,11 @@ spec:
     port: 24224
     targetPort: 24224
     protocol: 'TCP'
+  # and expose the fluentd prometheus output plugin
+  - name: 'prometheus'
+    port: 24231
+    targetPort: 24231
+    protocol: 'TCP'
 ---
 kind: 'ConfigMap'
 apiVersion: 'v1'
@@ -32,54 +37,167 @@ metadata:
   name: 'fluent-configuration'
 data:
   fluentd: |
+    # Accept logs from the fluent-bit and other collection services running
+    # throughout the cluster.
     <source>
       @type forward
       port 24224
       bind 0.0.0.0
     </source>
-    <match {signup,signup-http,grid-router,subscription-manager,subscription-converger}>
-      @type s3
 
-      # Get the key id and secret key from somewhere else, somewhere more
-      # secret-y.
-      @include /fluentd/secrets/s3.conf
+    # This turns on the metrics HTTP server for Prometheus to scrape.
+    <source>
+      @type prometheus
+      port 24231
+      bind 0.0.0.0
+      metrics_path /metrics
+    </source>
 
-      # Write the logs to this bucket.
-      s3_bucket com.leastauthority.fluentd
-      s3_region us-east-1
-
-      # Write them into / in the bucket
-      path /
-
-      # Use a local file to buffer events before writing them to S3.
-      buffer_type file
-      # This is the path to the buffer file.
-      buffer_path /tmp/fluent/s3
-
-      # Even though the buffer is a file, flush it to S3 at shutdown.  The
-      # container has no persistent storage.
-      flush_at_shutdown true
-
-      # This controls how often the buffer is flushed to S3.  Whenever this
-      # data format string would change, the buffer is flushed and a new one
-      # started.
-      time_slice_format %Y%m%d%H
-
-      # But wait a little while after the change over to collect straggler
-      # events that belong in the old timeslice but just haven't arrived yet.
-      time_slice_wait 10m
-
-      # Use UTC as the timezone for logged timestamps.
-      utc
-
-      # Write JSON to the log.  Include some identifying metadata in each
-      # event.
-      format json
-      include_time_key
-      time_key fluent_time
-      include_tag_key
-      tag_key fluent_tag
+    # Duplicate the source event so we can both record everything and apply
+    # metrics processing.
+    <match>
+      @type copy
+      <store>
+        @type relabel
+        @label @LOGGING
+      </store>
+      <store>
+        @type relabel
+        @label @METRICS_SIGNUP
+      </store>
+      <store>
+        @type relabel
+        @label @METRICS_ERRORS
+      </store>
+      <store>
+        @type relabel
+        @label @METRICS_DEPLOYMENTS
+      </store>
     </match>
+
+    <label @LOGGING>
+      # Send everything on to S3 for short-term storage.
+      <match **>
+        # Currently expected labels:
+        #
+        #   signup
+        #   signup-http
+        #   grid-router
+        #   subscription-manager
+        #   subscription-converger
+        #
+        # But since these are defined elsewhere expect this list to be
+        # incomplete.
+        #
+        @type s3
+
+        # Get the key id and secret key from somewhere else, somewhere more
+        # secret-y.
+        @include /fluentd/secrets/s3.conf
+
+        # Write the logs to this bucket.
+        s3_bucket com.leastauthority.fluentd
+        s3_region us-east-1
+
+        # Write them into / in the bucket
+        path /
+
+        # Use a local file to buffer events before writing them to S3.
+        buffer_type file
+        # This is the path to the buffer file.
+        buffer_path /tmp/fluent/s3
+
+        # Even though the buffer is a file, flush it to S3 at shutdown.  The
+        # container has no persistent storage.
+        flush_at_shutdown true
+
+        # This controls how often the buffer is flushed to S3.  Whenever this
+        # data format string would change, the buffer is flushed and a new one
+        # started.
+        time_slice_format %Y%m%d%H
+
+        # But wait a little while after the change over to collect straggler
+        # events that belong in the old timeslice but just haven't arrived yet.
+        time_slice_wait 10m
+
+        # Use UTC as the timezone for logged timestamps.
+        utc
+
+        # Write JSON to the log.  Include some identifying metadata in each
+        # event.
+        format json
+        include_time_key
+        time_key fluent_time
+        include_tag_key
+        tag_key fluent_tag
+      </match>
+    </label>
+
+    <label @METRICS_ERRORS>
+      # Scrape Twisted error event metrics out of the log stream and expose it
+      # to Prometheus.
+      <filter **>
+        @type where
+        # Match Twisted-style log events for Deferreds with no final errback.
+        where log_namespace = 'twisted.internet.defer' AND log_format = 'Unhandled error in Deferred:'
+      </filter>
+
+      # Take the output of the error filter and turn it into a Prometheus
+      # metric.
+      <filter **>
+        @type prometheus
+        <metric>
+          name s4_unhandled_error_counter
+          type counter
+          desc Total S4 Unhandled Errors
+        </metric>
+      </filter>
+    </label>
+
+    <label @METRICS_SIGNUP>
+      # Scrape S4 signup metrics out of the log stream and expose it to
+      # Prometheus.
+      <filter signup>
+        @type where
+
+        # Match only wormhole-signup success events.
+        where action_type = 'wormhole-signup' AND action_status = 'succeeded'
+      </filter>
+
+      # Take the output of the signup filter and turn it into a Prometheus
+      # metric.
+      <filter signup>
+        @type prometheus
+        <metric>
+          name s4_signup_counter
+          type counter
+          desc Total S4 Signups
+        </metric>
+      </filter>
+
+      <match signup>
+        # Quiet the logs by defining an output for this tag.  Without this, we
+        # get warnings like `no patterns matched tag="..."`.
+        @type null
+      </match>
+    </label>
+
+    <label @METRICS_DEPLOYMENTS>
+      <filter subscription-converger>
+        @type where
+        where action_type = 'load-deployments' and action_status = 'succeeded'
+      </filter>
+      <filter subscription-converger>
+        @type prometheus
+        <metric>
+          name s4_deployment_gauge
+          type gauge
+          desc Current S4 Subscription Deployments
+          key deployment_count
+        </metric>
+      </filter>
+    </label>
+
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -128,7 +246,7 @@ spec:
       containers:
       - name: 'fluentd'
         imagePullPolicy: 'Always'
-        image: 'leastauthority/fluentd'
+        image: 'leastauthority/fluentd:latest'
         env:
         - name: 'FLUENTD_CONF'
           value: 'fluentd.conf'

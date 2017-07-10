@@ -40,6 +40,11 @@ setup(
             "testtools",
             "fixtures",
             "deepdiff",
+
+            # This lets us generate our Grafana dashboard configurations.
+            # It's really part of the ops/monitoring system and not S4.
+            # Consider splitting the ops stuff off into another repo.
+            "grafanalib",
         ],
     },
 )
