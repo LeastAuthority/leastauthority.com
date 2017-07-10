@@ -35,6 +35,10 @@ It provisions resources (such as Tahoe-LAFS nodes) for new subscriptions it find
 Each subscription has a large portion of dedicated resources:
 the Kubernetes cluster (and its compute, memory, and network components) is a shared resource but little else is.
 
+Logs from the different components are collected using Fluentd and stored for a short period on S3.
+Metrics are extracted from the log stream and aggregated in Prometheus.
+Grafana is configured to visualize metrics using Prometheus as its data source.
+
 Top-Down Components
 ~~~~~~~~~~~~~~~~~~~
 
@@ -441,6 +445,13 @@ Change the Docker image used by the containers to reference the tag of the newly
 Use ``kubectl`` to apply the changes and begin a rolling update to deploy them::
 
   kubectl apply -f k8s/infrastructure.yaml
+
+Monitor Status of the Service
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. _monitor-lae:
+
+See `the monitoring system <https://monitoring.leastauthority.com/>`_.
 
 React to Increased Load
 ~~~~~~~~~~~~~~~~~~~~~~~
