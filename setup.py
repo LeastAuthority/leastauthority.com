@@ -24,6 +24,7 @@ setup(
         "eliot",
 
         "txAWS",
+        "prometheus_client",
 
         "magic-wormhole",
 

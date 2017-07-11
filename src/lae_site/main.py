@@ -20,6 +20,10 @@ from twisted.application.service import MultiService
 from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
+from twisted.web.resource import Resource
+from twisted.web.server import Site
+
+from prometheus_client.twisted import MetricsResource
 
 from wormhole import wormhole
 
@@ -72,6 +76,9 @@ class SiteOptions(Options):
         ("rendezvous-url", None, URL.fromText(u"ws://wormhole.leastauthority.com:4000/v1"),
          "The URL of the Wormhole Rendezvous server for wormhole-based signup.",
          urlFromBytes,
+        ),
+        ("metrics-port", None, "tcp:9000",
+         "A server endpoint description string on which to run a metrics-exposing server.",
         ),
     ]
 
@@ -175,6 +182,8 @@ def main(reactor, *argv):
 
     startLogging(sys.stdout, setStdout=False)
 
+    start_metrics_site(reactor, o["metrics-port"])
+
     d = Deferred()
     d.callback(None)
     d.addCallback(
@@ -188,6 +197,18 @@ def main(reactor, *argv):
     )
     d.addCallback(lambda ignored: Deferred())
     return d
+
+
+
+def start_metrics_site(reactor, port_string):
+    root = Resource()
+    root.putChild(b"metrics", MetricsResource())
+    service = StreamServerEndpointService(
+        serverFromString(reactor, port_string),
+        Site(root),
+    )
+    service.privilegedStartService()
+    service.startService()
 
 
 
