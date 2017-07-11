@@ -2,26 +2,13 @@
 
 {% block content %}
 
-<h3>Thank you</h3>
+<h3>Sign-Up Complete!</h3>
+
 <p>
-Thank you for subscribing to the {{ productfullname }}!
+  Thank you for signing up for Least Authority’s {{ productfullname }} ({{productname}})!
+  We are deploying the infrastructure necessary to support your Cloud service!
 </p>
-<p>
-We are deploying the infrastructure necessary to support your Cloud service!
-{{ claim }}
-</p>
-<p>
-Before you start using {{ productname }}, you will need to
-<a href="https://tahoe-lafs.org/trac/tahoe-lafs/wiki/Installation">install LAFS</a> on your
-trusted machine. After you've installed LAFS, you can configure it with the
-furl you'll be receiving in your email.
-</p>
-<p>
-If you've still not received an email within the hour, please make sure that
-your mail client didn't mark it as spam, and notify us at
-&lt;<a href="mailto:support@LeastAuthority.com">support@LeastAuthority.com</a>&gt;.
-You can also contact us at this address to cancel or change your subscription,
-or if you have any problem with the service.
-</p>
+
+{{ activationinfo }}
 
 {% endblock %}

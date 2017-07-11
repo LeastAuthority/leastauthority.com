@@ -88,7 +88,7 @@ class ISignup(Interface):
 
 
 class IClaim(Interface):
-    def describe():
+    def describe(env):
         """
         Explain the details of this claim in a way that can be rendered into a web
         page.
@@ -170,13 +170,11 @@ class _EmailSignup(object):
             return d.addActionFinish()
 
 
+
 @implementer(IClaim)
 class _EmailClaim(object):
-    description = (
-        u"We'll send you an email with your unique introducer furl within the next hour."
-    )
-    def describe(self):
-        return self.description
+    def describe(self, env):
+        return env.get_template("email_activation.html").render({})
 
 
 
@@ -435,5 +433,8 @@ class _WormholeClaim(object):
     code = attr.ib(validator=validators.instance_of(unicode))
     expires = attr.ib()
 
-    def describe(self):
-        return self.code + unicode(self.expires)
+    def describe(self, env):
+        tmpl = env.get_template("gridsync_activation.html")
+        return tmpl.render({
+            "claim": self.code,
+        })
