@@ -8,7 +8,9 @@ microservices="s4-common tahoe-introducer tahoe-storage foolscap-gatherer"
 ./leastauthority.com/docker/build.sh
 
 # Log in to Docker Hub so we can push the images.
-docker login "$(cat /var/run/secrets/dockerhub/username)" "$(cat /var/run/secrets/dockerhub/password)"
+docker login \
+       --username "$(cat /var/run/secrets/dockerhub/username)" \
+       --password "$(cat /var/run/secrets/dockerhub/password)"
 
 # And push them.
 for microservice in ${microservices}; do
