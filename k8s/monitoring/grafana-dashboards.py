@@ -27,6 +27,43 @@ def dashboard():
         title="S4",
         rows=[
             G.Row(panels=[
+                G.Graph(
+                    title="Signups",
+                    dataSource="prometheus",
+                    xAxis=G.XAxis(
+                        name="Total",
+                        mode="time",
+                    ),
+                    yAxes=[
+                        G.YAxis(
+                            format="none",
+                            label="#",
+                        ),
+                        G.YAxis(
+                            format="none",
+                            label="#",
+                        ),
+                    ],
+                    targets=[
+                        G.Target(
+                            expr="wormhole_signup_started",
+                            legendFormat="Wormhole Signups Started",
+                            refId="A",
+                        ),
+                        G.Target(
+                            expr="wormhole_signup_success",
+                            legendFormat="Wormhole Signups Completed",
+                            refId="B",
+                        ),
+                        G.Target(
+                            expr="wormhole_signup_failure",
+                            legendFormat="Wormhole Signups Failed",
+                            refId="C",
+                        ),
+                    ],
+                ),
+            ]),
+            G.Row(panels=[
                 G.SingleStat(
                     title='Current Customer Deployments',
                     dataSource='prometheus',
@@ -35,17 +72,6 @@ def dashboard():
                     targets=[
                         G.Target(
                             expr='s4_deployment_gauge',
-                        ),
-                    ],
-                ),
-                G.SingleStat(
-                    title='Signups',
-                    dataSource='prometheus',
-                    valueName='current',
-                    sparkline=G.SparkLine(show=True),
-                    targets=[
-                        G.Target(
-                            expr='s4_signup_counter',
                         ),
                     ],
                 ),
