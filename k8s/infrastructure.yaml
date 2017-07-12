@@ -490,6 +490,7 @@ spec:
           - '--k8s-service-account'
           - '--kubernetes-namespace'
           - '$(POD_KUBERNETES_NAMESPACE)'
+          - '--metrics-port=tcp:9000'
           - '--eliot-destination'
           - 'file:/app/log/router.json'
         env:
@@ -497,6 +498,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: 'metadata.namespace'
+        ports:
+        - containerPort: 9000
         volumeMounts:
         - mountPath: '/app/log'
           name: 'logs'
