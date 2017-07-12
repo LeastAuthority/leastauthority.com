@@ -16,7 +16,7 @@ yes | docker login \
 
 # And push them.
 for microservice in ${microservices}; do
-    docker push "${repo}/${microservice}:${DOCKER_TAG}"
+    docker push "${repo}/${microservice}" "${repo}/${microservice}:${DOCKER_TAG}"
 done
 
 docker logout
