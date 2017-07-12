@@ -63,10 +63,6 @@ data:
       </store>
       <store>
         @type relabel
-        @label @METRICS_SIGNUP
-      </store>
-      <store>
-        @type relabel
         @label @METRICS_ERRORS
       </store>
       <store>
@@ -152,34 +148,6 @@ data:
           desc Total S4 Unhandled Errors
         </metric>
       </filter>
-    </label>
-
-    <label @METRICS_SIGNUP>
-      # Scrape S4 signup metrics out of the log stream and expose it to
-      # Prometheus.
-      <filter signup>
-        @type where
-
-        # Match only wormhole-signup success events.
-        where action_type = 'wormhole-signup' AND action_status = 'succeeded'
-      </filter>
-
-      # Take the output of the signup filter and turn it into a Prometheus
-      # metric.
-      <filter signup>
-        @type prometheus
-        <metric>
-          name s4_signup_counter
-          type counter
-          desc Total S4 Signups
-        </metric>
-      </filter>
-
-      <match signup>
-        # Quiet the logs by defining an output for this tag.  Without this, we
-        # get warnings like `no patterns matched tag="..."`.
-        @type null
-      </match>
     </label>
 
     <label @METRICS_DEPLOYMENTS>
