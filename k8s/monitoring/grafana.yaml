@@ -20,6 +20,26 @@ spec:
     component: 'Monitoring'
     service: 'grafana'
 ---
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  name: 'grafana-internal'
+  labels:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+    service: 'grafana'
+spec:
+  type: 'NodePort'
+  ports:
+  - name: 'web'
+    port: 80
+    targetPort: 3000
+    protocol: 'TCP'
+  selector:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+    service: 'grafana'
+---
 apiVersion: 'extensions/v1beta1'
 kind: 'Deployment'
 metadata:
@@ -80,9 +100,11 @@ spec:
         - name: 'GF_AUTH_ANONYMOUS_ENABLED'
           value: 'false'
 
-        # We'll use OAuth2, we don't want a Grafana sign in form at all.
+        # We'll use OAuth2 for normal access but we need username/password
+        # access to access the admin account.  We don't often need that, but
+        # probably sometimes we do.
         - name: 'GF_AUTH_DISABLE_LOGIN_FORM'
-          value: 'true'
+          value: 'false'
 
         # Grafana must know its own hostname to successfully use an OAuth2
         # provider (to generate the correct callback URL).
@@ -126,13 +148,6 @@ spec:
         - name: 'GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS'
           value: 'LeastAuthority'
 
-        # This was helpful when setting up Grafana for the first time.  It
-        # makes everyone who logs in an admin.  Admin can see more things in
-        # the web ui (eg broken data sources).  It's not really a good idea in
-        # general for the obvious reasons.
-        # - name: 'GF_USERS_AUTO_ASSIGN_ORG_ROLE'
-        #   value: 'Admin'
-
         volumeMounts:
         - name: 'grafana-storage'
           mountPath: '/var/grafana-storage'
@@ -153,7 +168,7 @@ spec:
         image: 'quay.io/coreos/grafana-watcher:v0.0.4'
         args:
           - '--watch-dir=/var/grafana-dashboards'
-          - '--grafana-url=http://grafana:3000/'
+          - '--grafana-url=http://grafana-internal/'
         env:
 
         # First tell it how to gain admin access to Grafana.
