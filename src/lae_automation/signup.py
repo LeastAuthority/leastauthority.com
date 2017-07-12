@@ -22,6 +22,8 @@ from eliot.twisted import DeferredContext
 from twisted.internet.defer import succeed
 from twisted.web.client import Agent
 
+from prometheus_client import Counter
+
 from lae_automation.model import SubscriptionDetails
 
 from .subscription_manager import Client, network_client
@@ -248,11 +250,27 @@ class _WormholeSignup(object):
     rendezvous_url = attr.ib()
     result_path = attr.ib()
 
+    _start = Counter(
+        u"wormhole_signup_started",
+        u"The number of wormhole-based signup attempts which have started.",
+    )
+
+    _succeed = Counter(
+        u"wormhole_signup_success",
+        u"The number of wormhole-based signup attempts that have succeeded.",
+    )
+
+    _fail = Counter(
+        u"wormhole_signup_failure",
+        u"The number of wormhole-based signup attempts that have failed.",
+    )
+
     def signup(self, *args, **kwargs):
         """
         Provision a subscription and return an ``IClaim`` describing how to
         retrieve the resulting configuration from a magic wormhole server.
         """
+        self._start.inc()
         a = start_action(action_type=u"wormhole-signup")
         with a.context():
             d = DeferredContext(self.provisioner.signup(*args, **kwargs))
@@ -273,26 +291,29 @@ class _WormholeSignup(object):
             configuration,
         )
 
-        done.addCallback(_wormhole_claimed, self.reactor, details)
-        done.addErrback(_wormhole_failed, self.reactor, details)
+        done.addCallback(_wormhole_claimed, self, details)
+        done.addErrback(_wormhole_failed, self, details)
         done.addCallback(_record_result, self.result_path)
         return wormhole_code
 
 
 
-def _wormhole_claimed(ignored, reactor, details):
+def _wormhole_claimed(ignored, signup, details):
+    signup._succeed.inc()
     return {
         u"claim": u"claimed",
         u"subscription-id": details.subscription_id,
-        u"timestamp": datetime.utcfromtimestamp(reactor.seconds()).isoformat(),
+        u"timestamp": datetime.utcfromtimestamp(signup.reactor.seconds()).isoformat(),
     }
 
 
-def _wormhole_failed(error, reactor, details):
+def _wormhole_failed(error, signup, details):
+    signup._fail.inc()
+    now = datetime.utcfromtimestamp(signup.reactor.seconds()).isoformat()
     return {
         u"claim": u"failed", u"subscription-id": details.subscription_id,
         u"error": error.getTraceback(),
-        u"timestamp": datetime.utcfromtimestamp(reactor.seconds()).isoformat(),
+        u"timestamp": now,
     }
 
 
