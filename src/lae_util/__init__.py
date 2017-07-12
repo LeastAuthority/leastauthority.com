@@ -27,6 +27,8 @@ from ._retry import (
     decorate_methods,
 )
 
+from ._prometheus import prometheus_exporter
+
 def patch():
     from .twisted_8860 import detect, patch
     detect() and patch()

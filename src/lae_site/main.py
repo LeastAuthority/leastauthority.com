@@ -20,13 +20,10 @@ from twisted.application.service import MultiService
 from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
-from twisted.web.resource import Resource
-from twisted.web.server import Site
-
-from prometheus_client.twisted import MetricsResource
 
 from wormhole import wormhole
 
+from lae_util import prometheus_exporter
 from lae_util.fluentd_destination import (
     opt_eliot_destination,
     eliot_logging_service,
@@ -201,12 +198,7 @@ def main(reactor, *argv):
 
 
 def start_metrics_site(reactor, port_string):
-    root = Resource()
-    root.putChild(b"metrics", MetricsResource())
-    service = StreamServerEndpointService(
-        serverFromString(reactor, port_string),
-        Site(root),
-    )
+    service = prometheus_exporter(reactor, port_string)
     service.privilegedStartService()
     service.startService()
 
