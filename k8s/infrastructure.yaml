@@ -53,7 +53,7 @@ spec:
 kind: 'Service'
 apiVersion: 'v1'
 metadata:
-  name: 's4-metrics'
+  name: 's4-signup-metrics'
   labels:
     provider: 'LeastAuthority'
     app: 's4-signup'
