@@ -14,9 +14,10 @@ yes | docker login \
        --username "$(cat /var/run/secrets/dockerhub/username)" \
        --password "$(cat /var/run/secrets/dockerhub/password)"
 
-# And push them.
+# Then tag and push them.
 for microservice in ${microservices}; do
-    docker push "${repo}/${microservice}" "${repo}/${microservice}:${DOCKER_TAG}"
+    docker tag "${repo}/${microservice}" "${repo}/${microservice}:${DOCKER_TAG}"
+    docker push "${repo}/${microservice}:${DOCKER_TAG}"
 done
 
 docker logout
