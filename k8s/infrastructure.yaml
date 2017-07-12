@@ -53,19 +53,18 @@ spec:
 kind: 'Service'
 apiVersion: 'v1'
 metadata:
-  name: 's4-signup-metrics'
+  name: 's4-metrics'
   labels:
     provider: 'LeastAuthority'
-    app: 's4-signup'
+    app: 's4'
     component: 'Infrastructure'
 spec:
   selector:
     provider: 'LeastAuthority'
-    app: 's4-signup'
     component: 'Infrastructure'
   type: 'ClusterIP'
   ports:
-  # The signup server exposes Prometheus-compoatible metrics.
+  # All S4 metrics-exposing services will do it like this.
   - name: 'metrics'
     port: 9000
     targetPort: 9000
