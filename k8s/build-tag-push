@@ -2,6 +2,7 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
+repo="leastauthority"
 microservices="s4-common tahoe-introducer tahoe-storage foolscap-gatherer"
 
 # Build the images.
@@ -15,7 +16,7 @@ yes | docker login \
 
 # And push them.
 for microservice in ${microservices}; do
-    docker push "${microservice}:${DOCKER_TAG}"
+    docker push "${repo}/${microservice}:${DOCKER_TAG}"
 done
 
 docker logout
