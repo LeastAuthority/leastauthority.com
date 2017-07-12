@@ -40,6 +40,18 @@ spec:
         - name: 'docker'
           hostPath:
             path: '/var/run/docker.sock'
+        # And give it the secrets it needs in order to push images to Docker
+        # Hub which we will continue to use as a registry even though we don't
+        # use its automated builds feature.
+        - name: 'credentials'
+          secret:
+            secretName: 'dockerhub'
+            defaultMode: 0444
+            items:
+            - key: 'username'
+              path: 'username'
+            - key: 'password'
+              path: 'password'
       containers:
         - name: 'build'
           image: 'ubuntu:16.04'
@@ -48,8 +60,8 @@ spec:
           # customer pods.
           resources:
             limits:
-              cpu: '200m'
-              memory: '500Mi'
+              cpu: '1000m'
+              memory: '768Mi'
           env:
             # This will have a value substituted by the build driver.
             - name: "GIT_REV"
@@ -61,6 +73,9 @@ spec:
             # The other half of exposing Docker to the container...
             - name: 'docker'
               mountPath: '/var/run/docker.sock'
+            # The other half of exposing Docker Hub credentials to the container...
+            - name: 'credentials'
+              mountPath: '/var/run/secrets/dockerhub'
           command:
             # The command is the minimal amount of work we need to get a build
             # script from the repository which can take over for us.

@@ -2,33 +2,24 @@
 # Copyright Least Authority Enterprises.
 # See LICENSE for details.
 
-SERVER_PORT=30000
-SERVER="127.0.0.1:${SERVER_PORT}"
-
-microservices="web grid-router tahoe-introducer tahoe-storage foolscap-gatherer subscription-manager subscription-converger"
+repo="leastauthority"
+microservices="s4-common tahoe-introducer tahoe-storage foolscap-gatherer"
 
 # Build the images.
 ./leastauthority.com/docker/build.sh
 
-# Tag them in the way expected by the deployment configuration and
-# with the tag given in the environment.
+# Log in to Docker Hub so we can push the images.
+# https://github.com/moby/moby/issues/6400
+yes | docker login \
+       --username "$(cat /var/run/secrets/dockerhub/username)" \
+       --password "$(cat /var/run/secrets/dockerhub/password)"
+
+# Then tag and push them.
 for microservice in ${microservices}; do
-    repo="leastauthority/${microservice}"
-    docker tag ${repo} "${SERVER}/${repo}:${DOCKER_TAG}"
+    docker tag "${repo}/${microservice}" "${repo}/${microservice}:${DOCKER_TAG}"
+    docker push "${repo}/${microservice}:${DOCKER_TAG}"
 done
 
-# Forward a local port to the private registry so we can push the new images.
-twistd \
-    --pidfile /tmp/portforward.pid \
-    portforward \
-        --port 30000 \
-        --host private-registry.leastauthority-tweaks \
-        --dest_port ${SERVER_PORT}
-
-# And push them.
-for microservice in ${microservices}; do
-    repo="leastauthority/${microservice}"
-    docker push "${SERVER}/${repo}:${DOCKER_TAG}"
-done
+docker logout
 
 echo "Tagged images with ${DOCKER_TAG}"
