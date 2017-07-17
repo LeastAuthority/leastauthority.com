@@ -66,6 +66,42 @@ def dashboard():
                 ),
             ]),
             G.Row(panels=[
+                G.Graph(
+                    title="Usage",
+                    dataSource=PROMETHEUS,
+
+                    # Stack the connection graphs on each other, revealing
+                    # both a total and a distribution across different grid
+                    # router instances.
+                    stack=True,
+                    tooltip=G.Tooltip(
+                        valueType=G.INDIVIDUAL,
+                    ),
+
+                    xAxis=G.XAxis(
+                        name="When",
+                        mode="time",
+                    ),
+                    yAxes=[
+                        G.YAxis(
+                            format="none",
+                            label="Count",
+                        ),
+                        G.YAxis(
+                            format="none",
+                            label="Count",
+                        ),
+                    ],
+                    targets=[
+                        G.Target(
+                            expr="grid_router_connections",
+                            legendFormat="Tahoe-LAFS Connections",
+                            refId="D",
+                        ),
+                    ],
+                ),
+            ]),
+            G.Row(panels=[
                 G.SingleStat(
                     title='Current Customer Deployments',
                     dataSource='prometheus',
@@ -74,7 +110,7 @@ def dashboard():
                     targets=[
                         G.Target(
                             expr='s4_deployment_gauge',
-                            refId="D",
+                            refId="E",
                         ),
                     ],
                 ),
@@ -86,7 +122,7 @@ def dashboard():
                     targets=[
                         G.Target(
                             expr='s4_unhandled_error_counter',
-                            refId="E",
+                            refId="F",
                         ),
                     ],
                 ),
