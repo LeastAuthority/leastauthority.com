@@ -23,13 +23,15 @@ from txkube import network_kubernetes_from_context
 
 
 def dashboard():
+    PROMETHEUS = "prometheus"
+
     return G.Dashboard(
         title="S4",
         rows=[
             G.Row(panels=[
                 G.Graph(
                     title="Signups",
-                    dataSource="prometheus",
+                    dataSource=PROMETHEUS,
                     xAxis=G.XAxis(
                         name="Total",
                         mode="time",
