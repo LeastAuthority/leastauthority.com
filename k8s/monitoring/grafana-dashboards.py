@@ -39,11 +39,11 @@ def dashboard():
                     yAxes=[
                         G.YAxis(
                             format="none",
-                            label="#",
+                            label="Count",
                         ),
                         G.YAxis(
                             format="none",
-                            label="#",
+                            label="Count",
                         ),
                     ],
                     targets=[
