@@ -72,6 +72,7 @@ def dashboard():
                     targets=[
                         G.Target(
                             expr='s4_deployment_gauge',
+                            refId="D",
                         ),
                     ],
                 ),
@@ -83,6 +84,7 @@ def dashboard():
                     targets=[
                         G.Target(
                             expr='s4_unhandled_error_counter',
+                            refId="E",
                         ),
                     ],
                 ),
