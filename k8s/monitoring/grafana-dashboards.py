@@ -48,17 +48,17 @@ def dashboard():
                     ],
                     targets=[
                         G.Target(
-                            expr="wormhole_signup_started",
+                            expr='wormhole_signup_started{pod=~"s4-signup.*"}',
                             legendFormat="Wormhole Signups Started",
                             refId="A",
                         ),
                         G.Target(
-                            expr="wormhole_signup_success",
+                            expr='wormhole_signup_success{pod=~"s4-signup.*"}',
                             legendFormat="Wormhole Signups Completed",
                             refId="B",
                         ),
                         G.Target(
-                            expr="wormhole_signup_failure",
+                            expr='wormhole_signup_failure{pod=~"s4-signup.*"}',
                             legendFormat="Wormhole Signups Failed",
                             refId="C",
                         ),
