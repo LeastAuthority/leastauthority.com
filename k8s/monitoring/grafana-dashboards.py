@@ -33,7 +33,7 @@ def dashboard():
                     title="Signups",
                     dataSource=PROMETHEUS,
                     xAxis=G.XAxis(
-                        name="Total",
+                        name="When",
                         mode="time",
                     ),
                     yAxes=[
