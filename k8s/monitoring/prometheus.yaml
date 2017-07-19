@@ -12,3 +12,11 @@ spec:
   resources:
     requests:
       memory: '400Mi'
+
+  # Associate some persistent storage so that stats survive restarts,
+  # rescheduling, etc.
+  storage:
+    class: 'normal'
+    resources:
+      requests:
+        storage: '40Gi'

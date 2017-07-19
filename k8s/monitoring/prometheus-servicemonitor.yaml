@@ -1,23 +1,49 @@
 # https://coreos.com/operators/prometheus/docs/latest/user-guides/getting-started.html
 #
-# The idea of our Prometheus architecture is that applications will log to
-# Fluentd and Fluentd will be configured with a Prometheus output plugin.  It
-# will construct the desired metrics data from the log stream and expose that
-# data to Prometheus for collection.
+# The _old_ idea of our Prometheus architecture is that applications will log
+# to Fluentd and Fluentd will be configured with a Prometheus output plugin.
+# It will construct the desired metrics data from the log stream and expose
+# that data to Prometheus for collection.
+#
+# The new idea is that, because Fluentd configuration is so clunky and
+# prometheus-operator is so good at going out and grabbing metrics from
+# different pods, we'll have a bunch of service monitors that tell prometheus
+# where to go look and let it do that and we'll shrink down Fluentd's role as
+# much as possible.
 
 apiVersion: 'monitoring.coreos.com/v1alpha1'
 kind: 'ServiceMonitor'
 metadata:
-  name: 's4'
+  name: 's4-fluentd'
   labels:
     provider: 'LeastAuthority'
     component: 'Monitoring'
 spec:
   selector:
     # Select the Fluentd server.
+
     matchLabels:
       provider: 'LeastAuthority'
       component: 'Monitoring'
   endpoints:
   # And scrape metrics from its prometheus output plugin.
   - port: 'prometheus'
+
+---
+apiVersion: 'monitoring.coreos.com/v1alpha1'
+kind: 'ServiceMonitor'
+metadata:
+  name: 's4-signup'
+  labels:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+spec:
+  selector:
+    # Select the s4 signup server service.
+    matchLabels:
+      provider: 'LeastAuthority'
+      app: 's4-signup'
+      component: 'Infrastructure'
+  endpoints:
+  # And scrape metrics from its prometheus output plugin.
+  - port: 'metrics'

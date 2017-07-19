@@ -23,6 +23,7 @@ from twisted.python.filepath import FilePath
 
 from wormhole import wormhole
 
+from lae_util import prometheus_exporter
 from lae_util.fluentd_destination import (
     opt_eliot_destination,
     eliot_logging_service,
@@ -72,6 +73,9 @@ class SiteOptions(Options):
         ("rendezvous-url", None, URL.fromText(u"ws://wormhole.leastauthority.com:4000/v1"),
          "The URL of the Wormhole Rendezvous server for wormhole-based signup.",
          urlFromBytes,
+        ),
+        ("metrics-port", None, "tcp:9000",
+         "A server endpoint description string on which to run a metrics-exposing server.",
         ),
     ]
 
@@ -175,6 +179,8 @@ def main(reactor, *argv):
 
     startLogging(sys.stdout, setStdout=False)
 
+    start_metrics_site(reactor, o["metrics-port"])
+
     d = Deferred()
     d.callback(None)
     d.addCallback(
@@ -188,6 +194,13 @@ def main(reactor, *argv):
     )
     d.addCallback(lambda ignored: Deferred())
     return d
+
+
+
+def start_metrics_site(reactor, port_string):
+    service = prometheus_exporter(reactor, port_string)
+    service.privilegedStartService()
+    service.startService()
 
 
 

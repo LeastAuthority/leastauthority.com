@@ -34,6 +34,9 @@ from eliot import (
 )
 from eliot.twisted import DeferredContext
 
+from prometheus_client import Gauge
+
+from lae_util import prometheus_exporter
 from lae_util.service import AsynchronousService
 from lae_util.fluentd_destination import (
     eliot_logging_service,
@@ -53,6 +56,9 @@ class Options(_Options, KubernetesClientOptionsMixin):
     optParameters = [
         ("interval", None, 10.0,
          "The interval (in seconds) at which to iterate on reconfiguration.", float,
+        ),
+        ("metrics-port", None, "tcp:9000",
+         "A server endpoint description string on which to run a metrics-exposing server.",
         ),
     ]
 
@@ -102,6 +108,10 @@ def makeService(options, reactor=None):
 
     service = AsynchronousService(make_service)
     service.setServiceParent(parent)
+
+    prometheus_exporter(
+        reactor, options["metrics-port"]
+    ).setServiceParent(parent)
 
     return parent
 
@@ -266,6 +276,11 @@ class _Proxy(Protocol):
     """
     Handle the downstream connection for a proxy between two connections.
     """
+    _proxied_connections = Gauge(
+        u"grid_router_connections",
+        u"Current count of connections proxied by grid-router to Tahoe-LAFS.",
+    )
+
     def take_over(self, upstream, header):
         """
         Begin actively proxying between this protocol and ``upstream``.
@@ -281,6 +296,8 @@ class _Proxy(Protocol):
             upstream protocol's connection.
         """
         self.done = Deferred()
+
+        self._proxied_connections.inc()
 
         peer = self.transport.getPeer()
         a = start_action(
@@ -311,6 +328,8 @@ class _Proxy(Protocol):
         This protocol's connection was lost.  Close the upstream connection as
         well.
         """
+        self._proxied_connections.dec()
+
         self.upstream.transport.abortConnection()
         del self.upstream.dataReceived
         del self.upstream.connectionLost

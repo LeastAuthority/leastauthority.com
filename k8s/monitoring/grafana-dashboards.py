@@ -23,9 +23,84 @@ from txkube import network_kubernetes_from_context
 
 
 def dashboard():
+    PROMETHEUS = "prometheus"
+
     return G.Dashboard(
         title="S4",
         rows=[
+            G.Row(panels=[
+                G.Graph(
+                    title="Signups",
+                    dataSource=PROMETHEUS,
+                    xAxis=G.XAxis(
+                        name="When",
+                        mode="time",
+                    ),
+                    yAxes=[
+                        G.YAxis(
+                            format="none",
+                            label="Count",
+                        ),
+                        G.YAxis(
+                            format="none",
+                            label="Count",
+                        ),
+                    ],
+                    targets=[
+                        G.Target(
+                            expr='wormhole_signup_started{pod=~"s4-signup.*"}',
+                            legendFormat="Wormhole Signups Started",
+                            refId="A",
+                        ),
+                        G.Target(
+                            expr='wormhole_signup_success{pod=~"s4-signup.*"}',
+                            legendFormat="Wormhole Signups Completed",
+                            refId="B",
+                        ),
+                        G.Target(
+                            expr='wormhole_signup_failure{pod=~"s4-signup.*"}',
+                            legendFormat="Wormhole Signups Failed",
+                            refId="C",
+                        ),
+                    ],
+                ),
+            ]),
+            G.Row(panels=[
+                G.Graph(
+                    title="Usage",
+                    dataSource=PROMETHEUS,
+
+                    # Stack the connection graphs on each other, revealing
+                    # both a total and a distribution across different grid
+                    # router instances.
+                    stack=True,
+                    tooltip=G.Tooltip(
+                        valueType=G.INDIVIDUAL,
+                    ),
+
+                    xAxis=G.XAxis(
+                        name="When",
+                        mode="time",
+                    ),
+                    yAxes=[
+                        G.YAxis(
+                            format="none",
+                            label="Count",
+                        ),
+                        G.YAxis(
+                            format="none",
+                            label="Count",
+                        ),
+                    ],
+                    targets=[
+                        G.Target(
+                            expr="grid_router_connections",
+                            legendFormat="Tahoe-LAFS Connections",
+                            refId="D",
+                        ),
+                    ],
+                ),
+            ]),
             G.Row(panels=[
                 G.SingleStat(
                     title='Current Customer Deployments',
@@ -35,17 +110,7 @@ def dashboard():
                     targets=[
                         G.Target(
                             expr='s4_deployment_gauge',
-                        ),
-                    ],
-                ),
-                G.SingleStat(
-                    title='Signups',
-                    dataSource='prometheus',
-                    valueName='current',
-                    sparkline=G.SparkLine(show=True),
-                    targets=[
-                        G.Target(
-                            expr='s4_signup_counter',
+                            refId="E",
                         ),
                     ],
                 ),
@@ -57,6 +122,7 @@ def dashboard():
                     targets=[
                         G.Target(
                             expr='s4_unhandled_error_counter',
+                            refId="F",
                         ),
                     ],
                 ),

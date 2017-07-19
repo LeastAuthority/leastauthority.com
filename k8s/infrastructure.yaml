@@ -50,6 +50,26 @@ spec:
     targetPort: 8080
     protocol: 'TCP'
 ---
+kind: 'Service'
+apiVersion: 'v1'
+metadata:
+  name: 's4-metrics'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+spec:
+  selector:
+    provider: 'LeastAuthority'
+    component: 'Infrastructure'
+  type: 'ClusterIP'
+  ports:
+  # All S4 metrics-exposing services will do it like this.
+  - name: 'metrics'
+    port: 9000
+    targetPort: 9000
+    protocol: 'TCP'
+---
 # Read about services at
 # http://kubernetes.io/docs/user-guide/services/
 kind: 'Service'
@@ -300,13 +320,15 @@ spec:
           - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
           - '--site-logs-path=/app/log/httpd.json'
           - '--subscription-manager=http://subscription-manager/'
+          - '--metrics-port=tcp:9000'
           - '--eliot-destination'
           - 'file:/app/log/twist.json'
         workingDir: '/app/run'
         ports:
-        # We just happen to know this is the ports this container listens on.
+        # We just happen to know these are the ports this container listens on.
         - containerPort: 8443
         - containerPort: 8080
+        - containerPort: 9000
         volumeMounts:
         # We just happen to know these are the paths the container
         # wants to use for interesting, persistent state.
@@ -468,6 +490,7 @@ spec:
           - '--k8s-service-account'
           - '--kubernetes-namespace'
           - '$(POD_KUBERNETES_NAMESPACE)'
+          - '--metrics-port=tcp:9000'
           - '--eliot-destination'
           - 'file:/app/log/router.json'
         env:
@@ -475,6 +498,8 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: 'metadata.namespace'
+        ports:
+        - containerPort: 9000
         volumeMounts:
         - mountPath: '/app/log'
           name: 'logs'
