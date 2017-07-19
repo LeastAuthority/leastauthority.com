@@ -77,6 +77,11 @@ spec:
       containers:
       - name: prometheus-operator
         image: quay.io/coreos/prometheus-operator:v0.10.1
+        args:
+          # These enable kubelet/cAdvisor monitoring.
+          # https://coreos.com/operators/prometheus/docs/latest/user-guides/cluster-monitoring.html#preparing-kubernetes-components
+          - "--kubelet-service=kube-system/kubelet"
+          - "--config-reloader-image=quay.io/coreos/configmap-reload:v0.0.1"
         resources:
           requests:
             cpu: 100m
