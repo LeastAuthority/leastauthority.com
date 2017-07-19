@@ -24,7 +24,10 @@ from txkube import network_kubernetes_from_context
 
 def dashboard():
     PROMETHEUS = "prometheus"
-
+    X_TIME = G.XAxis(
+        name="When",
+        mode="time",
+    )
     return G.Dashboard(
         title="S4",
         rows=[
@@ -32,10 +35,7 @@ def dashboard():
                 G.Graph(
                     title="Signups",
                     dataSource=PROMETHEUS,
-                    xAxis=G.XAxis(
-                        name="When",
-                        mode="time",
-                    ),
+                    xAxis=X_TIME,
                     yAxes=[
                         G.YAxis(
                             format="none",
@@ -78,10 +78,7 @@ def dashboard():
                         valueType=G.INDIVIDUAL,
                     ),
 
-                    xAxis=G.XAxis(
-                        name="When",
-                        mode="time",
-                    ),
+                    xAxis=X_TIME,
                     yAxes=[
                         G.YAxis(
                             format="none",
