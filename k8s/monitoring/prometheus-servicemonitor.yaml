@@ -42,7 +42,7 @@ spec:
     # Select the s4 signup server service.
     matchLabels:
       provider: 'LeastAuthority'
-      app: 's4-signup'
+      app: 's4'
       component: 'Infrastructure'
   endpoints:
   # And scrape metrics from its prometheus output plugin.
