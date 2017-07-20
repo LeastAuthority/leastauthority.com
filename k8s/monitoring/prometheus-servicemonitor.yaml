@@ -42,8 +42,40 @@ spec:
     # Select the s4 signup server service.
     matchLabels:
       provider: 'LeastAuthority'
-      app: 's4-signup'
+      app: 's4'
       component: 'Infrastructure'
   endpoints:
   # And scrape metrics from its prometheus output plugin.
   - port: 'metrics'
+
+---
+# https://github.com/coreos/prometheus-operator/blob/92b5a896d2265f89caa1f87240291ba623ea8a99/contrib/kube-prometheus/manifests/prometheus/prometheus-k8s-servicemonitors.yaml#L25-L46
+# This gets us metrics from the kubelet-embedded cAdvisor on each Kubernetes
+# node.  These metrics basically describe a bunch of stuff about the nodes
+# (including some stuff about the containers they're running).
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ServiceMonitor
+metadata:
+  name: k8s-apps-https
+  labels:
+    k8s-apps: https
+    # Added these two labels so our Prometheus will select this
+    # ServiceMonitor.
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+spec:
+  jobLabel: k8s-app
+  selector:
+    matchExpressions:
+    - {key: k8s-app, operator: Exists}
+  namespaceSelector:
+    matchNames:
+    - kube-system
+  endpoints:
+  - port: https-metrics
+    interval: 15s
+    scheme: https
+    tlsConfig:
+      caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+      insecureSkipVerify: true
+    bearerTokenFile: /var/run/secrets/kubernetes.io/serviceaccount/token
