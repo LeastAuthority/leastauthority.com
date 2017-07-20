@@ -67,6 +67,41 @@ def cpu_usage(datasource, intervals):
 
     )
 
+def memory_usage(datasource):
+    return G.Graph(
+        title="Memory Usage",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                # 2 ^ 30 bytes
+                format="gbytes",
+                label="Memory",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+        targets=[
+            G.Target(
+                expr="""
+                sum(machine_memory_bytes) / 2 ^ 30
+                """,
+                legendFormat="Total Physical Memory",
+                refId="A",
+            ),
+            G.Target(
+                expr="""
+                sum(container_memory_rss) / 2 ^ 30
+                """,
+                legendFormat="Total Container RSS",
+                refId="B",
+            ),
+        ],
+    )
+
+
 
 def dashboard():
     PROMETHEUS = "prometheus"
@@ -144,6 +179,7 @@ def dashboard():
                 title="Cluster",
                 panels=[
                     cpu_usage(PROMETHEUS, ["1m", "5m", "10m"]),
+                    memory_usage(PROMETHEUS),
                 ],
             ),
             G.Row(panels=[
