@@ -21,13 +21,55 @@ from twisted.internet.task import react
 
 from txkube import network_kubernetes_from_context
 
+X_TIME = G.XAxis(
+    name="When",
+    mode="time",
+)
+
+def cpu_usage(datasource, intervals):
+    return G.Graph(
+        title="CPU usage",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="percent",
+                label="Average",
+                min=0,
+                max=100,
+            ),
+            G.YAxis(
+                format="percent",
+                label="Average",
+            ),
+        ],
+        targets=list(
+            G.Target(
+                # Find the rate of change in CPU seconds across all containers
+                # (filter out some pseudo-containers from Kubernetes by
+                # recognizing that they have a pod_name attribute; this avoids
+                # double-counting each value) metrics.  Sum those rates.
+                # Since a single CPU core can run a container for at most 1
+                # second per second, divide by the number of cores.  This is
+                # the proportion of cluster CPU resources used.  Multiply by
+                # 100 to give a percentage.
+                expr="""
+                  100
+                * sum(rate(container_cpu_usage_seconds_total{{pod_name!=""}}[{}]))
+                / sum(machine_cpu_cores)
+                """.format(interval),
+                legendFormat="CPU Usage ({} avg)".format(interval),
+                refId=chr(ord("A") + n),
+            )
+            for n, interval in enumerate(intervals),
+        ),
+
+    )
+
 
 def dashboard():
     PROMETHEUS = "prometheus"
-    X_TIME = G.XAxis(
-        name="When",
-        mode="time",
-    )
     return G.Dashboard(
         title="S4",
         rows=[
@@ -98,6 +140,12 @@ def dashboard():
                     ],
                 ),
             ]),
+            G.Row(
+                title="Cluster",
+                panels=[
+                    cpu_usage(PROMETHEUS, ["1m", "5m", "10m"]),
+                ],
+            ),
             G.Row(panels=[
                 G.SingleStat(
                     title='Current Customer Deployments',
