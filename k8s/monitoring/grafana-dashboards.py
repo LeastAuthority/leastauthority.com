@@ -102,6 +102,43 @@ def memory_usage(datasource):
     )
 
 
+def network_usage(datasource):
+    return G.Graph(
+        title="Network Usage",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                # 2^20 bytes / second
+                format="MBs",
+                label="Transferred",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+        targets=[
+            G.Target(
+                # Get the rate of data received on the public interface (eth0)
+                # for each entire node (id="/") over the last minute.
+                expr="""
+                sum(rate(container_network_receive_bytes_total{id="/",interface="eth0"}[1m])) / 2 ^ 20
+                """,
+                legendFormat="receive",
+                refId="A",
+            ),
+            G.Target(
+                # And rate of data sent.
+                expr="""
+                sum(rate(container_network_transmit_bytes_total{id="/",interface="eth0"}[1m])) / 2 ^ 20
+                """,
+                legendFormat="transmit",
+                refId="B",
+            ),
+        ],
+    )
+
 
 def dashboard():
     PROMETHEUS = "prometheus"
@@ -180,6 +217,7 @@ def dashboard():
                 panels=[
                     cpu_usage(PROMETHEUS, ["1m", "5m", "10m"]),
                     memory_usage(PROMETHEUS),
+                    network_usage(PROMETHEUS),
                 ],
             ),
             G.Row(panels=[
