@@ -178,8 +178,6 @@ def dashboard():
                         ),
                     ],
                 ),
-            ]),
-            G.Row(panels=[
                 G.Graph(
                     title="Usage",
                     dataSource=PROMETHEUS,
