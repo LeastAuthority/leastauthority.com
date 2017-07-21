@@ -1,0 +1,16 @@
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  labels:
+    app: 'disk-exporter'
+    k8s-app: 'disk-exporter'
+  name: 'disk-exporter'
+spec:
+  type: 'ClusterIP'
+  clusterIP: None
+  ports:
+  - name: 'http-metrics'
+    port: 9000
+    protocol: 'TCP'
+  selector:
+    app: 'disk-exporter'
