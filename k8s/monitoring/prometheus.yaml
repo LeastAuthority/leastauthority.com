@@ -8,6 +8,14 @@ spec:
     matchLabels:
       provider: 'LeastAuthority'
       component: 'Monitoring'
+
+  # Select ConfigMaps that configure Prometheus rules of various sorts.
+  ruleSelector:
+    matchLabels:
+      provider: 'LeastAuthority'
+      component: 'Monitoring'
+      role: 'prometheus-rulefiles'
+
   version: 'v1.7.0'
   resources:
     requests:
@@ -20,3 +28,34 @@ spec:
     resources:
       requests:
         storage: '40Gi'
+---
+apiVersion: 'v1'
+kind: 'ConfigMap'
+metadata:
+  name: 'prometheus-rules'
+  labels:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+    role: 'prometheus-rulefiles'
+data:
+  recording.rules: |
+    cpu:container_usage_seconds:rate1m =
+      sum(rate(container_cpu_usage_seconds_total{pod_name!=""}[1m]))
+
+    cpu:container_usage_seconds:rate5m =
+      sum(rate(container_cpu_usage_seconds_total{pod_name!=""}[5m]))
+
+    cpu:container_usage_seconds:rate10m =
+      sum(rate(container_cpu_usage_seconds_total{pod_name!=""}[10m]))
+
+    cores:machine_cpu:total =
+      sum(machine_cpu_cores)
+
+    rss:container_memory:total =
+      sum(container_memory_rss)
+
+    receive:container_network_bytes:rate1m =
+      sum(rate(container_network_receive_bytes_total{id="/",interface="eth0"}[1m]))
+
+    transmit:container_network_bytes:rate1m =
+      sum(rate(container_network_transmit_bytes_total{id="/",interface="eth0"}[1m]))
