@@ -102,6 +102,7 @@ def memory_usage(datasource):
     )
 
 
+
 def network_usage(datasource):
     return G.Graph(
         title="Network Usage",
@@ -138,6 +139,41 @@ def network_usage(datasource):
             ),
         ],
     )
+
+
+
+def filesystem_usage(datasource):
+    return G.Graph(
+        title="Filesystem Usage",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="percent",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+        targets=[
+            G.Target(
+                # Get the proportion used of each filesystem on a volume from
+                # a PersistentVolumeClaim on each node of the cluster.  It's
+                # hard to figure out the role each filesystem serves from this
+                # graph (since all we get is the PVC name).  Better than
+                # nothing, though.  Hopefully later we can do better.
+                expr="""
+                100
+                * filesystem_used_bytes{volume=~"pvc-.*"}
+                / filesystem_size_bytes{volume=~"pvc-.*"}
+                """,
+                legendFormat="{{volume}}",
+                refId="A",
+            ),
+        ],
+    )
+
 
 
 def dashboard():
@@ -216,6 +252,7 @@ def dashboard():
                     cpu_usage(PROMETHEUS, ["1m", "5m", "10m"]),
                     memory_usage(PROMETHEUS),
                     network_usage(PROMETHEUS),
+                    filesystem_usage(PROMETHEUS),
                 ],
             ),
             G.Row(panels=[
@@ -246,7 +283,6 @@ def dashboard():
             ]),
         ],
     ).auto_panel_ids()
-
 
 
 
