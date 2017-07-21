@@ -46,26 +46,31 @@ def cpu_usage(datasource, intervals):
         ],
         targets=list(
             G.Target(
-                # Find the rate of change in CPU seconds across all containers
-                # (filter out some pseudo-containers from Kubernetes by
-                # recognizing that they have a pod_name attribute; this avoids
-                # double-counting each value) metrics.  Sum those rates.
-                # Since a single CPU core can run a container for at most 1
-                # second per second, divide by the number of cores.  This is
-                # the proportion of cluster CPU resources used.  Multiply by
-                # 100 to give a percentage.
+                # CPU usage (as a percentage of maximum possible) averaged
+                # over a period is given as 100 times the sum (over all
+                # containers) of the rate of increase (in seconds) divided by
+                # the maximum possible increase (1 second per CPU).
+                #
+                # The sums are taken from recording rules because recomputing
+                # them for every point on the graph for every graph request
+                # becomes prohitively expensive.  Only a few specific rates
+                # are "recorded" and the ``interval`` parameter must match one
+                # of those. :(
+                #
+                # See prometheus.yaml for the recording rules.
                 expr="""
                   100
-                * sum(rate(container_cpu_usage_seconds_total{{pod_name!=""}}[{}]))
-                / sum(machine_cpu_cores)
+                * cpu:container_usage_seconds:rate{}
+                / cores:machine_cpu:total
                 """.format(interval),
                 legendFormat="CPU Usage ({} avg)".format(interval),
                 refId=chr(ord("A") + n),
             )
             for n, interval in enumerate(intervals),
         ),
-
     )
+
+
 
 def memory_usage(datasource):
     return G.Graph(
@@ -93,7 +98,7 @@ def memory_usage(datasource):
             ),
             G.Target(
                 expr="""
-                sum(container_memory_rss) / 2 ^ 30
+                rss:container_memory:total / 2 ^ 30
                 """,
                 legendFormat="Total Container RSS",
                 refId="B",
@@ -123,7 +128,7 @@ def network_usage(datasource):
                 # Get the rate of data received on the public interface (eth0)
                 # for each entire node (id="/") over the last minute.
                 expr="""
-                sum(rate(container_network_receive_bytes_total{id="/",interface="eth0"}[1m])) / 2 ^ 20
+                receive:container_network_bytes:rate1m / 2 ^ 20
                 """,
                 legendFormat="receive",
                 refId="A",
@@ -131,7 +136,7 @@ def network_usage(datasource):
             G.Target(
                 # And rate of data sent.
                 expr="""
-                sum(rate(container_network_transmit_bytes_total{id="/",interface="eth0"}[1m])) / 2 ^ 20
+                transmit:container_network_bytes:rate1m / 2 ^ 20
                 """,
                 legendFormat="transmit",
                 refId="B",
