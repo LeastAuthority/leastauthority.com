@@ -1,0 +1,37 @@
+apiVersion: 'extensions/v1beta1'
+kind: 'DaemonSet'
+metadata:
+  name: 'disk-exporter'
+spec:
+  updateStrategy:
+    rollingUpdate:
+  template:
+    metadata:
+      labels:
+        app: 'disk-exporter'
+      name: 'disk-exporter'
+    spec:
+      volumes:
+      - name: 'host-namespaces'
+        hostPath:
+          path: '/proc/1/ns'
+      containers:
+      - image: 'leastauthority/disk-exporter:latest'
+        name: 'disk-exporter'
+        securityContext:
+          privileged: true
+        ports:
+        - containerPort: 9000
+          hostPort: 9000
+          name: 'http-metrics'
+        resources:
+          requests:
+            memory: '150Mi'
+            cpu: '50m'
+          limits:
+            memory: '200Mi'
+            cpu: '100m'
+        volumeMounts:
+        - name: 'host-namespaces'
+          readOnly:  true
+          mountPath: '/ns'
