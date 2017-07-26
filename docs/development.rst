@@ -57,3 +57,23 @@ However, here is a slightly simplified and reformatted version that probably wor
 
 To be able to successfully submit the signup form,
 ``SUBSCRIPTION_MANAGER_URL`` will need to be set to the address of a usable subscription manager.
+
+S4 Subscription Manager
+~~~~~~~~~~~~~~~~~~~~~~~
+
+The *subscription-manager* container of the ``subscription-manager`` *Deployment* in ``k8s/infrastructure.yaml`` provides the canonical definition of the **S4 Subscription Manager** is run.
+However, here is a slightly simplified and reformatted version that probably works.
+
+::
+
+   twist \
+     --log-format=text \
+     s4-subscription-manager \
+     --domain ${DOMAIN} \
+     --state-path /tmp/subscriptions \
+     --listen-address tcp:8001
+
+For provisioning of subscriptions contained by this manager to succeed
+(such that the Tahoe-LAFS for the subscription is actually usable)
+``DOMAIN`` must be set to a Route53-managed domain which other components of the system are also using.
+For any testing short of that, any value for ``DOMAIN`` should be fine.
