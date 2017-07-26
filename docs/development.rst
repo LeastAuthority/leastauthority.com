@@ -79,3 +79,6 @@ However, here is a slightly simplified and reformatted version that probably wor
 
 To be able to successfully submit the signup form,
 ``SUBSCRIPTION_MANAGER_URL`` will need to be set to the address of a usable subscription manager.
+For example,
+if the subscription manager is running on localhost and was given a ``--listen-address`` of ``tcp:8001``
+then the value for ``SUBSCRIPTION_MANAGER_URL`` would be ``http://localhost:8001/``.
