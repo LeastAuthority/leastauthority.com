@@ -9,6 +9,12 @@ spec:
       provider: 'LeastAuthority'
       component: 'Monitoring'
 
+  # Keep data for a while - about 90 days.
+  # https://golang.org/pkg/time/#ParseDuration
+  # https://groups.google.com/forum/#!topic/prometheus-developers/iS-pg5i_eOI
+  # https://prometheus.io/docs/operating/storage/#settings-for-very-long-retention-time
+  retention: '2160h'
+
   # Select ConfigMaps that configure Prometheus rules of various sorts.
   ruleSelector:
     matchLabels:
