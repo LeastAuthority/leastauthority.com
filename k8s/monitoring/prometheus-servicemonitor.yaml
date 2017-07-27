@@ -65,7 +65,23 @@ spec:
   endpoints:
   # And scrape metrics from its prometheus output plugin.
   - port: 'http-metrics'
-
+---
+apiVersion: 'monitoring.coreos.com/v1alpha1'
+kind: 'ServiceMonitor'
+metadata:
+  name: 'tahoe-lafs-transfer-rate'
+  labels:
+    provider: 'LeastAuthority'
+    component: 'Monitoring'
+spec:
+  selector:
+    # Select the node exporter service.
+    matchLabels:
+      app: 'tahoe-lafs-transfer-rate-monitor'
+      k8s-app: 'tahoe-lafs-transfer-rate-monitor'
+  endpoints:
+  # And scrape metrics from its prometheus output plugin.
+  - port: 'http-metrics'
 ---
 # https://github.com/coreos/prometheus-operator/blob/92b5a896d2265f89caa1f87240291ba623ea8a99/contrib/kube-prometheus/manifests/prometheus/prometheus-k8s-servicemonitors.yaml#L25-L46
 # This gets us metrics from the kubelet-embedded cAdvisor on each Kubernetes

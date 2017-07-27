@@ -181,6 +181,45 @@ def filesystem_usage(datasource):
 
 
 
+def tahoe_lafs_transfer_rate(datasource):
+    return G.Graph(
+        title="Tahoe-LAFS Benchmarked Transfer Rate",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                # 2^10 bytes / second
+                format="KBs",
+                label="KiB/sec",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                  tahoe_lafs_roundtrip_benchmark_write_bytes_per_second_sum
+                / tahoe_lafs_roundtrip_benchmark_write_bytes_per_second_count
+                """,
+                legendFormat="upload",
+                refId="A",
+            ),
+            G.Target(
+                expr="""
+                  tahoe_lafs_roundtrip_benchmark_read_bytes_per_second_sum
+                / tahoe_lafs_roundtrip_benchmark_read_bytes_per_second_count
+                """,
+                legendFormat="download",
+                refId="B",
+            ),
+        ],
+    )
+
+
+
 def dashboard():
     PROMETHEUS = "prometheus"
     return G.Dashboard(
@@ -261,6 +300,7 @@ def dashboard():
                 ],
             ),
             G.Row(panels=[
+                tahoe_lafs_transfer_rate(PROMETHEUS),
                 G.SingleStat(
                     title='Current Customer Deployments',
                     dataSource='prometheus',
