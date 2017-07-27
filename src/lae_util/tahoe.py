@@ -247,17 +247,14 @@ _WRITE_TIME = Summary(
 )
 
 
-def main(reactor):
+def main(reactor, introducer_furl, mutable_file_cap):
     d = create_tahoe_lafs_client(
         reactor,
-        introducer_furl=u"pb://gnykjul7ocigeptkecenytywj2jerivp@on2wexzzmvnhu22tpbixm3tbnvsgg.introducer.leastauthority.com:10000/jvl5jssmejcl3lboep7nqnooia4bsykf",
+        introducer_furl=introducer_furl.decode("ascii"),
     )
     d.addCallback(
         roundtrip_check,
-        [u"URI:DIR2:3m7fosu5lmgwrqvwrca3jgoyia:musow6lqrwnls35mupm6th7hfc2qrga2d4vtyq4knq6ewbtt2fca",
-         u"scratch",
-         u"random",
-        ],
+        [mutable_file_cap.decode("ascii")],
     )
     def done(ignored):
         from prometheus_client import REGISTRY, write_to_textfile
@@ -268,5 +265,6 @@ def main(reactor):
 
 
 if __name__ == '__main__':
+    from sys import argv
     from twisted.internet.task import react
-    react(main, [])
+    react(main, argv[1:])
