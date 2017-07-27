@@ -219,6 +219,66 @@ def tahoe_lafs_transfer_rate(datasource):
     )
 
 
+def s4_customer_deployments(datasource):
+    return G.Graph(
+        title="Customer Deployments",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="none",
+                label="Count",
+                min=0,
+                max=100,
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                s4_deployment_gauge
+                """,
+                refId="A",
+                legendFormat="Total Customer Deployments",
+            ),
+        ],
+    )
+
+
+def unhandled_errors(datasource):
+    return G.Graph(
+        title="Unhandled Errors",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="none",
+                label="Count",
+                min=0,
+                max=100,
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                s4_unhandled_error_counter
+                """,
+                refId="A",
+                legendFormat="Total Unhandled Errors",
+            ),
+        ],
+    )
+
+
 
 def dashboard():
     PROMETHEUS = "prometheus"
@@ -301,30 +361,8 @@ def dashboard():
             ),
             G.Row(panels=[
                 tahoe_lafs_transfer_rate(PROMETHEUS),
-                G.SingleStat(
-                    title='Current Customer Deployments',
-                    dataSource='prometheus',
-                    valueName='current',
-                    sparkline=G.SparkLine(show=True),
-                    targets=[
-                        G.Target(
-                            expr='s4_deployment_gauge',
-                            refId="E",
-                        ),
-                    ],
-                ),
-                G.SingleStat(
-                    title='Unhandled Errors',
-                    dataSource='prometheus',
-                    valueName='current',
-                    sparkline=G.SparkLine(show=True),
-                    targets=[
-                        G.Target(
-                            expr='s4_unhandled_error_counter',
-                            refId="F",
-                        ),
-                    ],
-                ),
+                s4_customer_deployments(PROMETHEUS),
+                unhandled_errors(PROMETHEUS),
             ]),
         ],
     ).auto_panel_ids()
