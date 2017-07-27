@@ -21,3 +21,10 @@ s4_grid_router = ServiceMaker(
     "A self-configuring proxy/router for per-subscription Tahoe-LAFS access.",
     "s4-grid-router",
 )
+
+s4_tahoe_transfer_rate_monitor = ServiceMaker(
+    "S4 Tahoe-LAFS Transfer Rate Monitor",
+    "lae_util._monitor_tahoe",
+    "A service for collecting Tahoe-LAFS transfer rate metrics.",
+    "s4-tahoe-lafs-transfer-rate-monitor",
+)

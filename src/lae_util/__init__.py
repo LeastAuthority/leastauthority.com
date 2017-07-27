@@ -8,6 +8,9 @@ __all__ = [
     "timeout",
     "get_default_retry_steps",
     "decorate_methods",
+
+    "prometheus_exporter",
+    "AsynchronousService",
 ]
 
 import stripe
@@ -28,6 +31,8 @@ from ._retry import (
 )
 
 from ._prometheus import prometheus_exporter
+
+from .service import AsynchronousService
 
 def patch():
     from .twisted_8860 import detect, patch
