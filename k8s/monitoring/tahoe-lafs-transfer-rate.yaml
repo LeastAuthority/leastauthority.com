@@ -1,0 +1,81 @@
+apiVersion: 'v1'
+kind: 'Service'
+metadata:
+  labels:
+    app: 'tahoe-lafs-transfer-rate-monitor'
+    k8s-app: 'tahoe-lafs-transfer-rate-monitor'
+  name: 'tahoe-lafs-transfer-rate-monitor'
+spec:
+  type: 'ClusterIP'
+  clusterIP: None
+  ports:
+  - name: 'http-metrics'
+    port: 9000
+    protocol: 'TCP'
+  selector:
+    app: 'tahoe-lafs-transfer-rate-monitor'
+---
+kind: 'Deployment'
+apiVersion: 'extensions/v1beta1'
+metadata:
+  name: 'tahoe-lafs-transfer-rate-monitor'
+spec:
+  # Keep some old ReplicaSets for older versions of the Deployment around -
+  # but not all of them (as is the default).
+  revisionHistoryLimit: 3
+
+  replicas: 1
+  strategy:
+    type: 'RollingUpdate'
+
+  # This is a pod spec template.  The deployment uses it to create new pods
+  # sometimes (for example, when starting up for the first time, upgrading, or
+  # doing horizontal scale-out).
+  template:
+    metadata:
+      labels:
+        app: 'tahoe-lafs-transfer-rate-monitor'
+        provider: 'LeastAuthority'
+        component: 'Monitoring'
+
+    spec:
+      volumes:
+      # Read about containers at
+      # http://kubernetes.io/docs/user-guide/production-pods/
+      containers:
+      - name: 'transfer-rate-monitor'
+        image: 'leastauthority/s4-common:2.0'
+        imagePullPolicy: 'Always'
+        command:
+        - '/bin/sh'
+        - '-c'
+        args:
+        - >
+          . /app/env/bin/activate;
+          twist s4-tahoe-lafs-transfer-rate-monitor
+          --interval=600
+          --introducer-furl=$(INTRODUCER_FURL)
+          --scratch-cap=$(SCRATCH_CAP)
+        env:
+        - name: 'INTRODUCER_FURL'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'tahoe-lafs-rate-transfer-introducer-furl'
+        - name: 'SCRATCH_CAP'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'tahoe-lafs-rate-transfer-scratch-cap'
+
+        workingDir: '/app/run'
+        ports:
+        # We just happen to know these are the ports this container listens on.
+        - containerPort: 9000
+        resources:
+          requests:
+            cpu: '10m'
+            memory: '200Mi'
+          limits:
+            cpu: '100m'
+            memory: '200Mi'
