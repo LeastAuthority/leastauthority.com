@@ -189,8 +189,7 @@ def tahoe_lafs_transfer_rate(datasource):
         xAxis=X_TIME,
         yAxes=[
             G.YAxis(
-                # 2^10 bytes / second
-                format="KBs",
+                format="Bps",
                 label="Transfer Rate",
             ),
             G.YAxis(
