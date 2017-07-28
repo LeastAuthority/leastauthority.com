@@ -258,8 +258,6 @@ def unhandled_errors(datasource):
             G.YAxis(
                 format="none",
                 label="Count",
-                min=0,
-                max=100,
             ),
             G.YAxis(
                 show=False,
