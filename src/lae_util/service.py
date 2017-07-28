@@ -47,7 +47,8 @@ class AsynchronousService(object):
     def startService(self):
         with start_action(action_type=u"asyncservice:start"):
             self.running = True
-            d = self._d = DeferredContext(self._factory())
+            self._d = self._factory()
+            d = DeferredContext(self._d)
             d.addCallback(self._created)
             d.addErrback(self._failed)
             d.addActionFinish()

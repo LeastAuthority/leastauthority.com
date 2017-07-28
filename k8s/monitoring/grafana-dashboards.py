@@ -181,6 +181,102 @@ def filesystem_usage(datasource):
 
 
 
+def tahoe_lafs_transfer_rate(datasource):
+    return G.Graph(
+        title="Tahoe-LAFS Benchmarked Transfer Rate",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="Bps",
+                label="Transfer Rate",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                  tahoe_lafs_roundtrip_benchmark_write_bytes_per_second_sum
+                / tahoe_lafs_roundtrip_benchmark_write_bytes_per_second_count
+                """,
+                legendFormat="upload",
+                refId="A",
+            ),
+            G.Target(
+                expr="""
+                  tahoe_lafs_roundtrip_benchmark_read_bytes_per_second_sum
+                / tahoe_lafs_roundtrip_benchmark_read_bytes_per_second_count
+                """,
+                legendFormat="download",
+                refId="B",
+            ),
+        ],
+    )
+
+
+def s4_customer_deployments(datasource):
+    return G.Graph(
+        title="Customer Deployments",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="none",
+                label="Count",
+                min=0,
+                max=100,
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                s4_deployment_gauge
+                """,
+                refId="A",
+                legendFormat="Total Customer Deployments",
+            ),
+        ],
+    )
+
+
+def unhandled_errors(datasource):
+    return G.Graph(
+        title="Unhandled Errors",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="none",
+                label="Count",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                s4_unhandled_error_counter
+                """,
+                refId="A",
+                legendFormat="Total Unhandled Errors",
+            ),
+        ],
+    )
+
+
+
 def dashboard():
     PROMETHEUS = "prometheus"
     return G.Dashboard(
@@ -261,30 +357,9 @@ def dashboard():
                 ],
             ),
             G.Row(panels=[
-                G.SingleStat(
-                    title='Current Customer Deployments',
-                    dataSource='prometheus',
-                    valueName='current',
-                    sparkline=G.SparkLine(show=True),
-                    targets=[
-                        G.Target(
-                            expr='s4_deployment_gauge',
-                            refId="E",
-                        ),
-                    ],
-                ),
-                G.SingleStat(
-                    title='Unhandled Errors',
-                    dataSource='prometheus',
-                    valueName='current',
-                    sparkline=G.SparkLine(show=True),
-                    targets=[
-                        G.Target(
-                            expr='s4_unhandled_error_counter',
-                            refId="F",
-                        ),
-                    ],
-                ),
+                tahoe_lafs_transfer_rate(PROMETHEUS),
+                s4_customer_deployments(PROMETHEUS),
+                unhandled_errors(PROMETHEUS),
             ]),
         ],
     ).auto_panel_ids()
