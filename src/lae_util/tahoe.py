@@ -25,7 +25,7 @@ from attr.validators import optional, instance_of, provides
 
 from hyperlink import URL
 
-from prometheus_client import Summary, Counter
+from prometheus_client import Histogram, Counter
 
 from allmydata.util.configutil import (
     get_config,
@@ -193,12 +193,12 @@ def roundtrip_check(lafs, mutable_file_loc):
     contents = 512 * (256 * pattern)
     size = len(contents)
     d = _measure_async_time(
-        lambda interval: _WRITE_TIME.observe(size / interval),
+        lambda interval: _WRITE_RATE.observe(size / interval),
         lafs.write_mutable_file(mutable_file_loc, contents),
     )
     def wrote(ignored):
         d = _measure_async_time(
-            lambda interval: _READ_TIME.observe(size / interval),
+            lambda interval: _READ_RATE.observe(size / interval),
             lafs.read_file(mutable_file_loc),
         )
         return d
@@ -237,13 +237,18 @@ _ROUNDTRIP_FAILURE = Counter(
     "tahoe_lafs_roundtrip_benchmark_failure_total",
     "Number of roundtrip benchmarks which failued somehow.",
 )
-_READ_TIME = Summary(
+
+_rate_buckets = tuple(n * 50 * 1024 for n in range(1, 20)) + (float("inf"),)
+
+_READ_RATE = Histogram(
     "tahoe_lafs_roundtrip_benchmark_read_bytes_per_second",
     "Transfer rate for reading a file on the grid.",
+    buckets=_rate_buckets,
 )
-_WRITE_TIME = Summary(
+_WRITE_RATE = Histogram(
     "tahoe_lafs_roundtrip_benchmark_write_bytes_per_second",
     "Transfer rate for writing a file on the grid.",
+    buckets=_rate_buckets,
 )
 
 
