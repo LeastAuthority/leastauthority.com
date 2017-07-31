@@ -16,6 +16,7 @@ Use ``virtualenv`` to get an isolated Python environment to run S4 components::
 Check out the source from GitHub and install it in the *virtualenv*::
 
   git clone git@github.com:LeastAuthority/leastauthority.com
+  pip install --editable ~/Work/LeastAuthority/leastauthority.com/[dev]
   cd leastauthority.com
   ./test-tools/install-testing
 
