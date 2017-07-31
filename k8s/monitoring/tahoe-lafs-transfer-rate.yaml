@@ -39,7 +39,6 @@ spec:
         component: 'Monitoring'
 
     spec:
-      volumes:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
@@ -77,5 +76,5 @@ spec:
             cpu: '10m'
             memory: '200Mi'
           limits:
-            cpu: '100m'
+            cpu: '1000m'
             memory: '200Mi'
