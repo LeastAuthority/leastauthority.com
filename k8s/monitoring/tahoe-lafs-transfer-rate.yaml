@@ -39,7 +39,6 @@ spec:
         component: 'Monitoring'
 
     spec:
-      volumes:
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
