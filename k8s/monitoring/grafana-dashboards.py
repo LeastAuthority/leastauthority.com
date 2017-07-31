@@ -4,8 +4,8 @@ from __future__ import print_function, unicode_literals
 
 from sys import argv
 from io import BytesIO
-
 from json import loads, dumps
+from itertools import count
 
 # Satisfy grafanalib
 class machinery:
@@ -25,6 +25,10 @@ X_TIME = G.XAxis(
     name="When",
     mode="time",
 )
+
+def refId(n):
+    return str(n)
+
 
 def cpu_usage(datasource, intervals):
     return G.Graph(
@@ -64,7 +68,7 @@ def cpu_usage(datasource, intervals):
                 / cores:machine_cpu:total
                 """.format(interval),
                 legendFormat="CPU Usage ({} avg)".format(interval),
-                refId=chr(ord("A") + n),
+                refId=refId(n),
             )
             for n, interval in enumerate(intervals),
         ),
@@ -182,6 +186,12 @@ def filesystem_usage(datasource):
 
 
 def tahoe_lafs_transfer_rate(datasource):
+    def refidgen():
+        for i in count():
+            yield unicode(i)
+    refid = refidgen()
+
+
     return G.Graph(
         title="Tahoe-LAFS Benchmarked Transfer Rate",
         dataSource=datasource,
@@ -197,24 +207,61 @@ def tahoe_lafs_transfer_rate(datasource):
             ),
         ],
 
-        targets=[
+        targets=list(
             G.Target(
+                # The metric is a Histogram.  The _sum goes up by the number of
+                # bytes/second observed by each sample taken.  For example, if
+                # the first benchmark run observes 100 bytes/sec transfer
+                # rate, the _sum is 100.  If the second benchmark run observes
+                # 75 bytes/sec transfer rate, the _sum is then 175.  The
+                # _count gives the total number of samples present in the
+                # _sum.
+                #
+                # The rate() of the _sum over a recent interval is
+                # bytes/sec/sec.  The rate() of the _count over the same
+                # interval is 1/sec.  The quotient is bytes/sec and gives an
+                # average for the metric over the recent interval.
+                #
+                # Take the average of all such results to squash series from
+                # different pods into a single result.  There should be
+                # minimal overlap but whenever the pod gets recreated (because
+                # the deploying is updated, for example) there's a little.
                 expr="""
-                  tahoe_lafs_roundtrip_benchmark_write_bytes_per_second_sum
-                / tahoe_lafs_roundtrip_benchmark_write_bytes_per_second_count
-                """,
-                legendFormat="upload",
-                refId="A",
-            ),
+                avg without (pod,instance) (
+                    rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_sum{{service="tahoe-lafs-transfer-rate-monitor"}}[5m])
+                  / rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_count{{service="tahoe-lafs-transfer-rate-monitor"}}[5m])
+                )
+                """.format(metric=metric),
+                legendFormat="avg " + legend_format,
+                refId=next(refid),
+            )
+            for (legend_format, metric)
+            in [("upload", "write"), ("download", "read")]
+        ) + list(
             G.Target(
+                # The average above is nice, I suppose.  It doesn't give the
+                # full picture, though.  So also compute the rate which is
+                # slower than 90% of the results (faster than 10% of the
+                # results).  This is basically what a 90% transfer speed SLA
+                # would talk about.  Put another way, 90% of uploads should
+                # occur at a rate equal to or greater than the one plotted by
+                # this expression.
                 expr="""
-                  tahoe_lafs_roundtrip_benchmark_read_bytes_per_second_sum
-                / tahoe_lafs_roundtrip_benchmark_read_bytes_per_second_count
-                """,
-                legendFormat="download",
-                refId="B",
-            ),
-        ],
+                avg without (pod,instance) (
+                    histogram_quantile(
+                        0.10,
+                        rate(
+                            tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_bucket{{service="tahoe-lafs-transfer-rate-monitor"}}[5m]
+                        )
+                    )
+                )
+                """.format(metric=metric),
+                legendFormat="90% " + legend_format,
+                refId=next(refid),
+            )
+            for (legend_format, metric)
+            in [("upload", "write"), ("download", "read")]
+        ),
     )
 
 
