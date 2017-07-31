@@ -4,7 +4,7 @@ services:
   # The leastauthority.com website, including handling of the signup forms.
   web:
     # See build.sh
-    image: 'leastauthority.com/web'
+    image: 'leastauthority/s4-common'
 
     ports:
       # The web server in the container listens for HTTPS on 8443.
