@@ -63,10 +63,6 @@ data:
       </store>
       <store>
         @type relabel
-        @label @METRICS_ERRORS
-      </store>
-      <store>
-        @type relabel
         @label @METRICS_DEPLOYMENTS
       </store>
     </match>
@@ -128,26 +124,6 @@ data:
         tag_key fluent_tag
       </match>
     </label>
-
-    <label @METRICS_ERRORS>
-      # Scrape Twisted error event metrics out of the log stream and expose it
-      # to Prometheus.
-      <filter **>
-        @type where
-        # Match Twisted-style log events for Deferreds with no final errback.
-        where log_namespace = 'twisted.internet.defer' AND log_format = 'Unhandled error in Deferred:'
-      </filter>
-
-      # Take the output of the error filter and turn it into a Prometheus
-      # metric.
-      <filter **>
-        @type prometheus
-        <metric>
-          name s4_unhandled_error_counter
-          type counter
-          desc Total S4 Unhandled Errors
-        </metric>
-      </filter>
     </label>
 
     <label @METRICS_DEPLOYMENTS>
