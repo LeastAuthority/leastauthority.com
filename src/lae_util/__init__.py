@@ -31,6 +31,9 @@ from ._retry import (
 )
 
 from ._prometheus import prometheus_exporter
+from ._prometheus import (
+    opt_metrics_port,
+)
 
 from .service import AsynchronousService
 

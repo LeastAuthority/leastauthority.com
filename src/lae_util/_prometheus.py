@@ -19,6 +19,23 @@ _UNHANDLED_ERRORS = Counter(
 )
 
 
+
+def get_metrics_service(options, reactor):
+    return prometheus_exporter(reactor, options["metrics-port"])
+
+
+
+def opt_metrics_port(cls):
+    cls.optParameters = list(cls.optParameters) + [
+        ("metrics-port", None, "tcp:9000",
+         "A server endpoint description string on which to run a metrics-exposing server.",
+        ),
+    ]
+    cls.get_metrics_service = get_metrics_service
+    return cls
+
+
+
 def prometheus_exporter(reactor, port_string):
     """
     Create an ``IService`` that exposes Prometheus metrics from this process
