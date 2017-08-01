@@ -314,7 +314,7 @@ def unhandled_errors(datasource):
         targets=[
             G.Target(
                 expr="""
-                s4_unhandled_error_counter
+                sum(s4_unhandled_error_counter)
                 """,
                 refId="A",
                 legendFormat="Total Unhandled Errors",
