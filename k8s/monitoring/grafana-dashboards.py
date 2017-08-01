@@ -346,17 +346,26 @@ def dashboard():
                     ],
                     targets=[
                         G.Target(
-                            expr='wormhole_signup_started{pod=~"s4-signup.*"}',
+                            # Filter down to just the signup pod since that's
+                            # the only one where this metric value is
+                            # meaningful.  Some other pods report a 0 value
+                            # for this metric because they happen to import
+                            # the Python code that defines the object
+                            # representing it.
+                            #
+                            # Also, sum over the selected series to account
+                            # for pod replacement.
+                            expr='sum(wormhole_signup_started{pod=~"s4-signup.*"})',
                             legendFormat="Wormhole Signups Started",
                             refId="A",
                         ),
                         G.Target(
-                            expr='wormhole_signup_success{pod=~"s4-signup.*"}',
+                            expr='sum(wormhole_signup_success{pod=~"s4-signup.*"})',
                             legendFormat="Wormhole Signups Completed",
                             refId="B",
                         ),
                         G.Target(
-                            expr='wormhole_signup_failure{pod=~"s4-signup.*"}',
+                            expr='sum(wormhole_signup_failure{pod=~"s4-signup.*"})',
                             legendFormat="Wormhole Signups Failed",
                             refId="C",
                         ),
