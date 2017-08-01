@@ -34,6 +34,8 @@ from twisted.python.filepath import FilePath
 from twisted.python.url import URL
 from twisted.web.client import Agent
 
+from prometheus import Gauge
+
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceRegion
 from txaws.route53.model import (
@@ -299,6 +301,13 @@ def get_customer_grid_configmaps(k8s, namespace):
 
 
 
+_DEPLOYMENTS = Gauge(
+    u"s4_deployment_gauge",
+    u"Current S4 Subscription Deployments",
+)
+
+
+
 def get_customer_grid_deployments(k8s, namespace):
     action = start_action(action_type=u"load-deployments")
     with action.context():
@@ -306,6 +315,7 @@ def get_customer_grid_deployments(k8s, namespace):
         def got_deployments(deployments):
             deployments = list(deployments)
             action.add_success_fields(deployment_count=len(deployments))
+            _DEPLOYMENTS.set(len(deployments))
             return deployments
         d.addCallback(got_deployments)
         return d.addActionFinish()
@@ -325,6 +335,13 @@ def get_customer_grid_replicasets(k8s, namespace):
 
 
 
+_PODS = Gauge(
+    u"s4_pod_gauge",
+    u"Current S4 Subscription Pods",
+)
+
+
+
 def get_customer_grid_pods(k8s, namespace):
     action = start_action(action_type=u"load-pods")
     with action.context():
@@ -332,6 +349,7 @@ def get_customer_grid_pods(k8s, namespace):
         def got_pods(pods):
             pods = list(pods)
             action.add_success_fields(pod_count=len(pods))
+            _PODS.set(len(pods))
             return pods
         d.addCallback(got_pods)
         return d.addActionFinish()
@@ -355,6 +373,13 @@ def get_active_subscriptions(subscriptions):
 
 
 
+_S3_BUCKETS = Gauge(
+    u"s4_s3_bucket_gauge",
+    u"Current S4 S3 Buckets",
+)
+
+
+
 def get_s3_buckets(s3):
     action = start_action(action_type=u"list-buckets")
     with action.context():
@@ -362,6 +387,7 @@ def get_s3_buckets(s3):
         def got_buckets(buckets):
             buckets = list(buckets)
             action.add_success_fields(bucket_count=len(buckets))
+            _S3_BUCKETS.set(len(buckets))
             return buckets
         d.addCallback(got_buckets)
         return d.addActionFinish()
