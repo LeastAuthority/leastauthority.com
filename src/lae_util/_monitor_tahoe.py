@@ -10,7 +10,7 @@ from twisted.application.service import MultiService
 from twisted.application.internet import TimerService
 
 from lae_util import (
-    prometheus_exporter,
+    opt_metrics_port,
     AsynchronousService,
 )
 
@@ -20,6 +20,7 @@ from lae_util.tahoe import (
 )
 
 
+@opt_metrics_port
 class Options(Options):
     optParameters = [
         ("introducer-furl", None, None,
@@ -33,9 +34,6 @@ class Options(Options):
         ("interval", None, 30.0,
          "The amount of time to allow to pass between measurements.",
          float,
-        ),
-        ("metrics-port", None, "tcp:9000",
-         "A server endpoint description string on which to run a metrics-exposing server.",
         ),
     ]
 
@@ -55,9 +53,7 @@ def makeService(options):
         )
     ).setServiceParent(service)
 
-    prometheus_exporter(
-        reactor, options["metrics-port"],
-    ).setServiceParent(service)
+    options.get_metrics_service(reactor).setServiceParent(service)
 
     return service
 
