@@ -151,84 +151,6 @@ spec:
     targetPort: 'subscr-manager'
     protocol: 'TCP'
 ---
-kind: 'ConfigMap'
-apiVersion: 'v1'
-metadata:
-  name: 'fluent-bit-configuration'
-data:
-  parser: |
-    [PARSER]
-        Name        eliot
-        Format      json
-        Time_Key    timestamp
-        Time_Format %s.%L
-        Time_Keep   On
-
-    [PARSER]
-        Name        http-json
-        Format      json
-        Time_Key    timestamp
-        Time_Format %s.%L
-        Time_Keep   Off
-
-  signup: |
-    [INPUT]
-        Name        tail
-        Tag         signup
-        Parser      eliot
-        Path        /app/log/twist.json
-
-    [INPUT]
-        Name        tail
-        Tag         signup-http
-        Parser      http-json
-        Path        /app/log/httpd.json
-
-    [OUTPUT]
-        Match       *
-        Name        forward
-        Host        fluentd
-        Port        24224
-
-  router: |
-    [INPUT]
-        Name        tail
-        Tag         grid-router
-        Parser      eliot
-        Path        /app/log/router.json
-
-    [OUTPUT]
-        Match       *
-        Name        forward
-        Host        fluentd
-        Port        24224
-
-  convergence: |
-    [INPUT]
-        Name        tail
-        Tag         subscription-converger
-        Parser      eliot
-        Path        /app/log/convergence.json
-
-    [OUTPUT]
-        Match       *
-        Name        forward
-        Host        fluentd
-        Port        24224
-
-  manager: |
-    [INPUT]
-        Name        tail
-        Tag         subscription-manager
-        Parser      eliot
-        Path        /app/log/manager.json
-
-    [OUTPUT]
-        Match       *
-        Name        forward
-        Host        fluentd
-        Port        24224
----
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
@@ -264,15 +186,6 @@ spec:
           claimName: 'infrastructure-flapp-pvc'
       - name: 'logs'
         emptyDir:
-      - name: 'fluent-bit-config'
-        configMap:
-          name: 'fluent-bit-configuration'
-          defaultMode: 0444
-          items:
-          - key: 'parser'
-            path: 'fluent-bit.parser'
-          - key: 'signup'
-            path: 'fluent-bit.conf'
 
       # Kubernetes manages some of the secrets we require.  Mount
       # them into the container.
@@ -346,30 +259,6 @@ spec:
           limits:
             cpu: '100m'
             memory: '200Mi'
-
-      # This is a kind of sidecar for tailing the web server's log and
-      # shipping it off to the Fluentd server.
-      - name: 'logs'
-        # This version doesn't match our fluentd (as selected in our
-        # Dockerfile) but it looks like fluent-bit:0.12 isn't final yet.
-        image: 'fluent/fluent-bit:0.11'
-        command:
-        - '/fluent-bit/bin/fluent-bit'
-        - '-v'
-        - '--parser=/app/etc/fluent-bit.parser'
-        - '--config=/app/etc/fluent-bit.conf'
-        volumeMounts:
-        # Make the app logs readable by this container as well.
-        - mountPath: '/app/log'
-          name: 'logs'
-          readOnly: true
-        - mountPath: '/app/etc'
-          name: 'fluent-bit-config'
-          readOnly: true
-        resources:
-          limits:
-            cpu: '10m'
-            memory: '30Mi'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -465,15 +354,7 @@ spec:
       volumes:
       - name: 'logs'
         emptyDir:
-      - name: 'fluent-bit-config'
-        configMap:
-          name: 'fluent-bit-configuration'
-          defaultMode: 0444
-          items:
-          - key: 'parser'
-            path: 'fluent-bit.parser'
-          - key: 'router'
-            path: 'fluent-bit.conf'
+
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
@@ -507,29 +388,6 @@ spec:
           limits:
             cpu: '100m'
             memory: '200Mi'
-
-      # This is a kind of sidecar for tailing the web server's log and
-      # shipping it off to the Fluentd server.
-      - name: 'logs'
-        # This version doesn't match our fluentd (as selected in our
-        # Dockerfile) but it looks like fluent-bit:0.12 isn't final yet.
-        image: 'fluent/fluent-bit:0.11'
-        command:
-        - '/fluent-bit/bin/fluent-bit'
-        - '-v'
-        - '--parser=/app/etc/fluent-bit.parser'
-        - '--config=/app/etc/fluent-bit.conf'
-        volumeMounts:
-        # Make the app logs readable by this container as well.
-        - mountPath: '/app/log'
-          name: 'logs'
-        - mountPath: '/app/etc'
-          name: 'fluent-bit-config'
-          readOnly: true
-        resources:
-          limits:
-            cpu: '10m'
-            memory: '30Mi'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -575,16 +433,6 @@ spec:
             path: 'aws.id'
       - name: 'logs'
         emptyDir:
-      - name: 'fluent-bit-config'
-        configMap:
-          name: 'fluent-bit-configuration'
-          defaultMode: 0444
-          items:
-          - key: 'parser'
-            path: 'fluent-bit.parser'
-          - key: 'convergence'
-            path: 'fluent-bit.conf'
-
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -628,29 +476,6 @@ spec:
           readOnly: true
         - mountPath: '/app/log'
           name: 'logs'
-
-      # This is a kind of sidecar for tailing the web server's log and
-      # shipping it off to the Fluentd server.
-      - name: 'logs'
-        # This version doesn't match our fluentd (as selected in our
-        # Dockerfile) but it looks like fluent-bit:0.12 isn't final yet.
-        image: 'fluent/fluent-bit:0.11'
-        command:
-        - '/fluent-bit/bin/fluent-bit'
-        - '-v'
-        - '--parser=/app/etc/fluent-bit.parser'
-        - '--config=/app/etc/fluent-bit.conf'
-        volumeMounts:
-        # Make the app logs readable by this container as well.
-        - mountPath: '/app/log'
-          name: 'logs'
-        - mountPath: '/app/etc'
-          name: 'fluent-bit-config'
-          readOnly: true
-        resources:
-          limits:
-            cpu: '10m'
-            memory: '30Mi'
 ---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
@@ -686,15 +511,6 @@ spec:
           claimName: 'infrastructure-subscription-manager-pvc'
       - name: 'logs'
         emptyDir:
-      - name: 'fluent-bit-config'
-        configMap:
-          name: 'fluent-bit-configuration'
-          defaultMode: 0444
-          items:
-          - key: 'parser'
-            path: 'fluent-bit.parser'
-          - key: 'manager'
-            path: 'fluent-bit.conf'
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -734,29 +550,6 @@ spec:
         - containerPort: 8000
           # Length limit of 15 on port names.
           name: 'subscr-manager'
-
-      # This is a kind of sidecar for tailing the web server's log and
-      # shipping it off to the Fluentd server.
-      - name: 'logs'
-        # This version doesn't match our fluentd (as selected in our
-        # Dockerfile) but it looks like fluent-bit:0.12 isn't final yet.
-        image: 'fluent/fluent-bit:0.11'
-        command:
-        - '/fluent-bit/bin/fluent-bit'
-        - '-v'
-        - '--parser=/app/etc/fluent-bit.parser'
-        - '--config=/app/etc/fluent-bit.conf'
-        volumeMounts:
-        # Make the app logs readable by this container as well.
-        - mountPath: '/app/log'
-          name: 'logs'
-        - mountPath: '/app/etc'
-          name: 'fluent-bit-config'
-          readOnly: true
-        resources:
-          limits:
-            cpu: '10m'
-            memory: '30Mi'
 ---
 # Read about StorageClass at
 # http://blog.kubernetes.io/2016/10/dynamic-provisioning-and-storage-in-kubernetes.html
