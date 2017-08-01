@@ -9,7 +9,7 @@ __all__ = [
     "get_default_retry_steps",
     "decorate_methods",
 
-    "prometheus_exporter",
+    "opt_metrics_port",
     "AsynchronousService",
 ]
 
@@ -30,7 +30,6 @@ from ._retry import (
     decorate_methods,
 )
 
-from ._prometheus import prometheus_exporter
 from ._prometheus import (
     opt_metrics_port,
 )
