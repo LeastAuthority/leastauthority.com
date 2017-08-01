@@ -61,10 +61,6 @@ data:
         @type relabel
         @label @LOGGING
       </store>
-      <store>
-        @type relabel
-        @label @METRICS_DEPLOYMENTS
-      </store>
     </match>
 
     <label @LOGGING>
@@ -123,23 +119,6 @@ data:
         include_tag_key
         tag_key fluent_tag
       </match>
-    </label>
-    </label>
-
-    <label @METRICS_DEPLOYMENTS>
-      <filter subscription-converger>
-        @type where
-        where action_type = 'load-deployments' and action_status = 'succeeded'
-      </filter>
-      <filter subscription-converger>
-        @type prometheus
-        <metric>
-          name s4_deployment_gauge
-          type gauge
-          desc Current S4 Subscription Deployments
-          key deployment_count
-        </metric>
-      </filter>
     </label>
 
 ---

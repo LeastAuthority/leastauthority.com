@@ -34,7 +34,7 @@ from twisted.python.filepath import FilePath
 from twisted.python.url import URL
 from twisted.web.client import Agent
 
-from prometheus import Gauge
+from prometheus_client import Gauge
 
 from txaws.credentials import AWSCredentials
 from txaws.service import AWSServiceRegion
