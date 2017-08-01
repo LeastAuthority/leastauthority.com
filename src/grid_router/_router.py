@@ -36,7 +36,10 @@ from eliot.twisted import DeferredContext
 
 from prometheus_client import Gauge
 
-from lae_util import prometheus_exporter
+from lae_util import (
+    opt_metrics_port,
+)
+
 from lae_util.service import AsynchronousService
 from lae_util.fluentd_destination import (
     eliot_logging_service,
@@ -48,7 +51,7 @@ from lae_automation.subscription_converger import (
 )
 
 
-
+@opt_metrics_port
 class Options(_Options, KubernetesClientOptionsMixin):
     """
     Command-line option definitions for *twist[d] s4-grid-router*.
@@ -56,9 +59,6 @@ class Options(_Options, KubernetesClientOptionsMixin):
     optParameters = [
         ("interval", None, 10.0,
          "The interval (in seconds) at which to iterate on reconfiguration.", float,
-        ),
-        ("metrics-port", None, "tcp:9000",
-         "A server endpoint description string on which to run a metrics-exposing server.",
         ),
     ]
 
@@ -109,9 +109,7 @@ def makeService(options, reactor=None):
     service = AsynchronousService(make_service)
     service.setServiceParent(parent)
 
-    prometheus_exporter(
-        reactor, options["metrics-port"]
-    ).setServiceParent(parent)
+    options.get_metrics_service(reactor).setServiceParent(parent)
 
     return parent
 
