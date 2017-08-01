@@ -47,6 +47,7 @@ from lae_util.fluentd_destination import (
     opt_eliot_destination,
     eliot_logging_service,
 )
+from lae_util import opt_metrics_port
 
 from .model import DeploymentConfiguration
 from .subscription_manager import Client as SMClient
@@ -121,6 +122,7 @@ class KubernetesClientOptionsMixin(object):
 
 
 
+@opt_metrics_port
 class Options(_Options, KubernetesClientOptionsMixin):
     optParameters = [
         ("domain", None, None,
@@ -165,6 +167,8 @@ def makeService(options):
         reactor,
         options.get("destinations", []),
     ).setServiceParent(parent)
+
+    options.get_metrics_service(reactor).setServiceParent(parent)
 
     agent = Agent(reactor)
     subscription_client = SMClient(
