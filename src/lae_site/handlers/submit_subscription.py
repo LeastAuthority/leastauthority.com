@@ -95,27 +95,41 @@ class SubmitSubscriptionHandler(HandlerBase):
             # Errors we expect: https://stripe.com/docs/api#errors
             note = "Note: This error could be caused by insufficient funds, or other charge-disabling "+\
                 "factors related to the User's payment credential.\n"
-            self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                                      details=e.message,
-                                                      email_subject="Stripe Card error",
-                                                      notes=note)
+            self.handle_stripe_create_customer_errors(
+                traceback.format_exc(100), e,
+                details=e.message,
+                email_subject="Stripe Card error ({})".format(user_email),
+                notes=note,
+            )
         except stripe.APIError as e:
-            self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                        details="Our payment processor is temporarily unavailable,"+
-                                            " please try again in\ a few moments.",
-                                        email_subject="Stripe API error")
+            self.handle_stripe_create_customer_errors(
+                traceback.format_exc(100), e,
+                details=(
+                    "Our payment processor is temporarily unavailable, "
+                    "please try again in a few moments."
+                ),
+                email_subject="Stripe API error ({})".format(user_email),
+            )
         except stripe.InvalidRequestError as e:
-            self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                        details="Due to technical difficulties unrelated to your card"+
-                                            " details, we were unable to charge your account. Our"+
-                                            " engineers have been notified and will contact you with"+
-                                            " an update shortly.",
-                                        email_subject="Stripe Invalid Request error")
+            self.handle_stripe_create_customer_errors(
+                traceback.format_exc(100), e,
+                details=(
+                    "Due to technical difficulties unrelated to your card "
+                    "details, we were unable to charge your account. Our "
+                    "engineers have been notified and will contact you with "
+                    "an update shortly.",
+                ),
+                email_subject="Stripe Invalid Request error ({})".format(user_email),
+            )
         except Exception as e:
-            self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-                                        details="Something went wrong. Please try again, or contact"+
-                                            " <support@leastauthority.com>.",
-                                        email_subject="Stripe unexpected error")
+            self.handle_stripe_create_customer_errors(
+                traceback.format_exc(100), e,
+                details=(
+                    "Something went wrong. Please try again, or contact "
+                    " <support@leastauthority.com>."
+                ),
+                email_subject="Stripe unexpected error ({})".format(user_email),
+            )
 
 
     def render(self, request):
