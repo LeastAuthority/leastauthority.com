@@ -324,6 +324,35 @@ def unhandled_errors(datasource):
 
 
 
+def process_open_fds(datasource):
+    return G.Graph(
+        title="Open File Descriptors",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="none",
+                label="Count",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                process_open_fds{pod=~".+"}
+                """,
+                refId="A",
+                legendFormat="{{pod}}",
+            ),
+        ],
+    )
+
+
+
 def dashboard():
     PROMETHEUS = "prometheus"
     return G.Dashboard(
@@ -410,6 +439,12 @@ def dashboard():
                     memory_usage(PROMETHEUS),
                     network_usage(PROMETHEUS),
                     filesystem_usage(PROMETHEUS),
+                ],
+            ),
+            G.Row(
+                title="Cluster2",
+                panels=[
+                    process_open_fds(PROMETHEUS),
                 ],
             ),
             G.Row(panels=[
