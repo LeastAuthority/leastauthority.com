@@ -140,6 +140,13 @@ class Options(_Options, KubernetesClientOptionsMixin):
         ("storageserver-image", None, None, "The Docker image to run a Tahoe-LAFS storage server."),
 
         ("interval", None, 10.0, "The interval (in seconds) at which to iterate on convergence.", float),
+
+        ("log-gatherer-furl", None, None,
+         "A fURL pointing at a Foolscap log gatherer where Tahoe-LAFS nodes should ship their logs.",
+        ),
+        ("stats-gatherer-furl", None, None,
+         "A fURL pointing at a Foolscap stats gatherer where Tahoe-LAFS nodes should ship their stats.",
+        ),
     ]
 
     opt_eliot_destination = opt_eliot_destination
@@ -227,8 +234,8 @@ def _finish_convergence_service(k8s_client, options, subscription_client):
         introducer_image=options["introducer-image"].decode("ascii"),
         storageserver_image=options["storageserver-image"].decode("ascii"),
 
-        log_gatherer_furl=None,
-        stats_gatherer_furl=None,
+        log_gatherer_furl=options["log-gatherer-furl"],
+        stats_gatherer_furl=options["stats-gatherer-furl"],
     )
 
     return TimerService(
