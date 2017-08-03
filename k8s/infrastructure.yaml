@@ -456,6 +456,7 @@ spec:
           - '--endpoint=http://subscription-manager/'
           - '--k8s-service-account'
           - '--eliot-destination=file:/app/log/convergence.json'
+          - '--log-gatherer-furl=$(LOG_GATHERER_FURL)'
         workingDir: '/app/run'
         env:
           - name: 'S4_DOMAIN'
@@ -467,6 +468,12 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: 'metadata.namespace'
+          - name: 'LOG_GATHERER_FURL'
+            valueFrom:
+              secretKeyRef:
+                name: 's4'
+                key: 'log-gatherer-furl'
+
         ports:
         # Metrics for Prometheus.
         - containerPort: 9000
