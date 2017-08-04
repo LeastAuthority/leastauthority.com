@@ -9,6 +9,7 @@ from attr.validators import instance_of
 from twisted.web.resource import Resource
 from twisted.web.client import Agent
 
+import treq
 from treq.client import HTTPClient
 from treq.auth import add_basic_auth
 from treq.testing import StubTreq
@@ -61,7 +62,7 @@ class _StripeClient(object):
             url = url.add(u"limit", u"{}".format(limit))
 
         d = self.treq.get(url.to_uri().to_text())
-        d.addCallback(self.treq.json_content)
+        d.addCallback(treq.json_content)
         d.addCallback(
             lambda stripe_list: list(
                 StripeSubscription(
