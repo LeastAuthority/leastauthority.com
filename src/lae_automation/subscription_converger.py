@@ -192,7 +192,7 @@ def makeService(options):
     kubernetes = options.get_kubernetes_service(reactor)
 
     stripe_secret_api_key = options["stripe-secret-api-key-path"].getContent()
-    stripe_client = network_stripe_client(stripe_secret_api_key)
+    stripe_client = network_stripe_client(reactor, stripe_secret_api_key)
 
     def get_k8s_client():
         d = kubernetes.versioned_client()
