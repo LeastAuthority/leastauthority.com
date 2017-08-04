@@ -147,6 +147,10 @@ class Options(_Options, KubernetesClientOptionsMixin):
         ("stats-gatherer-furl", None, None,
          "A fURL pointing at a Foolscap stats gatherer where Tahoe-LAFS nodes should ship their stats.",
         ),
+        ("stripe-secret-api-key-path", None, None,
+         "The path to a file containing a Stripe secret API key.",
+         FilePath,
+        ),
     ]
 
     opt_eliot_destination = opt_eliot_destination
@@ -186,12 +190,16 @@ def makeService(options):
 
     kubernetes = options.get_kubernetes_service(reactor)
 
+    stripe_secret_api_key = options["stripe-secret-api-key-path"].getContent()
+    stripe_client = network_stripe_client(stripe_secret_api_key)
+
     def get_k8s_client():
         d = kubernetes.versioned_client()
         d.addCallback(
             _finish_convergence_service,
             options,
             subscription_client,
+            stripe_client,
         )
         return d
 
@@ -203,7 +211,9 @@ def makeService(options):
 
 
 
-def _finish_convergence_service(k8s_client, options, subscription_client):
+def _finish_convergence_service(
+    k8s_client, options, subscription_client, stripe_client
+):
     k8s = KubeClient(k8s=k8s_client)
 
     access_key_id = FilePath(options["aws-access-key-id-path"]).getContent().strip()
@@ -245,6 +255,7 @@ def _finish_convergence_service(k8s_client, options, subscription_client):
         subscription_client,
         k8s,
         aws,
+        stripe_client,
     )
 
 def divert_errors_to_log(f, scope):
@@ -282,6 +293,37 @@ def _s4_selector(namespace):
         LabelSelector(CUSTOMER_METADATA_LABELS),
         NamespaceSelector(namespace),
     ])
+
+
+
+def get_subscription_states(stripe_client):
+    def get_batch(starting_after, limit):
+        d = stripe_client.list_subscriptions(
+            starting_after=starting_after,
+            limit=limit,
+        )
+        d.addCallback(accumulate_batch, limit)
+        return d
+
+    def accumulate_batch(retrieved, limit):
+        accumulator.extend(retrieved)
+        if len(retrieved) >= limit:
+            return get_batch(retrieved[-1].id, limit)
+
+    action = start_action(action_type=u"load-subscription-states")
+    with action.context():
+        accumulator = []
+        d = DeferredContext(get_batch(None, 100))
+        def finished(ignored):
+            action.add_success_fields(subscription_count=len(accumulator))
+            return {
+                subscription.id: subscription
+                for subscription
+                in accumulator
+            }
+        d.addCallback(finished)
+        return d.addActionFinish()
+
 
 
 def get_customer_grid_service(k8s, namespace):
@@ -420,10 +462,22 @@ class _State(PClass):
     service = field()
     zone = field(type=_ZoneState)
     buckets = field()
+    billing_subscriptions = field()
+
+    def active_subscriptions(self):
+        return {
+            s.subscription_id: s
+            for s in self.subscriptions.itervalues()
+            if not self.canceled(s.subscription_id)
+        }
+
+
+    def canceled(self, sid):
+        return self.billing_subscriptions[sid].status == u"canceled"
 
 
 
-def _get_converge_inputs(config, subscriptions, k8s, aws):
+def _get_converge_inputs(config, subscriptions, k8s, aws, stripe_client):
     a = start_action(action_type=u"load-converge-inputs")
     with a.context():
         d = DeferredContext(
@@ -436,6 +490,7 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
                 get_customer_grid_service(k8s, config.kubernetes_namespace),
                 get_hosted_zone_by_name(aws.get_route53_client(), Name(config.domain)),
                 get_s3_buckets(aws.get_s3_client()),
+                get_subscription_states(stripe_client),
             ]),
         )
         d.addCallback(
@@ -449,6 +504,7 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
                     u"service",
                     u"zone",
                     u"buckets",
+                    u"billing_subscriptions",
                 ], state,
                 ),
             )),
@@ -461,6 +517,7 @@ def _converge_logic(actual, config, subscriptions, k8s, aws):
     convergers = [
         _converge_s3,
         _converge_service,
+        _converge_active_subscriptions,
         _converge_configmaps,
         _converge_deployments,
         _converge_replicasets,
@@ -529,7 +586,7 @@ def _compute_changes(desired, actual):
 def _converge_s3(actual, config, subscription, k8s, aws):
     buckets = []
     actual_bucket_names = {bucket.name for bucket in actual.buckets}
-    for subscription in actual.subscriptions.itervalues():
+    for subscription in actual.active_subscriptions().itervalues():
         bucket_name = get_bucket_name(
             subscription.subscription_id, subscription.customer_id,
         )
@@ -541,7 +598,7 @@ def _converge_s3(actual, config, subscription, k8s, aws):
     from twisted.internet import reactor
 
     return list(
-        lambda n=n: create_user_bucket(reactor, s3, n)
+        partial(create_user_bucket, reactor, s3, n)
         for n
         in buckets
     )
@@ -556,6 +613,25 @@ def _converge_service(actual, config, subscriptions, k8s, aws):
         return [lambda: k8s.create(service)]
 
     return []
+
+
+
+def _converge_active_subscriptions(actual, config, subscriptions, k8s, aws):
+    """
+    Deactive any subscriptions with a payment subscription status of "canceled".
+    """
+    active_subscriptions = actual.active_subscriptions()
+    to_deactivate = (
+        subscription.subscription_id
+        for subscription
+        in actual.subscriptions.itervalues()
+        if subscription.subscription_id not in active_subscriptions
+    )
+    return list(
+        partial(subscriptions.delete, sid)
+        for sid
+        in to_deactivate
+    )
 
 
 
@@ -597,10 +673,6 @@ class _ChangeableDeployments(PClass):
 
 
 def _converge_deployments(actual, deploy_config, subscriptions, k8s, aws):
-    # XXX Oh boy there's two more deployment states to deal with. :/ Merely
-    # deleting a deployment doesn't clean up its replicaset (nor its pod,
-    # therefore).  So instead we need to update the deployment with replicas =
-    # 0 and wait for it to settle, and only then delete it.
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableDeployments(
@@ -628,9 +700,10 @@ def _converge_replicasets(actual, config, subscriptions, k8s, aws):
     # We don't ever have to create a ReplicaSet.  We'll just delete the ones
     # we don't need anymore.
     deletes = []
+    active_subscriptions = actual.active_subscriptions()
     for replicaset in actual.replicasets:
         sid = replicaset.metadata.annotations[u"subscription"]
-        if sid not in actual.subscriptions:
+        if sid not in active_subscriptions:
             Message.log(condition=u"undesired", subscription=sid)
             deletes.append(replicaset.metadata)
 
@@ -644,9 +717,10 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
     # We don't ever have to create a Pod.  We'll just delete the ones we don't
     # need anymore.
     deletes = []
+    active_subscriptions = actual.active_subscriptions()
     for pod in actual.pods:
         sid = pod.metadata.annotations[u"subscription"]
-        if sid not in actual.subscriptions:
+        if sid not in active_subscriptions:
             Message.log(condition=u"undesired", subscription=sid)
             deletes.append(pod.metadata)
 
@@ -736,7 +810,7 @@ def _converge_route53_customer(actual, config, subscriptions, k8s, aws):
     subscriptions.
     """
     changes = _compute_changes(
-        actual.subscriptions,
+        actual.active_subscriptions(),
         _ChangeableZone(
             zone=actual.zone.zone,
             rrsets=actual.zone.rrsets,
@@ -819,7 +893,7 @@ def _execute_converge_outputs(jobs):
         return d.addActionFinish()
 
 
-def converge(config, subscriptions, k8s, aws):
+def converge(config, subscriptions, k8s, aws, stripe_client):
     """
     Bring provisioned resources in line with active subscriptions.
 
@@ -834,6 +908,9 @@ def converge(config, subscriptions, k8s, aws):
 
     :param AWSServiceRegion aws: A client for interacting with AWS.
 
+    :param stripe_client: A client for interacting with Stripe for retrieving
+        subscription state information.
+
     :return Deferred(NoneType): The returned ``Deferred`` fires after one
         attempt has been made to bring the actual state of provisioned
         resources in line with the desired state of provisioned resources
@@ -846,7 +923,9 @@ def converge(config, subscriptions, k8s, aws):
     # mis-configurations and correct them.
     a = start_action(action_type=u"converge")
     with a.context():
-        d = DeferredContext(_get_converge_inputs(config, subscriptions, k8s, aws))
+        d = DeferredContext(_get_converge_inputs(
+            config, subscriptions, k8s, aws, stripe_client,
+        ))
         d.addCallback(_converge_logic, config, subscriptions, k8s, aws)
         d.addCallback(_execute_converge_outputs)
         d.addCallback(lambda result: None)

@@ -62,6 +62,11 @@ from lae_automation.containers import (
 )
 from lae_automation.signup import get_bucket_name
 
+from ..stripe import (
+    StripeSubscription,
+    StripeState,
+    memory_stripe_client,
+)
 from .strategies import (
     domains, subscription_id, subscription_details, deployment_configuration,
     node_pems, ipv4_addresses, docker_image_tags,
@@ -245,6 +250,8 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         self.database = SubscriptionDatabase.from_directory(
             self.path, self.domain,
         )
+        self.stripe_state = StripeState()
+        self.stripe_client = memory_stripe_client(self.stripe_state)
 
         # Track which subscriptions have had these resources created in
         # Kubernetes (by Kubernetes).  Once they've been created, we expect
@@ -280,6 +287,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def teardown(self):
         self.action.finish()
 
+
     @rule(details=subscription_details().map(lambda d: attr.assoc(d, oldsecrets=None)))
     def activate(self, details):
         """
@@ -288,24 +296,43 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         This makes new subscription state available to subsequently
         executed rules.
         """
+        sid = details.subscription_id
         assume(
-            details.subscription_id
-            not in self.database.list_all_subscription_identifiers()
+            sid not in self.database.list_all_subscription_identifiers()
         )
-        Message.log(activating=details.subscription_id)
+        Message.log(activating=sid)
         self.database.create_subscription(
-            subscription_id=details.subscription_id,
+            subscription_id=sid,
             details=details,
         )
+        self.stripe_state.subscriptions[sid] = StripeSubscription(
+            id=sid,
+            status=u"active",
+        )
+
 
     @rule(choose=choices())
-    def deactivate(self, choose):
-        identifiers = self.database.list_active_subscription_identifiers()
+    def cancel_subscription(self, choose):
+        """
+        Terminate a subscription in the payment processor, Stripe.  This is like
+        someone cancelling their subscription or failing to pay.
+        """
+        identifiers = list(
+            sid
+            for (sid, subscr)
+            in self.stripe_state.subscriptions.items()
+            if subscr.status == u"active"
+        )
         assume(0 < len(identifiers))
+
         subscription_id = choose(sorted(identifiers))
         Message.log(deactivating=subscription_id)
-        self.database.deactivate_subscription(subscription_id)
 
+        subscr = self.stripe_state.subscriptions[subscription_id]
+        self.stripe_state.subscriptions[subscription_id] = attr.assoc(
+            subscr,
+            status=u"canceled",
+        )
         # We no longer require that the pods and replicasets belonging to this
         # subscription exist since the system is supposed to destroy them if
         # there is no corresponding active subscription.  We use ``discard``
@@ -429,6 +456,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.subscription_client,
             self.kube_client,
             self.aws_region,
+            self.stripe_client,
         )
         self.case.successResultOf(d)
         self.check_convergence(
@@ -436,13 +464,15 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             self.deploy_config,
             self.kube_client,
             self.aws_region,
+            self.stripe_state,
         )
 
-    def check_convergence(self, database, config, kube, aws):
+    def check_convergence(self, database, config, kube, aws, stripe_state):
         with start_action(action_type=u"check-convergence"):
             subscriptions = sorted(database.list_active_subscription_identifiers())
             Message.log(active_subscriptions=subscriptions)
             checks = {
+                self.check_subscriptions,
                 self.check_configmaps,
                 self.check_deployments,
                 self.check_replicasets,
@@ -453,10 +483,26 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             }
             k8s_state = self.kubernetes._state
             for check in checks:
-                check(database, config, subscriptions, k8s_state, aws)
+                check(stripe_state, database, config, subscriptions, k8s_state, aws)
 
 
-    def check_s3(self, database, config, subscriptions, k8s_state, aws):
+    def check_subscriptions(
+        self, stripe_state, database, config, subscriptions, kube, aws,
+    ):
+        """
+        If a subscription is cancelled in Stripe, it should have been marked as
+        deactivated in the subscription database.
+        """
+        for sid, subscr in stripe_state.subscriptions.items():
+            if subscr.status == u"canceled":
+                assert_that(subscriptions, Not(Contains(sid)))
+            else:
+                assert_that(subscriptions, Contains(sid))
+
+
+    def check_s3(
+        self, stripe_state, database, config, subscriptions, k8s_state, aws,
+    ):
         s3 = aws.get_s3_client()
         buckets = set(
             bucket.name
@@ -474,7 +520,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             # have S3 buckets get deleted automatically yet.
 
 
-    def check_configmaps(self, database, config, subscriptions, k8s_state, aws):
+    def check_configmaps(
+        self, stripe_state, database, config, subscriptions, k8s_state, aws,
+    ):
         for sid in subscriptions:
             assert_that(
                 create_configuration(
@@ -486,7 +534,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             )
 
 
-    def check_pods(self, database, config, subscriptions, k8s_state, aws):
+    def check_pods(
+        self, stripe_state, database, config, subscriptions, k8s_state, aws,
+    ):
         """
         Any Pods which exist should have an active subscription.  Not all active
         subscriptions necessarily have a Pod.  Any Pods which were created as
@@ -511,7 +561,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         )
 
 
-    def check_replicasets(self, database, config, subscriptions, k8s_state, aws):
+    def check_replicasets(
+        self, stripe_state, database, config, subscriptions, k8s_state, aws,
+    ):
         """
         Any ReplicaSet which exists should have an active subscription.  Not all
         active subscriptions necessarily have a ReplicaSet.  Any ReplicaSets
@@ -537,7 +589,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         )
 
 
-    def check_deployments(self, database, config, subscriptions, k8s_state, aws):
+    def check_deployments(
+        self, stripe_state, database, config, subscriptions, k8s_state, aws,
+    ):
         for sid in subscriptions:
             actual = k8s_state.deployments.item_by_name(deployment_name(sid))
             reference = create_deployment(
@@ -557,7 +611,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                 AfterPreprocessing(drop_transients, GoodEquals(reference.serialize())),
             )
 
-    def check_service(self, database, config, subscriptions, k8s_state, aws):
+    def check_service(
+        self, stripe_state, database, config, subscriptions, k8s_state, aws,
+    ):
         expected = new_service(config.kubernetes_namespace, self.kube_model)
         actual = k8s_state.services.item_by_name(expected.metadata.name)
         # Don't actually care about the status.  That belongs to the server
@@ -569,7 +625,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         )
         Message.log(check_service=thaw(expected))
 
-    def check_route53(self, database, config, subscriptions, k8s_state, aws):
+    def check_route53(
+        self, stripe_state, database, config, subscriptions, k8s_state, aws,
+    ):
         expected_rrsets = pmap()
 
         service = k8s_state.services.item_by_name(S4_CUSTOMER_GRID_NAME)
@@ -615,7 +673,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         })
         assert_that(
             actual_rrsets,
-            GoodEquals(expected_rrsets),
+            Equals(expected_rrsets),
         )
 
 
@@ -652,6 +710,21 @@ class SubscriptionConvergenceTests(TestCase):
         m.allocate_loadbalancer(data)
         m.converge()
 
+
+    @given(
+        a=subscription_details().map(lambda d: attr.assoc(d, oldsecrets=None)),
+        b=subscription_details().map(lambda d: attr.assoc(d, oldsecrets=None)),
+        data=data(),
+    )
+    def test_foo(self, a, b, data):
+        m = self._machine()
+        m.activate(a)
+        m.converge()
+        m.create_replicasets()
+        m.activate(b)
+        m.cancel_subscription(lambda identifiers: a.subscription_id)
+        m.create_pods(data)
+        m.converge()
 
 
 class DivertErrorsToLogTests(TestCase):

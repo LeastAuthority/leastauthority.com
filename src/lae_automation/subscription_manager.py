@@ -15,6 +15,7 @@ import attr
 from attr import validators
 
 from eliot import start_action
+from eliot.twisted import DeferredContext
 
 from twisted.python.url import URL
 from twisted.web.iweb import IAgent, IResponse
@@ -510,12 +511,14 @@ class Client(object):
         return d
 
     def delete(self, subscription_id):
-        d = self.agent.request(
-            b"DELETE", self._url(u"v1", u"subscriptions", subscription_id),
-        )
-        d.addCallback(require_code(NO_CONTENT))
-        d.addCallback(lambda ignored: None)
-        return d
+        action = start_action(action_type=u"deactivate-subscription")
+        with action.context():
+            d = DeferredContext(self.agent.request(
+                b"DELETE", self._url(u"v1", u"subscriptions", subscription_id),
+            ))
+            d.addCallback(require_code(NO_CONTENT))
+            d.addCallback(lambda ignored: None)
+            return d.addActionFinish()
 
 
 @attr.s
