@@ -65,6 +65,7 @@ from .containers import (
 from .initialize import create_user_bucket
 from .signup import get_bucket_name
 from .kubeclient import KubeClient, And, LabelSelector, NamespaceSelector
+from .stripe import network_stripe_client
 
 from txkube import (
     network_kubernetes, authenticate_with_serviceaccount,
