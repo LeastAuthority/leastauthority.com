@@ -32,7 +32,7 @@ shares.total = 1
 
 For User support, visit
 
-  https://leastauthority.com/support
+  https://leastauthority.zendesk.com/hc/en-us
 
 The service is priced at $25/month for unlimited storage for personal use.
 It comes with a 30-day free trial, so you can test it out with no obligation.
