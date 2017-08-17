@@ -23,4 +23,4 @@ class S4SignupStyle(Resource):
             S4_SIGNUP_STYLE_COOKIE,
             request.args.get(b"style", [b"email"])[0]
         )
-        return redirectTo(b"/s4-subscription-form", request)
+        return request

@@ -1,4 +1,3 @@
-
 import logging, pprint, sys
 from urllib import quote
 from cgi import escape as htmlEscape

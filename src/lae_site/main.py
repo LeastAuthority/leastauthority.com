@@ -44,11 +44,15 @@ from lae_automation.confirmation import (
 
 root_log = logging.getLogger(__name__)
 
+# def addHeaders(self, request):
+#    request.setHeader('Access-Control-Allow-Origin', 'localhost:5000')
+#    return request
+
 def urlFromBytes(b):
     return URL.fromText(b.decode("utf-8"))
 
-
 @opt_metrics_port
+
 class SiteOptions(Options):
     optFlags = [
         # TODO:
@@ -195,6 +199,12 @@ def main(reactor, *argv):
     d.addCallback(lambda ignored: Deferred())
     return d
 
+
+
+def start_metrics_site(reactor, port_string):
+    service = prometheus_exporter(reactor, port_string)
+    service.privilegedStartService()
+    service.startService()
 
 
 def site_for_options(reactor, options):
