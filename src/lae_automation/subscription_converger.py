@@ -560,6 +560,7 @@ def _converge_service(actual, config, subscriptions, k8s, aws):
 
 
 class _ChangeableDeployments(PClass):
+    deploy_config = field(type=DeploymentConfiguration)
     deployments = field(
         factory=lambda deployments: {
             d.metadata.annotations[u"subscription"]: d
@@ -580,33 +581,43 @@ class _ChangeableDeployments(PClass):
             deployment.spec.template.spec.containers[1].ports[0].containerPort
         )
 
+        introducer_image = deployment.spec.template.spec.containers[0].image
+        storageserver_image = deployment.spec.template.spec.containers[1].image
+
         return (
             subscription.introducer_port_number != intro or
             subscription.storage_port_number != storage
+        ) or (
+            self.deploy_config.introducer_image != introducer_image or
+            self.deploy_config.storageserver_image != storageserver_image
         ) or (
             deployment.metadata.labels.version != CONTAINERIZED_SUBSCRIPTION_VERSION
         )
 
 
 
-def _converge_deployments(actual, config, subscriptions, k8s, aws):
+def _converge_deployments(actual, deploy_config, subscriptions, k8s, aws):
     # XXX Oh boy there's two more deployment states to deal with. :/ Merely
     # deleting a deployment doesn't clean up its replicaset (nor its pod,
     # therefore).  So instead we need to update the deployment with replicas =
     # 0 and wait for it to settle, and only then delete it.
     changes = _compute_changes(
         actual.subscriptions,
-        _ChangeableDeployments(deployments=actual.deployments),
+        _ChangeableDeployments(
+            deploy_config=deploy_config,
+            deployments=actual.deployments,
+        ),
     )
     def delete(sid):
         return k8s.delete(k8s.k8s.model.v1beta1.Deployment(
             metadata=dict(
-                namespace=config.kubernetes_namespace,
+                namespace=deploy_config.kubernetes_namespace,
                 name=deployment_name(sid),
             ),
         ))
     def create(subscription):
-        return k8s.create(create_deployment(config, subscription, k8s.k8s.model))
+        deployment = create_deployment(deploy_config, subscription, k8s.k8s.model)
+        return k8s.create(deployment)
 
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)

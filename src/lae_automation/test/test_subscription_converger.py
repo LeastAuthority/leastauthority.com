@@ -64,7 +64,7 @@ from lae_automation.signup import get_bucket_name
 
 from .strategies import (
     domains, subscription_id, subscription_details, deployment_configuration,
-    node_pems, ipv4_addresses,
+    node_pems, ipv4_addresses, docker_image_tags,
 )
 from ..kubeclient import KubeClient
 
@@ -316,6 +316,19 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         self.has_pod.discard(subscription_id)
 
 
+    @rule(tag=docker_image_tags())
+    def change_tahoe_images(self, tag):
+        """
+        Change the Deployment configuration to require a different Docker image
+        for the Tahoe-LAFS containers.  This essentially corresponds to a
+        Tahoe-LAFS upgrade for all customers.
+        """
+        self.deploy_config = attr.assoc(
+            self.deploy_config,
+            introducer_image=u"tahoe-introducer:{}".format(tag),
+            storageserver_image=u"tahoe-storageserver:{}".format(tag),
+        )
+
     @rule(data=data())
     def allocate_loadbalancer(self, data):
         """
@@ -538,10 +551,10 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                     [u"metadata", u"resourceVersion"], None,
                     [u"status"], None,
                 )
-                return simplified
+                return simplified.serialize()
             assert_that(
                 actual,
-                AfterPreprocessing(drop_transients, GoodEquals(reference)),
+                AfterPreprocessing(drop_transients, GoodEquals(reference.serialize())),
             )
 
     def check_service(self, database, config, subscriptions, k8s_state, aws):
