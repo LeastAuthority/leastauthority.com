@@ -6,8 +6,10 @@ This module implements various Hypothesis strategies useful for
 QuickCheck-style testing of ``lae_automation`` APIs.
 """
 
-from os import devnull
-from string import uppercase, lowercase, ascii_letters, ascii_lowercase, digits
+from string import (
+    uppercase, lowercase, ascii_letters, ascii_lowercase, digits,
+    hexdigits,
+)
 from base64 import b32encode
 from itertools import count, islice
 
@@ -339,6 +341,12 @@ def urls():
         URL,
         scheme=strategies.sampled_from([u"http", u"https"]),
         host=domains(),
+    )
+
+
+def docker_image_tags():
+    return strategies.text(
+        alphabet=hexdigits.decode("ascii"), min_size=8, max_size=8,
     )
 
 
