@@ -248,6 +248,18 @@ def _finish_convergence_service(
         stats_gatherer_furl=options["stats-gatherer-furl"],
     )
 
+    return _convergence_service(
+        reactor,
+        options["interval"],
+        config,
+        subscription_client,
+        k8s,
+        aws,
+    )
+
+
+
+def _convergence_service(reactor, interval, config, subscription_client, k8s, aws):
     def monitorable_converge(*a, **kw):
         d = converge(*a, **kw)
         def finished(passthrough):
@@ -260,14 +272,18 @@ def _finish_convergence_service(
         monitorable_converge, u"subscription_converger",
     )
 
-    return TimerService(
-        options["interval"],
+    service = TimerService(
+        interval,
         safe_converge,
         config,
         subscription_client,
         k8s,
         aws,
     )
+    service.clock = reactor
+    return service
+
+
 
 def divert_errors_to_log(f, scope):
     def g(*a, **kw):

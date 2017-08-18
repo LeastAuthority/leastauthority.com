@@ -6,19 +6,28 @@ Tests for ``lae_automation.subscription_converger``.
 """
 
 from json import dumps
+from tempfile import mkdtemp
 
 from zope.interface.verify import verifyObject
 
 import pem
 import attr
 
+from prometheus_client import REGISTRY
+
 from hypothesis import assume, given, settings
 from hypothesis.strategies import choices, data
-
+from hypothesis.stateful import (
+    RuleBasedStateMachine,
+    rule,
+    run_state_machine_as_test,
+)
 from pyrsistent import thaw, pmap, discard
 
 from eliot import Message, start_action
 from eliot.testing import capture_logging
+
+from hyperlink import URL
 
 from testtools.assertions import assert_that
 from testtools.matchers import (
@@ -30,6 +39,7 @@ from testtools.matchers import (
 from twisted.python.filepath import FilePath
 from twisted.application.service import IService
 from twisted.python.failure import Failure
+from twisted.test.proto_helpers import MemoryReactorClock
 
 from txaws.testing.service import FakeAWSServiceRegion
 from txaws.route53.model import RRSetKey, RRSet, HostedZone
@@ -43,6 +53,7 @@ from lae_util.testtools import TestCase, CustomException
 from lae_automation.test.matchers import GoodEquals
 
 from lae_automation.subscription_manager import (
+    SubscriptionDatabase,
     memory_client,
 )
 from lae_automation.subscription_converger import (
@@ -51,6 +62,7 @@ from lae_automation.subscription_converger import (
     get_customer_grid_service,
     converge, get_hosted_zone_by_name,
     divert_errors_to_log,
+    _convergence_service,
 )
 from lae_automation.containers import (
     S4_CUSTOMER_GRID_NAME,
@@ -60,6 +72,7 @@ from lae_automation.containers import (
     configmap_name,
     deployment_name,
 )
+from lae_automation.model import DeploymentConfiguration
 from lae_automation.signup import get_bucket_name
 
 from .strategies import (
@@ -166,6 +179,40 @@ class ConvergeHelperTests(TestCase):
 
 
 
+def write_kubernetes_configuration(scratch, cert, key):
+    scratch.child(u"cert.pem").setContent(cert.as_bytes())
+    scratch.child(u"key.pem").setContent(key.as_bytes())
+
+    config = scratch.child(u"config.json")
+    config.setContent(dumps({
+        u"apiVersion": u"v1",
+        u"clusters": [{
+            u"name": u"testing",
+            u"cluster": {
+                u"certificate-authority": scratch.child(u"cert.pem").path,
+                u"server": u"https://bar/",
+            },
+        }],
+        u"users": [{
+            u"name": u"testing",
+            u"user": {
+                u"client-certificate": scratch.child(u"cert.pem").path,
+                u"client-key": scratch.child(u"key.pem").path,
+            },
+        }],
+        u"contexts": [{
+            u"name": u"testing",
+            u"context": {
+                u"cluster": u"testing",
+                u"user": u"testing",
+                u"namespace": u"testing",
+            },
+        }],
+    }))
+    return config
+
+
+
 class MakeServiceTests(TestCase):
     def test_interface(self):
         """
@@ -176,35 +223,11 @@ class MakeServiceTests(TestCase):
 
         cert_and_key = node_pems().example()
         cert, key = pem.parse(cert_and_key)
-        scratch.child(u"cert.pem").setContent(cert.as_bytes())
-        scratch.child(u"key.pem").setContent(key.as_bytes())
 
-        config = scratch.child(u"config.json")
-        config.setContent(dumps({
-            u"apiVersion": u"v1",
-            u"clusters": [{
-                u"name": u"testing",
-                u"cluster": {
-                    u"certificate-authority": scratch.child(u"cert.pem").path,
-                    u"server": u"https://bar/",
-                },
-            }],
-            u"users": [{
-                u"name": u"testing",
-                u"user": {
-                    u"client-certificate": scratch.child(u"cert.pem").path,
-                    u"client-key": scratch.child(u"key.pem").path,
-                },
-            }],
-            u"contexts": [{
-                u"name": u"testing",
-                u"context": {
-                    u"cluster": u"testing",
-                    u"user": u"testing",
-                    u"namespace": u"testing",
-                },
-            }],
-        }))
+        config = write_kubernetes_configuration(
+            scratch, cert, key,
+        )
+
         access_key_id_path = FilePath(self.mktemp())
         access_key_id_path.setContent(b"foo")
         secret_access_key_path = FilePath(self.mktemp())
@@ -225,12 +248,6 @@ class MakeServiceTests(TestCase):
         service = makeService(options)
         verifyObject(IService, service)
 
-
-from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
-
-from tempfile import mkdtemp
-
-from lae_automation.subscription_manager import SubscriptionDatabase
 
 
 class SubscriptionConvergence(RuleBasedStateMachine):
@@ -667,3 +684,62 @@ class DivertErrorsToLogTests(TestCase):
             return Failure(CustomException())
         divert_errors_to_log(broke, u"test-failure-logged")()
         self.assertThat(logger.flush_tracebacks(CustomException), HasLength(1))
+
+
+
+class ConvergenceLoopMetricsTests(TestCase):
+    """
+    Tests for metrics gathered about the convergence loop.
+    """
+    def test_converge_complete(self):
+        """
+        At the end of a convergence iteration, ``_CONVERGE_COMPLETE`` is updated
+        to the current time.
+        """
+        interval = 45
+
+        reactor = MemoryReactorClock()
+
+        deploy_config = DeploymentConfiguration(
+            domain=u"s4.example.com",
+            kubernetes_namespace=u"testing",
+            subscription_manager_endpoint=URL.from_text(u"http://localhost:8000"),
+            s3_access_key_id=u"access key id",
+            s3_secret_key=u"secret key",
+            introducer_image=u"introducer:abcdefgh",
+            storageserver_image=u"storageserver:abcdefgh",
+        )
+
+        state_path = FilePath(self.mktemp().decode("ascii"))
+        state_path.makedirs()
+        subscription_client = memory_client(
+            state_path,
+            deploy_config.domain,
+        )
+        k8s_client = KubeClient(k8s=memory_kubernetes().client())
+        aws_region = FakeAWSServiceRegion(
+            access_key=deploy_config.s3_access_key_id,
+            secret_key=deploy_config.s3_secret_key,
+        )
+        d = aws_region.get_route53_client().create_hosted_zone(
+            u"foo", deploy_config.domain,
+        )
+        self.successResultOf(d)
+
+        service = _convergence_service(
+            reactor,
+            interval,
+            deploy_config,
+            subscription_client,
+            k8s_client,
+            aws_region,
+        )
+        service.startService()
+        reactor.advance(interval)
+        last_completed = next(iter(list(
+            metric.samples[-1][-1]
+            for metric
+            in REGISTRY.collect()
+            if metric.name == u"s4_last_convergence_succeeded"
+        )))
+        self.assertThat(reactor.seconds(), Equals(last_completed))
