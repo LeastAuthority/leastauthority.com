@@ -192,6 +192,7 @@ def makeService(options):
             _finish_convergence_service,
             options,
             subscription_client,
+            reactor,
         )
         return d
 
@@ -203,7 +204,16 @@ def makeService(options):
 
 
 
-def _finish_convergence_service(k8s_client, options, subscription_client):
+_CONVERGE_COMPLETE = Gauge(
+    u"s4_last_convergence_succeeded",
+    u"The time at which the convergence loop last succeeded.",
+)
+
+
+
+def _finish_convergence_service(
+    k8s_client, options, subscription_client, reactor,
+):
     k8s = KubeClient(k8s=k8s_client)
 
     access_key_id = FilePath(options["aws-access-key-id-path"]).getContent().strip()
@@ -238,14 +248,42 @@ def _finish_convergence_service(k8s_client, options, subscription_client):
         stats_gatherer_furl=options["stats-gatherer-furl"],
     )
 
-    return TimerService(
+    return _convergence_service(
+        reactor,
         options["interval"],
-        divert_errors_to_log(converge, u"subscription_converger"),
         config,
         subscription_client,
         k8s,
         aws,
     )
+
+
+
+def _convergence_service(reactor, interval, config, subscription_client, k8s, aws):
+    def monitorable_converge(*a, **kw):
+        d = converge(*a, **kw)
+        def finished(passthrough):
+            _CONVERGE_COMPLETE.set(reactor.seconds())
+            return passthrough
+        d.addCallback(finished)
+        return d
+
+    safe_converge = divert_errors_to_log(
+        monitorable_converge, u"subscription_converger",
+    )
+
+    service = TimerService(
+        interval,
+        safe_converge,
+        config,
+        subscription_client,
+        k8s,
+        aws,
+    )
+    service.clock = reactor
+    return service
+
+
 
 def divert_errors_to_log(f, scope):
     def g(*a, **kw):
