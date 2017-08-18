@@ -295,6 +295,36 @@ def s4_customer_deployments(datasource):
     )
 
 
+
+def last_convergence(datasource):
+    return G.Graph(
+        title="Since Last Convergence",
+        dataSource=datasource,
+
+        xAxis=X_TIME,
+        yAxes=[
+            G.YAxis(
+                format="none",
+                label="Period",
+            ),
+            G.YAxis(
+                show=False,
+            ),
+        ],
+
+        targets=[
+            G.Target(
+                expr="""
+                time() - s4_last_convergence_succeeded
+                """,
+                refId="A",
+                legendFormat="Time Since Last Convergence Success",
+            ),
+        ],
+    )
+
+
+
 def unhandled_errors(datasource):
     return G.Graph(
         title="Unhandled Errors",
@@ -431,6 +461,7 @@ def dashboard():
                         ),
                     ],
                 ),
+                last_convergence(PROMETHEUS),
             ]),
             G.Row(
                 title="Cluster",
