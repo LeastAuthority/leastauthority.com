@@ -181,8 +181,6 @@ def _deployment_template(model):
 			        }
 			    ],
                             u"ports": [],
-                            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-                            u"livenessProbe": _CONFIG_LIVENESS_PROBE,
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
@@ -212,6 +210,8 @@ def _deployment_template(model):
 			        }
 			    ],
                             u"ports": [],
+                            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+                            u"livenessProbe": _CONFIG_LIVENESS_PROBE,
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
