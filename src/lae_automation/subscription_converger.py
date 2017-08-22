@@ -695,6 +695,8 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
 
 
 class _ChangeableConfigMaps(PClass):
+    deploy_config = field(type=DeploymentConfiguration)
+    k8s_model = field()
     configmaps = field(
         factory=lambda configmaps: {
             c.metadata.annotations[u"subscription"]: c
@@ -707,25 +709,34 @@ class _ChangeableConfigMaps(PClass):
 
 
     def needs_update(self, subscription):
-        # TODO
-        return False
+        actual_configmap = self.configmaps[subscription.subscription_id]
+        expected_configmap = create_configuration(
+            self.deploy_config,
+            subscription,
+            self.k8s_model,
+        )
+        return actual_configmap.data != expected_configmap.data
 
 
 
-def _converge_configmaps(actual, config, subscriptions, k8s, aws):
+def _converge_configmaps(actual, deploy_config, subscriptions, k8s, aws):
     changes = _compute_changes(
         actual.subscriptions,
-        _ChangeableConfigMaps(configmaps=actual.configmaps),
+        _ChangeableConfigMaps(
+            deploy_config=deploy_config,
+            k8s_model=k8s.k8s.model,
+            configmaps=actual.configmaps,
+        ),
     )
     def delete(sid):
         return k8s.delete(k8s.k8s.model.v1.ConfigMap(
             metadata=dict(
-                namespace=config.kubernetes_namespace,
+                namespace=deploy_config.kubernetes_namespace,
                 name=configmap_name(sid),
             ),
         ))
     def create(subscription):
-        return k8s.create(create_configuration(config, subscription, k8s.k8s.model))
+        return k8s.create(create_configuration(deploy_config, subscription, k8s.k8s.model))
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
     return deletes + creates

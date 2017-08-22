@@ -181,6 +181,8 @@ def _deployment_template(model):
 			        }
 			    ],
                             u"ports": [],
+                            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+                            u"livenessProbe": _CONFIG_LIVENESS_PROBE,
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
@@ -232,13 +234,55 @@ def _deployment_template(model):
                                     u"memory": u"128Mi",
                                 },
                             },
-		        }
+		        },
+                        _CONFIG_LIVENESS_SIDECAR,
 		    ]
 	        }
 	    }
         }
     )
 
+
+# This extra container in the customer deployment pods watches for
+# configuration file changes and signals non-liveness when they occur.  This
+# provokes Kubernetes into restarting the pod - allowing it to pick up the new
+# configuration.  If Tahoe-LAFS could re-read its configuration file we might
+# be able to avoid this whole thing.
+_CONFIG_LIVENESS_SIDECAR = {
+    u"name": u"config-liveness-sidecar",
+    u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
+    u"args": [
+        u"8080",
+        u"/app/config/storage.json",
+    ],
+    u"volumeMounts": [
+        {
+            u"name": u"storage-config-volume",
+            u"mountPath": u"/app/config",
+        },
+    ],
+    u"ports": [
+        {
+            u"name": u"liveness",
+            u"containerPort": 8080,
+        },
+    ],
+    u"resources": {
+        u"requests": {
+            u"cpu": u"1m",
+            u"memory": u"32Ki",
+        },
+    },
+}
+
+_CONFIG_LIVENESS_PROBE = {
+    u"httpGet": {
+        u"path": u"/",
+        u"port": u"liveness",
+    },
+    u"initialDelaySeconds": 5,
+    u"periodSeconds": 10,
+}
 
 
 def _sanitize(subscription_id):

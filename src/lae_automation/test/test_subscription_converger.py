@@ -78,6 +78,8 @@ from lae_automation.signup import get_bucket_name
 from .strategies import (
     domains, subscription_id, subscription_details, deployment_configuration,
     node_pems, ipv4_addresses, docker_image_tags,
+    aws_access_key_id,
+    aws_secret_key,
 )
 from ..kubeclient import KubeClient
 
@@ -345,6 +347,21 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             introducer_image=u"tahoe-introducer:{}".format(tag),
             storageserver_image=u"tahoe-storageserver:{}".format(tag),
         )
+
+
+    @rule(id=aws_access_key_id(), key=aws_secret_key())
+    def change_access_key(self, id, key):
+        """
+        Change the ``DeploymentConfiguration`` to reference a diferent AWS key.
+        This is a necessary event for good key management (retiring old keys
+        and introducing new ones).
+        """
+        self.deploy_config = attr.assoc(
+            self.deploy_config,
+            s3_access_key_id=id,
+            s3_secret_key=key,
+        )
+
 
     @rule(data=data())
     def allocate_loadbalancer(self, data):
