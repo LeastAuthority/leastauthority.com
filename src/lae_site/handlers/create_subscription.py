@@ -83,52 +83,64 @@ class CreateSubscription(HandlerBase):
     send_plain_email('info@leastauthority.com', 'support@leastauthority.com', body, headers)
     raise RenderErrorDetailsForBrowser(details)
 
-  def create_customer(self, stripe_authorization_token, user_email):
+  def create_customer(self, stripe_authorization_token, user_email, request):
         try:
             return self._stripe.create(
                 authorization_token=stripe_authorization_token,
                 plan_id=PLAN_ID,
                 email=user_email,
+                # request=request
             )
         except stripe.CardError as e:
+            # Using the Stripe default - it returns 402 on declined cards or unfinished charges due to card error
+            request.setResponseCode(402)
             # Errors we expect: https://stripe.com/docs/api#errors
             note = "Note: This error could be caused by insufficient funds, or other charge-disabling "+\
                 "factors related to the User's payment credential.\n"
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
-              details=e.message,
+              details=e.message.encode("utf-8"),
               email_subject="Stripe Card error",
               notes=note)
         except stripe.APIError as e:
+            # Should return the same as Authentication error
+            request.setResponseCode(401)
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
               details="Our payment processor is temporarily unavailable,"+
                   " please try again in\ a few moments.",
               email_subject="Stripe API error")
         except stripe.InvalidRequestError as e:
+            # Might be better to return 422 - unusable entity error
+            request.setResponseCode(400)
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
               details="Due to technical difficulties unrelated to your card"+
                   " details, we were unable to charge your account. Our"+
                   " engineers have been notified and will contact you with"+
                   " an update shortly.",
               email_subject="Stripe Invalid Request error")
+        except stripe.AuthenticationError as e:
+            request.setResponseCode(401)
+            self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
+              details="Our payment processor is temporarily unavailable,"+
+                  " please try again in\ a few moments.",
+              email_subject="Stripe Auth error")
         except Exception as e:
+            # Return a generic error here
+            request.setResponseCode(400)
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
               details="Something went wrong. Please try again, or contact"+
-                  " <support@leastauthority.com>.",
+                "support@leastauthority.com.",
               email_subject="Stripe unexpected error")
 
   def render_POST(self, request):
     request = self.addHeaders(request)
     stripe_authorization_token = request.args.get(b"stripeToken")[0]
     user_email = request.args.get(b"email")[0]
-    # print(request.args.get)
-    # return request.args.get(b"stripeToken")[0]
 
     try:
         # Invoke card charge by requesting subscription to recurring-payment plan.
-        customer = self.create_customer(stripe_authorization_token, user_email)
+        customer = self.create_customer(stripe_authorization_token, user_email, request)
     except RenderErrorDetailsForBrowser as e:
-        tmpl = env.get_template('s4-subscription-form.html')
-        return tmpl.render({"errorblock": e.details}).encode('utf-8', 'replace')
+        return e.details
 
     # Initiate the provisioning service
     subscription = customer.subscriptions.data[0]
@@ -146,11 +158,12 @@ class CreateSubscription(HandlerBase):
 
 def signed_up(claim, request):
   # Return 200 and text to be added to template on client
-    request.setResponseCode(200)
+    # request.setResponseCode(200)
     request.write(claim.describe(env).encode('utf-8'))
     request.finish()
 
-def signup_failed(reason, customer, mailer):
+def signup_failed(request, reason, customer, mailer):
+  # request.setResponseCode(400)
   headers = {
       "From": FROM_ADDRESS,
       "Subject": "Sign-up error",
