@@ -9,6 +9,8 @@ from eliot import Message
 
 from pyrsistent import ny
 
+from twisted.python.filepath import FilePath
+
 from .server import marshal_tahoe_configuration
 
 CONTAINERIZED_SUBSCRIPTION_VERSION = u"2"
@@ -132,6 +134,18 @@ def create_configuration(deploy_config, details, model):
 
 
 def _deployment_template(model):
+    introducer_liveness_sidecar = create_liveness_container(
+        model=model,
+        port=8080,
+        volumeName=u"introducer-config-volume",
+        configItem=u"introducer.json",
+    )
+    storageserver_liveness_sidecar = create_liveness_container(
+        model=model,
+        port=8080,
+        volumeName=u"storage-config-volume",
+        configItem=u"storage.json",
+    )
     return model.v1beta1.Deployment(
         metadata=_s4_customer_metadata(model),
         status=None,
@@ -171,6 +185,8 @@ def _deployment_template(model):
 		        }
 		    ],
 		    u"containers": [
+                        introducer_liveness_sidecar,
+                        storageserver_liveness_sidecar,
 		        {
                             # The image is filled in at instantiation time.
 			    u"name": u"introducer",
@@ -181,6 +197,7 @@ def _deployment_template(model):
 			        }
 			    ],
                             u"ports": [],
+                            u"livenessProbe": create_liveness_probe(model, introducer_liveness_sidecar),
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
@@ -210,8 +227,7 @@ def _deployment_template(model):
 			        }
 			    ],
                             u"ports": [],
-                            # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
-                            u"livenessProbe": _CONFIG_LIVENESS_PROBE,
+                            u"livenessProbe": create_liveness_probe(model, storageserver_liveness_sidecar),
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
@@ -235,7 +251,6 @@ def _deployment_template(model):
                                 },
                             },
 		        },
-                        _CONFIG_LIVENESS_SIDECAR,
 		    ]
 	        }
 	    }
@@ -243,46 +258,49 @@ def _deployment_template(model):
     )
 
 
-# This extra container in the customer deployment pods watches for
-# configuration file changes and signals non-liveness when they occur.  This
-# provokes Kubernetes into restarting the pod - allowing it to pick up the new
-# configuration.  If Tahoe-LAFS could re-read its configuration file we might
-# be able to avoid this whole thing.
-_CONFIG_LIVENESS_SIDECAR = {
-    u"name": u"config-liveness-sidecar",
-    u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
-    u"args": [
-        u"8080",
-        u"/app/config/storage.json",
-    ],
-    u"volumeMounts": [
-        {
-            u"name": u"storage-config-volume",
-            u"mountPath": u"/app/config",
-        },
-    ],
-    u"ports": [
-        {
-            u"name": u"liveness",
-            u"containerPort": 8080,
-        },
-    ],
-    u"resources": {
-        u"requests": {
-            u"cpu": u"1m",
-            u"memory": u"32Ki",
-        },
-    },
-}
 
-_CONFIG_LIVENESS_PROBE = {
-    u"httpGet": {
-        u"path": u"/",
-        u"port": u"liveness",
-    },
-    u"initialDelaySeconds": 5,
-    u"periodSeconds": 10,
-}
+def create_liveness_container(model, port, volumeName, configItem):
+    # This extra container in the customer deployment pods watches for
+    # configuration file changes and signals non-liveness when they occur.  This
+    # provokes Kubernetes into restarting the pod - allowing it to pick up the new
+    # configuration.  If Tahoe-LAFS could re-read its configuration file we might
+    # be able to avoid this whole thing.
+    mountpoint = FilePath(u"/config")
+    return model.v1.Container(**{
+        u"name": u"config-liveness-sidecar-{}".format(port),
+        u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
+        u"args": [u"".format(port), mountpoint.child(configItem).path],
+        u"volumeMounts": [{
+            u"name": volumeName,
+            u"mountPath": mountpoint.path,
+        }],
+        u"ports": [{
+            u"containerPort": port,
+        }],
+        u"resources": {
+            u"requests": {
+                u"cpu": u"1m",
+                u"memory": u"32Ki",
+            },
+        },
+    })
+
+
+
+def create_liveness_probe(model, container):
+    # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+    return model.v1.Probe(**{
+        u"httpGet": {
+            u"path": u"/",
+            u"port": container.ports[0].containerPort,
+        },
+        u"failureThreshold": 1,
+        u"successThreshold": 1,
+        u"initialDelaySeconds": 5,
+        u"periodSeconds": 10,
+        u"timeoutSeconds": 5,
+    })
+
 
 
 def _sanitize(subscription_id):
