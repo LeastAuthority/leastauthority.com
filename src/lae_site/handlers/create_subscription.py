@@ -92,7 +92,7 @@ class CreateSubscription(HandlerBase):
                 # request=request
             )
         except stripe.CardError as e:
-            # Using the Stripe default - it returns 402 on declined cards or unfinished charges due to card error
+            # Always return 402 on card errors
             request.setResponseCode(402)
             # Errors we expect: https://stripe.com/docs/api#errors
             note = "Note: This error could be caused by insufficient funds, or other charge-disabling "+\
@@ -109,8 +109,8 @@ class CreateSubscription(HandlerBase):
                   " please try again in\ a few moments.",
               email_subject="Stripe API error")
         except stripe.InvalidRequestError as e:
-            # Might be better to return 422 - unusable entity error
-            request.setResponseCode(400)
+            # Return 422 - unusable entity error
+            request.setResponseCode(422)
             self.handle_stripe_create_customer_errors(traceback.format_exc(100), e,
               details="Due to technical difficulties unrelated to your card"+
                   " details, we were unable to charge your account. Our"+
@@ -157,8 +157,7 @@ class CreateSubscription(HandlerBase):
     return NOT_DONE_YET
 
 def signed_up(claim, request):
-  # Return 200 and text to be added to template on client
-    # request.setResponseCode(200)
+    # Return 200 and text to be added to template on client
     request.write(claim.describe(env).encode('utf-8'))
     request.finish()
 
