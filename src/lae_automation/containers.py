@@ -142,7 +142,7 @@ def _deployment_template(model):
     )
     storageserver_liveness_sidecar = create_liveness_container(
         model=model,
-        port=8080,
+        port=8081,
         volumeName=u"storage-config-volume",
         configItem=u"storage.json",
     )
@@ -326,6 +326,11 @@ def create_deployment(deploy_config, details, model):
     intro_name = u"introducer"
     storage_name = u"storage"
 
+    def named(name):
+        def predicate(key, value):
+            return value.name == name
+        return predicate
+
     deployment = _deployment_template(model).transform(
         # Make sure it ends up in our namespace.
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
@@ -359,10 +364,10 @@ def create_deployment(deploy_config, details, model):
         # that it be unique within the pod, since we want to expose these via
         # a v1.Service, we need to make them unique across all pods the
         # service is going to select.  That's all pods for customer grids.
-        ["spec", "template", "spec", "containers", 0, "ports", 0],
+        ["spec", "template", "spec", "containers", named(u"introducer"), "ports", 0],
         model.v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
 
-        ["spec", "template", "spec", "containers", 1, "ports", 0],
+        ["spec", "template", "spec", "containers", named(u"storageserver"), "ports", 0],
         model.v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
 
         # Some other metadata to make inspecting this stuff a little easier.
