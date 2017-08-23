@@ -351,12 +351,12 @@ def create_deployment(deploy_config, details, model):
 
         # The deployment configuration tells us what images we're supposed to
         # be using at the moment.
-        [u"spec", u"template", u"spec", u"containers", 0, u"image"],
+        [u"spec", u"template", u"spec", u"containers", named(u"introducer"), u"image"],
         deploy_config.introducer_image,
 
         # The deployment configuration tells us what images we're supposed to
         # be using at the moment.
-        [u"spec", u"template", u"spec", u"containers", 1, u"image"],
+        [u"spec", u"template", u"spec", u"containers", named("storageserver"), u"image"],
         deploy_config.storageserver_image,
 
         # Assign it service names and a port numbers.
