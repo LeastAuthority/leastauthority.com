@@ -269,7 +269,7 @@ def create_liveness_container(model, port, volumeName, configItem):
     return model.v1.Container(**{
         u"name": u"config-liveness-sidecar-{}".format(port),
         u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
-        u"args": [u"".format(port), mountpoint.child(configItem).path],
+        u"args": [u"{}".format(port), mountpoint.child(configItem).path],
         u"volumeMounts": [{
             u"name": volumeName,
             u"mountPath": mountpoint.path,
