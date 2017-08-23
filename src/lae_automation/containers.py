@@ -261,10 +261,11 @@ def _deployment_template(model):
 
 def create_liveness_container(model, port, volumeName, configItem):
     # This extra container in the customer deployment pods watches for
-    # configuration file changes and signals non-liveness when they occur.  This
-    # provokes Kubernetes into restarting the pod - allowing it to pick up the new
-    # configuration.  If Tahoe-LAFS could re-read its configuration file we might
-    # be able to avoid this whole thing.
+    # configuration file changes and signals non-liveness when they occur.
+    # This provokes Kubernetes into restarting the container on which the
+    # liveness probe is defined - allowing it to pick up the new
+    # configuration.  If Tahoe-LAFS could re-read its configuration file we
+    # might be able to avoid this whole thing.
     mountpoint = FilePath(u"/config")
     return model.v1.Container(**{
         u"name": u"config-liveness-sidecar-{}".format(port),
