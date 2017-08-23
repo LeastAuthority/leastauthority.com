@@ -298,7 +298,7 @@ def create_liveness_probe(model, container):
         u"failureThreshold": 1,
         u"successThreshold": 1,
         u"initialDelaySeconds": 5,
-        u"periodSeconds": 10,
+        u"periodSeconds": 600,
         u"timeoutSeconds": 5,
     })
 
@@ -326,6 +326,12 @@ def create_deployment(deploy_config, details, model):
     # of the Deployment, I think.  Hey look they are.
     intro_name = u"introducer"
     storage_name = u"storage"
+
+    # Compute a small amount of pseudo-random jitter to add to the liveness
+    # probe interval for the given container.  This serves to de-synchronize
+    # liveness probes across pods for different subscriptions to avoid having
+    # them all restarted in one thundering herd.
+    jitter = hash(details.subscription_id) % 120
 
     def named(name):
         def predicate(key, value):
@@ -370,6 +376,14 @@ def create_deployment(deploy_config, details, model):
 
         ["spec", "template", "spec", "containers", named(u"storageserver"), "ports", 0],
         model.v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
+
+        # Add some jitter to the liveness probe intervals to avoid a
+        # thundering herd on configuration updates and such.
+        ["spec", "template", "spec", "containers", named(u"introducer"), "livenessProbe", "periodSeconds"],
+        lambda seconds: seconds + jitter,
+
+        ["spec", "template", "spec", "containers", named(u"storageserver"), "livenessProbe", "periodSeconds"],
+        lambda seconds: seconds + jitter,
 
         # Some other metadata to make inspecting this stuff a little easier.
         # First added to the pod template...
