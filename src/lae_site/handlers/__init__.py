@@ -58,12 +58,6 @@ def make_resource(
         "s4-subscription-form",
         JinjaHandler("s4-subscription-form.html"),
     )
-    # resource.putChild(
-    #     'submit-subscription',
-    #     SubmitSubscriptionHandler(
-    #         get_signup, mailer, stripe,
-    #     ),
-    # )
 
     return resource
 

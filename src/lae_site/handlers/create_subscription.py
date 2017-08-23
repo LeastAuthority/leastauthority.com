@@ -61,13 +61,6 @@ class CreateSubscription(HandlerBase):
     self._stripe = stripe
     # The following helper methods are all called directly or indirectly by render.
 
-  # def get_creation_parameter(request):
-  #     request = addHeaders(request)
-  #     # Parse request, info from stripe and subscriber.
-  #     stripe_authorization_token = request.args.get(b"stripeToken")[0]
-  #     # user_email = self.get_arg(request, 'email')
-  #     return stripe_authorization_token
-
   def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject, notes=''):
     print >>self.out, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
     print >>self.out, trace_back

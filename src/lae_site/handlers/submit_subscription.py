@@ -132,15 +132,6 @@ class SubmitSubscriptionHandler(HandlerBase):
 
 
     def render(self, request):
-        # The expected HTTP method is a POST from the <form> in templates/subscription_signup.html.
-        # render_POST is handled by the HandlerBase parent which calls this this method after logging
-        # the request.
-
-        # if request.method != 'POST':
-        #     tmpl = env.get_template('s4-subscription-form.html')
-        #     msg = ("Your browser requested this page with {} but we expected a POST."
-        #            "\n\nPlease try again.".format(request.method))
-        #     return tmpl.render({"errorblock": msg}).encode('utf-8', 'replace')
 
         # Get information needed to create the new stripe subscription to the S4 plan
         stripe_authorization_token, user_email = self.get_creation_parameters(request)
