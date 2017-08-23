@@ -612,22 +612,27 @@ class _ChangeableDeployments(PClass):
 
     def needs_update(self, subscription):
         deployment = self.deployments[subscription.subscription_id]
-        intro = (
-            deployment.spec.template.spec.containers[0].ports[0].containerPort
-        )
-        storage = (
-            deployment.spec.template.spec.containers[1].ports[0].containerPort
-        )
-
-        introducer_image = deployment.spec.template.spec.containers[0].image
-        storageserver_image = deployment.spec.template.spec.containers[1].image
+        introducer = list(
+            container
+            for  container
+            in deployment.spec.template.spec.containers
+            if container.name == u"introducer"
+        )[0]
+        storageserver = list(
+            container
+            for  container
+            in deployment.spec.template.spec.containers
+            if container.name == u"storageserver"
+        )[0]
+        intro_port = introducer.ports[0].containerPort
+        storage_port = storageserver.ports[0].containerPort
 
         return (
-            subscription.introducer_port_number != intro or
-            subscription.storage_port_number != storage
+            subscription.introducer_port_number != intro_port or
+            subscription.storage_port_number != storage_port
         ) or (
-            self.deploy_config.introducer_image != introducer_image or
-            self.deploy_config.storageserver_image != storageserver_image
+            self.deploy_config.introducer_image != introducer.image or
+            self.deploy_config.storageserver_image != storageserver.image
         ) or (
             deployment.metadata.labels.version != CONTAINERIZED_SUBSCRIPTION_VERSION
         )
