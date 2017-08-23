@@ -635,10 +635,6 @@ class _ChangeableDeployments(PClass):
 
 
 def _converge_deployments(actual, deploy_config, subscriptions, k8s, aws):
-    # XXX Oh boy there's two more deployment states to deal with. :/ Merely
-    # deleting a deployment doesn't clean up its replicaset (nor its pod,
-    # therefore).  So instead we need to update the deployment with replicas =
-    # 0 and wait for it to settle, and only then delete it.
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableDeployments(
