@@ -9,6 +9,8 @@ from eliot import Message
 
 from pyrsistent import ny
 
+from twisted.python.filepath import FilePath
+
 from .server import marshal_tahoe_configuration
 
 CONTAINERIZED_SUBSCRIPTION_VERSION = u"2"
@@ -132,6 +134,18 @@ def create_configuration(deploy_config, details, model):
 
 
 def _deployment_template(model):
+    introducer_liveness_sidecar = create_liveness_container(
+        model=model,
+        port=8080,
+        volumeName=u"introducer-config-volume",
+        configItem=u"introducer.json",
+    )
+    storageserver_liveness_sidecar = create_liveness_container(
+        model=model,
+        port=8081,
+        volumeName=u"storage-config-volume",
+        configItem=u"storage.json",
+    )
     return model.v1beta1.Deployment(
         metadata=_s4_customer_metadata(model),
         status=None,
@@ -171,6 +185,8 @@ def _deployment_template(model):
 		        }
 		    ],
 		    u"containers": [
+                        introducer_liveness_sidecar,
+                        storageserver_liveness_sidecar,
 		        {
                             # The image is filled in at instantiation time.
 			    u"name": u"introducer",
@@ -181,6 +197,7 @@ def _deployment_template(model):
 			        }
 			    ],
                             u"ports": [],
+                            u"livenessProbe": create_liveness_probe(model, introducer_liveness_sidecar),
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
@@ -210,6 +227,7 @@ def _deployment_template(model):
 			        }
 			    ],
                             u"ports": [],
+                            u"livenessProbe": create_liveness_probe(model, storageserver_liveness_sidecar),
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
@@ -232,12 +250,57 @@ def _deployment_template(model):
                                     u"memory": u"128Mi",
                                 },
                             },
-		        }
+		        },
 		    ]
 	        }
 	    }
         }
     )
+
+
+
+def create_liveness_container(model, port, volumeName, configItem):
+    # This extra container in the customer deployment pods watches for
+    # configuration file changes and signals non-liveness when they occur.
+    # This provokes Kubernetes into restarting the container on which the
+    # liveness probe is defined - allowing it to pick up the new
+    # configuration.  If Tahoe-LAFS could re-read its configuration file we
+    # might be able to avoid this whole thing.
+    mountpoint = FilePath(u"/config")
+    return model.v1.Container(**{
+        u"name": u"config-liveness-sidecar-{}".format(port),
+        u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
+        u"args": [u"{}".format(port), mountpoint.child(configItem).path],
+        u"volumeMounts": [{
+            u"name": volumeName,
+            u"mountPath": mountpoint.path,
+        }],
+        u"ports": [{
+            u"containerPort": port,
+        }],
+        u"resources": {
+            u"requests": {
+                u"cpu": u"1m",
+                u"memory": u"32Ki",
+            },
+        },
+    })
+
+
+
+def create_liveness_probe(model, container):
+    # https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/
+    return model.v1.Probe(**{
+        u"httpGet": {
+            u"path": u"/",
+            u"port": container.ports[0].containerPort,
+        },
+        u"failureThreshold": 1,
+        u"successThreshold": 1,
+        u"initialDelaySeconds": 5,
+        u"periodSeconds": 600,
+        u"timeoutSeconds": 5,
+    })
 
 
 
@@ -264,6 +327,17 @@ def create_deployment(deploy_config, details, model):
     intro_name = u"introducer"
     storage_name = u"storage"
 
+    # Compute a small amount of pseudo-random jitter to add to the liveness
+    # probe interval for the given container.  This serves to de-synchronize
+    # liveness probes across pods for different subscriptions to avoid having
+    # them all restarted in one thundering herd.
+    jitter = hash(details.subscription_id) % 120
+
+    def named(name):
+        def predicate(key, value):
+            return value.name == name
+        return predicate
+
     deployment = _deployment_template(model).transform(
         # Make sure it ends up in our namespace.
         [u"metadata", u"namespace"], deploy_config.kubernetes_namespace,
@@ -284,12 +358,12 @@ def create_deployment(deploy_config, details, model):
 
         # The deployment configuration tells us what images we're supposed to
         # be using at the moment.
-        [u"spec", u"template", u"spec", u"containers", 0, u"image"],
+        [u"spec", u"template", u"spec", u"containers", named(u"introducer"), u"image"],
         deploy_config.introducer_image,
 
         # The deployment configuration tells us what images we're supposed to
         # be using at the moment.
-        [u"spec", u"template", u"spec", u"containers", 1, u"image"],
+        [u"spec", u"template", u"spec", u"containers", named("storageserver"), u"image"],
         deploy_config.storageserver_image,
 
         # Assign it service names and a port numbers.
@@ -297,11 +371,19 @@ def create_deployment(deploy_config, details, model):
         # that it be unique within the pod, since we want to expose these via
         # a v1.Service, we need to make them unique across all pods the
         # service is going to select.  That's all pods for customer grids.
-        ["spec", "template", "spec", "containers", 0, "ports", 0],
+        ["spec", "template", "spec", "containers", named(u"introducer"), "ports", 0],
         model.v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
 
-        ["spec", "template", "spec", "containers", 1, "ports", 0],
+        ["spec", "template", "spec", "containers", named(u"storageserver"), "ports", 0],
         model.v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
+
+        # Add some jitter to the liveness probe intervals to avoid a
+        # thundering herd on configuration updates and such.
+        ["spec", "template", "spec", "containers", named(u"introducer"), "livenessProbe", "periodSeconds"],
+        lambda seconds: seconds + jitter,
+
+        ["spec", "template", "spec", "containers", named(u"storageserver"), "livenessProbe", "periodSeconds"],
+        lambda seconds: seconds + jitter,
 
         # Some other metadata to make inspecting this stuff a little easier.
         # First added to the pod template...

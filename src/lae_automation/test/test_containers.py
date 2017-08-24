@@ -13,7 +13,7 @@ from hypothesis import given
 
 from foolscap.furl import decode_furl
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, Contains, Not
 
 from txkube import v1_5_model as model
 
@@ -21,7 +21,10 @@ from lae_util.testtools import TestCase
 
 from .strategies import deployment_configurations, subscription_details
 
-from ..containers import create_configuration
+from ..containers import (
+    create_configuration,
+    create_deployment,
+)
 
 
 class CreateConfigurationTests(TestCase):
@@ -51,3 +54,21 @@ class CreateConfigurationTests(TestCase):
             introducer_furl,
             Equals(loads(config.data["storage.json"])["storage"]["introducer_furl"]),
         )
+
+
+class CreateDeploymentTests(TestCase):
+    """
+    Tests for ``create_deployment``.
+    """
+    @given(deployment_configurations(), subscription_details())
+    def test_image(self, deploy_config, details):
+        """
+        Each container in the created deployment has an image specified.
+        """
+        deployment = create_deployment(
+            deploy_config,
+            details,
+            model,
+        )
+        for container in deployment.spec.template.spec.containers:
+            self.assertThat((None, u""), Not(Contains(container.image)))

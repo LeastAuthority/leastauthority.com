@@ -5,7 +5,7 @@
 Tests for ``lae_automation.subscription_converger``.
 """
 
-from json import dumps
+from json import dumps, loads
 from tempfile import mkdtemp
 
 from zope.interface.verify import verifyObject
@@ -78,6 +78,8 @@ from lae_automation.signup import get_bucket_name
 from .strategies import (
     domains, subscription_id, subscription_details, deployment_configuration,
     node_pems, ipv4_addresses, docker_image_tags,
+    aws_access_key_id,
+    aws_secret_key,
 )
 from ..kubeclient import KubeClient
 
@@ -346,6 +348,21 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             storageserver_image=u"tahoe-storageserver:{}".format(tag),
         )
 
+
+    @rule(id=aws_access_key_id(), key=aws_secret_key())
+    def change_access_key(self, id, key):
+        """
+        Change the ``DeploymentConfiguration`` to reference a diferent AWS key.
+        This is a necessary event for good key management (retiring old keys
+        and introducing new ones).
+        """
+        self.deploy_config = attr.assoc(
+            self.deploy_config,
+            s3_access_key_id=id,
+            s3_secret_key=key,
+        )
+
+
     @rule(data=data())
     def allocate_loadbalancer(self, data):
         """
@@ -492,14 +509,22 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     def check_configmaps(self, database, config, subscriptions, k8s_state, aws):
+        def json_data(configmap):
+            d = configmap.serialize()
+            for k, v in d[u"data"].items():
+                d[u"data"][k] = loads(v)
+            return d
+
         for sid in subscriptions:
             assert_that(
-                create_configuration(
+                json_data(create_configuration(
                     config,
                     database.get_subscription(sid),
                     self.kube_model,
-                ),
-                GoodEquals(k8s_state.configmaps.item_by_name(configmap_name(sid))),
+                )),
+                GoodEquals(json_data(
+                    k8s_state.configmaps.item_by_name(configmap_name(sid)),
+                )),
             )
 
 

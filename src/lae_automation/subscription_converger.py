@@ -612,22 +612,27 @@ class _ChangeableDeployments(PClass):
 
     def needs_update(self, subscription):
         deployment = self.deployments[subscription.subscription_id]
-        intro = (
-            deployment.spec.template.spec.containers[0].ports[0].containerPort
-        )
-        storage = (
-            deployment.spec.template.spec.containers[1].ports[0].containerPort
-        )
-
-        introducer_image = deployment.spec.template.spec.containers[0].image
-        storageserver_image = deployment.spec.template.spec.containers[1].image
+        introducer = list(
+            container
+            for  container
+            in deployment.spec.template.spec.containers
+            if container.name == u"introducer"
+        )[0]
+        storageserver = list(
+            container
+            for  container
+            in deployment.spec.template.spec.containers
+            if container.name == u"storageserver"
+        )[0]
+        intro_port = introducer.ports[0].containerPort
+        storage_port = storageserver.ports[0].containerPort
 
         return (
-            subscription.introducer_port_number != intro or
-            subscription.storage_port_number != storage
+            subscription.introducer_port_number != intro_port or
+            subscription.storage_port_number != storage_port
         ) or (
-            self.deploy_config.introducer_image != introducer_image or
-            self.deploy_config.storageserver_image != storageserver_image
+            self.deploy_config.introducer_image != introducer.image or
+            self.deploy_config.storageserver_image != storageserver.image
         ) or (
             deployment.metadata.labels.version != CONTAINERIZED_SUBSCRIPTION_VERSION
         )
@@ -635,10 +640,6 @@ class _ChangeableDeployments(PClass):
 
 
 def _converge_deployments(actual, deploy_config, subscriptions, k8s, aws):
-    # XXX Oh boy there's two more deployment states to deal with. :/ Merely
-    # deleting a deployment doesn't clean up its replicaset (nor its pod,
-    # therefore).  So instead we need to update the deployment with replicas =
-    # 0 and wait for it to settle, and only then delete it.
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableDeployments(
@@ -695,6 +696,8 @@ def _converge_pods(actual, config, subscriptions, k8s, aws):
 
 
 class _ChangeableConfigMaps(PClass):
+    deploy_config = field(type=DeploymentConfiguration)
+    k8s_model = field()
     configmaps = field(
         factory=lambda configmaps: {
             c.metadata.annotations[u"subscription"]: c
@@ -707,25 +710,34 @@ class _ChangeableConfigMaps(PClass):
 
 
     def needs_update(self, subscription):
-        # TODO
-        return False
+        actual_configmap = self.configmaps[subscription.subscription_id]
+        expected_configmap = create_configuration(
+            self.deploy_config,
+            subscription,
+            self.k8s_model,
+        )
+        return actual_configmap.data != expected_configmap.data
 
 
 
-def _converge_configmaps(actual, config, subscriptions, k8s, aws):
+def _converge_configmaps(actual, deploy_config, subscriptions, k8s, aws):
     changes = _compute_changes(
         actual.subscriptions,
-        _ChangeableConfigMaps(configmaps=actual.configmaps),
+        _ChangeableConfigMaps(
+            deploy_config=deploy_config,
+            k8s_model=k8s.k8s.model,
+            configmaps=actual.configmaps,
+        ),
     )
     def delete(sid):
         return k8s.delete(k8s.k8s.model.v1.ConfigMap(
             metadata=dict(
-                namespace=config.kubernetes_namespace,
+                namespace=deploy_config.kubernetes_namespace,
                 name=configmap_name(sid),
             ),
         ))
     def create(subscription):
-        return k8s.create(create_configuration(config, subscription, k8s.k8s.model))
+        return k8s.create(create_configuration(deploy_config, subscription, k8s.k8s.model))
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
     return deletes + creates

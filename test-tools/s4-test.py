@@ -32,6 +32,8 @@ from datetime import timedelta
 
 from twisted.internet.task import react
 from twisted.web.client import Agent
+from twisted.python.filepath import FilePath
+from twisted.internet.task import cooperate
 
 from lae_automation.model import SubscriptionDetails
 from lae_automation.subscription_manager import network_client
@@ -39,6 +41,7 @@ from lae_automation.signup import get_bucket_name
 
 from sys import argv
 
+HERE = FilePath(__file__).parent()
 
 def subscribe(reactor, root_url, email):
     """
@@ -78,7 +81,7 @@ def subscribe(reactor, root_url, email):
     return client.create(sid, subscription)
 
 
-def check_subscription(details):
+def check_subscription(details, tahoe_env):
     """
     Given a subscription, try to use the Tahoe-LAFS service that goes with it.
 
@@ -95,10 +98,7 @@ def check_subscription(details):
     noisy_wait(timedelta(seconds=30))
     print(u"Testing {}".format(furl))
 
-    # If we made this a little more stable then we could avoid the constant
-    # pip install'ing of tahoe-lafs.
-    tahoe_env = mkdtemp(prefix=u"tahoe-lafs-env")
-    check_call(["./tahoe-test.sh", tahoe_env, furl])
+    check_call([HERE.child("tahoe-test.sh").path, tahoe_env, furl])
 
 
 def noisy_wait(duration):
@@ -123,8 +123,16 @@ def main(reactor):
     Create and verify one S4 subscription.
     """
     root_url = argv[1]
-    email = argv[2]
+    emails = argv[2:]
 
-    d = subscribe(reactor, root_url, email)
-    d.addCallback(check_subscription)
-    return d
+    tahoe_env = mkdtemp(prefix=u"tahoe-lafs-env")
+    task = cooperate(
+        subscribe(
+            reactor, root_url, email,
+        ).addCallback(
+            check_subscription, tahoe_env,
+        )
+        for email
+        in emails
+    )
+    return task.whenDone()
