@@ -163,8 +163,7 @@ def signed_up(claim, request):
     request.write(claim.describe(env).encode('utf-8'))
     request.finish()
 
-def signup_failed(request, reason, customer, mailer):
-  # request.setResponseCode(400)
+def signup_failed(reason, customer, mailer):
   headers = {
       "From": FROM_ADDRESS,
       "Subject": "Sign-up error",
