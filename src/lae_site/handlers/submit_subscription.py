@@ -44,8 +44,9 @@ class Mailer(object):
             from_addr, to_addr, subject, headers,
         )
 
-class SubmitSubscriptionHandler(HandlerBase):
 
+
+class SubmitSubscriptionHandler(HandlerBase):
     def __init__(self, get_signup, mailer, stripe):
         """
 
