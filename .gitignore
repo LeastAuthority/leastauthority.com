@@ -26,3 +26,6 @@ telepresence.log
 
 # distutils gunk
 leastauthority.com.egg-info/
+
+# env file
+.env

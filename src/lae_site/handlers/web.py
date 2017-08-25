@@ -11,6 +11,7 @@ loader = FileSystemLoader(
 )
 env = Environment(loader=loader)
 
+
 class JinjaHandler(Resource):
     def __init__(self, template_name):
         Resource.__init__(self)
