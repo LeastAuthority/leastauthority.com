@@ -197,8 +197,6 @@ def main(reactor, *argv):
 
 
 
-
-
 def site_for_options(reactor, options):
     provisioner = get_provisioner(
         reactor,

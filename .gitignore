@@ -29,3 +29,5 @@ leastauthority.com.egg-info/
 
 # env file
 .env
+
+* .DS_Store

@@ -360,6 +360,10 @@ class Options(_Options):
         ),
         ("state-path", "p", None, "Path to the subscription state directory."),
         ("listen-address", "l", None, "Endpoint on which the server should listen."),
+        ("cross-domain", None, None, 
+            "The domain for allowing cross origin for the subscription form"
+            "(useful for different environment switching)"
+        ),
     ]
 
     opt_eliot_destination = opt_eliot_destination
@@ -371,6 +375,7 @@ class Options(_Options):
         # Populated from a configuration file which can easily contain extra
         # trailing whitespace (like a newline).  Clean it up.
         self["domain"] = self["domain"].strip()
+        self["cross-domain"] = self["cross-domain"].strip()
 
 
 def makeService(options):
@@ -392,6 +397,7 @@ def makeService(options):
     site = Site(make_resource(
         options["state-path"],
         options["domain"].decode("ascii"),
+        # options["cross-domain"]
     ))
 
     StreamServerEndpointService(
