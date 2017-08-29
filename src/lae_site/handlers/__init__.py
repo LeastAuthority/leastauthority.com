@@ -17,7 +17,7 @@ from lae_site import __file__ as _lae_root
 
 _STATIC = FilePath(_lae_root).sibling("static")
 
-def configuration(stripe_publishable_api_key):
+def configuration(stripe_publishable_api_key, cross_domain):
     """
     Create a ``Resource`` which serves up simple configuration used by
     JavaScript on the website.
@@ -28,6 +28,7 @@ def configuration(stripe_publishable_api_key):
             # API uses.  It's safe to share and required by the
             # JavaScript Stripe client API.
             u"stripe-publishable-api-key": stripe_publishable_api_key,
+            u"cross-domain": cross_domain,
         }),
         b"application/json",
     )
@@ -36,7 +37,7 @@ def configuration(stripe_publishable_api_key):
 
 def make_resource(
         stripe_publishable_api_key,
-        get_signup, stripe, mailer,
+        get_signup, stripe, mailer, cross_domain
 ):
     resource = Resource()
     resource.putChild("", Redirect("https://leastauthority.com/"))
@@ -45,13 +46,13 @@ def make_resource(
     resource.putChild('static', File(_STATIC.path))
     resource.putChild(
         'configuration',
-        configuration(stripe_publishable_api_key),
+        configuration(stripe_publishable_api_key, cross_domain),
     )
     resource.putChild("s4-signup-style", S4SignupStyle())
     # add new path for AJAX POST
     resource.putChild('create-subscription',
         CreateSubscription(
-            get_signup, mailer, stripe,
+            get_signup, mailer, stripe, cross_domain
         ),
     )
     resource.putChild(

@@ -75,6 +75,10 @@ class SiteOptions(Options):
          "The URL of the Wormhole Rendezvous server for wormhole-based signup.",
          urlFromBytes,
         ),
+        ("cross-domain", None, None, "The domain for allowing cross origin for the subscription form"
+            "(useful for different environment switching)",
+            urlFromBytes,
+        ),
     ]
 
     def __init__(self, reactor):
@@ -134,6 +138,7 @@ class SiteOptions(Options):
             "subscription-manager",
             "site-logs-path",
             "wormhole-result-path",
+            "cross-domain"
         ]
         for option in required_options:
             if self[option] is None:
@@ -197,6 +202,8 @@ def main(reactor, *argv):
 
 
 
+
+
 def site_for_options(reactor, options):
     provisioner = get_provisioner(
         reactor,
@@ -232,6 +239,7 @@ def site_for_options(reactor, options):
         get_signup,
         Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
         Mailer(),
+        options["cross-domain"],
     )
     site = make_site(resource, options["site-logs-path"])
     return site

@@ -535,8 +535,6 @@ spec:
           - 's4-subscription-manager'
           - '--domain'
           - '$(S4_DOMAIN)'
-          - '--cross-domain'
-          - '$(CROSS_DOMAIN)'
           - '--state-path'
           - '/app/data/subscriptions'
           - '--listen-address'
