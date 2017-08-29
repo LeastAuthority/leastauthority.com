@@ -19,7 +19,7 @@ from lae_automation.model import DeploymentConfiguration
 from .matchers import hasLocationHint
 from .strategies import (
     bucket_name, ipv4_address, aws_access_key_id, aws_secret_key,
-    furl,
+    furl, key_prefixes,
 )
 
 class NewTahoeConfigurationTests(TestCase):
@@ -27,7 +27,7 @@ class NewTahoeConfigurationTests(TestCase):
     Tests for ``new_tahoe_configuration``.
     """
     @given(
-        bucket_name(),
+        bucket_name(), key_prefixes(),
         ipv4_address(), ipv4_address(),
         aws_access_key_id(), aws_secret_key(),
         furl(), furl(),
@@ -37,7 +37,7 @@ class NewTahoeConfigurationTests(TestCase):
     @settings(max_examples=10)
     def test_generated(
             self,
-            bucket_name,
+            bucket_name, key_prefix,
             publichost, privatehost,
             s3_access_key_id, s3_secret_key,
             log_gatherer_furl, stats_gatherer_furl,
@@ -60,7 +60,13 @@ class NewTahoeConfigurationTests(TestCase):
             stats_gatherer_furl=stats_gatherer_furl,
         )
         config = server.new_tahoe_configuration(
-            deploy_config, bucket_name, publichost, privatehost, 4321, 1234,
+            deploy_config,
+            bucket_name,
+            key_prefix,
+            publichost,
+            privatehost,
+            4321,
+            1234,
         )
         # It returns an object which can be round-tripped through the
         # JSON format.

@@ -534,6 +534,7 @@ spec:
           - 's4-subscription-manager'
           - '--domain'
           - '$(S4_DOMAIN)'
+          - '--bucket-name=$(S4_BUCKET)'
           - '--state-path'
           - '/app/data/subscriptions'
           - '--listen-address'
@@ -546,6 +547,12 @@ spec:
               secretKeyRef:
                 name: 's4'
                 key: 'domain'
+          - name: 'S4_BUCKET'
+            valueFrom:
+              secretKeyRef:
+                name: 's4'
+                key: 'bucket-name'
+
         workingDir: '/app/run'
 
         volumeMounts:

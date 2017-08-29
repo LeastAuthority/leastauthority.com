@@ -62,10 +62,17 @@ def secrets_to_legacy_format(secrets):
 
 def marshal_tahoe_configuration(
         introducer_pem,
-        storage_pem, storage_privkey,
-        introducer_port, storageserver_port,
-        bucket_name, publichost, privatehost, introducer_furl,
-        s3_access_key_id, s3_secret_key,
+        storage_pem,
+        storage_privkey,
+        introducer_port,
+        storageserver_port,
+        bucket_name,
+        key_prefix,
+        publichost,
+        privatehost,
+        introducer_furl,
+        s3_access_key_id,
+        s3_secret_key,
         log_gatherer_furl=None,
         stats_gatherer_furl=None,
 ):
@@ -86,6 +93,7 @@ def marshal_tahoe_configuration(
             node_pem=storage_pem,
             node_privkey=storage_privkey,
             bucket_name=bucket_name,
+            key_prefix=key_prefix,
             publichost=publichost,
             privatehost=privatehost,
             introducer_furl=introducer_furl,
@@ -97,7 +105,7 @@ def marshal_tahoe_configuration(
     )
 
 
-def new_tahoe_configuration(deploy_config, bucketname, publichost, privatehost, introducer_port, storageserver_port):
+def new_tahoe_configuration(deploy_config, bucketname, key_prefix, publichost, privatehost, introducer_port, storageserver_port):
     """
     Create brand new secrets and configuration for use by an
     introducer/storage pair.
@@ -136,6 +144,7 @@ def new_tahoe_configuration(deploy_config, bucketname, publichost, privatehost, 
         storageserver_port=storageserver_port,
 
         bucket_name=bucketname,
+        key_prefix=key_prefix,
         publichost=publichost,
         privatehost=privatehost,
         # The object of the reference is irrelevant.  The furl will
