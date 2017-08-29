@@ -77,7 +77,6 @@ class SiteOptions(Options):
         ),
         ("cross-domain", None, None, "The domain for allowing cross origin for the subscription form"
             "(useful for different environment switching)",
-            urlFromBytes,
         ),
     ]
 

@@ -43,13 +43,8 @@ class Mailer(object):
         )
 
 class CreateSubscription(HandlerBase):
-    def addHeaders(self, request):
-      request.setHeader('Access-Control-Allow-Origin', 'http://localhost:5000')
-      return request
-
-    def __init__(self, get_signup, mailer, stripe):
+    def __init__(self, get_signup, mailer, stripe, cross_domain):
         """
-
         :param get_signup: A one-argument callable which returns an ``ISignup``
             which can sign up a new user for us.  The argument is the kind of
             signup desired, ``wormhole`` or ``email``.
@@ -59,7 +54,12 @@ class CreateSubscription(HandlerBase):
         self._get_signup = get_signup
         self._mailer = mailer
         self._stripe = stripe
+        self._cross_domain = cross_domain
     
+    def addHeaders(self, request, cross_domain):
+      request.setHeader('Access-Control-Allow-Origin', cross_domain)
+      return request
+
     # The following helper methods are all called directly or indirectly by render.
     def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject, notes=''):
         print >>self.out, "Got %s from the stripe.Customer.create call:" % (error.__class__.__name__,)
@@ -134,7 +134,7 @@ class CreateSubscription(HandlerBase):
             )
 
     def render_POST(self, request):
-        request = self.addHeaders(request)
+        request = self.addHeaders(request, self._cross_domain)
         stripe_authorization_token = request.args.get(b"stripeToken")[0]
         user_email = request.args.get(b"email")[0]
 
