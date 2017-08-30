@@ -332,7 +332,7 @@ def create_deployment(deploy_config, details, model):
     # probe interval for the given container.  This serves to de-synchronize
     # liveness probes across pods for different subscriptions to avoid having
     # them all restarted in one thundering herd.
-    jitter = hash(details.subscription_id) % 120
+    jitter = hash(details.subscription_id) % 1200
 
     def named(name):
         def predicate(key, value):
