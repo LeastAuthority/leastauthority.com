@@ -20,10 +20,10 @@ class MakeResourceTests(TestCase):
     Tests for ``make_resource``.
     """
     def test_interface(self):
-        cross_domain = "http://localhost:5000/"
         """
         ``make_resource`` returns an ``IResource`` provider.
         """
+        cross_domain = "http://localhost:5000/"
         p = FilePath(self.mktemp().decode("ascii"))
         p.makedirs()
         resource = make_resource(
