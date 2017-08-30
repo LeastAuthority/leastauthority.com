@@ -103,6 +103,7 @@ def create_configuration(deploy_config, details, model):
         introducer_port=details.introducer_port_number,
         storageserver_port=details.storage_port_number,
         bucket_name=details.bucketname,
+        key_prefix=details.key_prefix,
         publichost=public_host,
         privatehost=private_host,
         introducer_furl=details.external_introducer_furl,

@@ -94,6 +94,11 @@ def make_external_furl(internal_furl, publichost, port):
 
 @attr.s(frozen=True)
 class SubscriptionDetails(object):
+    # TODO: Old subscriptions have distinctive bucket names.  Newer
+    # subscriptions all share a bucket.  It would be nice to migrate all the
+    # old subscription data to the single shared bucket and then get rid of
+    # this field.  Once there's just one bucket, the configuration about which
+    # bucket that is can live on DeploymentConfiguration.
     bucketname = attr.ib()
 
     # Like the thing returned by secrets_to_legacy_format.
@@ -114,6 +119,11 @@ class SubscriptionDetails(object):
 
     introducer_port_number = attr.ib()
     storage_port_number = attr.ib()
+
+    key_prefix = attr.ib(
+        validator=validators.instance_of(unicode),
+        default=u"",
+    )
 
     @property
     def publichost(self):

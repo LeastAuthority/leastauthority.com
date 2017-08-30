@@ -261,8 +261,9 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         self.case = case
         self.path = FilePath(mkdtemp().decode("utf-8"))
         self.domain = u"s4.example.com"
+        self.bucket = u"s4"
         self.database = SubscriptionDatabase.from_directory(
-            self.path, self.domain,
+            self.path, self.domain, self.bucket,
         )
 
         # Track which subscriptions have had these resources created in
@@ -501,7 +502,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             subscription = database.get_subscription(sid)
             assert_that(
                 buckets,
-                Contains(get_bucket_name(sid, subscription.customer_id)),
+                Contains(subscription.bucketname),
             )
             # Note we don't check that S3 buckets for deactivated
             # subscriptions don't exist because we're not actually ready to

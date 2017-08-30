@@ -291,6 +291,14 @@ def introducer_configuration(node_pems=node_pems):
         _add_furl("stats-gatherer-swissnum", "stats_gatherer_furl")
     )
 
+
+def key_prefixes():
+    return strategies.builds(
+        lambda sid: sid + u"/",
+        subscription_id(),
+    )
+
+
 def storage_configuration(keypair=keyutil.make_keypair(), node_pems=node_pems):
     return strategies.fixed_dictionaries({
         "port": port_number(),
@@ -299,6 +307,7 @@ def storage_configuration(keypair=keyutil.make_keypair(), node_pems=node_pems):
         "node_privkey": strategies.sampled_from([keypair[0]]),
 
         "bucket_name": bucket_name(),
+        "key_prefix": strategies.one_of(strategies.none(), key_prefixes()),
         "publichost": ipv4_addresses(),
         "privatehost": ipv4_addresses(),
         "s3_access_key_id": aws_access_key_id(),
@@ -415,6 +424,7 @@ def subscription_details():
             **kw
         ),
         bucketname=bucket_name(),
+        key_prefix=key_prefixes(),
         oldsecrets=old_secrets(),
         customer_email=emails(),
         customer_pgpinfo=strategies.none(),

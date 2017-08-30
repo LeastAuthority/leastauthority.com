@@ -451,14 +451,16 @@ spec:
           - '--kubernetes-namespace=$(POD_KUBERNETES_NAMESPACE)'
           - '--aws-access-key-id-path=/app/k8s_secrets/aws.id'
           - '--aws-secret-access-key-path=/app/k8s_secrets/aws.key'
-          - '--introducer-image=leastauthority/tahoe-introducer:53ce862'
-          - '--storageserver-image=leastauthority/tahoe-storage:53ce862'
+          - '--introducer-image=leastauthority/tahoe-introducer:$(TAHOE_LAFS_REV)'
+          - '--storageserver-image=leastauthority/tahoe-storage:$(TAHOE_LAFS_REV)'
           - '--endpoint=http://subscription-manager/'
           - '--k8s-service-account'
           - '--eliot-destination=file:/app/log/convergence.json'
           - '--log-gatherer-furl=$(LOG_GATHERER_FURL)'
         workingDir: '/app/run'
         env:
+          - name: 'TAHOE_LAFS_REV'
+            value: '5fc1626'
           - name: 'S4_DOMAIN'
             valueFrom:
               secretKeyRef:
@@ -534,6 +536,7 @@ spec:
           - 's4-subscription-manager'
           - '--domain'
           - '$(S4_DOMAIN)'
+          - '--bucket-name=$(S4_BUCKET)'
           - '--state-path'
           - '/app/data/subscriptions'
           - '--listen-address'
@@ -546,6 +549,12 @@ spec:
               secretKeyRef:
                 name: 's4'
                 key: 'domain'
+          - name: 'S4_BUCKET'
+            valueFrom:
+              secretKeyRef:
+                name: 's4'
+                key: 'bucket-name'
+
         workingDir: '/app/run'
 
         volumeMounts:

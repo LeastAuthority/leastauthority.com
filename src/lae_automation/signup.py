@@ -108,7 +108,7 @@ class _Provisioner(object):
 
     def signup(self, customer_email, customer_id, subscription_id, plan_id):
         details = SubscriptionDetails(
-            bucketname=get_bucket_name(subscription_id, customer_id),
+            bucketname=None,
             oldsecrets=None,
             customer_email=customer_email,
             customer_pgpinfo="",

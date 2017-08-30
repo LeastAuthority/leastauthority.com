@@ -30,7 +30,13 @@ from .matchers import AttrsEquals, GoodEquals
 
 def partial_subscription_details():
     return subscription_details().map(
-        lambda d: attr.assoc(d, oldsecrets=None),
+        lambda d: attr.assoc(
+            d,
+            bucketname=None,
+            # Duplicate key prefix assignment logic in subscription manager. :/
+            key_prefix=d.subscription_id + u"/",
+            oldsecrets=None,
+        ),
     )
 
 
@@ -63,14 +69,28 @@ class SubscriptionManagerTestMixin(object):
             introducer_port_number=10000,
             storage_port_number=10001,
             oldsecrets=created.oldsecrets,
+
+            # This isn't random but it's hard to predict the value from here.
+            # Just make sure we get the same values back from subsequent
+            # calls.
+            bucketname=created.bucketname,
         )
-        self.expectThat(expected, AttrsEquals(created))
+        self.expectThat(
+            expected, AttrsEquals(created),
+            "create() subscription mismatches expected",
+        )
 
         [listed] = self.successResultOf(client.list())
-        self.expectThat(expected, AttrsEquals(listed))
+        self.expectThat(
+            expected, AttrsEquals(listed),
+            "list() subscription mismatches expected",
+        )
 
         retrieved = self.successResultOf(client.get(details.subscription_id))
-        self.expectThat(expected, AttrsEquals(retrieved))
+        self.expectThat(
+            expected, AttrsEquals(retrieved),
+            "get() subscription mismatches expected",
+        )
 
 
     @given(
@@ -137,7 +157,7 @@ class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
     def get_client(self):
         return memory_client(
             FilePath(mkdtemp().decode("utf-8")),
-            u"s4.example.com"
+            u"s4.example.com",
         )
 
 
@@ -152,6 +172,7 @@ class MakeServiceTests(TestCase):
         options = Options()
         options.parseOptions([
             b"--domain", b"s4.example.com",
+            b"--bucket-name", b"s4-bucket",
             b"--state-path", self.mktemp(),
             b"--listen-address", b"tcp:12345",
         ])
