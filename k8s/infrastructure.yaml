@@ -234,9 +234,8 @@ spec:
           - '--site-logs-path=/app/log/httpd.json'
           - '--subscription-manager=http://subscription-manager/'
           - '--metrics-port=tcp:9000'
-          - '--eliot-destination'
           - '--cross-domain=$(CROSS_DOMAIN)'
-          - 'file:/app/log/twist.json'
+          - '--eliot-destination=file:/app/log/twist.json'
         workingDir: '/app/run'
         ports:
         # We just happen to know these are the ports this container listens on.
