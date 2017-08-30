@@ -30,7 +30,7 @@ from lae_util.fluentd_destination import (
 )
 
 from lae_site.handlers import make_resource, make_site, make_redirector_site
-from lae_site.handlers.submit_subscription import Stripe, Mailer
+from lae_site.handlers.create_subscription import Stripe, Mailer
 
 from lae_automation.signup import (
     provision_subscription,
