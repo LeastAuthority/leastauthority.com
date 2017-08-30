@@ -547,6 +547,11 @@ spec:
               secretKeyRef:
                 name: 's4'
                 key: 'domain'
+          - name: 'CROSS_DOMAIN'
+            valueFrom:
+              secretKeyRef:
+                name: 's4'
+                key: 'cross-domain'
         workingDir: '/app/run'
 
         volumeMounts:

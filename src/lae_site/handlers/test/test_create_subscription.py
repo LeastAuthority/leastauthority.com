@@ -1,5 +1,5 @@
 """
-Tests for ``lae_site.submit_subscription``.
+Tests for ``lae_site.create_subscription``.
 """
 
 import attr
@@ -12,7 +12,7 @@ from twisted.web.http import OK
 from twisted.web.resource import Resource
 
 from lae_util.testtools import TestCase
-from lae_site.handlers.submit_subscription import SubmitSubscriptionHandler
+from lae_site.handlers.create_subscription import CreateSubscription
 
 from treq.testing import RequestTraversalAgent
 
@@ -62,7 +62,6 @@ class Plan(object):
     id = attr.ib()
 
 
-
 @attr.s
 class PositiveStripe(object):
     def create(self, authorization_token, plan_id, email):
@@ -96,7 +95,7 @@ class MemoryMailer(object):
 
 class FullSignupTests(TestCase):
     """
-    Tests for ``SubmitSubscriptionHandler``.
+    Tests for ``CreateSubscription``.
     """
     def test_render_signup_success(self):
         """
@@ -104,9 +103,10 @@ class FullSignupTests(TestCase):
         self.signup = TrivialSignup()
         self.mailer = MemoryMailer()
         self.stripe = PositiveStripe()
+        self.cross_domain = "http://localhost:5000/"
 
-        resource = SubmitSubscriptionHandler(
-            lambda style: self.signup, self.mailer, self.stripe,
+        resource = CreateSubscription(
+            lambda style: self.signup, self.mailer, self.stripe, self.cross_domain
         )
         root = Resource()
         root.putChild(b"", resource)
