@@ -60,6 +60,7 @@ from .containers import (
     configmap_public_host,
     create_configuration,
     create_deployment,
+    profile_deployment,
     new_service,
 )
 from .initialize import create_user_bucket
@@ -654,6 +655,11 @@ def _converge_deployments(actual, deploy_config, subscriptions, k8s, aws):
         ))
     def create(subscription):
         deployment = create_deployment(deploy_config, subscription, k8s.k8s.model)
+
+        # XXXX HAHA
+        if u"+profile@" in subscription.customer_email:
+            deployment = profile_deployment(k8s.k8s.model, deployment)
+
         return k8s.create(deployment)
 
     deletes = list(partial(delete, sid) for sid in changes.delete)

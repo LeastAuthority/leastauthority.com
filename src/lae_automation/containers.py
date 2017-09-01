@@ -321,6 +321,48 @@ def deployment_name(subscription_id):
 
 
 
+def _named_pred(name):
+    def predicate(key, value):
+        return value.name == name
+    return predicate
+
+
+
+def profile_deployment(model, deployment):
+    def append(element):
+        def appender(sequence):
+            return sequence + [element]
+        return appender
+
+    pod_spec = [u"spec", u"template", u"spec"]
+    storageserver = pod_spec + [u"containers", _named_pred(u"storageserver")]
+    return deployment.transform(
+        pod_spec + [u"volumes"],
+        append(model.v1.Volume(
+            name=u"tahoe-profiles",
+            persistentVolumeClaim={u"claimName": u"tahoe-profiles"},
+        )),
+
+        storageserver + [u"command"],
+        [u"/bin/sh", u"-c"],
+
+        storageserver + [u"args"],
+        [
+            u"""
+            /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json \
+            && /app/env/bin/tahoe run /var/run/storageserver \
+                --profile=/profiles/tahoe-$(date +%s).stats \
+                --profiler=cprofile \
+                --savestats
+            """,
+        ],
+
+        storageserver + [u"volumeMounts"],
+        append(model.v1.VolumeMount(mountPath=u"/profiles", name=u"tahoe-profiles")),
+    )
+
+
+
 def create_deployment(deploy_config, details, model):
     name = deployment_name(details.subscription_id)
     configmap = configmap_name(details.subscription_id)
@@ -339,11 +381,6 @@ def create_deployment(deploy_config, details, model):
     # liveness probes across pods for different subscriptions to avoid having
     # them all restarted in one thundering herd.
     jitter = hash(details.subscription_id) % 1200
-
-    def named(name):
-        def predicate(key, value):
-            return value.name == name
-        return predicate
 
     deployment = _deployment_template(model).transform(
         # Make sure it ends up in our namespace.
@@ -365,12 +402,12 @@ def create_deployment(deploy_config, details, model):
 
         # The deployment configuration tells us what images we're supposed to
         # be using at the moment.
-        [u"spec", u"template", u"spec", u"containers", named(u"introducer"), u"image"],
+        [u"spec", u"template", u"spec", u"containers", _named_pred(u"introducer"), u"image"],
         deploy_config.introducer_image,
 
         # The deployment configuration tells us what images we're supposed to
         # be using at the moment.
-        [u"spec", u"template", u"spec", u"containers", named("storageserver"), u"image"],
+        [u"spec", u"template", u"spec", u"containers", _named_pred("storageserver"), u"image"],
         deploy_config.storageserver_image,
 
         # Assign it service names and a port numbers.
@@ -378,18 +415,18 @@ def create_deployment(deploy_config, details, model):
         # that it be unique within the pod, since we want to expose these via
         # a v1.Service, we need to make them unique across all pods the
         # service is going to select.  That's all pods for customer grids.
-        ["spec", "template", "spec", "containers", named(u"introducer"), "ports", 0],
+        ["spec", "template", "spec", "containers", _named_pred(u"introducer"), "ports", 0],
         model.v1.ContainerPort(name=intro_name, containerPort=details.introducer_port_number),
 
-        ["spec", "template", "spec", "containers", named(u"storageserver"), "ports", 0],
+        ["spec", "template", "spec", "containers", _named_pred(u"storageserver"), "ports", 0],
         model.v1.ContainerPort(name=storage_name, containerPort=details.storage_port_number),
 
         # Add some jitter to the liveness probe intervals to avoid a
         # thundering herd on configuration updates and such.
-        ["spec", "template", "spec", "containers", named(u"introducer"), "livenessProbe", "periodSeconds"],
+        ["spec", "template", "spec", "containers", _named_pred(u"introducer"), "livenessProbe", "periodSeconds"],
         lambda seconds: seconds + jitter,
 
-        ["spec", "template", "spec", "containers", named(u"storageserver"), "livenessProbe", "periodSeconds"],
+        ["spec", "template", "spec", "containers", _named_pred(u"storageserver"), "livenessProbe", "periodSeconds"],
         lambda seconds: seconds + jitter,
 
         # Some other metadata to make inspecting this stuff a little easier.
