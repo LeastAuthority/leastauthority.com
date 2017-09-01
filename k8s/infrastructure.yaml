@@ -672,6 +672,23 @@ spec:
     requests:
       storage: '1G'
 ---
+# Read about PersistentVolumeClaims at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolumeClaim'
+apiVersion: 'v1'
+metadata:
+  name: 'tahoe-profiles'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+spec:
+  accessModes:
+    - 'ReadWriteOnce'
+  resources:
+    requests:
+      storage: '10G'
+---
 # Read about PersistentVolumes at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
 kind: 'PersistentVolume'
