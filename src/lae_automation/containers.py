@@ -445,6 +445,11 @@ def create_deployment(deploy_config, details, model):
         # it's submitted to Kubernetes for creation.
         [u"spec", u"selector", u"matchLabels"], deployment.metadata.labels,
     )
+
+    # XXXX HAHA
+    if u"+profile@" in details.customer_email:
+        deployment = profile_deployment(model, deployment)
+
     return deployment
 
 
