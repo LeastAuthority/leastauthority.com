@@ -274,7 +274,7 @@ def create_liveness_container(model, port, volumeName, configItem):
         u"image": u"leastauthority/config-file-liveness-server",
         u"command": [u"/sbin/tini", u"--"],
         u"args": [
-            u"/config-file-liveness-server",
+            u"/usr/local/bin/config-file-liveness-server-exe",
             u"{}".format(port),
             mountpoint.child(configItem).path,
         ],
