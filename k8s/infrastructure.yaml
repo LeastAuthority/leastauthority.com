@@ -238,6 +238,12 @@ spec:
           - '--cross-domain=$(CROSS_DOMAIN)'
           - 'file:/app/log/twist.json'
         workingDir: '/app/run'
+        env:
+          - name: 'CROSS_DOMAIN'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+                key: 'cross-domain'
         ports:
         # We just happen to know these are the ports this container listens on.
         - containerPort: 8443
@@ -547,11 +553,6 @@ spec:
               secretKeyRef:
                 name: 's4'
                 key: 'domain'
-          - name: 'CROSS_DOMAIN'
-            valueFrom:
-              secretKeyRef:
-                name: 's4'
-                key: 'cross-domain'
         workingDir: '/app/run'
 
         volumeMounts:
