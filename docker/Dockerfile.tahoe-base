@@ -13,6 +13,9 @@ RUN git clone "${TAHOE_LAFS_GIT_REPO_URL}" /app/code && \
     git -C /app/code checkout "${TAHOE_LAFS_GIT_REV}"
 
 
+RUN /app/env/bin/pip install dumb-init
+ENTRYPOINT ["/app/env/bin/dumb-init", "--"]
+
 RUN /app/env/bin/pip install https://github.com/twisted/txaws/archive/master.zip
 RUN /app/env/bin/pip install --find-links=https://tahoe-lafs.org/deps -e /app/code[test]
 

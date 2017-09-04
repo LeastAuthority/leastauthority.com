@@ -4,4 +4,4 @@ RUN /app/env/bin/tahoe create-node /var/run/storageserver
 
 CMD \
     /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json \
-    && /app/env/bin/tahoe run /var/run/storageserver
+    && exec /app/env/bin/tahoe run /var/run/storageserver
