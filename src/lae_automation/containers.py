@@ -329,10 +329,15 @@ def _named_pred(name):
 
 
 def profile_deployment(model, deployment):
-    def append(element):
-        def appender(sequence):
-            return sequence + [element]
-        return appender
+    def transformer_kind(op):
+        def make_transformer(element):
+            def transform(target):
+                return getattr(target, op)(element)
+            return transform
+        return make_transformer
+
+    append = transformer_kind("append")
+    extend = transformer_kind("extend")
 
     pod_spec = [u"spec", u"template", u"spec"]
     storageserver = pod_spec + [u"containers", _named_pred(u"storageserver")]
@@ -347,15 +352,11 @@ def profile_deployment(model, deployment):
         [u"/bin/sh", u"-c"],
 
         storageserver + [u"args"],
-        [
-            u"""
-            /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json \
-            && /app/env/bin/tahoe run /var/run/storageserver \
-                --profile=/profiles/tahoe-$(date +%s).stats \
-                --profiler=cprofile \
-                --savestats
-            """,
-        ],
+        extend([
+            u"--profile=/profiles/tahoe-{date}.stats",
+            u"--profiler=cprofile",
+            u"--savestats",
+        ]),
 
         storageserver + [u"volumeMounts"],
         append(model.v1.VolumeMount(mountPath=u"/profiles", name=u"tahoe-profiles")),
