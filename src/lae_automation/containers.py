@@ -271,7 +271,7 @@ def create_liveness_container(model, port, volumeName, configItem):
     return model.v1.Container(**{
         u"name": u"config-liveness-sidecar-{}".format(port),
         u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
-        u"entrypoint": [u"/sbin/tini", u"--"],
+        u"command": [u"/sbin/tini", u"--"],
         u"args": [
             u"/config-file-liveness-server",
             u"{}".format(port),
