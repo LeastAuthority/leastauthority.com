@@ -337,7 +337,6 @@ def profile_deployment(model, deployment):
         return make_transformer
 
     append = transformer_kind("append")
-    extend = transformer_kind("extend")
 
     pod_spec = [u"spec", u"template", u"spec"]
     storageserver = pod_spec + [u"containers", _named_pred(u"storageserver")]
@@ -348,15 +347,15 @@ def profile_deployment(model, deployment):
             persistentVolumeClaim={u"claimName": u"tahoe-profiles"},
         )),
 
-        storageserver + [u"command"],
-        [u"/bin/sh", u"-c"],
-
         storageserver + [u"args"],
-        extend([
-            u"--profile=/profiles/tahoe-{date}.stats",
-            u"--profiler=cprofile",
-            u"--savestats",
-        ]),
+        [
+            u"/bin/sh", u"-c",
+            u"""
+            /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json
+                && exec /app/env/bin/tahoe run /var/run/storageserver
+                    --profile=/profiles/tahoe-$(date +%s).stats --profiler=cprofile --savestats
+            """.replace(u"\n", u" "),
+        ],
 
         storageserver + [u"volumeMounts"],
         append(model.v1.VolumeMount(mountPath=u"/profiles", name=u"tahoe-profiles")),
