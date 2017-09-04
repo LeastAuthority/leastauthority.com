@@ -239,9 +239,9 @@ spec:
         workingDir: '/app/run'
         env:
           - name: 'CROSS_DOMAIN'
-          valueFrom:
-            secretKeyRef:
-              name: 's4'
+            valueFrom:
+              secretKeyRef:
+                name: 's4'
                 key: 'cross-domain'
         ports:
         # We just happen to know these are the ports this container listens on.
