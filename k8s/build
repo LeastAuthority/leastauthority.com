@@ -9,7 +9,8 @@ from twisted.python.filepath import FilePath
 
 from pyrsistent import freeze, thaw
 
-from yaml import safe_load, safe_dump
+from yaml import safe_load
+from json import dumps
 
 HERE = FilePath(__file__).parent()
 
@@ -42,7 +43,12 @@ def main(rev=None):
     )
 
     with NamedTemporaryFile() as fObj:
-        fObj.write(safe_dump(thaw(job)))
+        # Specifically use JSON here because Kubernetes (1.6.x) yaml parser is
+        # buggy.  For example, it treats ``153e147`` as a number instead of a
+        # string.  Quotes are required to force the string interpretation.
+        # Bypass all of that by going with a format that more than one person
+        # can actually understand.
+        fObj.write(dumps(thaw(job)))
         fObj.flush()
 
         print(check_output([u"kubectl", u"--context", context_name, u"create", u"-f", fObj.name]))
