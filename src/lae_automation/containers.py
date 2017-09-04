@@ -270,6 +270,7 @@ def create_liveness_container(model, port, volumeName, configItem):
     mountpoint = FilePath(u"/config")
     return model.v1.Container(**{
         u"name": u"config-liveness-sidecar-{}".format(port),
+        u"imagePullPolicy": u"Always",
         u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
         u"command": [u"/sbin/tini", u"--"],
         u"args": [
