@@ -2,6 +2,8 @@ FROM leastauthority/tahoe-base
 
 RUN /app/env/bin/tahoe create-node /var/run/storageserver
 
+ADD cProfileCPU.py /app/env/lib/python2.7/site-packages/cProfileCPU.py
+
 CMD \
     /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json \
     && exec /app/env/bin/tahoe run /var/run/storageserver

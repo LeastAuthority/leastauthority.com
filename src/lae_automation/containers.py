@@ -352,7 +352,7 @@ def profile_deployment(model, deployment):
             u"/bin/sh", u"-c",
             u"""
             /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json
-                && exec /app/env/bin/tahoe run /var/run/storageserver
+                && exec /app/env/bin/python -m cProfileCPU /app/env/bin/tahoe run /var/run/storageserver
                     --profile=/profiles/tahoe-$(date +%s).stats --profiler=cprofile --savestats
             """.replace(u"\n", u" "),
         ],
