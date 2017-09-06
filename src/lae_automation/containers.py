@@ -354,7 +354,8 @@ def profile_deployment(model, deployment):
             # the addition of the profiling command.
             u"""
             /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json
-                && exec /app/env/bin/python -m cProfileCPU /app/env/bin/tahoe run /var/run/storageserver
+                && exec /app/env/bin/python -m cProfileCPU -o /profiles/tahoe-$(date +%s).stats \
+                            /app/env/bin/tahoe run /var/run/storageserver
             """.replace(u"\n", u" "),
         ],
 
