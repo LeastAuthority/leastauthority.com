@@ -350,10 +350,11 @@ def profile_deployment(model, deployment):
         storageserver + [u"args"],
         [
             u"/bin/sh", u"-c",
+            # Largely copy/paste from Dockerfile.tahoe-storageserver but with
+            # the addition of the profiling command.
             u"""
             /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json
                 && exec /app/env/bin/python -m cProfileCPU /app/env/bin/tahoe run /var/run/storageserver
-                    --profile=/profiles/tahoe-$(date +%s).stats --profiler=cprofile --savestats
             """.replace(u"\n", u" "),
         ],
 
