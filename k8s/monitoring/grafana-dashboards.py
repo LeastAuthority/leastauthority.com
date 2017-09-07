@@ -228,8 +228,8 @@ def tahoe_lafs_transfer_rate(datasource):
                 # the deploying is updated, for example) there's a little.
                 expr="""
                 avg without (pod,instance) (
-                    rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_sum{{service="tahoe-lafs-transfer-rate-monitor"}}[5m])
-                  / rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_count{{service="tahoe-lafs-transfer-rate-monitor"}}[5m])
+                    rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_sum{{service="tahoe-lafs-transfer-rate-monitor"}}[60m])
+                  / rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_count{{service="tahoe-lafs-transfer-rate-monitor"}}[60m])
                 )
                 """.format(metric=metric),
                 legendFormat="avg " + legend_format,
@@ -251,7 +251,7 @@ def tahoe_lafs_transfer_rate(datasource):
                     histogram_quantile(
                         0.10,
                         rate(
-                            tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_bucket{{service="tahoe-lafs-transfer-rate-monitor"}}[5m]
+                            tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_bucket{{service="tahoe-lafs-transfer-rate-monitor"}}[60m]
                         )
                     )
                 )
