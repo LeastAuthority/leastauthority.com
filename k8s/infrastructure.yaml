@@ -451,16 +451,21 @@ spec:
           - '--kubernetes-namespace=$(POD_KUBERNETES_NAMESPACE)'
           - '--aws-access-key-id-path=/app/k8s_secrets/aws.id'
           - '--aws-secret-access-key-path=/app/k8s_secrets/aws.key'
-          - '--introducer-image=leastauthority/tahoe-introducer:$(TAHOE_LAFS_REV)'
-          - '--storageserver-image=leastauthority/tahoe-storage:$(TAHOE_LAFS_REV)'
+          - '--introducer-image=$(TAHOE_LAFS_INTRODUCER_IMAGE)'
+          - '--storageserver-image=$(TAHOE_LAFS_STORAGESERVER_IMAGE)'
           - '--endpoint=http://subscription-manager/'
           - '--k8s-service-account'
           - '--eliot-destination=file:/app/log/convergence.json'
           - '--log-gatherer-furl=$(LOG_GATHERER_FURL)'
         workingDir: '/app/run'
         env:
-          - name: 'TAHOE_LAFS_REV'
-            value: '626dad7'
+          # These two env vars can be rewritten (with the correct tag) by
+          # k8s/rewrite-objects.py
+          - name: 'TAHOE_LAFS_INTRODUCER_IMAGE'
+            value: 'leastauthority/tahoe-introducer'
+          - name: 'TAHOE_LAFS_STORAGESERVER_IMAGE'
+            value: 'leastauthority/tahoe-storage'
+
           - name: 'S4_DOMAIN'
             valueFrom:
               secretKeyRef:
