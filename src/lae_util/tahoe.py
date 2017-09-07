@@ -12,7 +12,7 @@ from tempfile import mkdtemp
 from random import randrange
 
 from twisted.python.filepath import FilePath
-from twisted.internet.defer import succeed
+from twisted.internet.defer import inlineCallbacks, succeed
 from twisted.internet.interfaces import IProcessTransport
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet.utils import getProcessOutput
@@ -86,7 +86,7 @@ class _TahoeConfiguration(object):
 
 @attr.s
 class _TahoeClient(object):
-    configuration = attr.ib(validator=instance_of(_TahoeConfiguration))
+    configuration = attr.ib(validator=optional(instance_of(_TahoeConfiguration)))
     root = attr.ib(validator=optional(instance_of(FilePath)))
     root_uri = attr.ib(validator=instance_of(URL))
 
@@ -118,11 +118,12 @@ class _TahoeProcess(object):
 @attr.s(frozen=True)
 class _LAFS(object):
     tahoe_client = attr.ib(validator=instance_of(_TahoeClient))
-    tahoe_process = attr.ib(validator=instance_of(_TahoeProcess))
+    tahoe_process = attr.ib(validator=optional(instance_of(_TahoeProcess)))
     treq = attr.ib()
 
     def shutdown(self):
-        return self.tahoe_process.stop()
+        if self.tahoe_process is not None:
+            return self.tahoe_process.stop()
 
 
     @property
@@ -131,7 +132,9 @@ class _LAFS(object):
 
 
     def _put_file(self, uri, contents):
-        d = self.treq.put(uri.to_uri().to_text().encode("ascii"), contents)
+        uri_bytes = uri.to_uri().to_text().encode("ascii")
+        print("PUT {}".format(uri_bytes))
+        d = self.treq.put(uri_bytes, contents)
         d.addCallback(self.treq.text_content)
         return d
 
@@ -148,10 +151,27 @@ class _LAFS(object):
 
     def read_file(self, loc):
         uri = self._root_uri.child(u"uri", *loc)
-        d = self.treq.get(uri.to_uri().to_text().encode("ascii"))
+        uri_bytes = uri.to_uri().to_text().encode("ascii")
+        print("GET {}".format(uri_bytes))
+        d = self.treq.get(uri_bytes)
         d.addCallback(self.treq.content)
         return d
 
+
+def join_tahoe_lafs_client(client_directory, treq=_treq):
+    config = get_config(client_directory.child(u"tahoe.cfg").path)
+    server_endpoint = config.get("node", "web.port")
+    root_uri = URL(u"http", u"127.0.0.1", port=int(server_endpoint.split(":")[1]))
+    client = _TahoeClient(
+        configuration=None,
+        root=client_directory,
+        root_uri=root_uri,
+    )
+    return _LAFS(
+        tahoe_client=client,
+        tahoe_process=None,
+        treq=_treq,
+    )
 
 
 def create_tahoe_lafs_client(reactor, treq=_treq, **configuration):
@@ -190,7 +210,7 @@ def _wait_until_reachable(reactor, treq, uri):
 
 def roundtrip_check(lafs, mutable_file_loc):
     pattern = u"{:04x}".format(randrange(2 ** 16)).encode("ascii")
-    contents = 512 * (256 * pattern)
+    contents = (16 * 1024 * 1024) / len(pattern) * pattern
     size = len(contents)
     d = _measure_async_time(
         lambda interval: _WRITE_RATE.observe(size / interval),
@@ -252,20 +272,54 @@ _WRITE_RATE = Histogram(
 )
 
 
-def main(reactor, introducer_furl, mutable_file_cap):
-    d = create_tahoe_lafs_client(
-        reactor,
-        introducer_furl=introducer_furl.decode("ascii"),
-    )
-    d.addCallback(
-        roundtrip_check,
-        [mutable_file_cap.decode("ascii")],
-    )
-    def done(ignored):
-        from prometheus_client import REGISTRY, write_to_textfile
-        write_to_textfile("/tmp/roundtrip.prom", REGISTRY)
-    d.addCallback(done)
-    return d
+from twisted.python.usage import (
+    Options,
+    UsageError,
+)
+
+class Options(Options):
+    optParameters = [
+        (u"introducer-furl", None, None, "The introducer fURL to use."),
+        (u"mutable-file-cap", None, None, "An existing mutable file cap to re-write."),
+        (u"client-directory", None, None, "The directory of an existing Tahoe-LAFS client to use.", FilePath),
+    ]
+
+    optFlags = [
+        ("preserve-tahoe", None, "If a Tahoe-LAFS process is started, leave it running."),
+    ]
+
+
+@inlineCallbacks
+def main(reactor, *argv):
+    options = Options()
+    try:
+        options.parseOptions(argv)
+    except UsageError as e:
+        raise SystemExit(str(e))
+
+    if options[u"client-directory"]:
+        client = join_tahoe_lafs_client(options[u"client-directory"])
+    else:
+        introducer_furl = options[u"introducer-furl"]
+        client = yield create_tahoe_lafs_client(
+            reactor,
+            introducer_furl=introducer_furl.decode("ascii"),
+        )
+        if options[u"preserve-tahoe"]:
+            print(u"Tahoe: {}".format(client.tahoe_client.root.path))
+        else:
+            reactor.addSystemEventTrigger("before", "shutdown", lambda: client.shutdown())
+
+    mutable_file_cap = options[u"mutable-file-cap"]
+
+    if mutable_file_cap is None:
+        mutable_file_cap = (yield client.create_mutable_file(b"xxx")).strip()
+        print(mutable_file_cap)
+
+    yield roundtrip_check(client, [mutable_file_cap.decode("ascii")])
+
+    from prometheus_client import REGISTRY, write_to_textfile
+    write_to_textfile("/tmp/roundtrip.prom", REGISTRY)
 
 
 
