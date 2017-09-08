@@ -93,7 +93,7 @@ class Options(Options):
 @attr.s
 class _CheckTime(object):
     clock = attr.ib()
-    when = attr.ib()
+    _when = attr.ib()
 
 
     def set(self):
@@ -110,7 +110,7 @@ def makeService(options):
 
     service = MultiService()
 
-    last_check = _CheckTime(reactor, reactor.seconds())
+    last_check = _CheckTime(clock=reactor, when=reactor.seconds())
 
     AsynchronousService(
         lambda: _create_monitor_service(
