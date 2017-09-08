@@ -25,7 +25,7 @@ from attr.validators import optional, instance_of, provides
 
 from hyperlink import URL
 
-from prometheus_client import Histogram, Counter
+from prometheus_client import Counter, Gauge
 
 from allmydata.util.configutil import (
     get_config,
@@ -213,12 +213,12 @@ def roundtrip_check(lafs, mutable_file_loc):
     contents = (16 * 1024 * 1024) / len(pattern) * pattern
     size = len(contents)
     d = _measure_async_time(
-        lambda interval: _WRITE_RATE.observe(size / interval),
+        lambda interval: _LAST_WRITE.set(size / interval),
         lafs.write_mutable_file(mutable_file_loc, contents),
     )
     def wrote(ignored):
         d = _measure_async_time(
-            lambda interval: _READ_RATE.observe(size / interval),
+            lambda interval: _LAST_READ.set(size / interval),
             lafs.read_file(mutable_file_loc),
         )
         return d
@@ -260,15 +260,13 @@ _ROUNDTRIP_FAILURE = Counter(
 
 _rate_buckets = tuple(n * 50 * 1024 for n in range(1, 20)) + (float("inf"),)
 
-_READ_RATE = Histogram(
-    "tahoe_lafs_roundtrip_benchmark_read_bytes_per_second",
-    "Transfer rate for reading a file on the grid.",
-    buckets=_rate_buckets,
+_LAST_READ = Gauge(
+    "tahoe_lafs_roundtrip_benchmark_last_read_bytes_per_second",
+    "Most recent measured transfer rate for reading a file on the grid.",
 )
-_WRITE_RATE = Histogram(
-    "tahoe_lafs_roundtrip_benchmark_write_bytes_per_second",
-    "Transfer rate for writing a file on the grid.",
-    buckets=_rate_buckets,
+_LAST_WRITE = Gauge(
+    "tahoe_lafs_roundtrip_benchmark_last_write_bytes_per_second",
+    "Most recent measured transfer rate for writeing a file on the grid.",
 )
 
 
