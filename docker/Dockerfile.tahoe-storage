@@ -5,11 +5,11 @@ RUN /app/env/bin/tahoe create-node /var/run/storageserver
 ADD cProfileCPU.py /app/env/lib/python2.7/site-packages/cProfileCPU.py
 ADD TheseusHook.py /app/env/lib/python2.7/site-packages/TheseusHook.py
 
-RUN apt-get install cython
+RUN /app/env/bin/pip install cython
 RUN git clone https://github.com/leastauthority/twisted-theseus && \
     cd twisted-theseus && \
     git checkout shutdown-isinstance-exception && \
-    pip install .
+    /app/env/bin/pip install .
 
 CMD \
     /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json \
