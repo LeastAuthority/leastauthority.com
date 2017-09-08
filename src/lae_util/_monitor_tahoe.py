@@ -82,8 +82,10 @@ class Options(Options):
          "The amount of time to allow to pass between measurements.",
          float,
         ),
+        ("shares-needed", None, 1, None, int),
+        ("shares-happy", None, 1, None, int),
+        ("shares-total", None, 1, None, int),
     ]
-
 
 
 
@@ -115,6 +117,11 @@ def makeService(options):
             options["interval"],
             options["introducer-furl"],
             options["scratch-cap"],
+            dict(
+                shares_needed=options["shares-needed"],
+                shares_happy=options["shares-happy"],
+                shares_total=options["shares-total"],
+            ),
             last_check.set,
         )
     ).setServiceParent(service)
@@ -145,10 +152,14 @@ def _timer_service(reactor, *a, **kw):
 
 
 
-def _create_monitor_service(reactor, interval, introducer_furl, mutable_file_cap, set_check_time):
+def _create_monitor_service(
+        reactor, interval, introducer_furl, mutable_file_cap, configuration,
+        set_check_time,
+):
     d = create_tahoe_lafs_client(
         reactor,
         introducer_furl=introducer_furl,
+        **configuration
     )
     d.addCallback(
         lambda lafs: _timer_service(
