@@ -55,6 +55,9 @@ spec:
           --interval=600
           --introducer-furl=$(INTRODUCER_FURL)
           --scratch-cap=$(SCRATCH_CAP)
+          --shares-needed=3
+          --shares-total=3
+          --shares-happy=1
         env:
         - name: 'INTRODUCER_FURL'
           valueFrom:
