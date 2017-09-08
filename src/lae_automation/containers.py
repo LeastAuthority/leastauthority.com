@@ -340,6 +340,10 @@ def profile_deployment(model, deployment):
 
     pod_spec = [u"spec", u"template", u"spec"]
     storageserver = pod_spec + [u"containers", _named_pred(u"storageserver")]
+
+    # profiler = u"cProfileCPU"
+    profiler = u"TheseusHook"
+
     return deployment.transform(
         pod_spec + [u"volumes"],
         append(model.v1.Volume(
@@ -350,13 +354,13 @@ def profile_deployment(model, deployment):
         storageserver + [u"args"],
         [
             u"/bin/sh", u"-c",
-            # Largely copy/paste from Dockerfile.tahoe-storageserver but with
-            # the addition of the profiling command.
+            # Largely copy/paste from Dockerfile.tahoe-storage but with the
+            # addition of the profiling command.
             u"""
             /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json
-                && exec /app/env/bin/python -m cProfileCPU -o /profiles/tahoe-$(date +%s).stats \
+                && exec /app/env/bin/python -m {profiler} -o /profiles/tahoe-$(date +%s).stats \
                             /app/env/bin/tahoe run /var/run/storageserver
-            """.replace(u"\n", u" "),
+            """.replace(u"\n", u" ").format(profiler=profiler),
         ],
 
         storageserver + [u"volumeMounts"],
