@@ -52,7 +52,7 @@ spec:
         - >
           . /app/env/bin/activate;
           twist s4-tahoe-lafs-transfer-rate-monitor
-          --interval=600
+          --interval=15
           --introducer-furl=$(INTRODUCER_FURL)
           --scratch-cap=$(SCRATCH_CAP)
           --shares-needed=3
