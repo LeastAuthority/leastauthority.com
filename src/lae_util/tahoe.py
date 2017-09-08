@@ -216,20 +216,21 @@ def roundtrip_check(lafs, mutable_file_loc):
         lambda interval: _LAST_WRITE.set(size / interval),
         lafs.write_mutable_file(mutable_file_loc, contents),
     )
-    def wrote(ignored):
-        d = _measure_async_time(
-            lambda interval: _LAST_READ.set(size / interval),
-            lafs.read_file(mutable_file_loc),
-        )
-        return d
-    d.addCallback(wrote)
 
-    def read(result):
+    def check(result):
         if contents == result:
             _ROUNDTRIP_SUCCESS.inc()
         else:
             raise Exception("mismatch response bytes:\n{}".format(result))
-    d.addCallback(read)
+
+    def wrote(ignored):
+        d = _measure_async_time(
+            lambda interval: _LAST_READ.set(size / interval),
+            lafs.read_file(mutable_file_loc).addCallback(check),
+        )
+        return d
+    d.addCallback(wrote)
+
     def failed(reason):
         _ROUNDTRIP_FAILURE.inc()
         return reason
