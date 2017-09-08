@@ -23,6 +23,7 @@ from twisted.web.resource import Resource
 from lae_util import (
     opt_metrics_port,
     AsynchronousService,
+    retry_failure, backoff,
 )
 
 from lae_util.tahoe import (
@@ -166,6 +167,7 @@ def _create_monitor_service(
             reactor,
             interval,
             _record_success(_measure, set_check_time),
+            reactor,
             lafs,
             mutable_file_cap,
         ),
@@ -174,9 +176,18 @@ def _create_monitor_service(
 
 
 
-def _measure(lafs, mutable_file_cap):
+def _measure(reactor, lafs, mutable_file_cap):
     print("Measuring")
-    return roundtrip_check(lafs, [mutable_file_cap])
+    return retry_failure(
+        reactor,
+        lambda: roundtrip_check(lafs, [mutable_file_cap]),
+        expected=(Exception,),
+        steps=backoff(
+            step=1.0,
+            maximum_step=5.0,
+            timeout=30.0,
+        ),
+    )
 
 
 
