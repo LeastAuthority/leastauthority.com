@@ -148,6 +148,11 @@ spec:
         - name: 'GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS'
           value: 'LeastAuthority'
 
+        # Comma separated list of Grafana plugins to install in the container
+        # (at startup time).
+        - name: 'GF_INSTALL_PLUGINS'
+          value: 'mtanda-histogram-panel,mtanda-heatmap-epoch-panel'
+
         volumeMounts:
         - name: 'grafana-storage'
           mountPath: '/var/grafana-storage'

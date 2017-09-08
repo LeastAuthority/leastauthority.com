@@ -2,6 +2,9 @@
 
 from __future__ import print_function, unicode_literals
 
+import attr
+from attr.validators import instance_of
+
 from sys import argv
 from io import BytesIO
 from json import loads, dumps
@@ -26,8 +29,64 @@ X_TIME = G.XAxis(
     mode="time",
 )
 
-def refId(n):
-    return str(n)
+def refidgen():
+    for i in count():
+        yield unicode(i)
+refid = refidgen()
+
+
+
+@attr.s
+class Heatmap(object):
+    title = attr.ib()
+    dataSource = attr.ib()
+    targets = attr.ib()
+    id = attr.ib(default=None)
+
+    xAxis = attr.ib(default=attr.Factory(G.XAxis), validator=instance_of(G.XAxis))
+    # XXX: This isn't a *good* default, rather it's the default Grafana uses.
+    yAxis = attr.ib(
+        default=attr.Factory(lambda: G.YAxis(format=G.SHORT_FORMAT)))
+
+    span = attr.ib(default=None)
+
+    def to_json_data(self):
+        return {
+            "title": self.title,
+            "datasource": self.dataSource,
+            "targets": self.targets,
+            "xAxis": self.xAxis,
+            'yAxis': self.yAxis,
+            "span": self.span,
+
+            "dataFormat": "timeseries",
+            "type": "heatmap",
+            "heatmap": {},
+
+            "xBucketNumber": None,
+            "xBucketSize": None,
+            "yBucketNumber": None,
+            "yBucketSize": None,
+
+            "cards": {
+                "cardPadding": None,
+                "cardRound": None,
+            },
+            "color": {
+                "cardColor": "#b4ff00",
+                "colorScale": "sqrt",
+                "colorScheme": "interpolateOranges",
+                "exponent": 0.5,
+                "mode": "spectrum"
+            },
+            "highlightCards": True,
+            "links": [],
+            "tooltip": {
+                "show": True,
+                "showHistogram": False,
+            },
+        }
+
 
 
 def cpu_usage(datasource, intervals):
@@ -68,7 +127,7 @@ def cpu_usage(datasource, intervals):
                 / cores:machine_cpu:total
                 """.format(interval),
                 legendFormat="CPU Usage ({} avg)".format(interval),
-                refId=refId(n),
+                refId=next(refid),
             )
             for n, interval in enumerate(intervals),
         ),
@@ -98,14 +157,14 @@ def memory_usage(datasource):
                 sum(machine_memory_bytes) / 2 ^ 30
                 """,
                 legendFormat="Total Physical Memory",
-                refId="A",
+                refId=next(refid),
             ),
             G.Target(
                 expr="""
                 rss:container_memory:total / 2 ^ 30
                 """,
                 legendFormat="Total Container RSS",
-                refId="B",
+                refId=next(refid),
             ),
         ],
     )
@@ -136,7 +195,7 @@ def network_usage(datasource):
                 receive:container_network_bytes:rate1m / 2 ^ 20
                 """,
                 legendFormat="receive",
-                refId="A",
+                refId=next(refid),
             ),
             G.Target(
                 # And rate of data sent.
@@ -144,7 +203,7 @@ def network_usage(datasource):
                 transmit:container_network_bytes:rate1m / 2 ^ 20
                 """,
                 legendFormat="transmit",
-                refId="B",
+                refId=next(refid),
             ),
         ],
     )
@@ -178,90 +237,32 @@ def filesystem_usage(datasource):
                 / filesystem_size_bytes{volume=~"pvc-.*"}
                 """,
                 legendFormat="{{volume}}",
-                refId="A",
+                refId=next(refid),
             ),
         ],
     )
 
 
-
-def tahoe_lafs_transfer_rate(datasource):
-    def refidgen():
-        for i in count():
-            yield unicode(i)
-    refid = refidgen()
-
-
-    return G.Graph(
-        title="Tahoe-LAFS Benchmarked Transfer Rate",
+def tahoe_lafs_transfer_rate(datasource, direction):
+    return Heatmap(
+        title="Tahoe-LAFS Benchmarked {direction} Rate".format(direction=direction),
         dataSource=datasource,
 
         xAxis=X_TIME,
-        yAxes=[
-            G.YAxis(
-                format="Bps",
-                label="Transfer Rate",
-            ),
-            G.YAxis(
-                show=False,
+        yAxis=G.YAxis(
+            format="MBs",
+            label="Transfer Rate",
+        ),
+
+        targets=[
+            G.Target(
+                expr="""
+                tahoe_lafs_roundtrip_benchmark_last_{direction}_bytes_per_second / 1024 / 1024
+                """.format(direction=direction),
+                legendFormat=direction.title(),
+                refId=next(refid),
             ),
         ],
-
-        targets=list(
-            G.Target(
-                # The metric is a Histogram.  The _sum goes up by the number of
-                # bytes/second observed by each sample taken.  For example, if
-                # the first benchmark run observes 100 bytes/sec transfer
-                # rate, the _sum is 100.  If the second benchmark run observes
-                # 75 bytes/sec transfer rate, the _sum is then 175.  The
-                # _count gives the total number of samples present in the
-                # _sum.
-                #
-                # The rate() of the _sum over a recent interval is
-                # bytes/sec/sec.  The rate() of the _count over the same
-                # interval is 1/sec.  The quotient is bytes/sec and gives an
-                # average for the metric over the recent interval.
-                #
-                # Take the average of all such results to squash series from
-                # different pods into a single result.  There should be
-                # minimal overlap but whenever the pod gets recreated (because
-                # the deploying is updated, for example) there's a little.
-                expr="""
-                avg without (pod,instance) (
-                    rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_sum{{service="tahoe-lafs-transfer-rate-monitor"}}[60m])
-                  / rate(tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_count{{service="tahoe-lafs-transfer-rate-monitor"}}[60m])
-                )
-                """.format(metric=metric),
-                legendFormat="avg " + legend_format,
-                refId=next(refid),
-            )
-            for (legend_format, metric)
-            in [("upload", "write"), ("download", "read")]
-        ) + list(
-            G.Target(
-                # The average above is nice, I suppose.  It doesn't give the
-                # full picture, though.  So also compute the rate which is
-                # slower than 90% of the results (faster than 10% of the
-                # results).  This is basically what a 90% transfer speed SLA
-                # would talk about.  Put another way, 90% of uploads should
-                # occur at a rate equal to or greater than the one plotted by
-                # this expression.
-                expr="""
-                avg without (pod,instance) (
-                    histogram_quantile(
-                        0.10,
-                        rate(
-                            tahoe_lafs_roundtrip_benchmark_{metric}_bytes_per_second_bucket{{service="tahoe-lafs-transfer-rate-monitor"}}[60m]
-                        )
-                    )
-                )
-                """.format(metric=metric),
-                legendFormat="90% " + legend_format,
-                refId=next(refid),
-            )
-            for (legend_format, metric)
-            in [("upload", "write"), ("download", "read")]
-        ),
     )
 
 
@@ -288,7 +289,7 @@ def s4_customer_deployments(datasource):
                 expr="""
                 s4_deployment_gauge
                 """,
-                refId="A",
+                refId=next(refid),
                 legendFormat="Total Customer Deployments",
             ),
         ],
@@ -322,7 +323,7 @@ def last_convergence(datasource):
                     }
                 )
                 """,
-                refId="A",
+                refId=next(refid),
                 legendFormat="Time Since Last Convergence Success",
             ),
         ],
@@ -351,7 +352,7 @@ def unhandled_errors(datasource):
                 expr="""
                 sum(s4_unhandled_error_counter)
                 """,
-                refId="A",
+                refId=next(refid),
                 legendFormat="Total Unhandled Errors",
             ),
         ],
@@ -380,7 +381,7 @@ def process_open_fds(datasource):
                 expr="""
                 process_open_fds{pod=~".+"}
                 """,
-                refId="A",
+                refId=next(refid),
                 legendFormat="{{pod}}",
             ),
         ],
@@ -421,17 +422,17 @@ def dashboard():
                             # for pod replacement.
                             expr='sum(wormhole_signup_started{pod=~"s4-signup.*"})',
                             legendFormat="Wormhole Signups Started",
-                            refId="A",
+                            refId=next(refid),
                         ),
                         G.Target(
                             expr='sum(wormhole_signup_success{pod=~"s4-signup.*"})',
                             legendFormat="Wormhole Signups Completed",
-                            refId="B",
+                            refId=next(refid),
                         ),
                         G.Target(
                             expr='sum(wormhole_signup_failure{pod=~"s4-signup.*"})',
                             legendFormat="Wormhole Signups Failed",
-                            refId="C",
+                            refId=next(refid),
                         ),
                     ],
                 ),
@@ -462,7 +463,7 @@ def dashboard():
                         G.Target(
                             expr="grid_router_connections",
                             legendFormat="Tahoe-LAFS Connections",
-                            refId="D",
+                            refId=next(refid),
                         ),
                     ],
                 ),
@@ -484,7 +485,12 @@ def dashboard():
                 ],
             ),
             G.Row(panels=[
-                tahoe_lafs_transfer_rate(PROMETHEUS),
+                tahoe_lafs_transfer_rate(PROMETHEUS, "read"),
+            ]),
+            G.Row(panels=[
+                tahoe_lafs_transfer_rate(PROMETHEUS, "write"),
+            ]),
+            G.Row(panels=[
                 s4_customer_deployments(PROMETHEUS),
                 unhandled_errors(PROMETHEUS),
             ]),
