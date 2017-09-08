@@ -63,27 +63,12 @@ class Heatmap(object):
             "type": "heatmap",
             "heatmap": {},
 
-            "xBucketNumber": None,
-            "xBucketSize": None,
-            "yBucketNumber": None,
-            "yBucketSize": None,
-
-            "cards": {
-                "cardPadding": None,
-                "cardRound": None,
-            },
             "color": {
                 "cardColor": "#b4ff00",
                 "colorScale": "sqrt",
                 "colorScheme": "interpolateOranges",
                 "exponent": 0.5,
                 "mode": "spectrum"
-            },
-            "highlightCards": True,
-            "links": [],
-            "tooltip": {
-                "show": True,
-                "showHistogram": False,
             },
         }
 
@@ -468,6 +453,7 @@ def dashboard():
                     ],
                 ),
                 last_convergence(PROMETHEUS),
+                unhandled_errors(PROMETHEUS),
             ]),
             G.Row(
                 title="Cluster",
@@ -478,21 +464,13 @@ def dashboard():
                     filesystem_usage(PROMETHEUS),
                 ],
             ),
-            G.Row(
-                title="Cluster2",
-                panels=[
-                    process_open_fds(PROMETHEUS),
-                ],
-            ),
             G.Row(panels=[
                 tahoe_lafs_transfer_rate(PROMETHEUS, "read"),
+                process_open_fds(PROMETHEUS),
             ]),
             G.Row(panels=[
                 tahoe_lafs_transfer_rate(PROMETHEUS, "write"),
-            ]),
-            G.Row(panels=[
                 s4_customer_deployments(PROMETHEUS),
-                unhandled_errors(PROMETHEUS),
             ]),
         ],
     ).auto_panel_ids()
