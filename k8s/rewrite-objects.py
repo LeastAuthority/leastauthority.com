@@ -7,7 +7,7 @@ from subprocess import check_output
 
 from yaml import safe_load_all, safe_dump_all
 
-from pyrsistent import ny, freeze, thaw
+from pyrsistent import ny, freeze, thaw, discard
 
 from twisted.python.usage import UsageError, Options
 
@@ -78,11 +78,15 @@ def owned_by(whom):
 
 
 
-def deployments(docs):
-    def check(index):
-        return docs[index].get(u"kind") == u"Deployment"
+def k8s_resource_filter(kind):
+    def check(index, value):
+        return value.kind == kind
     return check
 
+
+deployments = k8s_resource_filter(u"Deployment")
+pvcs = k8s_resource_filter(u"PersistentVolumeClaim")
+pvs = k8s_resource_filter(u"PersistentVolume")
 
 
 def has_tag():
@@ -103,7 +107,7 @@ def rewrite_tags(docs, rev):
         return env
 
     return docs.transform(
-        [deployments(docs), u"spec", u"template", u"spec", u"containers", ny, u"image"],
+        [deployments, u"spec", u"template", u"spec", u"containers", ny, u"image"],
         if_(
             and_(
                 owned_by("leastauthority"),
@@ -116,7 +120,7 @@ def rewrite_tags(docs, rev):
 
         # There are also a couple environment variables that have an image
         # name in them.
-        [deployments(docs), u"spec", u"template", u"spec", u"containers", ny, u"env", ny],
+        [deployments, u"spec", u"template", u"spec", u"containers", ny, u"env", ny],
         maybe_change_image,
     )
 
@@ -130,8 +134,14 @@ def stub_all_volumes(docs):
         return {u"name": volume[u"name"], u"emptyDir": {}}
 
     return docs.transform(
-        [deployments(docs), u"spec", u"template", u"spec", u"volumes", ny],
+        [deployments, u"spec", u"template", u"spec", u"volumes", ny],
         if_(persistent_volume_claim, to_empty_dir),
+
+        [pvcs],
+        discard,
+
+        [pvs],
+        discard,
     )
 
 main(argv)
