@@ -13,6 +13,7 @@ from tempfile import mkdtemp
 from random import randrange
 from functools import partial
 
+from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
 from twisted.internet.defer import inlineCallbacks, succeed
 from twisted.internet.interfaces import IProcessTransport
@@ -163,6 +164,7 @@ class _LAFS(object):
 
             ),
         )
+        d.addCallback(require_non_error_code, self.treq)
         d.addCallback(self.treq.text_content)
         return d
 
@@ -182,11 +184,21 @@ class _LAFS(object):
         uri_bytes = uri.to_uri().to_text().encode("ascii")
         print("GET {}".format(uri_bytes))
         d = self.treq.get(uri_bytes)
+        d.addCallback(require_non_error_code, self.treq)
         d.addCallback(
             partial(content_with_progress, progress_callback, self.treq),
         )
         return d
 
+
+def require_non_error_code(response, treq):
+    if 200 <= response.code < 300:
+        return response
+    d = treq.text_content(response)
+    d.addCallback(
+        lambda content: Failure(Exception("unexpected response code", response.code, content)),
+    )
+    return d
 
 
 def content_with_progress(progress_callback, treq, response):
