@@ -155,7 +155,13 @@ class _LAFS(object):
         print("PUT {}".format(uri_bytes))
         d = self.treq.put(
             uri_bytes,
-            FileBodyProducer(_ReadProgressFileWrapper(BytesIO(contents))),
+            FileBodyProducer(
+                _ReadProgressFileWrapper(
+                    BytesIO(contents),
+                    progress_callback,
+                ),
+
+            ),
         )
         d.addCallback(self.treq.text_content)
         return d
@@ -177,7 +183,7 @@ class _LAFS(object):
         print("GET {}".format(uri_bytes))
         d = self.treq.get(uri_bytes)
         d.addCallback(
-            partial(content_with_progress, self.treq, progress_callback),
+            partial(content_with_progress, progress_callback, self.treq),
         )
         return d
 

@@ -9,6 +9,7 @@ from functools import partial
 
 import attr
 
+from twisted.logger import Logger
 from twisted.python.usage import Options
 from twisted.internet.endpoints import serverFromString
 from twisted.application.service import MultiService
@@ -97,6 +98,7 @@ class _CheckTime(object):
 
     def set(self):
         self._when = self.clock.seconds()
+        _logger.info(check_time=self._when)
 
 
     def get(self):
@@ -139,10 +141,14 @@ def makeService(options):
     return service
 
 
+_logger = Logger()
 
 def is_alive(clock, last_progress, maximum_age):
-    return clock.seconds() - last_progress() < maximum_age
-
+    now = clock.seconds()
+    progress = last_progress()
+    age = now - progress
+    _logger.info(now=now, progress=progress, age=age, maximum_age=maximum_age)
+    return age < maximum_age
 
 
 def _timer_service(reactor, *a, **kw):
@@ -178,7 +184,7 @@ def _create_monitor_service(
 
 def _measure(reactor, lafs, mutable_file_cap, progress_callback):
     print("Measuring")
-    return retry_failure(
+    d = retry_failure(
         reactor,
         lambda: roundtrip_check(lafs, [mutable_file_cap], progress_callback),
         expected=(Exception,),
@@ -188,6 +194,8 @@ def _measure(reactor, lafs, mutable_file_cap, progress_callback):
             timeout=30.0,
         ),
     )
+    d.addErrback(partial(_logger.failure, "measurement failure"))
+    return d
 
 
 
