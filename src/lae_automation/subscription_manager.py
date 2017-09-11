@@ -15,6 +15,7 @@ import attr
 from attr import validators
 
 from eliot import start_action
+from eliot.twisted import DeferredContext
 
 from twisted.python.url import URL
 from twisted.web.iweb import IAgent, IResponse
@@ -85,14 +86,15 @@ class Subscriptions(Resource):
         """
         Get the subscription identifiers of all active subscriptions.
         """
-        ids = self.database.list_active_subscription_identifiers()
-        subscriptions = list(
-            marshal_subscription(self.database.get_subscription(sid))
-            for sid
-            in ids
-        )
-        request.responseHeaders.setRawHeaders(u"content-type", [u"application/json"])
-        return dumps(dict(subscriptions=subscriptions))
+        with start_action(action_type=u"subscription-database:list-subscriptions"):
+            ids = self.database.list_active_subscription_identifiers()
+            subscriptions = list(
+                marshal_subscription(self.database.get_subscription(sid))
+                for sid
+                in ids
+            )
+            request.responseHeaders.setRawHeaders(u"content-type", [u"application/json"])
+            return dumps(dict(subscriptions=subscriptions))
 
 
 def _marshal_oldsecrets(oldsecrets):
@@ -167,6 +169,9 @@ class Subscription(Resource):
 @attr.s(frozen=True)
 class SubscriptionDatabase(object):
     domain = attr.ib(validator=validators.instance_of(unicode))
+    bucket_name = attr.ib(
+        validator=validators.instance_of(unicode),
+    )
 
     path = attr.ib(validator=my_validators.all(
         validators.instance_of(FilePath),
@@ -177,24 +182,29 @@ class SubscriptionDatabase(object):
     ))
 
     @classmethod
-    def from_directory(cls, path, domain):
+    def from_directory(cls, path, domain, bucket_name):
         if not path.exists():
             raise ValueError("State directory ({}) does not exist.".format(path.path))
         if not path.isdir():
             raise ValueError("State path ({}) is not a directory.".format(path.path))
-        return SubscriptionDatabase(path=path, domain=domain)
+        return SubscriptionDatabase(
+            path=path,
+            domain=domain,
+            bucket_name=bucket_name,
+        )
 
     def _subscription_path(self, subscription_id):
         return self.path.child(b32encode(subscription_id) + u".json")
 
     def _subscription_state(self, subscription_id, details):
         return dict(
-            version=1,
+            version=2,
             details=dict(
                 active=True,
                 id=subscription_id,
 
                 bucket_name=details.bucketname,
+                key_prefix=details.key_prefix,
                 oldsecrets=_marshal_oldsecrets(details.oldsecrets),
                 email=details.customer_email,
 
@@ -281,16 +291,30 @@ class SubscriptionDatabase(object):
             # anyway
             deploy_config = NullDeploymentConfiguration()
             deploy_config.domain = self.domain
+            key_prefix = details.subscription_id + u"/"
             config = new_tahoe_configuration(
                 deploy_config,
-                details.bucketname,
+
+                # Subscriptions all share a single S3 bucket that we know
+                # about.
+                self.bucket_name,
+
+                # They all have a unique prefix in that bucket to keep their
+                # shares separate, though.
+                key_prefix,
+
                 configmap_public_host(details.subscription_id, self.domain),
                 u"127.0.0.1",
                 details.introducer_port_number,
                 details.storage_port_number,
             )
             legacy = secrets_to_legacy_format(config)
-            details = attr.assoc(details, oldsecrets=legacy)
+            details = attr.assoc(
+                details,
+                oldsecrets=legacy,
+                bucketname=self.bucket_name,
+                key_prefix=key_prefix,
+            )
             details = self.load_subscription(details)
             return details
 
@@ -302,9 +326,12 @@ class SubscriptionDatabase(object):
         path.setContent(dumps(subscription))
 
     def get_subscription(self, subscription_id):
-        path = self._subscription_path(subscription_id)
-        state = loads(path.getContent())
-        return getattr(self, "_load_{}".format(state["version"]))(state)
+        with start_action(action_type=u"subscription-database:get-subscription") as a:
+            path = self._subscription_path(subscription_id)
+            state = loads(path.getContent())
+            loader = getattr(self, "_load_{}".format(state["version"]))
+            a.add_success_fields(subscription=state)
+            return loader(state)
 
     def _load_1(self, state):
         details = state["details"]
@@ -320,6 +347,14 @@ class SubscriptionDatabase(object):
 
             introducer_port_number=details["introducer_port_number"],
             storage_port_number=details["storage_port_number"],
+        )
+
+    def _load_2(self, state):
+        # Version 2 added ``key_prefix`` to the state.  Everything else is the
+        # same so we can piggy-back on _load_1.
+        return attr.assoc(
+            self._load_1(state),
+            key_prefix=state["details"]["key_prefix"],
         )
 
     def list_all_subscription_identifiers(self):
@@ -341,8 +376,12 @@ def required(options, key):
         raise UsageError("--{} is required.".format(key))
 
 
-def make_resource(path, domain):
-    database = SubscriptionDatabase.from_directory(path, domain=domain)
+def make_resource(path, domain, bucket_name):
+    database = SubscriptionDatabase.from_directory(
+        path,
+        domain=domain,
+        bucket_name=bucket_name,
+    )
     v1 = Resource()
     v1.putChild("subscriptions", Subscriptions(database))
 
@@ -358,6 +397,9 @@ class Options(_Options):
          "The domain on which the service is running "
          "(useful for alternate staging deployments).",
         ),
+        ("bucket-name", None, None,
+         "The name of the S3 bucket which holds Tahoe-LAFS shares.",
+        ),
         ("state-path", "p", None, "Path to the subscription state directory."),
         ("listen-address", "l", None, "Endpoint on which the server should listen."),
     ]
@@ -367,6 +409,7 @@ class Options(_Options):
     def postOptions(self):
         required(self, "state-path")
         required(self, "listen-address")
+        required(self, "bucket-name")
         self["state-path"] = FilePath(self["state-path"].decode("utf-8"))
         # Populated from a configuration file which can easily contain extra
         # trailing whitespace (like a newline).  Clean it up.
@@ -392,6 +435,7 @@ def makeService(options):
     site = Site(make_resource(
         options["state-path"],
         options["domain"].decode("ascii"),
+        options["bucket-name"].decode("ascii"),
     ))
 
     StreamServerEndpointService(
@@ -499,15 +543,20 @@ class Client(object):
         """
         Get all existing active subscriptions.
         """
-        d = self.agent.request(
-            b"GET", self._url(u"v1", u"subscriptions"),
-        )
-        d.addCallback(require_code(OK))
-        d.addCallback(readBody)
-        d.addCallback(loads)
-        d.addCallback(lambda response: response["subscriptions"])
-        d.addCallback(lambda json: map(decode_subscription, json))
-        return d
+        a = start_action(action_type=u"subscription-client:list")
+        with a.context():
+            d = DeferredContext(self.agent.request(
+                b"GET", self._url(u"v1", u"subscriptions"),
+            ))
+            d.addCallback(require_code(OK))
+            d.addCallback(readBody)
+            def got_body(body):
+                encoded_subscriptions = loads(body)["subscriptions"]
+                a.add_success_fields(subscriptions=encoded_subscriptions)
+                subscriptions = map(decode_subscription, encoded_subscriptions)
+                return subscriptions
+            d.addCallback(got_body)
+            return d.addActionFinish()
 
     def delete(self, subscription_id):
         d = self.agent.request(
@@ -547,7 +596,7 @@ def memory_client(database_path, domain):
     Create a subscription manager client which uses in-memory
     interactions with the database at the given path.
     """
-    root = make_resource(database_path, domain)
+    root = make_resource(database_path, domain, u"s4")
     agent = MemoryAgent(root)
     return Client(endpoint=b"/", agent=agent, cooperator=Uncooperator())
 

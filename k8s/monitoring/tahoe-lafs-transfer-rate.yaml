@@ -71,6 +71,16 @@ spec:
         ports:
         # We just happen to know these are the ports this container listens on.
         - containerPort: 9000
+        - containerPort: 9001
+        livenessProbe:
+          httpGet:
+            path: '/liveness'
+            port: 9001
+          failureThreshold: 1
+          successThreshold: 1
+          initialDelaySeconds: 5
+          periodSeconds: 900
+          timeoutSeconds: 5
         resources:
           requests:
             cpu: '10m'

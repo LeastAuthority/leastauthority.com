@@ -55,13 +55,6 @@ spec:
       containers:
         - name: 'build'
           image: 'ubuntu:16.04'
-          # The build is actually intensive.  Try to get it scheduled
-          # somewhere with enough resources to not detrimentally impact any
-          # customer pods.
-          resources:
-            limits:
-              cpu: '1000m'
-              memory: '768Mi'
           env:
             # This will have a value substituted by the build driver.
             - name: "GIT_REV"

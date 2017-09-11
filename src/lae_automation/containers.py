@@ -103,6 +103,7 @@ def create_configuration(deploy_config, details, model):
         introducer_port=details.introducer_port_number,
         storageserver_port=details.storage_port_number,
         bucket_name=details.bucketname,
+        key_prefix=details.key_prefix,
         publichost=public_host,
         privatehost=private_host,
         introducer_furl=details.external_introducer_furl,
@@ -269,8 +270,14 @@ def create_liveness_container(model, port, volumeName, configItem):
     mountpoint = FilePath(u"/config")
     return model.v1.Container(**{
         u"name": u"config-liveness-sidecar-{}".format(port),
-        u"image": u"leastauthority/config-file-liveness-server-config-file-liveness-server-exe",
-        u"args": [u"{}".format(port), mountpoint.child(configItem).path],
+        u"imagePullPolicy": u"Always",
+        u"image": u"leastauthority/config-file-liveness-server",
+        u"command": [u"/sbin/tini", u"--"],
+        u"args": [
+            u"/usr/local/bin/config-file-liveness-server-exe",
+            u"{}".format(port),
+            mountpoint.child(configItem).path,
+        ],
         u"volumeMounts": [{
             u"name": volumeName,
             u"mountPath": mountpoint.path,
@@ -331,7 +338,7 @@ def create_deployment(deploy_config, details, model):
     # probe interval for the given container.  This serves to de-synchronize
     # liveness probes across pods for different subscriptions to avoid having
     # them all restarted in one thundering herd.
-    jitter = hash(details.subscription_id) % 120
+    jitter = hash(details.subscription_id) % 1200
 
     def named(name):
         def predicate(key, value):

@@ -73,6 +73,7 @@ class ConfigureTahoeTests(TestBase):
             introducer_port=introducer_config["port"],
             storageserver_port=storage_config["port"],
             bucket_name=storage_config["bucket_name"],
+            key_prefix=storage_config["key_prefix"],
             publichost=storage_config["publichost"],
             privatehost=storage_config["privatehost"],
             introducer_furl=storage_config["introducer_furl"],
@@ -110,6 +111,7 @@ class ConfigureTahoeTests(TestBase):
             introducer_port=introducer_config["port"],
             storageserver_port=storage_config["port"],
             bucket_name=storage_config["bucket_name"],
+            key_prefix=storage_config["key_prefix"],
             publichost=storage_config["publichost"],
             privatehost=storage_config["privatehost"],
             introducer_furl=introducer_furl,
@@ -165,7 +167,9 @@ class MarshalTahoeConfiguration(TestBase):
         The basic structure of the result returned matches the structure
         created by the hypothesis strategies used by other tests.
         """
-        marshalled = marshal_tahoe_configuration("", "", "", 0, 0, "", "", "", "", "", "")
+        marshalled = marshal_tahoe_configuration(
+            "", "", "", 0, 0, "", "", "", "", "", "", "",
+        )
         introducer = introducer_configuration().example()
         storage = storage_configuration().example()
 
