@@ -98,7 +98,10 @@ class _CheckTime(object):
 
     def set(self):
         self._when = self.clock.seconds()
-        _logger.info(check_time=self._when)
+        _logger.info(
+            format="setting check time to {check_time}",
+            check_time=self._when,
+        )
 
 
     def get(self):
@@ -147,7 +150,13 @@ def is_alive(clock, last_progress, maximum_age):
     now = clock.seconds()
     progress = last_progress()
     age = now - progress
-    _logger.info(now=now, progress=progress, age=age, maximum_age=maximum_age)
+    _logger.info(
+        format="checking liveness",
+        now=now,
+        progress=progress,
+        age=age,
+        maximum_age=maximum_age,
+    )
     return age < maximum_age
 
 
