@@ -194,6 +194,7 @@ def _measure(reactor, lafs, mutable_file_cap, progress_callback):
             timeout=30.0,
         ),
     )
+    d.addCallback(lambda ignored: _logger.info("measurement completed"))
     d.addErrback(partial(_logger.failure, "measurement failure"))
     return d
 
