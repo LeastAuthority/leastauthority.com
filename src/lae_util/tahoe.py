@@ -13,6 +13,7 @@ from tempfile import mkdtemp
 from random import randrange
 from functools import partial
 
+from twisted.logger import Logger
 from twisted.python.failure import Failure
 from twisted.python.filepath import FilePath
 from twisted.internet.defer import inlineCallbacks, succeed
@@ -36,6 +37,8 @@ from allmydata.util.configutil import (
     set_config,
     write_config,
 )
+
+_logger = Logger()
 
 
 @attr.s
@@ -87,6 +90,22 @@ class _TahoeConfiguration(object):
         return d
 
 
+class NoisyProcessProtocol(ProcessProtocol):
+    def connectionMade(self):
+        _logger.info("Tahoe-LAFS connectionMade")
+
+    def processExited(self, reason):
+        _logger.failure("Tahoe-LAFS processExited", reason)
+
+    def processEnded(self, reason):
+        _logger.failure("Tahoe-LAFS processEnded", reason)
+
+    def childDataReceived(self, childFD, data):
+        _logger.info(
+            "Tahoe-LAFS data received fd={fd} data={data}", fd=childFD, data=data,
+        )
+
+
 
 @attr.s
 class _TahoeClient(object):
@@ -96,7 +115,7 @@ class _TahoeClient(object):
 
     def launch(self, reactor):
         process = reactor.spawnProcess(
-            ProcessProtocol(),
+            NoisyProcessProtocol(),
             u"tahoe", (
                 u"tahoe",
                 u"run",
