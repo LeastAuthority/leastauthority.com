@@ -10,7 +10,6 @@ from functools import partial
 import attr
 
 from twisted.python.usage import Options
-from twisted.internet.defer import maybeDeferred
 from twisted.internet.endpoints import serverFromString
 from twisted.application.service import MultiService
 from twisted.application.internet import (
@@ -110,7 +109,7 @@ def makeService(options):
 
     service = MultiService()
 
-    last_check = _CheckTime(clock=reactor, when=reactor.seconds())
+    last_progress = _CheckTime(clock=reactor, when=reactor.seconds())
 
     AsynchronousService(
         lambda: _create_monitor_service(
@@ -123,14 +122,14 @@ def makeService(options):
                 shares_happy=options["shares-happy"],
                 shares_total=options["shares-total"],
             ),
-            last_check.set,
+            last_progress.set,
         )
     ).setServiceParent(service)
 
     check_liveness = partial(
         is_alive,
         reactor,
-        last_check.get,
+        last_progress.get,
         options["interval"] * 3,
     )
 
@@ -141,8 +140,8 @@ def makeService(options):
 
 
 
-def is_alive(clock, last_check, maximum_age):
-    return clock.seconds() - last_check() < maximum_age
+def is_alive(clock, last_progress, maximum_age):
+    return clock.seconds() - last_progress() < maximum_age
 
 
 
@@ -155,7 +154,7 @@ def _timer_service(reactor, *a, **kw):
 
 def _create_monitor_service(
         reactor, interval, introducer_furl, mutable_file_cap, configuration,
-        set_check_time,
+        progress_callback,
 ):
     d = create_tahoe_lafs_client(
         reactor,
@@ -166,21 +165,22 @@ def _create_monitor_service(
         lambda lafs: _timer_service(
             reactor,
             interval,
-            _record_success(_measure, set_check_time),
+            _measure,
             reactor,
             lafs,
             mutable_file_cap,
+            progress_callback,
         ),
     )
     return d
 
 
 
-def _measure(reactor, lafs, mutable_file_cap):
+def _measure(reactor, lafs, mutable_file_cap, progress_callback):
     print("Measuring")
     return retry_failure(
         reactor,
-        lambda: roundtrip_check(lafs, [mutable_file_cap]),
+        lambda: roundtrip_check(lafs, [mutable_file_cap], progress_callback),
         expected=(Exception,),
         steps=backoff(
             step=1.0,
@@ -195,13 +195,4 @@ def _call_and_passthrough(f):
     def g(result):
         f()
         return result
-    return g
-
-
-
-def _record_success(f, record):
-    def g(*a, **kw):
-        d = maybeDeferred(f, *a, **kw)
-        d.addCallback(_call_and_passthrough(record))
-        return d
     return g

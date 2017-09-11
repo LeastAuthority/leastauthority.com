@@ -6,10 +6,12 @@ Utilities for managing a Tahoe-LAFS client node and interacting with its
 web API.
 """
 
+from io import BytesIO
 from os import environ
 from time import time
 from tempfile import mkdtemp
 from random import randrange
+from functools import partial
 
 from twisted.python.filepath import FilePath
 from twisted.internet.defer import inlineCallbacks, succeed
@@ -17,6 +19,7 @@ from twisted.internet.interfaces import IProcessTransport
 from twisted.internet.protocol import ProcessProtocol
 from twisted.internet.utils import getProcessOutput
 from twisted.internet.task import deferLater
+from twisted.web.client import FileBodyProducer
 
 import treq as _treq
 
@@ -115,6 +118,22 @@ class _TahoeProcess(object):
 
 
 
+class _ReadProgressFileWrapper(object):
+    def __init__(self, wrapped, progress):
+        self._wrapped = wrapped
+        self._progress = progress
+        self.seek = wrapped.seek
+        self.tell = wrapped.tell
+        self.close = wrapped.close
+
+
+    def read(self, length):
+        result = self._wrapped.read(length)
+        self._progress()
+        return result
+
+
+
 @attr.s(frozen=True)
 class _LAFS(object):
     tahoe_client = attr.ib(validator=instance_of(_TahoeClient))
@@ -131,31 +150,49 @@ class _LAFS(object):
         return self.tahoe_client.root_uri
 
 
-    def _put_file(self, uri, contents):
+    def _put_file(self, uri, contents, progress_callback):
         uri_bytes = uri.to_uri().to_text().encode("ascii")
         print("PUT {}".format(uri_bytes))
-        d = self.treq.put(uri_bytes, contents)
+        d = self.treq.put(
+            uri_bytes,
+            FileBodyProducer(_ReadProgressFileWrapper(BytesIO(contents))),
+        )
         d.addCallback(self.treq.text_content)
         return d
 
 
     def create_mutable_file(self, contents, format=u"SDMF"):
         uri = self._root_uri.child(u"uri").add(u"format", format)
-        return self._put_file(uri, contents)
+        return self._put_file(uri, contents, lambda: None)
 
 
-    def write_mutable_file(self, loc, contents):
+    def write_mutable_file(self, loc, contents, progress_callback):
         uri = self._root_uri.child(u"uri", *loc)
-        return self._put_file(uri, contents)
+        return self._put_file(uri, contents, progress_callback)
 
 
-    def read_file(self, loc):
+    def read_file(self, loc, progress_callback):
         uri = self._root_uri.child(u"uri", *loc)
         uri_bytes = uri.to_uri().to_text().encode("ascii")
         print("GET {}".format(uri_bytes))
         d = self.treq.get(uri_bytes)
-        d.addCallback(self.treq.content)
+        d.addCallback(
+            partial(content_with_progress, self.treq, progress_callback),
+        )
         return d
+
+
+
+def content_with_progress(progress_callback, treq, response):
+    accumulator = []
+    def accumulate_and_report(chunk):
+        accumulator.append(chunk)
+        progress_callback()
+
+    d = treq.collect(response, accumulate_and_report)
+    d.addCallback(lambda ignored: b"".join(accumulator))
+    return d
+
 
 
 def join_tahoe_lafs_client(client_directory, treq=_treq):
@@ -208,13 +245,13 @@ def _wait_until_reachable(reactor, treq, uri):
     return d
 
 
-def roundtrip_check(lafs, mutable_file_loc):
+def roundtrip_check(lafs, mutable_file_loc, progress_callback):
     pattern = u"{:04x}".format(randrange(2 ** 16)).encode("ascii")
     contents = (16 * 1024 * 1024) / len(pattern) * pattern
     size = len(contents)
     d = _measure_async_time(
         lambda interval: _LAST_WRITE.set(size / interval),
-        lafs.write_mutable_file(mutable_file_loc, contents),
+        lafs.write_mutable_file(mutable_file_loc, contents, progress_callback),
     )
 
     def check(result):
@@ -226,7 +263,7 @@ def roundtrip_check(lafs, mutable_file_loc):
     def wrote(ignored):
         d = _measure_async_time(
             lambda interval: _LAST_READ.set(size / interval),
-            lafs.read_file(mutable_file_loc).addCallback(check),
+            lafs.read_file(mutable_file_loc, progress_callback).addCallback(check),
         )
         return d
     d.addCallback(wrote)
