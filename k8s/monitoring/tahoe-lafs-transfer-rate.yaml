@@ -51,7 +51,9 @@ spec:
         args:
         - >
           . /app/env/bin/activate;
-          twist s4-tahoe-lafs-transfer-rate-monitor
+          twist
+          --log-format=text
+          s4-tahoe-lafs-transfer-rate-monitor
           --interval=15
           --introducer-furl=$(INTRODUCER_FURL)
           --scratch-cap=$(SCRATCH_CAP)
