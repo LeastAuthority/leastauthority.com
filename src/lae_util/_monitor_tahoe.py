@@ -98,7 +98,7 @@ class _CheckTime(object):
 
     def set(self):
         self._when = self.clock.seconds()
-        _logger.info(
+        _logger.debug(
             format="setting check time to {check_time}",
             check_time=self._when,
         )
