@@ -4,6 +4,7 @@ import attr
 
 from twisted.logger import Logger
 from twisted.web.server import NOT_DONE_YET
+from twisted.web.http import PAYMENT_REQUIRED
 
 from lae_util import stripe
 from lae_util.send_email import send_plain_email, FROM_ADDRESS
@@ -56,6 +57,7 @@ class CreateSubscription(HandlerBase):
         self._stripe = stripe
         self._cross_domain = cross_domain
     
+    # add the client domain where the form is, so we can submit cross-domain requests
     def addHeaders(self, request, cross_domain):
       request.setHeader('Access-Control-Allow-Origin', cross_domain)
       return request
@@ -85,56 +87,57 @@ class CreateSubscription(HandlerBase):
             )
         except stripe.CardError as e:
             # Always return 402 on card errors
-            request.setResponseCode(402)
+            request.PAYMENT_REQUIRED
             # Errors we expect: https://stripe.com/docs/api#errors
-            note = "Note: This error could be caused by insufficient funds, or other charge-disabling "+\
-                "factors related to the User's payment credential.\n"
+            note = "Note: This error could be caused by insufficient funds, or other charge-disabling "
+            "factors related to the User's payment credential."
             self.handle_stripe_create_customer_errors(
-              traceback.format_exc(100), e,
-              details=e.message.encode("utf-8"),
-              email_subject="Stripe Card error ({})".format(user_email),
-              notes=note,
+                traceback.format_exc(100), e,
+                details=e.message.encode("utf-8"),
+                email_subject="Stripe Card error ({})".format(user_email),
+                notes=note,
             )
         except stripe.APIError as e:
             # Should return the same as Authentication error
             request.setResponseCode(401)
             self.handle_stripe_create_customer_errors(
-              traceback.format_exc(100), e,
-              details="Our payment processor is temporarily unavailable,"+
-                  " please try again in\ a few moments.",
-              email_subject="Stripe API error ({})".format(user_email),
+                traceback.format_exc(100), e,
+                details="Our payment processor is temporarily unavailable,"
+                    " please try again in a few moments.",
+                email_subject="Stripe API error ({})".format(user_email),
             )
         except stripe.InvalidRequestError as e:
             # Return 422 - unusable entity error
             request.setResponseCode(422)
             self.handle_stripe_create_customer_errors(
-              traceback.format_exc(100), e,
-              details="Due to technical difficulties unrelated to your card"+
-                  " details, we were unable to charge your account. Our"+
-                  " engineers have been notified and will contact you with"+
-                  " an update shortly.",
-              email_subject="Stripe Invalid Request error ({})".format(user_email),
+                traceback.format_exc(100), e,
+                details="Due to technical difficulties unrelated to your card"
+                    " details, we were unable to charge your account. Our"
+                    " engineers have been notified and will contact you with"
+                    " an update shortly.",
+                email_subject="Stripe Invalid Request error ({})".format(user_email),
             )
         except stripe.AuthenticationError as e:
             request.setResponseCode(401)
             self.handle_stripe_create_customer_errors(
-              traceback.format_exc(100), e,
-              details="Our payment processor is temporarily unavailable,"+
-                  " please try again in\ a few moments.",
-              email_subject="Stripe Auth error ({})".format(user_email),
+                traceback.format_exc(100), e,
+                details="Our payment processor is temporarily unavailable,"
+                    " please try again in a few moments.",
+                email_subject="Stripe Auth error ({})".format(user_email),
             )
         except Exception as e:
             # Return a generic error here
             request.setResponseCode(400)
             self.handle_stripe_create_customer_errors(
-              traceback.format_exc(100), e,
-              details="Something went wrong. Please try again, or contact"+
-                "support@leastauthority.com.",
-              email_subject="Stripe unexpected error ({})".format(user_email),
+                traceback.format_exc(100), e,
+                details="Something went wrong. Please try again, or contact"
+                    "support@leastauthority.com.",
+                email_subject="Stripe unexpected error ({})".format(user_email),
             )
 
     def render_POST(self, request):
         request = self.addHeaders(request, self._cross_domain)
+        print request.args
         stripe_authorization_token = request.args.get(b"stripeToken")[0]
         user_email = request.args.get(b"email")[0]
 
@@ -164,14 +167,14 @@ def signed_up(claim, request):
     request.finish()
 
 def signup_failed(reason, customer, mailer):
-  headers = {
-      "From": FROM_ADDRESS,
-      "Subject": "Sign-up error",
-  }
-  logger.failure("Signup failed", reason)
-  mailer.mail(
-      'info@leastauthority.com',
-      'support@leastauthority.com',
-      "A sign-up failed for <%s>." % (customer.email,),
+    headers = {
+        "From": FROM_ADDRESS,
+        "Subject": "Sign-up error",
+    }
+    logger.failure("Signup failed", reason)
+    mailer.mail(
+        'info@leastauthority.com',
+        'support@leastauthority.com',
+        "A sign-up failed for <%s>." % (customer.email,),
       headers,
-  )
+    )

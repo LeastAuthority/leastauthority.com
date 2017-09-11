@@ -8,7 +8,6 @@ from twisted.web.resource import Resource
 from twisted.python.filepath import FilePath
 
 from lae_site.handlers.web import JinjaHandler
-# TODO: Rename all handlers teh same way for consistency
 from lae_site.handlers.s4_signup_style import S4SignupStyle
 from lae_site.handlers.create_subscription import CreateSubscription
 
@@ -36,7 +35,7 @@ def configuration(stripe_publishable_api_key, cross_domain):
 
 def make_resource(
         stripe_publishable_api_key,
-        get_signup, stripe, mailer, cross_domain
+        get_signup, stripe, mailer, cross_domain,
 ):
     resource = Resource()
     resource.putChild("", Redirect("https://leastauthority.com/"))
@@ -51,7 +50,7 @@ def make_resource(
     # add new path for AJAX POST
     resource.putChild('create-subscription',
         CreateSubscription(
-            get_signup, mailer, stripe, cross_domain
+            get_signup, mailer, stripe, cross_domain,
         ),
     )
     resource.putChild(
