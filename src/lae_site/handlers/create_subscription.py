@@ -106,8 +106,10 @@ class CreateSubscription(HandlerBase):
             request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
-                details="Our payment processor is temporarily unavailable,"
-                    " please try again in a few moments.",
+                details=(
+                    "Our payment processor is temporarily unavailable, "
+                    "please try again in a few moments."
+                ),
                 email_subject="Stripe API error ({})".format(user_email),
             )
         except stripe.InvalidRequestError as e:
@@ -115,18 +117,22 @@ class CreateSubscription(HandlerBase):
             request.setResponseCode(422)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
-                details="Due to technical difficulties unrelated to your card"
-                    " details, we were unable to charge your account. Our"
-                    " engineers have been notified and will contact you with"
-                    " an update shortly.",
+                details=(
+                    "Due to technical difficulties unrelated to your card "
+                    "details, we were unable to charge your account. Our "
+                    "engineers have been notified and will contact you with "
+                    "an update shortly."
+                ),
                 email_subject="Stripe Invalid Request error ({})".format(user_email),
             )
         except stripe.AuthenticationError as e:
             request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
-                details="Our payment processor is temporarily unavailable,"
-                    " please try again in a few moments.",
+                details=(
+                    "Our payment processor is temporarily unavailable, "
+                    "please try again in a few moments."
+                ),
                 email_subject="Stripe Auth error ({})".format(user_email),
             )
         except Exception as e:
@@ -134,14 +140,15 @@ class CreateSubscription(HandlerBase):
             request.setResponseCode(BAD_REQUEST)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
-                details="Something went wrong. Please try again, or contact"
-                    "support@leastauthority.com.",
+                details=(
+                    "Something went wrong. Please try again, or contact "
+                    "support@leastauthority.com."
+                ),
                 email_subject="Stripe unexpected error ({})".format(user_email),
             )
 
     def render_POST(self, request):
         request = self.addHeaders(request, self._cross_domain)
-        print request.args
         stripe_authorization_token = request.args.get(b"stripeToken")[0]
         user_email = request.args.get(b"email")[0]
 
