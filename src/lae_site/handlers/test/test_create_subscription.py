@@ -4,11 +4,16 @@ Tests for ``lae_site.create_subscription``.
 
 import attr
 
-from testtools.matchers import Equals, Contains
+from stripe import CardError
+
+from testtools.matchers import Equals, Contains, HasLength
 
 from twisted.internet.defer import succeed
 from twisted.web.client import readBody
-from twisted.web.http import OK
+from twisted.web.http import (
+    OK,
+    PAYMENT_REQUIRED,
+)
 from twisted.web.resource import Resource
 
 from lae_util.testtools import TestCase
@@ -30,7 +35,10 @@ class TrivialClaim(object):
 
 
 class TrivialSignup(object):
+    signups = 0
+
     def signup(self, email, customer_id, subscription_id, plan_id):
+        self.signups += 1
         return succeed(
             TrivialClaim(email, customer_id, subscription_id, plan_id),
         )
@@ -71,6 +79,11 @@ class PositiveStripe(object):
                 Subscription("sub_123456", Plan(plan_id)),
             ]),
         )
+
+
+class NegativeStripe(object):
+    def create(self, authorization_token, plan_id, email):
+        raise CardError("Stripe error", "Stripe param", "Stripe code")
 
 
 @attr.s
@@ -119,3 +132,30 @@ class FullSignupTests(TestCase):
         self.expectThat(response.code, Equals(OK))
         self.expectThat(body, Contains("You subscribed."))
         self.expectThat(self.mailer.emails, Equals([]))
+        self.expectThat(self.signup.signups, Equals(1))
+
+
+    def test_render_signup_failure(self):
+        """
+        No subscription resources are provisioned if the Stripe interaction fails.
+        """
+        self.signup = TrivialSignup()
+        self.mailer = MemoryMailer()
+        self.stripe = NegativeStripe()
+        self.cross_domain = "http://localhost:5000/"
+
+        resource = CreateSubscription(
+            lambda style: self.signup, self.mailer, self.stripe, self.cross_domain
+        )
+        root = Resource()
+        root.putChild(b"", resource)
+
+        agent = RequestTraversalAgent(root)
+        d = agent.request(b"POST", b"http://127.0.0.1/?stripeToken=abc&email=alice@example.invalid")
+        response = self.successResultOf(d)
+        body = self.successResultOf(readBody(response))
+
+        self.expectThat(response.code, Equals(PAYMENT_REQUIRED))
+        self.expectThat(body, Contains("Stripe error"))
+        self.expectThat(self.mailer.emails, HasLength(1))
+        self.expectThat(self.signup.signups, Equals(0))

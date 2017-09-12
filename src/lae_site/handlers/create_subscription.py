@@ -79,7 +79,12 @@ class CreateSubscription(HandlerBase):
             body = combination
         else:
             body = trace_back
-        send_plain_email('info@leastauthority.com', 'support@leastauthority.com', body, headers)
+        self._mailer.mail(
+            'info@leastauthority.com',
+            'support@leastauthority.com',
+            body,
+            headers,
+        )
         raise RenderErrorDetailsForBrowser(details)
 
     def create_customer(self, stripe_authorization_token, user_email, request):
