@@ -60,7 +60,7 @@ class CreateSubscription(HandlerBase):
         self._mailer = mailer
         self._stripe = stripe
         self._cross_domain = cross_domain
-    
+
     # add the client domain where the form is, so we can submit cross-domain requests
     def addHeaders(self, request, cross_domain):
       request.setHeader('Access-Control-Allow-Origin', cross_domain)
@@ -180,5 +180,5 @@ def signup_failed(reason, customer, mailer):
         'info@leastauthority.com',
         'support@leastauthority.com',
         "A sign-up failed for <%s>." % (customer.email,),
-      headers,
+        headers,
     )
