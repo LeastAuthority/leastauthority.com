@@ -93,8 +93,10 @@ class CreateSubscription(HandlerBase):
             # Always return 402 on card errors
             request.setResponseCode(PAYMENT_REQUIRED)
             # Errors we expect: https://stripe.com/docs/api#errors
-            note = "Note: This error could be caused by insufficient funds, or other charge-disabling "
-            "factors related to the User's payment credential."
+            note = (
+                "Note: This error could be caused by insufficient funds, or other charge-disabling "
+                "factors related to the User's payment credential."
+            )
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
                 details=e.message.encode("utf-8"),
