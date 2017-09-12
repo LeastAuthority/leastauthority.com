@@ -242,7 +242,7 @@ spec:
             valueFrom:
               secretKeyRef:
                 name: 's4'
-                  key: 'cross-domain'
+                key: 'cross-domain'
         ports:
         # We just happen to know these are the ports this container listens on.
         - containerPort: 8443
