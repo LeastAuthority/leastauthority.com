@@ -4,7 +4,11 @@ import attr
 
 from twisted.logger import Logger
 from twisted.web.server import NOT_DONE_YET
-from twisted.web.http import PAYMENT_REQUIRED
+from twisted.web.http import (
+    PAYMENT_REQUIRED,
+    UNAUTHORIZED,
+    BAD_REQUEST,
+)
 
 from lae_util import stripe
 from lae_util.send_email import send_plain_email, FROM_ADDRESS
@@ -87,7 +91,7 @@ class CreateSubscription(HandlerBase):
             )
         except stripe.CardError as e:
             # Always return 402 on card errors
-            request.PAYMENT_REQUIRED
+            request.setResponseCode(PAYMENT_REQUIRED)
             # Errors we expect: https://stripe.com/docs/api#errors
             note = "Note: This error could be caused by insufficient funds, or other charge-disabling "
             "factors related to the User's payment credential."
@@ -99,7 +103,7 @@ class CreateSubscription(HandlerBase):
             )
         except stripe.APIError as e:
             # Should return the same as Authentication error
-            request.setResponseCode(401)
+            request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
                 details="Our payment processor is temporarily unavailable,"
@@ -118,7 +122,7 @@ class CreateSubscription(HandlerBase):
                 email_subject="Stripe Invalid Request error ({})".format(user_email),
             )
         except stripe.AuthenticationError as e:
-            request.setResponseCode(401)
+            request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
                 details="Our payment processor is temporarily unavailable,"
@@ -127,7 +131,7 @@ class CreateSubscription(HandlerBase):
             )
         except Exception as e:
             # Return a generic error here
-            request.setResponseCode(400)
+            request.setResponseCode(BAD_REQUEST)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
                 details="Something went wrong. Please try again, or contact"
