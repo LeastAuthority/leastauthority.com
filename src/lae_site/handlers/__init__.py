@@ -8,7 +8,6 @@ from twisted.web.resource import Resource
 from twisted.python.filepath import FilePath
 
 from lae_site.handlers.web import JinjaHandler
-from lae_site.handlers.s4_signup_style import S4SignupStyle
 from lae_site.handlers.create_subscription import CreateSubscription
 
 from lae_site import __file__ as _lae_root
@@ -46,7 +45,6 @@ def make_resource(
         'configuration',
         configuration(stripe_publishable_api_key, cross_domain),
     )
-    resource.putChild("s4-signup-style", S4SignupStyle())
     # add new path for AJAX POST
     resource.putChild('create-subscription',
         CreateSubscription(

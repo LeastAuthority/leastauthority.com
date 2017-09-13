@@ -16,12 +16,13 @@ from lae_util.send_email import send_plain_email, FROM_ADDRESS
 from lae_site.handlers.web import env
 
 from lae_site.handlers.main import HandlerBase
-from lae_site.handlers.s4_signup_style import S4_SIGNUP_STYLE_COOKIE
 
 PLAN_ID                 = u'S4_consumer_iteration_2_beta1_2014-05-27'
 
 logger = Logger()
 
+# global variable for signup style wormhole
+s4_signup_style = 'wormhole'
 
 class RenderErrorDetailsForBrowser(Exception):
     def __init__(self, details):
@@ -158,7 +159,7 @@ class CreateSubscription(HandlerBase):
         request = self.addHeaders(request, self._cross_domain)
         stripe_authorization_token = request.args.get(b"stripeToken")[0]
         user_email = request.args.get(b"email")[0]
-
+        
         try:
             # Invoke card charge by requesting subscription to recurring-payment plan.
             customer = self.create_customer(stripe_authorization_token, user_email, request)
@@ -167,7 +168,7 @@ class CreateSubscription(HandlerBase):
 
         # Initiate the provisioning service
         subscription = customer.subscriptions.data[0]
-        style = (request.getCookie(S4_SIGNUP_STYLE_COOKIE) or "email").decode("ascii")
+        style = s4_signup_style.decode("ascii")
         signup = self._get_signup(style)
         d = signup.signup(
             customer.email.decode("utf-8"),
