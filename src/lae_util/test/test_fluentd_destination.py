@@ -16,6 +16,7 @@ from testtools.matchers import (
     MatchesStructure,
     Equals,
     IsInstance,
+    AfterPreprocessing,
 )
 
 from twisted.python.url import URL
@@ -106,8 +107,9 @@ class  ParseDestinationDescriptionTests(TestCase):
             _parse_destination_description("file:{}".format(path))(reactor),
             MatchesStructure(
                 file=MatchesStructure(
-                    name=Equals(path),
-                    mode=Equals("a"),
+                    path=Equals(path),
+                    rotateLength=AfterPreprocessing(bool, Equals(True)),
+                    maxRotatedFiles=AfterPreprocessing(bool, Equals(True)),
                 ),
             ),
         )
