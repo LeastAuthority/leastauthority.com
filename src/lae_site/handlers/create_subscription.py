@@ -159,7 +159,7 @@ class CreateSubscription(HandlerBase):
         request = self.addHeaders(request, self._cross_domain)
         stripe_authorization_token = request.args.get(b"stripeToken")[0]
         user_email = request.args.get(b"email")[0]
-        
+
         try:
             # Invoke card charge by requesting subscription to recurring-payment plan.
             customer = self.create_customer(stripe_authorization_token, user_email, request)
