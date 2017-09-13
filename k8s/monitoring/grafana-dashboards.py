@@ -315,7 +315,12 @@ def last_convergence(datasource):
         targets=[
             G.Target(
                 expr="""
-                time() - s4_last_convergence_succeeded
+                time()
+                - max(
+                    s4_last_convergence_succeeded{
+                        pod=~"subscription-converger-.*"
+                    }
+                )
                 """,
                 refId="A",
                 legendFormat="Time Since Last Convergence Success",
