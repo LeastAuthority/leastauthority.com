@@ -10,6 +10,8 @@ from logging import getLogger
 import attr
 from attr.validators import provides, instance_of
 
+from twisted.python.logfile import LogFile
+from twisted.python.filepath import FilePath
 from twisted.python.url import URL
 from twisted.logger import globalLogPublisher
 from twisted.application.service import Service
@@ -86,7 +88,13 @@ class _DestinationParser(object):
         if args == "-":
             get_file = lambda: stdout
         else:
-            get_file = lambda: open(args, "a")
+            path = FilePath(args)
+            get_file = lambda: LogFile(
+                path.basename(),
+                path.dirname(),
+                rotateLength=1024 * 1024 * 1024,
+                maxRotatedFiles=10,
+            )
         return lambda reactor: FileDestination(get_file())
 
 
