@@ -3,9 +3,9 @@ deepdiff==3.3.0
 extras==1.0.0
 fixtures==3.0.0
 funcsigs==1.0.2
-grafanalib==0.1.2
-hypothesis==3.11.6
-jsonpickle==0.9.4
+grafanalib==0.3.0
+hypothesis==3.27.0
+jsonpickle==0.9.5
 linecache2==1.0.0
 mock==2.0.0
 pbr==3.1.1
@@ -14,4 +14,4 @@ testtools==2.3.0
 traceback2==1.4.0
 unittest2==1.1.0
 txkube[dev]==0.2.0
-eliot-tree==17.0.0
+eliot-tree==17.1.0
