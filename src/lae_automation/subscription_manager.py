@@ -552,8 +552,10 @@ class Client(object):
             d.addCallback(readBody)
             def got_body(body):
                 encoded_subscriptions = loads(body)["subscriptions"]
-                a.add_success_fields(subscriptions=encoded_subscriptions)
                 subscriptions = map(decode_subscription, encoded_subscriptions)
+                a.add_success_fields(subscription_ids=list(
+                    s.subscription_id for s in subscriptions
+                ))
                 return subscriptions
             d.addCallback(got_body)
             return d.addActionFinish()
