@@ -30,7 +30,7 @@ from lae_util.fluentd_destination import (
 )
 
 from lae_site.handlers import make_resource, make_site, make_redirector_site
-from lae_site.handlers.submit_subscription import Stripe, Mailer
+from lae_site.handlers.create_subscription import Stripe, Mailer
 
 from lae_automation.signup import (
     provision_subscription,
@@ -74,6 +74,9 @@ class SiteOptions(Options):
         ("rendezvous-url", None, URL.fromText(u"ws://wormhole.leastauthority.com:4000/v1"),
          "The URL of the Wormhole Rendezvous server for wormhole-based signup.",
          urlFromBytes,
+        ),
+        ("cross-domain", None, None, "The domain for allowing cross origin for the subscription form"
+            "(useful for different environment switching)",
         ),
     ]
 
@@ -134,6 +137,7 @@ class SiteOptions(Options):
             "subscription-manager",
             "site-logs-path",
             "wormhole-result-path",
+            "cross-domain"
         ]
         for option in required_options:
             if self[option] is None:
@@ -232,6 +236,7 @@ def site_for_options(reactor, options):
         get_signup,
         Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
         Mailer(),
+        options["cross-domain"],
     )
     site = make_site(resource, options["site-logs-path"])
     return site

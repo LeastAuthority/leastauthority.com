@@ -26,3 +26,5 @@ telepresence.log
 
 # distutils gunk
 leastauthority.com.egg-info/
+
+.DS_Store

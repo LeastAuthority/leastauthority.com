@@ -23,6 +23,7 @@ class MakeResourceTests(TestCase):
         """
         ``make_resource`` returns an ``IResource`` provider.
         """
+        cross_domain = "http://localhost:5000/"
         p = FilePath(self.mktemp().decode("ascii"))
         p.makedirs()
         resource = make_resource(
@@ -30,6 +31,7 @@ class MakeResourceTests(TestCase):
             u"stripe-publishable-api-key",
             p.child(u"confirmed"),
             p.child(u"subscriptions"),
+            cross_domain,
         )
         verifyObject(IResource, resource)
 
@@ -67,6 +69,7 @@ class SiteForOptionsTests(TestCase):
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",
+            b"--cross-domain", b"http://127.0.0.1:5000/",
             b"--wormhole-result-path", self.mktemp(),
         ])
         site = site_for_options(MemoryReactor(), options)
