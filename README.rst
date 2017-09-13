@@ -4,8 +4,8 @@ leastauthority.com
 .. image:: https://travis-ci.org/LeastAuthority/leastauthority.com.svg?master
     :target: https://travis-ci.org/LeastAuthority/leastauthority.com
 
-.. image:: https://requires.io/github/LeastAuthority/leastauthority.com/requirements.svg?branch=requires-io-master
-     :target: https://requires.io/github/LeastAuthority/leastauthority.com/requirements/?branch=requires-io-master
+.. image:: https://requires.io/github/LeastAuthority/leastauthority.com/requirements.svg?branch=master
+     :target: https://requires.io/github/LeastAuthority/leastauthority.com/requirements/?branch=master
      :alt: Requirements Status
 
 This website is a Twisted Web server with a set of static files.
