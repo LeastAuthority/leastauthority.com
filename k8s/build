@@ -30,7 +30,7 @@ def equals(expected):
     return check
 
 def main(rev=None):
-    context_name = u"k8s-staging.leastauthority.com"
+    context_name = u"staging"
     template = HERE.child("build-image-template.yaml")
     with template.open() as fObj:
         job = freeze(safe_load(fObj))
