@@ -76,6 +76,7 @@ def _parse(pem_str):
 
 def _convert_oldsecrets(oldsecrets):
     if oldsecrets:
+        oldsecrets = oldsecrets.copy()
         if oldsecrets["introducer_node_pem"] is not None:
             oldsecrets["introducer_node_pem"] = parse(oldsecrets["introducer_node_pem"])
         if oldsecrets["server_node_pem"] is not None:
