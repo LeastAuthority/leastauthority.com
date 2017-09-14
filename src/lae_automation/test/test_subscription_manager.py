@@ -16,6 +16,8 @@ from twisted.application.service import IService
 
 from testtools.matchers import Equals, Is, Not
 
+from eliot.testing import capture_logging
+
 from hypothesis import given, assume
 
 from lae_automation.subscription_manager import (
@@ -52,8 +54,9 @@ class SubscriptionManagerTestMixin(object):
         raise NotImplementedError()
 
 
-    @given(partial_subscription_details())
-    def test_round_trip(self, details):
+    @capture_logging(None)
+    @given(details=partial_subscription_details())
+    def test_round_trip(self, details, logger):
         """
         A subscription created with ``create`` can be found in the list retrieved
         with ``list``.
