@@ -2,10 +2,13 @@
 
 from __future__ import print_function, unicode_literals
 
+from os import environ
 from sys import argv
 from io import BytesIO
 from json import loads, dumps
 from itertools import count
+
+from pykube.exceptions import PyKubeError
 
 # Satisfy grafanalib
 class machinery:
@@ -525,7 +528,24 @@ def configmap(model, dashboard):
 
 @inlineCallbacks
 def main(reactor, context):
-    kubernetes = network_kubernetes_from_context(reactor, context)
+    try:
+        kubeconfig = environ["KUBECONFIG"]
+    except KeyError:
+        config_paths = [None]
+    else:
+        config_paths = kubeconfig.split(":")
+
+    kubernetes = None
+    for config_path in config_paths:
+        try:
+            kubernetes = network_kubernetes_from_context(reactor, context)
+        except PyKubeError:
+            continue
+        else:
+            break
+    if kubernetes is None:
+        raise SystemExit("Cannot find Kubernetes context {}".format(context))
+
     client = yield kubernetes.client()
     model = client.model
     cfg = model.iobject_to_raw(configmap(model, dashboard()))
