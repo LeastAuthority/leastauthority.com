@@ -391,7 +391,7 @@ def main(reactor, *argv):
         mutable_file_cap = (yield client.create_mutable_file(b"xxx")).strip()
         print(mutable_file_cap)
 
-    yield roundtrip_check(client, [mutable_file_cap.decode("ascii")])
+    yield roundtrip_check(client, [mutable_file_cap.decode("ascii")], lambda: None)
 
     from prometheus_client import REGISTRY, write_to_textfile
     write_to_textfile("/tmp/roundtrip.prom", REGISTRY)
