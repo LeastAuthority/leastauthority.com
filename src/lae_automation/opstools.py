@@ -27,27 +27,43 @@ from lae_automation.subscription_manager import (
 
 
 def cancel_subscription_main():
+    """
+    Find the subscription associated with ``email`` and mark it as
+    de-activated in the subscription manager database (causing its resources
+    to be deprovisioned).
+    """
     react(cancel_subscription, argv[1:])
 
 
 
-def cancel_subscription(reactor, context, email):
+def cancel_subscription(reactor, k8s_context, email):
     return _with_subscription_manager(
-        reactor, context,
+        reactor, k8s_context,
         partial(_cancel_one_subscription, email),
     )
 
 
 
 @inlineCallbacks
-def _with_subscription_manager(reactor, context, f):
+def _with_subscription_manager(reactor, k8s_context, f):
+    """
+    Call ``f`` with a subscription manager client.
+
+    Do this by forwarding the API port to the subscription manager pod and
+    pointing a ``network_client`` at it.
+    """
     print("Tunneling to subscription manager...")
-    subscription_manager_pod = yield _get_subscription_manager_pod(reactor, context)
+    subscription_manager_pod = yield _get_subscription_manager_pod(
+        reactor, k8s_context,
+    )
+
+    # Use kubectl for the port-forward since txkube does not yet support that
+    # API.
     forwarder = reactor.spawnProcess(
         ProcessProtocol(),
         b"kubectl",
         [b"kubectl",
-         b"--context", context,
+         b"--context", k8s_context,
          b"port-forward",
          subscription_manager_pod,
          b"9009:8000",
@@ -92,8 +108,8 @@ def _cancel_one_subscription_by_id(subscription_id, subscription_manager_client)
 
 
 @inlineCallbacks
-def _get_subscription_manager_pod(reactor, context):
-    k8s = network_kubernetes_from_context(reactor, context)
+def _get_subscription_manager_pod(reactor, k8s_context):
+    k8s = network_kubernetes_from_context(reactor, k8s_context)
     k8s_client = yield k8s.versioned_client()
     podlist = yield k8s_client.list(k8s_client.model.v1.Pod)
     for pod in podlist.items:
@@ -126,13 +142,18 @@ def _get_subscription_id(subscription_manager_client, email):
 
 
 def sync_subscriptions_main():
+    """
+    Find all subscriptions with provisioned resources but without an active
+    Stripe subscription and mark them as de-activated in the subscription
+    manager database (causing their resources to be deprovisioned).
+    """
     react(sync_subscriptions, argv[1:])
 
 
 
-def sync_subscriptions(reactor, context, api_key):
+def sync_subscriptions(reactor, k8s_context, api_key):
     return _with_subscription_manager(
-        reactor, context,
+        reactor, k8s_context,
         partial(_sync_subscriptions, reactor, api_key),
     )
 
