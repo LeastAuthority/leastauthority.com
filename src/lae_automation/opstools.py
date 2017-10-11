@@ -86,8 +86,7 @@ def _cancel_one_subscription(email, subscription_manager_client):
 @inlineCallbacks
 def _cancel_one_subscription_by_id(subscription_id, subscription_manager_client):
     print("Canceling subscription {}...".format(subscription_id))
-    yield None
-    # yield subscription_manager_client.delete(subscription_id)
+    yield subscription_manager_client.delete(subscription_id)
     print("Cancelled.")
 
 
