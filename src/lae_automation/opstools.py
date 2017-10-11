@@ -133,11 +133,20 @@ def _is_subscription_manager_pod(pod):
 
 @inlineCallbacks
 def _get_subscription_id(subscription_manager_client, email):
+    found = []
     subscriptions = yield subscription_manager_client.list()
     for subscription in subscriptions:
         if email == subscription.customer_email:
-            returnValue(subscription.subscription_id)
-    raise Exception("Could not find subscription with matching email")
+            found.append(subscription.subscription_id)
+    if len(found) == 0:
+        raise Exception("Could not find subscription with matching email")
+    elif len(found) > 1:
+        raise Exception(
+            "Found {} subscriptions with matching email".format(len(found)),
+        )
+    else:
+        returnValue(found[0])
+
 
 
 
