@@ -490,13 +490,9 @@ This process `should be automated https://github.com/LeastAuthority/leastauthori
 Until it is, the Stripe subscription and AWS resources must be adjusted directly.
 
 #. Cancel the Stripe subscription in the Stripe admin web interface.
-#. Forward a port to the subscription manager.
+#. Mark the subscription as cancelled in the subscription manager, triggering de-provisioning of Kubernetes resources::
 
-   #. ``kubectl --context prod port-forward $(kubectl --context prod get pods -o json -l provider=LeastAuthority,app=s4,component=Infrastructure | jp --unquoted "(items[?status.phase=='Running'].metadata.name)[0]") 8000:8000'``
-
-#. Issue a DELETE for the customer's subscription.
-
-   #. ``curl --request DELETE http://localhost:8000/v1/subscriptions/<subscription id>``
+  cancel-subscription production <email address>
 
 .. _kops: https://github.com/kubernetes/kops
 .. _kubectl: http://kubernetes.io/docs/user-guide/kubectl-overview/
