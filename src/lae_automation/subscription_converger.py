@@ -389,6 +389,10 @@ _PODS = Gauge(
     u"Current S4 Subscription Pods",
 )
 
+_RUNNING_PODS = Gauge(
+    u"s4_running_pod_gauge",
+    u"Current Running S4 Subscription Pods",
+)
 
 
 def get_customer_grid_pods(k8s, namespace):
@@ -397,8 +401,16 @@ def get_customer_grid_pods(k8s, namespace):
         d = DeferredContext(k8s.get_pods(_s4_selector(namespace)))
         def got_pods(pods):
             pods = list(pods)
+
             action.add_success_fields(pod_count=len(pods))
+            _RUNNING_PODS.set(len(list(
+                pod
+                for pod
+                in pods
+                if pod.status.phase == u"Running"
+            )))
             _PODS.set(len(pods))
+
             return pods
         d.addCallback(got_pods)
         return d.addActionFinish()
