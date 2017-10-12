@@ -43,10 +43,10 @@ def cancel_subscription_main():
 
 
 
-def cancel_subscription(reactor, k8s_context, email):
+def cancel_subscription(reactor, k8s_context, email_or_subscription_id):
     return _with_subscription_manager(
         reactor, k8s_context,
-        partial(_cancel_one_subscription, email),
+        partial(_cancel_one_subscription, email_or_subscription_id.decode("utf-8")),
     )
 
 
@@ -99,9 +99,20 @@ def _with_subscription_manager(reactor, k8s_context, f):
 
 
 @inlineCallbacks
-def _cancel_one_subscription(email, subscription_manager_client):
+def _cancel_one_subscription(email_or_subscription_id, subscription_manager_client):
     print("Searching for subscription with matching email...")
-    subscription_id = yield _get_subscription_id(subscription_manager_client, email)
+    if "@" in email_or_subscription_id:
+        email = email_or_subscription_id
+        subscription_id = yield _get_subscription_id(subscription_manager_client, email)
+    elif email_or_subscription_id.startswith("sub_"):
+        subscription_id = email_or_subscription_id
+    else:
+        raise Exception(
+            "Strange subscription identifier ({}): need an email or subscription id".format(
+                email_or_subscription_id,
+            ),
+        )
+
     yield _cancel_one_subscription_by_id(subscription_id, subscription_manager_client)
 
 
