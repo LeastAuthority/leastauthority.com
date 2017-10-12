@@ -202,25 +202,52 @@ def _sync_subscriptions(reactor, api_key, subscription_manager_client):
 
 
 
-def _get_active_stripe_subscriptions(reactor, api_key):
-    # XXX Pagination
-    limit = 100
-    trialinglist = stripe.Subscription.list(
-        limit=limit,
-        api_key=api_key,
-        status="trialing",
-    )
-    assert not trialinglist.has_more, "You have to implement pagination now."
+def _list(collection, api_key, **kwargs):
+    limit = 50
+    starting_after = None
+    all_items = []
+    while True:
+        more_items = collection.list(
+            limit=limit,
+            api_key=api_key,
+            starting_after=starting_after,
+            **kwargs
+        )
+        all_items.extend(more_items.data)
 
-    activelist = stripe.Subscription.list(
-        limit=limit,
-        api_key=api_key,
-        status="active",
-    )
-    assert not activelist.has_more, "You have to implement pagination now."
+        if more_items.has_more:
+            # Move to the next page and issue another request.
+            starting_after = more_items.data[-1].id
+        else:
+            # All done.
+            return all_items
+
+
+def _get_active_stripe_subscriptions(reactor, api_key):
+    """
+    Get the Stripe subscriptions for which we should have S4 provisioned
+    state.
+
+    https://stripe.com/docs/subscriptions/lifecycle#states
+    """
+    # Subscriptions in the trial period are considered active.
+    trialinglist = _list(stripe.Subscription, api_key=api_key, status="trialing")
+
+    # Subscriptions that are past the trial period and have paid their most
+    # recent invoice are considered active.
+    activelist =  _list(stripe.Subscription, api_key=api_key, status="active")
+
+    # Subscriptions which have failed an initial billing attempt are also
+    # considered active because a subsequent billing attempt will still be
+    # made (automatically) and may succeed.
+    pastduelist = _list(stripe.Subscription, api_key=api_key, status="past_due")
+
+    # canceled and unpaid subscriptions are not considered active.  They must
+    # be returned to some other state in order to be allowed resources in our
+    # system.
 
     return succeed(list(
         subscr.id
         for subscr
-        in trialinglist.data + activelist.data
+        in trialinglist + activelist + pastduelist
     ))
