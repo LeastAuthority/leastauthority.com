@@ -8,6 +8,12 @@ setup(
     packages=find_packages(where="src"),
     py_modules=["twisted.plugins.lae_dropin"],
     include_package_data=True,
+    entry_points={
+        "console_scripts": [
+            "cancel-subscription = lae_automation.opstools:cancel_subscription_main",
+            "sync-subscriptions-to-stripe = lae_automation.opstools:sync_subscriptions_main",
+        ],
+    },
     dependency_links=[
         "https://tahoe-lafs.org/deps/",
     ],
