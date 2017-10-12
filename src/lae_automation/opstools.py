@@ -1,3 +1,10 @@
+# Copyright Least Authority Enterprises.
+# See LICENSE for details.
+
+"""
+This module contains the implementation for command-line operations tools
+with ``setup.py``-defined entrypoints.
+"""
 
 from __future__ import unicode_literals, print_function
 
