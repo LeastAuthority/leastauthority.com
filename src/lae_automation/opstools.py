@@ -52,7 +52,7 @@ def _with_subscription_manager(reactor, k8s_context, f):
     Do this by forwarding the API port to the subscription manager pod and
     pointing a ``network_client`` at it.
     """
-    print("Tunneling to subscription manager...")
+    print("Tunnelling to subscription manager...")
     subscription_manager_pod = yield _get_subscription_manager_pod(
         reactor, k8s_context,
     )
