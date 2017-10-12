@@ -1,0 +1,15 @@
+This directory contains configuration files for kubectl.
+They include endpoint and credential details to allow kubectl to work with our Kubernetes deployments.
+
+The configuration files contain sensitive material which must remain confidential.
+They are encrypted using sops.
+
+To use the configuration, decrypt as many of the files as you want or need:
+
+    $ sops -d k8s/kubeconfig/staging.enc.yaml > ~/.kube/staging.yaml
+
+And set ``KUBECONFIG`` to refer to the files:
+
+    $ export KUBECONFIG=~/.kube/staging.yaml:<more files if you want>
+
+`kubectl` should now offer you additional contexts.
