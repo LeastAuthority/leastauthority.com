@@ -301,7 +301,20 @@ def s4_customer_deployments(datasource):
                 )
                 """,
                 refId="A",
-                legendFormat="{{shortpod}}",
+                legendFormat="Deployments ({{shortpod}})",
+            ),
+            G.Target(
+                expr="""
+                label_replace(
+                    s4_running_pod_gauge{pod=~"subscription-converger-.*"},
+                    "shortpod",
+                    "$1",
+                    "pod",
+                    "subscription-converger-(.*)"
+                )
+                """,
+                refId="B",
+                legendFormat="Running ({{shortpod}})",
             ),
         ],
     )
