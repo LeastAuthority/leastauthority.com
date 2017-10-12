@@ -274,7 +274,7 @@ def s4_customer_deployments(datasource):
         yAxes=[
             G.YAxis(
                 format="none",
-                label="Count",
+                label="Total Customer Deployments",
                 min=0,
                 max=100,
             ),
@@ -285,11 +285,20 @@ def s4_customer_deployments(datasource):
 
         targets=[
             G.Target(
+                # Each replicaset and pod end up with their own series.  Label
+                # these more succinctly.  Leave them distinct in case it is
+                # interesting to see where restarts have happened.
                 expr="""
-                s4_deployment_gauge
+                label_replace(
+                    s4_deployment_gauge{pod=~"subscription-converger-.*"},
+                    "shortpod",
+                    "$1",
+                    "pod",
+                    "subscription-converger-(.*)"
+                )
                 """,
                 refId="A",
-                legendFormat="Total Customer Deployments",
+                legendFormat="{{shortpod}}",
             ),
         ],
     )
