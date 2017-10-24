@@ -10,6 +10,7 @@ from io import BytesIO
 from json import loads, dumps
 from os import O_CREAT, O_EXCL, O_WRONLY, open as os_open, fdopen
 from base64 import b32encode, b32decode
+from urllib import quote
 
 import attr
 from attr import validators
@@ -20,7 +21,7 @@ from eliot.twisted import DeferredContext
 from twisted.python.url import URL
 from twisted.web.iweb import IAgent, IResponse
 from twisted.web.resource import Resource
-from twisted.web.http import CREATED, NO_CONTENT, OK
+from twisted.web.http import CREATED, NO_CONTENT, OK, BAD_REQUEST
 from twisted.web.server import Site
 from twisted.internet import task as theCooperator
 from twisted.web.client import FileBodyProducer, readBody
@@ -54,6 +55,32 @@ def create(path):
         | O_WRONLY
     )
     return fdopen(os_open(path.path, flags), "w")
+
+
+class Search(Resource):
+    """
+    Handle requests relating to searches of the collection of subscriptions.
+
+    GET ?email=... -> list of subscription identifiers with matching email
+                       address
+    """
+    def __init__(self, database):
+        Resource.__init__(self)
+        self.database = database
+
+
+    def render_GET(self, request):
+        """
+        Search for subscriptions matching the request parameters.
+        """
+        email = request.args.get("email", [None])[0]
+        if email is None:
+            request.setResponseCode(BAD_REQUEST)
+            return
+
+        subscription_ids = self.database.search(email=email.decode("utf-8"))
+        return dumps(subscription_ids)
+
 
 
 class Subscriptions(Resource):
@@ -240,6 +267,18 @@ class SubscriptionDatabase(object):
             return result
 
 
+    def search(self, email):
+        """
+        Find subscriptions matching certain conditions.
+        """
+        results = []
+        for sid in self.list_active_subscription_identifiers():
+            subscription = self.get_subscription(sid)
+            if email == subscription.customer_email:
+                results.append(sid)
+        return results
+
+
     def load_subscription(self, details):
         """
         Load a subscription into the database based on the given details,
@@ -384,6 +423,7 @@ def make_resource(path, domain, bucket_name):
     )
     v1 = Resource()
     v1.putChild("subscriptions", Subscriptions(database))
+    v1.putChild("search", Search(database))
 
     root = Resource()
     root.putChild("v1", v1)
@@ -457,8 +497,36 @@ class Client(object):
     agent = attr.ib(validator=validators.provides(IAgent))
     cooperator = attr.ib()
 
-    def _url(self, *segments):
-        return URL.fromText(self.endpoint.decode("utf-8")).child(*segments).asURI().asText().encode("ascii")
+    def _url(self, *segments, **query):
+        url = URL.fromText(
+            self.endpoint.decode("utf-8"),
+        ).child(*segments)
+        for k, v in query.items():
+            url = url.add(
+                k.decode("utf-8"),
+                quote(v.encode("utf-8"), safe="").decode("ascii"),
+            )
+        return url.asURI().asText().encode("ascii")
+
+
+    def search(self, email):
+        """
+        Find a subscription based on some parameters.
+
+        :param unicode email: The customer email address of the subscriptions
+            to find.
+
+        :return: A ``Deferred`` that fires with the identifiers of
+            subscriptions matching the given parameters.
+        """
+        d = self.agent.request(
+            b"GET", self._url(u"v1", u"search", email=email),
+        )
+        d.addCallback(require_code(OK))
+        d.addCallback(readBody)
+        d.addCallback(loads)
+        return d
+
 
     def load(self, details):
         """

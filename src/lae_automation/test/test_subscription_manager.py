@@ -14,7 +14,9 @@ from zope.interface.verify import verifyObject
 from twisted.python.filepath import FilePath
 from twisted.application.service import IService
 
-from testtools.matchers import Equals, Is, Not
+from testtools.matchers import (
+    Equals, Is, Not, HasLength,
+)
 
 from eliot.testing import capture_logging
 
@@ -153,6 +155,26 @@ class SubscriptionManagerTestMixin(object):
             ),
             GoodEquals(details),
         )
+
+    @given(subscription_details(), subscription_details())
+    def test_search_by_email(self, target, bystander):
+        """
+        ``search`` finds a list of subscription identifiers with a customer email
+        address matching the given address.
+        """
+        assume(target.subscription_id != bystander.subscription_id)
+        assume(target.customer_email != bystander.customer_email)
+
+        client = self.get_client()
+        self.successResultOf(client.load(target))
+        self.successResultOf(client.load(bystander))
+
+        ids = self.successResultOf(
+            client.search(email=target.customer_email),
+        )
+
+        self.assertThat(ids, HasLength(1))
+        self.assertThat(ids[0], Equals(target.subscription_id))
 
 
 
