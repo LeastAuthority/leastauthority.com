@@ -24,7 +24,7 @@ The first is by running the processes natively ("native").
 The second is by running a local Kubernetes cluster ("kubernetes").
 
 Native Deployment
-=================
+~~~~~~~~~~~~~~~~~
 
 Local Development Environment
 -----------------------------
@@ -109,8 +109,7 @@ if the subscription manager is running on localhost and was given a ``--listen-a
 then the value for ``SUBSCRIPTION_MANAGER_URL`` would be ``http://localhost:8001/``.
 
 Kubernetes Deployment
-=====================
-
+~~~~~~~~~~~~~~~~~~~~~
 
 A local deployment is made possible through the use of minikube.
 Minikube is a tool for running Kubernetes on a single host through the use of virtual machines.
