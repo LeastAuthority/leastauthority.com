@@ -1,5 +1,30 @@
-Development
-===========
+Local Deployments
+=================
+
+Front Matter
+~~~~~~~~~~~~
+
+Scope
+-----
+
+This document outlines the procedure for running the S4 backend service on a local host for testing and development purposes.
+
+Audience
+--------
+
+This document is intended for individuals conducting testing and development on the S4 backend itself.
+The primary interaction expected is to deploy in-development versions of the service software.
+Manual testing of scenarios that are difficult to properly automatically test can then be conducted.
+
+Overview
+~~~~~~~~
+
+This document outlines two different ways to run the various pieces of S4 backend service software.
+The first is by running the processes natively ("native").
+The second is by running a local Kubernetes cluster ("kubernetes").
+
+Native Deployment
+=================
 
 Local Development Environment
 -----------------------------
@@ -82,3 +107,38 @@ To be able to successfully submit the signup form,
 For example,
 if the subscription manager is running on localhost and was given a ``--listen-address`` of ``tcp:8001``
 then the value for ``SUBSCRIPTION_MANAGER_URL`` would be ``http://localhost:8001/``.
+
+Kubernetes Deployment
+=====================
+
+
+A local deployment is made possible through the use of minikube.
+Minikube is a tool for running Kubernetes on a single host through the use of virtual machines.
+
+The Deployment
+~~~~~~~~~~~~~~
+
+Download and install minikube as appropriate for your platform.
+Then use the following script as a guide for the subsequent steps necessary.
+
+::
+
+   $ minikube start
+   ...
+   Kubectl is now configured to use the cluster.
+   $ kubectl config get-contexts
+   CURRENT   NAME         CLUSTER          AUTHINFO       NAMESPACE
+   *         minikube     minikube         minikube
+   ...
+   $ export KUBECONFIG=~/.kube/staging.yaml:~/.kube/production.yaml:~/.kube/config
+   $ ./ops/stage-current-HEAD minikube
+   ...
+   $ kubectl --context minikube get pod
+   NAME                                      READY     STATUS    RESTARTS   AGE
+   foolscap-log-gatherer-1614954323-96ngg    1/1       Running   0          3m
+   grid-router-642627163-pj3fb               1/1       Running   0          3m
+   grid-router-642627163-qp3xx               1/1       Running   0          3m
+   s4-signup-292847253-1fwkv                 1/1       Running   0          3m
+   subscription-converger-4212458664-4mnrx   1/1       Running   0          3m
+   subscription-manager-137010057-6cxbz      1/1       Running   0          3m
+   $
