@@ -125,6 +125,7 @@ Then use the following script as a guide for the subsequent steps necessary.
    $ minikube start
    ...
    Kubectl is now configured to use the cluster.
+   $ IP=$(minikube ip)
    $ kubectl config get-contexts
    CURRENT   NAME         CLUSTER          AUTHINFO       NAMESPACE
    *         minikube     minikube         minikube
@@ -140,4 +141,9 @@ Then use the following script as a guide for the subsequent steps necessary.
    s4-signup-292847253-1fwkv                 1/1       Running   0          3m
    subscription-converger-4212458664-4mnrx   1/1       Running   0          3m
    subscription-manager-137010057-6cxbz      1/1       Running   0          3m
+   $ kubectl --context minikube get service s4
+   NAME      CLUSTER-IP   EXTERNAL-IP   PORT(S)                      AGE
+   s4        10.0.0.128   <pending>     443:**32096**/TCP,80:30324/TCP   3h
+   $ curl --insecure https://${IP}:32096/configuration
+   {"stripe-publishable-api-key": ...
    $
