@@ -87,16 +87,29 @@ spec:
         component: 'Infrastructure'
         version: '1'
     spec:
-      # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
-      securityContext:
-        # This gets the wormhole-server-data volume mount owned by the same
-        # uid as the wormhole server runs as, letting it write a db into it.
-        fsGroup: 1000
-
       volumes:
       - name: 'wormhole-server-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-wormhole-server-pvc'
+
+      # https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+      initContainers:
+      # This container makes sure the database directory is writeable by the
+      # wormhole server.
+      - name: 'fix-database-ownership'
+        image: 'busybox'
+        args:
+        - '/bin/sh'
+        - '-c'
+        - 'chown 1000:1000 /app/data'
+        volumeMounts:
+        # A volume for the persistent relay server state which allows it to
+        # continue some connection attempts across restarts.
+        - mountPath: '/app/data'
+          name: 'wormhole-server-data'
+        # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+        securityContext:
+          runAsUser: 0
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -124,6 +137,9 @@ spec:
         # continue some connection attempts across restarts.
         - mountPath: '/app/data'
           name: 'wormhole-server-data'
+        # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+        securityContext:
+          runAsUser: 1000
         resources:
           limits:
             cpu: '10m'
