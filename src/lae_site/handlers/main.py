@@ -19,11 +19,11 @@ class HandlerBase(Resource):
         self._log.debug('Initialized.')
 
     def render_POST(self, request):
-        self.log_request(self, request)
+        self.log_request(request)
         return self.render(self, request)
 
     def render_GET(self, request):
-        self.log_request(self, request)
+        self.log_request(request)
         return self.render(self, request)
 
     def log_request(self, request):

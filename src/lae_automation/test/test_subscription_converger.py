@@ -364,8 +364,35 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         )
 
 
+    @rule()
+    def initialize_service_status(self):
+        """
+        Create a status for the S4 Customer Grid service.  The status does not yet
+        contain any LoadBalancer details.  That will come when
+        ``allocate_loadbalancer`` runs.
+        """
+        services = list(
+            service
+            for service
+            in self.kubernetes._state.services.items
+            if service.status is None
+        )
+        assume([] != services)
+        for service in services:
+            self.kubernetes._state_changed(self.kubernetes._state.replace(
+                u"services",
+                service,
+                service.set(
+                    u"status",
+                    self.kube_model.v1.ServiceStatus(
+                        loadBalancer=self.kube_model.v1.LoadBalancerStatus(),
+                    ),
+                ),
+            ))
+
+
     @rule(data=data())
-    def allocate_loadbalancer(self, data):
+    def allocate_loadbalancer_ingress(self, data):
         """
         Complete the S4 Customer Grid service setup by updating its status to
         reflect the existence of a platform-supplied LoadBalancer.  This would
@@ -377,24 +404,19 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             for service
             in self.kubernetes._state.services.items
             if service.spec.type == u"LoadBalancer"
-            and service.status is None
+            and service.status is not None
+            and not service.status.loadBalancer.ingress
         ]
         assume([] != services)
         for service in services:
             self.kubernetes._state_changed(self.kubernetes._state.replace(
                 u"services",
                 service,
-                service.set(
-                    u"status",
-                    self.kube_model.v1.ServiceStatus(
-                        loadBalancer=self.kube_model.v1.LoadBalancerStatus(
-                            ingress=[
-                                self.kube_model.v1.LoadBalancerIngress(
-                                    hostname=data.draw(domains()),
-                                ),
-                            ],
-                        ),
-                    ),
+                service.transform(
+                    [u"status", u"loadBalancer", u"ingress"],
+                    [self.kube_model.v1.LoadBalancerIngress(
+                        hostname=data.draw(domains()),
+                    )],
                 ),
             ))
 
@@ -616,7 +638,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         expected_rrsets = pmap()
 
         service = k8s_state.services.item_by_name(S4_CUSTOMER_GRID_NAME)
-        if service.status is not None:
+        if service.status is not None and service.status.loadBalancer.ingress:
             # TODO: It would be slightly nicer to make this a Route53 Alias
             # instead of a CNAME.  txAWS needs support for creating Route53 Alias
             # rrsets first, though.
@@ -692,7 +714,8 @@ class SubscriptionConvergenceTests(TestCase):
         """
         m = self._machine()
         m.converge()
-        m.allocate_loadbalancer(data)
+        m.initialize_service_status()
+        m.allocate_loadbalancer_ingress(data)
         m.converge()
 
 
