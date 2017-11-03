@@ -71,7 +71,7 @@ class SiteOptions(Options):
         ("subscription-manager", None, None, "Base URL of the subscription manager API.",
          urlFromBytes,
         ),
-        ("rendezvous-url", None, URL.fromText(u"ws://wormhole.leastauthority.com:4000/v1"),
+        ("rendezvous-url", None, URL.fromText(u"ws://wormhole:4000/v1"),
          "The URL of the Wormhole Rendezvous server for wormhole-based signup.",
          urlFromBytes,
         ),
