@@ -817,6 +817,11 @@ def _converge_route53_infrastructure(actual, config, subscriptions, k8s, aws):
         # v1.ServiceStatus field.
         return []
 
+    if not actual.service.status.loadBalancer.ingress:
+        # Also cannot do anything if we don't yet know what our ingress
+        # address is.
+        return []
+
     loadbalancer_hostname = actual.service.status.loadBalancer.ingress[0].hostname
     introducer_key = RRSetKey(label=_introducer_domain(config.domain), type=u"CNAME")
     desired_rrset = RRSet(
