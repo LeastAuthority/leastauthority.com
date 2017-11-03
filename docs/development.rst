@@ -113,6 +113,7 @@ Kubernetes Deployment
 
 A local deployment is made possible through the use of minikube.
 Minikube is a tool for running Kubernetes on a single host through the use of virtual machines.
+These instructions have been tested with minikube v0.23.
 
 The Deployment
 ~~~~~~~~~~~~~~
@@ -147,3 +148,13 @@ Then use the following script as a guide for the subsequent steps necessary.
    $ curl --insecure https://${IP}:32096/configuration
    {"stripe-publishable-api-key": ...
    $
+
+To enable web-based signup, you will also need to deploy a local instance of the website.
+See the instructions in that repository for details.
+You will also need to change the ``cross-domain`` secret in the minikube-based deployment::
+
+  $ EDITOR=... kubectl --context minikube edit service s4
+
+Change the value to the base64 encoding of ``http://localhost:8080``
+(or whatever ``Origin`` header corresponds to the address you will run the website).
+You can also use the base64 encoding of ``*`` to allow requests from any address.
