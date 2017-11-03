@@ -127,6 +127,7 @@ spec:
         - '--rendezvous=tcp:4000'
         - '--transit=tcp:4001'
         - '--relay-database-path=/app/data/relay.sqlite'
+        - '--disallow-list'
         ports:
         # We just happen to know these are the ports this container listens
         # on.
