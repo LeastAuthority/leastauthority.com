@@ -51,51 +51,6 @@ MONITORPUBKEY = 'MONITOR PUBLIC KEY'
 
 
 class TestSignupModule(TestCase):
-    def setUp(self):
-        super(TestSignupModule, self).setUp()
-        self.mockconfigdir = FilePath('./test_signup').child('TestSignupModule')
-        make_dirs(self.mockconfigdir.path)
-        self.SIGNUPSPATH = 'mock_signups.csv'
-        self.CONFIGFILEPATH = 'init_test_config.json'
-        self.EC2SECRETPATH = 'mock_ec2_secret'
-        self.S3SECRETPATH = 'mock_s3_secret'
-        self.MONITORPUBKEYPATH = 'MONITORKEYS.pub'
-
-        self.MEMAIL = 'MEMAIL'
-        self.MKEYINFO = 'MKEYINFO'
-        self.MCUSTOMER_ID = u'cus_x14Charactersx'
-        self.MSUBSCRIPTION_ID = u'sub_x14Characterx'
-        self.MPLAN_ID = 'XX_consumer_iteration_#_GREEKLETTER#_2XXX-XX-XX'
-        self.MENCODED_IDS = 'on2wex3yge2eg2dbojqwg5dfoj4a-mn2xgx3yge2eg2dbojqwg5dfojzxq'
-
-        FilePath(self.SIGNUPSPATH).setContent('')
-        FilePath(self.CONFIGFILEPATH).setContent(CONFIGFILEJSON)
-        FilePath(self.EC2SECRETPATH).setContent(MOCKEC2SECRETCONTENTS)
-        FilePath(self.S3SECRETPATH).setContent(MOCKS3SECRETCONTENTS)
-        FilePath(self.MONITORPUBKEYPATH).setContent(MONITORPUBKEY)
-
-        self.DEPLOYMENT_CONFIGURATION = model.DeploymentConfiguration(
-            domain=u"s4.example.com",
-            kubernetes_namespace=u"testing",
-            subscription_manager_endpoint=URL.fromText(u"http://localhost/"),
-            s3_access_key_id=ZEROPRODUCT["s3_access_key_id"],
-            s3_secret_key=MOCKS3SECRETCONTENTS,
-
-            introducer_image=u"tahoe-introducer",
-            storageserver_image=u"tahoe-storageserver",
-        )
-        self.SUBSCRIPTION = model.SubscriptionDetails(
-            bucketname="lae-" + self.MENCODED_IDS,
-            oldsecrets=old_secrets().example(),
-            customer_email=self.MEMAIL,
-            customer_pgpinfo=self.MKEYINFO,
-            product_id=u"filler",
-            customer_id=self.MCUSTOMER_ID,
-            subscription_id=self.MSUBSCRIPTION_ID,
-            introducer_port_number=12345,
-            storage_port_number=12346,
-        )
-
     def test_get_bucket_name(self):
         self.failUnlessEqual(b32encode("abc"), "MFRGG===")
         self.failUnlessEqual(b32encode("def"), "MRSWM===")
