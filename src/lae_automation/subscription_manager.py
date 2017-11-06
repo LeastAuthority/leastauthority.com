@@ -101,7 +101,7 @@ class Subscriptions(Resource):
         Create a new subscription from details given by the request.
         """
         payload = loads(request.content.read())
-        request_details = SubscriptionDetails(**payload)
+        request_details = decode_subscription(payload)
         response_details = self.database.create_subscription(
             subscription_id=request_details.subscription_id,
             details=request_details,
@@ -162,7 +162,7 @@ class Subscription(Resource):
         """
         payload = loads(request.content.read())
         request_details = attr.assoc(
-            SubscriptionDetails(**payload),
+            decode_subscription(payload),
             subscription_id=self.subscription_id,
         )
         response_details = self.database.load_subscription(
