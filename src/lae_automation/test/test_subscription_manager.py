@@ -180,6 +180,45 @@ class SubscriptionManagerTestMixin(object):
         self.assertThat(ids[0], Equals(target.subscription_id))
 
 
+    @given(subscription_details(), subscription_id())
+    def test_change_stripe_subscription_id(self, details, new_stripe_id):
+        """
+        ``change`` accepts a ``stripe_subscription_id`` keyword argument and
+        changes the value of that field associated with the indicated
+        subscription.
+        """
+        client = self.get_client()
+        expected = self.successResultOf(client.load(details))
+        modified = self.successResultOf(client.change(
+            details.subscription_id,
+            stripe_subscription_id=new_stripe_id,
+        ))
+        self.assertThat(
+            modified,
+            AttrsEquals(attr.assoc(
+                expected,
+                stripe_subscription_id=new_stripe_id,
+            )),
+        )
+
+    @given(subscription_details(), subscription_id())
+    def test_change_does_not_reactivate(self, details, new_stripe_id):
+        """
+        If a deactivated subscription is modified using ``change`` it remains
+        deactivated.
+        """
+        client = self.get_client()
+        self.successResultOf(client.load(details))
+        self.successResultOf(client.delete(details.subscription_id))
+        self.successResultOf(client.change(
+            details.subscription_id,
+            stripe_subscription_id=new_stripe_id,
+        ))
+        self.assertThat(
+            [],
+            Equals(self.successResultOf(client.list())),
+        )
+
 
 class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
     def get_client(self):
