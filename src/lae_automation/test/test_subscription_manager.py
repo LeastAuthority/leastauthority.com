@@ -6,6 +6,8 @@ Tests for ``lae_automation.subscription_manager``.
 """
 
 from tempfile import mkdtemp
+from json import dumps
+from base64 import b32encode
 
 import attr
 
@@ -156,6 +158,7 @@ class SubscriptionManagerTestMixin(object):
             GoodEquals(details),
         )
 
+
     @given(subscription_details(), subscription_details())
     def test_search_by_email(self, target, bystander):
         """
@@ -180,10 +183,79 @@ class SubscriptionManagerTestMixin(object):
 
 class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
     def get_client(self):
+        return self._get_client_for_path(FilePath(mkdtemp().decode("utf-8")))
+
+
+    def _get_client_for_path(self, path):
         return memory_client(
-            FilePath(mkdtemp().decode("utf-8")),
+            path,
             u"s4.example.com",
         )
+
+
+    @given(subscription_details())
+    def test_get_version_2(self, details):
+        """
+        A subscription with version 2 state persisted in the database can be
+        retrieved.  Its subscription id is set equal to its stripe
+        subscription id.
+        """
+
+        # Version 2 details don't have a separate stripe subscription id
+        # field.  We'll expect the upgrade process to populate it with a copy
+        # of the base subscription id field.
+        details = attr.assoc(
+            details,
+            stripe_subscription_id=details.subscription_id,
+        )
+
+        def _marshal_oldsecrets(oldsecrets):
+            oldsecrets = oldsecrets.copy()
+            oldsecrets["introducer_node_pem"] = "".join(map(str, oldsecrets["introducer_node_pem"]))
+            oldsecrets["server_node_pem"] = "".join(map(str, oldsecrets["server_node_pem"]))
+            return oldsecrets
+
+        def v2_subscription_state(subscription_id, details):
+            """
+            A copy of the implementation of the v2 serializer so that the test can
+            create exactly the v2 representation of a particular subscription.
+            """
+            return dict(
+                version=2,
+                details=dict(
+                    active=True,
+                    id=subscription_id,
+
+                    bucket_name=details.bucketname,
+                    key_prefix=details.key_prefix,
+                    oldsecrets=_marshal_oldsecrets(details.oldsecrets),
+                    email=details.customer_email,
+
+                    product_id=details.product_id,
+                    customer_id=details.customer_id,
+                    subscription_id=details.subscription_id,
+
+                    introducer_port_number=details.introducer_port_number,
+                    storage_port_number=details.storage_port_number,
+                ),
+            )
+
+        subscription_directory = FilePath(mkdtemp().decode("utf-8"))
+        path = subscription_directory.child(
+            b32encode(details.subscription_id) + u".json",
+        )
+        path.setContent(dumps(
+            v2_subscription_state(
+                details.subscription_id,
+                details,
+            ),
+        ))
+
+        client = self._get_client_for_path(subscription_directory)
+        retrieved = self.successResultOf(client.get(details.subscription_id))
+
+        self.assertThat(details, AttrsEquals(retrieved))
+
 
 
 # TODO: A more integration-y test using network_client.

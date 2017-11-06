@@ -125,6 +125,7 @@ class Subscriptions(Resource):
 
 
 def _marshal_oldsecrets(oldsecrets):
+    oldsecrets = oldsecrets.copy()
     oldsecrets["introducer_node_pem"] = "".join(map(str, oldsecrets["introducer_node_pem"]))
     oldsecrets["server_node_pem"] = "".join(map(str, oldsecrets["server_node_pem"]))
     return oldsecrets
@@ -168,7 +169,7 @@ class Subscription(Resource):
             details=request_details,
         )
         request.setResponseCode(CREATED)
-        return dumps(attr.asdict(response_details))
+        return dumps(marshal_subscription(response_details))
 
 
     def render_GET(self, request):
@@ -225,7 +226,7 @@ class SubscriptionDatabase(object):
 
     def _subscription_state(self, subscription_id, details):
         return dict(
-            version=2,
+            version=3,
             details=dict(
                 active=True,
                 id=subscription_id,
@@ -238,6 +239,7 @@ class SubscriptionDatabase(object):
                 product_id=details.product_id,
                 customer_id=details.customer_id,
                 subscription_id=details.subscription_id,
+                stripe_subscription_id=details.stripe_subscription_id,
 
                 introducer_port_number=details.introducer_port_number,
                 storage_port_number=details.storage_port_number,
@@ -386,6 +388,13 @@ class SubscriptionDatabase(object):
 
             introducer_port_number=details["introducer_port_number"],
             storage_port_number=details["storage_port_number"],
+
+            # Version 3 adds ``stripe_subscription_id`` to the state.  We need
+            # to supply _some_ value here or ``SubscriptionDetails``
+            # constructor fails.  Pre-version 3 subscriptions don't have
+            # distinct subscription and stripe subscription identifiers.  Make
+            # them the same.
+            stripe_subscription_id=details["subscription_id"],
         )
 
     def _load_2(self, state):
@@ -394,6 +403,14 @@ class SubscriptionDatabase(object):
         return attr.assoc(
             self._load_1(state),
             key_prefix=state["details"]["key_prefix"],
+        )
+
+    def _load_3(self, state):
+        # Version 3 added ``stripe_subscription_id`` to the state.  Everything
+        # else is the same so we can piggy-back on _load_2.
+        return attr.assoc(
+            self._load_2(state),
+            stripe_subscription_id=state["details"]["stripe_subscription_id"],
         )
 
     def list_all_subscription_identifiers(self):
