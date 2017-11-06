@@ -79,7 +79,8 @@ class ISignup(Interface):
             customer associated with thi s subscription.
 
         :param unicode subscription_id: A unique identifier to associate with
-            the newly created subscription.
+            the newly created subscription to associate it state in a billing
+            system.
 
         :param unicode plan_id: The identifier of the service plan to which
 
@@ -115,6 +116,7 @@ class _Provisioner(object):
             product_id=plan_id,
             customer_id=customer_id,
             subscription_id=subscription_id,
+            stripe_subscription_id=subscription_id,
             introducer_port_number=0,
             storage_port_number=0,
         )

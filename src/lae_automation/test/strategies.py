@@ -431,5 +431,6 @@ def subscription_details():
         product_id=strategies.just(u"S4_consumer_iteration_2_beta1_2014-05-27"),
         customer_id=customer_id(),
         subscription_id=subscription_id(),
+        stripe_subscription_id=subscription_id(),
         ports=two_distinct_ports(),
     )

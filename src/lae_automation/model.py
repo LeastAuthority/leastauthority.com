@@ -95,6 +95,20 @@ def make_external_furl(internal_furl, publichost, port):
 
 @attr.s(frozen=True)
 class SubscriptionDetails(object):
+    """
+    All of the specifics of a single S4 subscription.
+
+    :ivar unicode subscription_id: The S4 internal subscription identifier for
+        this subscription.  This is unique across subscriptions in a
+        particular S4 deployment.  It is also persistent.  It is the primary
+        key for subscriptions.  For subscriptions this may be equal to
+        ``subscription_id`` but this is not necessarily the case.
+
+    :ivar unicode stripe_subscription_id: This is the Stripe subscription
+        identifier for the Stripe subscription associated with this S4
+        subscription.  This may change if certain billing-related events take
+        place.
+    """
     # TODO: Old subscriptions have distinctive bucket names.  Newer
     # subscriptions all share a bucket.  It would be nice to migrate all the
     # old subscription data to the single shared bucket and then get rid of
@@ -120,6 +134,10 @@ class SubscriptionDetails(object):
 
     introducer_port_number = attr.ib()
     storage_port_number = attr.ib()
+
+    stripe_subscription_id = attr.ib(
+        validator=validators.instance_of(unicode),
+    )
 
     key_prefix = attr.ib(
         validator=validators.instance_of(unicode),

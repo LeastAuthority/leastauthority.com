@@ -101,7 +101,7 @@ class Subscriptions(Resource):
         Create a new subscription from details given by the request.
         """
         payload = loads(request.content.read())
-        request_details = SubscriptionDetails(**payload)
+        request_details = decode_subscription(payload)
         response_details = self.database.create_subscription(
             subscription_id=request_details.subscription_id,
             details=request_details,
@@ -125,6 +125,7 @@ class Subscriptions(Resource):
 
 
 def _marshal_oldsecrets(oldsecrets):
+    oldsecrets = oldsecrets.copy()
     oldsecrets["introducer_node_pem"] = "".join(map(str, oldsecrets["introducer_node_pem"]))
     oldsecrets["server_node_pem"] = "".join(map(str, oldsecrets["server_node_pem"]))
     return oldsecrets
@@ -161,14 +162,32 @@ class Subscription(Resource):
         """
         payload = loads(request.content.read())
         request_details = attr.assoc(
-            SubscriptionDetails(**payload),
+            decode_subscription(payload),
             subscription_id=self.subscription_id,
         )
         response_details = self.database.load_subscription(
             details=request_details,
         )
         request.setResponseCode(CREATED)
-        return dumps(attr.asdict(response_details))
+        return dumps(marshal_subscription(response_details))
+
+
+    def render_POST(self, request):
+        """
+        Change some fields of the subscription represented by this resource.
+
+        The request body is expected to be a JSON object with keys matching
+        valid fields of a ``SubscriptionDetails`` object.  The values will be
+        taken as the new values for the corresponding fields of this
+        subscription.
+        """
+        details = self.database.get_subscription(
+            subscription_id=self.subscription_id,
+        )
+        payload = loads(request.content.read())
+        details = attr.assoc(details, **payload)
+        details = self.database.change_subscription(details)
+        return dumps(marshal_subscription(details))
 
 
     def render_GET(self, request):
@@ -225,7 +244,7 @@ class SubscriptionDatabase(object):
 
     def _subscription_state(self, subscription_id, details):
         return dict(
-            version=2,
+            version=3,
             details=dict(
                 active=True,
                 id=subscription_id,
@@ -238,6 +257,7 @@ class SubscriptionDatabase(object):
                 product_id=details.product_id,
                 customer_id=details.customer_id,
                 subscription_id=details.subscription_id,
+                stripe_subscription_id=details.stripe_subscription_id,
 
                 introducer_port_number=details.introducer_port_number,
                 storage_port_number=details.storage_port_number,
@@ -277,6 +297,26 @@ class SubscriptionDatabase(object):
             if email == subscription.customer_email:
                 results.append(sid)
         return results
+
+
+    def change_subscription(self, details):
+        """
+        Change the details of an existing subscription.
+
+        :param SubscriptionDetails details: The new details for a
+            subscription.  The subscription to change is identified by the
+            ``subscription_id`` field.
+
+        :return SubscriptionDetails: The new subscription.
+        """
+        path = self._subscription_path(details.subscription_id)
+        subscription = loads(path.getContent())
+        active = subscription["details"]["active"]
+        state = self._subscription_state(details.subscription_id, details)
+        subscription["details"] = state
+        subscription["details"]["active"] = active
+        path.setContent(dumps(subscription))
+        return details
 
 
     def load_subscription(self, details):
@@ -386,6 +426,13 @@ class SubscriptionDatabase(object):
 
             introducer_port_number=details["introducer_port_number"],
             storage_port_number=details["storage_port_number"],
+
+            # Version 3 adds ``stripe_subscription_id`` to the state.  We need
+            # to supply _some_ value here or ``SubscriptionDetails``
+            # constructor fails.  Pre-version 3 subscriptions don't have
+            # distinct subscription and stripe subscription identifiers.  Make
+            # them the same.
+            stripe_subscription_id=details["subscription_id"],
         )
 
     def _load_2(self, state):
@@ -394,6 +441,14 @@ class SubscriptionDatabase(object):
         return attr.assoc(
             self._load_1(state),
             key_prefix=state["details"]["key_prefix"],
+        )
+
+    def _load_3(self, state):
+        # Version 3 added ``stripe_subscription_id`` to the state.  Everything
+        # else is the same so we can piggy-back on _load_2.
+        return attr.assoc(
+            self._load_2(state),
+            stripe_subscription_id=state["details"]["stripe_subscription_id"],
         )
 
     def list_all_subscription_identifiers(self):
@@ -548,9 +603,7 @@ class Client(object):
                 cooperator=self.cooperator,
             ),
         )
-        d.addCallback(require_code(CREATED))
-        d.addCallback(readBody)
-        d.addCallback(lambda body: SubscriptionDetails(**loads(body)))
+        d.addCallback(_load_subscription_details, CREATED)
         return d
 
 
@@ -582,10 +635,9 @@ class Client(object):
                 cooperator=self.cooperator,
             ),
         )
-        d.addCallback(require_code(CREATED))
-        d.addCallback(readBody)
-        d.addCallback(lambda body: SubscriptionDetails(**loads(body)))
+        d.addCallback(_load_subscription_details, CREATED)
         return d
+
 
     def get(self, subscription_id):
         """
@@ -601,11 +653,25 @@ class Client(object):
         d = self.agent.request(
             b"GET", self._url(u"v1", u"subscriptions", subscription_id),
         )
-        d.addCallback(require_code(OK))
-        d.addCallback(readBody)
-        d.addCallback(loads)
-        d.addCallback(decode_subscription)
+        d.addCallback(_load_subscription_details, OK)
         return d
+
+
+    def change(self, subscription_id, **kw):
+        """
+        Change one or more mutable fields of an existing subscription.
+        """
+        bodyProducer = FileBodyProducer(
+            BytesIO(dumps(kw)),
+            cooperator=self.cooperator,
+        )
+        d = self.agent.request(
+            b"POST", self._url(u"v1", u"subscriptions", subscription_id),
+            bodyProducer=bodyProducer,
+        )
+        d.addCallback(_load_subscription_details, OK)
+        return d
+
 
     def list(self):
         """
@@ -642,12 +708,21 @@ class UnexpectedResponseCode(Exception):
     response = attr.ib(validator=validators.provides(IResponse))
     required = attr.ib(validator=validators.instance_of(int))
 
+
 def require_code(required):
     def check(response):
         if response.code != required:
             raise UnexpectedResponseCode(response, required)
         return response
     return check
+
+
+def _load_subscription_details(response, required_code):
+    require_code(required_code)(response)
+    d = readBody(response)
+    d.addCallback(loads)
+    d.addCallback(decode_subscription)
+    return d
 
 
 def network_client(endpoint, agent, cooperator=None):
