@@ -34,6 +34,7 @@ def configuration(stripe_publishable_api_key, cross_domain):
 
 def make_resource(
         stripe_publishable_api_key,
+        stripe_plan_id,
         get_signup, stripe, mailer, cross_domain,
 ):
     resource = Resource()
@@ -49,6 +50,7 @@ def make_resource(
     resource.putChild('create-subscription',
         CreateSubscription(
             get_signup, mailer, stripe, cross_domain,
+            stripe_plan_id,
         ),
     )
     resource.putChild(
