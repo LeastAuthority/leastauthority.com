@@ -142,6 +142,7 @@ class GridRouterStateMachine(RuleBasedStateMachine):
             product_id=u"foo",
             customer_id=u"foo",
             subscription_id=u"foo",
+            stripe_subscription_id=u"foo",
             introducer_port_number=intro_port,
             storage_port_number=storage_port,
         )
