@@ -151,52 +151,52 @@ def _deployment_template(model):
         metadata=_s4_customer_metadata(model),
         status=None,
         spec={
-	    u"replicas": 1,
+            u"replicas": 1,
             u"selector": {
                 u"matchExpressions": None,
                 u"matchLabels": None,
             },
             # Don't keep an arbitrarily large amount of history around.
             u"revisionHistoryLimit": 2,
-	    u"template": {
-	        u"metadata": _s4_customer_metadata(model),
-	        u"spec": {
-		    u"volumes": [
-		        {
-			    u"name": u"introducer-config-volume",
-			    u"configMap": {
-			        u"items": [
-				    {
-				        u"key": u"introducer.json",
-				        u"path": u"introducer.json"
-				    }
-			        ]
-			    }
-		        },
-		        {
-			    u"name": u"storage-config-volume",
-			    u"configMap": {
-			        u"items": [
-				    {
-				        u"key": u"storage.json",
-				        u"path": u"storage.json"
-				    }
-			        ]
-			    }
-		        }
-		    ],
-		    u"containers": [
+            u"template": {
+                u"metadata": _s4_customer_metadata(model),
+                u"spec": {
+                    u"volumes": [
+                        {
+                            u"name": u"introducer-config-volume",
+                            u"configMap": {
+                                u"items": [
+                                    {
+                                        u"key": u"introducer.json",
+                                        u"path": u"introducer.json"
+                                    }
+                                ]
+                            }
+                        },
+                        {
+                            u"name": u"storage-config-volume",
+                            u"configMap": {
+                                u"items": [
+                                    {
+                                        u"key": u"storage.json",
+                                        u"path": u"storage.json"
+                                    }
+                                ]
+                            }
+                        }
+                    ],
+                    u"containers": [
                         introducer_liveness_sidecar,
                         storageserver_liveness_sidecar,
-		        {
+                        {
                             # The image is filled in at instantiation time.
-			    u"name": u"introducer",
-			    u"volumeMounts": [
-			        {
-				    u"name": u"introducer-config-volume",
-				    u"mountPath": u"/app/config"
-			        }
-			    ],
+                            u"name": u"introducer",
+                            u"volumeMounts": [
+                                {
+                                    u"name": u"introducer-config-volume",
+                                    u"mountPath": u"/app/config"
+                                }
+                            ],
                             u"ports": [],
                             u"livenessProbe": create_liveness_probe(model, introducer_liveness_sidecar),
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
@@ -217,16 +217,16 @@ def _deployment_template(model):
                                     u"memory": u"64Mi",
                                 },
                             },
-		        },
-		        {
+                        },
+                        {
                             # The image is filled in at instantiation time.
-			    u"name": u"storageserver",
-			    u"volumeMounts": [
-			        {
-				    u"name": u"storage-config-volume",
-				    u"mountPath": u"/app/config"
-			        }
-			    ],
+                            u"name": u"storageserver",
+                            u"volumeMounts": [
+                                {
+                                    u"name": u"storage-config-volume",
+                                    u"mountPath": u"/app/config"
+                                }
+                            ],
                             u"ports": [],
                             u"livenessProbe": create_liveness_probe(model, storageserver_liveness_sidecar),
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
@@ -251,10 +251,10 @@ def _deployment_template(model):
                                     u"memory": u"128Mi",
                                 },
                             },
-		        },
-		    ]
-	        }
-	    }
+                        },
+                    ]
+                }
+            }
         }
     )
 
@@ -432,10 +432,10 @@ def _customer_grid_service(model):
             },
         ),
         spec={
-	    u"type": u"LoadBalancer",
+            u"type": u"LoadBalancer",
             # We don't actually want to select the "customer" pods here.  Instead,
             # want the grid router pod.
-	    u"selector": _s4_infrastructure_metadata(model).labels,
+            u"selector": _s4_infrastructure_metadata(model).labels,
             u"ports": [
                 {u"name": u"introducer", u"protocol": u"TCP", u"port": 10000},
                 {u"name": u"storage", u"protocol": u"TCP", u"port": 10001},
