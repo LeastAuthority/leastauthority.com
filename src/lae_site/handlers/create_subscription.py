@@ -17,8 +17,6 @@ from lae_site.handlers.web import env
 
 from lae_site.handlers.main import HandlerBase
 
-PLAN_ID                 = u'S4_consumer_iteration_2_beta1_2014-05-27'
-
 logger = Logger()
 
 # global variable for signup style wormhole
@@ -49,7 +47,7 @@ class Mailer(object):
         )
 
 class CreateSubscription(HandlerBase):
-    def __init__(self, get_signup, mailer, stripe, cross_domain):
+    def __init__(self, get_signup, mailer, stripe, cross_domain, stripe_plan_id):
         """
         :param get_signup: A one-argument callable which returns an ``ISignup``
             which can sign up a new user for us.  The argument is the kind of
@@ -61,11 +59,12 @@ class CreateSubscription(HandlerBase):
         self._mailer = mailer
         self._stripe = stripe
         self._cross_domain = cross_domain
+        self._stripe_plan_id = stripe_plan_id
 
     # add the client domain where the form is, so we can submit cross-domain requests
     def addHeaders(self, request, cross_domain):
-      request.setHeader('Access-Control-Allow-Origin', cross_domain)
-      return request
+        request.setHeader('Access-Control-Allow-Origin', cross_domain)
+        return request
 
     # The following helper methods are all called directly or indirectly by render.
     def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject, notes=''):
@@ -88,11 +87,11 @@ class CreateSubscription(HandlerBase):
         )
         raise RenderErrorDetailsForBrowser(details)
 
-    def create_customer(self, stripe_authorization_token, user_email, request):
+    def create_customer(self, stripe_authorization_token, user_email, plan_id, request):
         try:
             return self._stripe.create(
                 authorization_token=stripe_authorization_token,
-                plan_id=PLAN_ID,
+                plan_id=self._stripe_plan_id,
                 email=user_email,
             )
         except stripe.CardError as e:
@@ -162,7 +161,12 @@ class CreateSubscription(HandlerBase):
 
         try:
             # Invoke card charge by requesting subscription to recurring-payment plan.
-            customer = self.create_customer(stripe_authorization_token, user_email, request)
+            customer = self.create_customer(
+                stripe_authorization_token,
+                user_email,
+                self._stripe_plan_id,
+                request,
+            )
         except RenderErrorDetailsForBrowser as e:
             return e.details
 
