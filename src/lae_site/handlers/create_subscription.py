@@ -63,8 +63,8 @@ class CreateSubscription(HandlerBase):
 
     # add the client domain where the form is, so we can submit cross-domain requests
     def addHeaders(self, request, cross_domain):
-      request.setHeader('Access-Control-Allow-Origin', cross_domain)
-      return request
+        request.setHeader('Access-Control-Allow-Origin', cross_domain)
+        return request
 
     # The following helper methods are all called directly or indirectly by render.
     def handle_stripe_create_customer_errors(self, trace_back, error, details, email_subject, notes=''):
