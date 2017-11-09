@@ -24,6 +24,7 @@ matrix:
     # This builder will run our test suite directly.
     - env: ENV="testing"
       language: "python"
+      cache: "pip"
 
 # Install leastauthority.com's dependencies.
 install:
