@@ -23,14 +23,13 @@ class MakeResourceTests(TestCase):
         """
         ``make_resource`` returns an ``IResource`` provider.
         """
-        cross_domain = "http://localhost:5000/"
-        p = FilePath(self.mktemp().decode("ascii"))
-        p.makedirs()
+        cross_domain = u"http://localhost:5000/"
         resource = make_resource(
-            u"stripe-secret-api-key",
             u"stripe-publishable-api-key",
-            p.child(u"confirmed"),
-            p.child(u"subscriptions"),
+            u"stripe-plan-id",
+            lambda: None,
+            object(),
+            object(),
             cross_domain,
         )
         verifyObject(IResource, resource)
@@ -66,6 +65,7 @@ class SiteForOptionsTests(TestCase):
         options.parseOptions([
             b"--stripe-secret-api-key-path", stripe_secret.path,
             b"--stripe-publishable-api-key-path", stripe_publishable.path,
+            b"--stripe-plan-id", b"foo-bar",
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",

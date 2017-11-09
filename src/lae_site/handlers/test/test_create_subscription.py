@@ -119,7 +119,11 @@ class FullSignupTests(TestCase):
         self.cross_domain = "http://localhost:5000/"
 
         resource = CreateSubscription(
-            lambda style: self.signup, self.mailer, self.stripe, self.cross_domain
+            lambda style: self.signup,
+            self.mailer,
+            self.stripe,
+            self.cross_domain,
+            u"plan-id",
         )
         root = Resource()
         root.putChild(b"", resource)
@@ -145,7 +149,11 @@ class FullSignupTests(TestCase):
         self.cross_domain = "http://localhost:5000/"
 
         resource = CreateSubscription(
-            lambda style: self.signup, self.mailer, self.stripe, self.cross_domain
+            lambda style: self.signup,
+            self.mailer,
+            self.stripe,
+            self.cross_domain,
+            u"plan-id",
         )
         root = Resource()
         root.putChild(b"", resource)
