@@ -73,7 +73,6 @@ from lae_automation.containers import (
     deployment_name,
 )
 from lae_automation.model import DeploymentConfiguration
-from lae_automation.signup import get_bucket_name
 
 from .strategies import (
     domains, subscription_id, subscription_details, deployment_configuration,
@@ -506,29 +505,10 @@ class SubscriptionConvergence(RuleBasedStateMachine):
                 self.check_pods,
                 self.check_service,
                 self.check_route53,
-                self.check_s3,
             }
             k8s_state = self.kubernetes._state
             for check in checks:
                 check(database, config, subscriptions, k8s_state, aws)
-
-
-    def check_s3(self, database, config, subscriptions, k8s_state, aws):
-        s3 = aws.get_s3_client()
-        buckets = set(
-            bucket.name
-            for bucket
-            in self.case.successResultOf(s3.list_buckets())
-        )
-        for sid in subscriptions:
-            subscription = database.get_subscription(sid)
-            assert_that(
-                buckets,
-                Contains(subscription.bucketname),
-            )
-            # Note we don't check that S3 buckets for deactivated
-            # subscriptions don't exist because we're not actually ready to
-            # have S3 buckets get deleted automatically yet.
 
 
     def check_configmaps(self, database, config, subscriptions, k8s_state, aws):
