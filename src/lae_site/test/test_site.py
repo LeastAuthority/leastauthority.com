@@ -1,17 +1,26 @@
 
 from zope.interface.verify import verifyObject
 
-from testtools.matchers import IsInstance
+from testtools.matchers import IsInstance, Equals
 
 from twisted.internet.interfaces import IProtocolFactory
 from twisted.web.resource import IResource, Resource
+from twisted.web.static import Data
 from twisted.web.server import Site
+from twisted.web.client import readBody
+from twisted.web.http_headers import Headers
+
 from twisted.python.filepath import FilePath
 from twisted.test.proto_helpers import MemoryReactor
 
-from lae_site.handlers import make_resource, make_site
+from lae_site.handlers import (
+    make_resource,
+    make_site,
+    _ResourceWithHeaders,
+)
 from lae_site.main import SiteOptions, site_for_options
 
+from lae_util.memoryagent import dummyRequest, asResponse, render
 from lae_util.testtools import TestCase
 
 
@@ -33,6 +42,35 @@ class MakeResourceTests(TestCase):
             cross_domain,
         )
         verifyObject(IResource, resource)
+
+
+class _ResourceWithHeadersTests(TestCase):
+    """
+    Tests for ``_ResourceWithHeaders``.
+    """
+    def test_extra_headers(self):
+        """
+        The extra headers passed to ``_ResourceWithHeaders`` are rendered into the
+        response by ``_ResourceWithHeaders.render``.
+        """
+        resource = Data(b"foo", b"text/plain")
+        wrapper = _ResourceWithHeaders(
+            Headers({b"bar": [b"baz"]}),
+            resource,
+        )
+        request = dummyRequest(b"GET", b"/", Headers())
+        self.successResultOf(render(wrapper, request))
+        response = asResponse(request)
+        self.expectThat(
+            response.headers,
+            Equals(Headers({
+                b"content-type": [b"text/plain"],
+                b"content-length": [b"3"],
+                b"bar": [b"baz"],
+            }))
+        )
+        body = self.successResultOf(readBody(response))
+        self.expectThat(body, Equals(b"foo"))
 
 
 class MakeSiteTests(TestCase):

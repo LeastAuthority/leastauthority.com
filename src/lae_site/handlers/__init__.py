@@ -5,6 +5,7 @@ from twisted.web.server import Site
 from twisted.web.static import File, Data
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
+from twisted.web.http_headers import Headers
 from twisted.python.filepath import FilePath
 
 from lae_site.handlers.web import JinjaHandler
@@ -37,8 +38,9 @@ class _ResourceWithHeaders(Resource):
         Render the additional headers into a response and then delegate to the
         wrapped resource.
         """
-        for k, v in self._headers.getAllRawHeaders():
-            request.responseHeaders.addRawHeader(k, v)
+        for k, vs in self._headers.getAllRawHeaders():
+            for v in vs:
+                request.responseHeaders.addRawHeader(k, v)
         return self._wrapped.render(request)
 
 
@@ -50,7 +52,9 @@ def configuration(stripe_publishable_api_key, cross_domain):
     return _ResourceWithHeaders(
         # Allow the signup page, hosted on *cross_domain*, to even accept a
         # response to a request for this resource.
-        {b"Access-Control-Allow-Origin": [cross_domain.encode("ascii")]},
+        Headers({
+            b"Access-Control-Allow-Origin": [cross_domain.encode("ascii")]
+        }),
         Data(
             dumps({
                 # Stripe publishable key identifies a Stripe account in
