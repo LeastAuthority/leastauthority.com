@@ -14,22 +14,54 @@ from lae_site import __file__ as _lae_root
 
 _STATIC = FilePath(_lae_root).sibling("static")
 
+
+class _ResourceWithHeaders(Resource):
+    """
+    Add response headers to the behavior of another resource.
+    """
+    def __init__(self, headers, wrapped):
+        """
+        :param Headers headers: Additional headers to include in any rendered
+            response.
+
+        :param IResource wrapped: Another resource which is responsible for
+            all response behavior apart from the additional headers.
+        """
+        self._wrapped = wrapped
+        self._headers = headers
+        Resource.__init__(self)
+
+
+    def render(self, request):
+        """
+        Render the additional headers into a response and then delegate to the
+        wrapped resource.
+        """
+        for k, v in self._headers.getAllRawHeaders():
+            request.responseHeaders.addRawHeader(k, v)
+        return self._wrapped.render(request)
+
+
 def configuration(stripe_publishable_api_key, cross_domain):
     """
     Create a ``Resource`` which serves up simple configuration used by
     JavaScript on the website.
     """
-    return Data(
-        dumps({
-            # Stripe publishable key identifies a Stripe account in
-            # API uses.  It's safe to share and required by the
-            # JavaScript Stripe client API.
-            u"stripe-publishable-api-key": stripe_publishable_api_key,
-            u"cross-domain": cross_domain,
-        }),
-        b"application/json",
+    return _ResourceWithHeaders(
+        # Allow the signup page, hosted on *cross_domain*, to even accept a
+        # response to a request for this resource.
+        {b"Access-Control-Allow-Origin": [cross_domain.encode("ascii")]},
+        Data(
+            dumps({
+                # Stripe publishable key identifies a Stripe account in
+                # API uses.  It's safe to share and required by the
+                # JavaScript Stripe client API.
+                u"stripe-publishable-api-key": stripe_publishable_api_key,
+                u"cross-domain": cross_domain,
+            }),
+            b"application/json",
+        )
     )
-
 
 
 def make_resource(
