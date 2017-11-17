@@ -8,6 +8,7 @@ with ``setup.py``-defined entrypoints.
 
 from __future__ import unicode_literals, print_function
 
+from datetime import datetime
 from functools import partial
 from sys import argv
 from os import environ
@@ -251,3 +252,75 @@ def _get_active_stripe_subscriptions(reactor, api_key):
         for subscr
         in trialinglist + activelist + pastduelist
     ))
+
+
+
+def copy_subscriptions_to_account():
+    _copy_subscriptions_to_account(argv[1], argv[2])
+
+
+
+def _copy_subscriptions_to_account(source, destination):
+    """
+    Given API keys to two Stripe accounts holding the same Customers and Credit
+    Cards, create Plans and Subscriptions in the latter account which match
+    those in the former account.
+    """
+    source_customers = _list(stripe.Customer, api_key=source)
+    print("Found {} customers in {}...".format(len(source_customers), source))
+    for customer in source_customers:
+        _copy_customer_subscriptions(customer, destination)
+
+
+
+def _copy_customer_subscriptions(customer, destination):
+    """
+    Copy subscriptions belonging to ``customer`` to a Stripe account accessed
+    via API key ``destination``.
+    """
+    for subscription in customer.subscriptions:
+        _copy_customer_subscription(customer, subscription, destination)
+        _terminate_customer_subscription(customer, subscription)
+
+
+
+def _copy_customer_subscription(customer, subscription, destination):
+    """
+    Copy one subscription belonging to ``customer`` to a Stripe account
+    accessed via API key ``destination``.
+    """
+    trial_end = subscription.current_period_end
+    plans = list(
+        subscription_item["plan"]["id"]
+        for subscription_item
+        in subscription["items"]["data"]
+    )
+    print("Copying customer {} subscription {} (trialing until {}) with plans {}".format(
+        customer.id,
+        subscription.id,
+        datetime.utcfromtimestamp(trial_end).isoformat(),
+        plans,
+    ))
+    stripe.Subscription.create(
+        api_key=destination,
+        customer=customer.id,
+        trial_end=trial_end,
+        items=list(
+            {"plan": plan}
+            for plan
+            in plans
+        ),
+    )
+
+
+
+def _terminate_customer_subscription(customer, subscription):
+    """
+    Terminate one subscription at the end of its current billing period.
+    """
+    print("Terminating customer {} origin subscription {} at end of period ({}).".format(
+        customer.id,
+        subscription.id,
+        datetime.utcfromtimestamp(subscription.current_period_end).isoformat(),
+    ))
+    subscription.delete(at_period_end=True)
