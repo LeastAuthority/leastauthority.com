@@ -77,6 +77,8 @@ def subscribe(reactor, root_url, email):
 
         introducer_port_number=0,
         storage_port_number=0,
+
+        stripe_subscription_id=sid,
     )
     return client.create(sid, subscription)
 
