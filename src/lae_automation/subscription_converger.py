@@ -62,8 +62,6 @@ from .containers import (
     create_deployment,
     new_service,
 )
-from .initialize import create_user_bucket
-from .signup import get_bucket_name
 from .kubeclient import KubeClient, And, LabelSelector, NamespaceSelector
 
 from txkube import (
@@ -230,9 +228,6 @@ def _finish_convergence_service(
         secret_key_hash=sha256(secret_access_key).hexdigest().decode("ascii"),
     )
 
-    # XXX I get to leave a ton of fields empty because I happen to know
-    # they're not used in this codepath. :/ Maybe this suggests something has
-    # gone wrong ...
     config = DeploymentConfiguration(
         domain=options["domain"].decode("ascii"),
         kubernetes_namespace=options["kubernetes-namespace"].decode("ascii"),
@@ -422,27 +417,6 @@ def get_active_subscriptions(subscriptions):
 
 
 
-_S3_BUCKETS = Gauge(
-    u"s4_s3_bucket_gauge",
-    u"Current S4 S3 Buckets",
-)
-
-
-
-def get_s3_buckets(s3):
-    action = start_action(action_type=u"list-buckets")
-    with action.context():
-        d = DeferredContext(s3.list_buckets())
-        def got_buckets(buckets):
-            buckets = list(buckets)
-            action.add_success_fields(bucket_count=len(buckets))
-            _S3_BUCKETS.set(len(buckets))
-            return buckets
-        d.addCallback(got_buckets)
-        return d.addActionFinish()
-
-
-
 class _ZoneState(PClass):
     zone = field()
     rrsets = field()
@@ -457,7 +431,6 @@ class _State(PClass):
     pods = field()
     service = field()
     zone = field(type=_ZoneState)
-    buckets = field()
 
 
 
@@ -473,7 +446,6 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
                 get_customer_grid_pods(k8s, config.kubernetes_namespace),
                 get_customer_grid_service(k8s, config.kubernetes_namespace),
                 get_hosted_zone_by_name(aws.get_route53_client(), Name(config.domain)),
-                get_s3_buckets(aws.get_s3_client()),
             ]),
         )
         d.addCallback(
@@ -486,7 +458,6 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
                     u"pods",
                     u"service",
                     u"zone",
-                    u"buckets",
                 ], state,
                 ),
             )),
@@ -497,7 +468,6 @@ def _get_converge_inputs(config, subscriptions, k8s, aws):
 @with_action(action_type=u"converge-logic")
 def _converge_logic(actual, config, subscriptions, k8s, aws):
     convergers = [
-        _converge_s3,
         _converge_service,
         _converge_configmaps,
         _converge_deployments,
@@ -560,26 +530,6 @@ def _compute_changes(desired, actual):
     return _Changes(
         create=list(desired[sid] for sid in to_create),
         delete=to_delete,
-    )
-
-
-
-def _converge_s3(actual, config, subscription, k8s, aws):
-    buckets = []
-    actual_bucket_names = {bucket.name for bucket in actual.buckets}
-    for subscription in actual.subscriptions.itervalues():
-        bucket_name = subscription.bucketname
-        if bucket_name not in actual_bucket_names:
-            Message.log(actor=u"converge-s3", bucket=bucket_name, activity=u"create")
-            buckets.append(bucket_name)
-
-    s3 = aws.get_s3_client()
-    from twisted.internet import reactor
-
-    return list(
-        lambda n=n: create_user_bucket(reactor, s3, n)
-        for n
-        in buckets
     )
 
 
