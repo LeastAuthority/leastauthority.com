@@ -70,7 +70,7 @@ def configuration(stripe_publishable_api_key, cross_domain):
 
 def make_resource(
     stripe_publishable_api_key,
-    stripe_plan_id,
+    plan_id,
     get_signup,
     stripe,
     mailer,
@@ -92,7 +92,7 @@ def make_resource(
             mailer,
             stripe,
             cross_domain,
-            stripe_plan_id,
+            plan_id,
         ),
     )
     resource.putChild(

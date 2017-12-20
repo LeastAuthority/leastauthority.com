@@ -2,6 +2,8 @@ import traceback
 
 import attr
 
+import chargebee
+
 from twisted.logger import Logger
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.http import (
@@ -29,16 +31,38 @@ class RenderErrorDetailsForBrowser(Exception):
 
 
 @attr.s
-class Stripe(object):
+class ChargeBee(object):
+    # Notes:
+    #
+    # Must have Settings > Payment Gateways > Smart Routing for currency of
+    # credit cards to be handled.
+    #
+    # Must have plan_id in Product Catalog > Plans.
+    #
+    # ChargeBee account must be configured to use same Stripe account as
+    # payment gateway as web server is configured to use for signup form.
+    #
+    # ChargeBee must not be configured to require any additional card details
+    # (they're not (presently?) available via the Stripe integration).
+
     key = attr.ib()
+    name = attr.ib()
 
     def create(self, authorization_token, plan_id, email):
-        return stripe.Customer.create(
-            api_key=self.key,
-            card=authorization_token,
-            plan=plan_id,
-            email=email,
-        )
+        chargebee.configure(self.key, self.name)
+        result = chargebee.Subscription.create({
+            "plan_id": plan_id,
+            "customer": {
+                "email": email,
+            },
+            "payment_method": {
+                "type": "card",
+                "tmp_token": authorization_token,
+            },
+        })
+        return result
+
+
 
 class Mailer(object):
     def mail(self, from_addr, to_addr, subject, headers):
@@ -94,7 +118,7 @@ class CreateSubscription(HandlerBase):
                 plan_id=self._stripe_plan_id,
                 email=user_email,
             )
-        except stripe.CardError as e:
+        except chargebee.PaymentError as e:
             # Always return 402 on card errors
             request.setResponseCode(PAYMENT_REQUIRED)
             # Errors we expect: https://stripe.com/docs/api#errors
@@ -108,7 +132,7 @@ class CreateSubscription(HandlerBase):
                 email_subject="Stripe Card error ({})".format(user_email),
                 notes=note,
             )
-        except stripe.APIError as e:
+        except chargebee.OperationFailedError as e:
             # Should return the same as Authentication error
             request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
@@ -119,7 +143,7 @@ class CreateSubscription(HandlerBase):
                 ),
                 email_subject="Stripe API error ({})".format(user_email),
             )
-        except stripe.InvalidRequestError as e:
+        except chargebee.InvalidRequestError as e:
             # Return 422 - unusable entity error
             request.setResponseCode(422)
             self.handle_stripe_create_customer_errors(
@@ -132,7 +156,7 @@ class CreateSubscription(HandlerBase):
                 ),
                 email_subject="Stripe Invalid Request error ({})".format(user_email),
             )
-        except stripe.AuthenticationError as e:
+        except chargebee.APIError as e:
             request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,
@@ -161,7 +185,7 @@ class CreateSubscription(HandlerBase):
 
         try:
             # Invoke card charge by requesting subscription to recurring-payment plan.
-            customer = self.create_customer(
+            result = self.create_customer(
                 stripe_authorization_token,
                 user_email,
                 self._stripe_plan_id,
@@ -171,14 +195,15 @@ class CreateSubscription(HandlerBase):
             return e.details
 
         # Initiate the provisioning service
-        subscription = customer.subscriptions.data[0]
+        subscription = result.subscription
+        customer = result.customer
         style = s4_signup_style.decode("ascii")
         signup = self._get_signup(style)
         d = signup.signup(
             customer.email.decode("utf-8"),
             customer.id.decode("utf-8"),
             subscription.id.decode("utf-8"),
-            subscription.plan.id.decode("utf-8"),
+            subscription.plan_id.decode("utf-8"),
         )
         d.addCallback(signed_up, request)
         d.addErrback(signup_failed, customer, self._mailer)
