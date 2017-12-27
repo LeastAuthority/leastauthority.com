@@ -35,7 +35,7 @@ def main(rev=None):
     with template.open() as fObj:
         job = freeze(safe_load(fObj))
     if rev is None:
-        rev = check_output([u"git", u"rev-parse", u"--short", u"HEAD"])
+        rev = check_output([u"git", u"rev-parse", u"--short", u"HEAD"]).strip()
     git_rev = value(job.spec.template.spec.containers[0].env, name(equals(u"GIT_REV")))
     job = job.transform(
         [u"spec", u"template", u"spec", u"containers", 0, u"env", git_rev, u"value"],
