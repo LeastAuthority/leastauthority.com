@@ -1,0 +1,7 @@
+apiVersion: 'v1'
+kind: 'ConfigMap'
+metadata:
+  name: 's4'
+data:
+  chargebee-site-name: 'leastauthority'
+  chargebee-plan-id: 's4-us'
