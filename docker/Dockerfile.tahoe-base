@@ -7,7 +7,7 @@
 FROM leastauthority/base
 
 ENV TAHOE_LAFS_GIT_REPO_URL="https://github.com/leastauthority/tahoe-lafs.git"
-ENV TAHOE_LAFS_GIT_REV="d2ba7235163c5e16b9fa5a1d3351a3d34252d6bc"
+ENV TAHOE_LAFS_GIT_REV="e77aa51be"
 
 RUN git clone "${TAHOE_LAFS_GIT_REPO_URL}" /app/code && \
     git -C /app/code checkout "${TAHOE_LAFS_GIT_REV}"
