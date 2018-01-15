@@ -49,7 +49,7 @@ class ChargeBee(object):
 
     def create(self, authorization_token, plan_id, email):
         chargebee.configure(self.key, self.name)
-        result = chargebee.Subscription.create({
+        subscription = chargebee.Subscription.create({
             "plan_id": plan_id,
             "customer": {
                 "email": email,
@@ -58,8 +58,11 @@ class ChargeBee(object):
                 "type": "card",
                 "tmp_token": authorization_token,
             },
+            "billing_address": {
+                "country": "DE",
+            },
         })
-        return result
+        return subscription
 
 
 
