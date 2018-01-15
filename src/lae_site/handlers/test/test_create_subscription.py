@@ -6,7 +6,7 @@ import attr
 
 from chargebee import PaymentError
 
-from testtools.matchers import Equals, Contains, HasLength
+from testtools.matchers import Equals, Contains, HasLength, raises
 
 from twisted.internet.defer import succeed
 from twisted.web.client import readBody
@@ -17,7 +17,10 @@ from twisted.web.http import (
 from twisted.web.resource import Resource
 
 from lae_util.testtools import TestCase
-from lae_site.handlers.create_subscription import CreateSubscription
+from lae_site.handlers.create_subscription import (
+    CreateSubscription,
+    EUCountry,
+)
 
 from treq.testing import RequestTraversalAgent
 
@@ -51,7 +54,6 @@ class Customer(object):
     email = attr.ib()
 
 
-
 @attr.s
 class Subscriptions(object):
     data = attr.ib()
@@ -78,7 +80,7 @@ class Result(object):
 
 @attr.s
 class PositiveChargeBee(object):
-    def create(self, authorization_token, plan_id, email):
+    def create(self, authorization_token, plan_id, country, email):
         return Result(
             customer=Customer(
                 "cus_abcdef",
@@ -92,7 +94,7 @@ class PositiveChargeBee(object):
 
 
 class NegativeChargeBee(object):
-    def create(self, authorization_token, plan_id, email):
+    def create(self, authorization_token, plan_id, country, email):
         raise PaymentError(
             432, {
                 "message": "chargebee error",
@@ -182,3 +184,20 @@ class FullSignupTests(TestCase):
         self.expectThat(body, Contains("chargebee error"))
         self.expectThat(self.mailer.emails, HasLength(1))
         self.expectThat(self.signup.signups, Equals(0))
+
+
+class EUCountryTests(TestCase):
+    """
+    Tests for ``EUCountry``.
+    """
+    def test_valid(self):
+        self.expectThat(
+            EUCountry(b"be").country_code,
+            Equals(b"be"),
+        )
+
+    def test_invalid(self):
+        self.expectThat(
+            lambda: EUCountry(b"xx"),
+            raises(ValueError),
+        )

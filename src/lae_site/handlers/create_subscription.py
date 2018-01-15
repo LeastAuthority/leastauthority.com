@@ -29,6 +29,65 @@ class RenderErrorDetailsForBrowser(Exception):
 
 
 
+_EU_COUNTRIES = {
+    "be",
+    "bg",
+    "cz",
+    "dk",
+    "de",
+    "ee",
+    "ie",
+    "el",
+    "es",
+    "fr",
+    "hr",
+    "it",
+    "cy",
+    "lv",
+    "lt",
+    "lu",
+    "hu",
+    "mt",
+    "nl",
+    "at",
+    "pl",
+    "pt",
+    "ro",
+    "si",
+    "sk",
+    "fi",
+    "se",
+    "uk",
+}
+
+
+def _in_eu(code):
+    # http://publications.europa.eu/code/pdf/370000en.htm#pays
+    code = code.decode("ascii").lower()
+    if code in _EU_COUNTRIES:
+        return code
+    raise ValueError("{} is not an EU country code".format(code))
+
+
+
+@attr.s
+class EUCountry(object):
+    country_code = attr.ib(type=unicode, convert=_in_eu)
+
+    def add(self, parameters):
+        parameters["billing_address"] = {
+            "country": self.country_code,
+        }
+        return parameters
+
+
+
+class NonEUCountry(object):
+    def add(self, parameters):
+        return parameters
+
+
+
 @attr.s
 class ChargeBee(object):
     # Notes:
@@ -47,9 +106,8 @@ class ChargeBee(object):
     key = attr.ib()
     name = attr.ib()
 
-    def create(self, authorization_token, plan_id, email):
-        chargebee.configure(self.key, self.name)
-        subscription = chargebee.Subscription.create({
+    def create(self, authorization_token, plan_id, email, country):
+        subscription_parameters = {
             "plan_id": plan_id,
             "customer": {
                 "email": email,
@@ -58,10 +116,13 @@ class ChargeBee(object):
                 "type": "card",
                 "tmp_token": authorization_token,
             },
-            "billing_address": {
-                "country": "DE",
-            },
-        })
+        }
+        subscription_parameters = country.add(subscription_parameters)
+
+        chargebee.configure(self.key, self.name)
+        subscription = chargebee.Subscription.create(
+            subscription_parameters,
+        )
         return subscription
 
 
@@ -113,12 +174,13 @@ class CreateSubscription(HandlerBase):
         )
         raise RenderErrorDetailsForBrowser(details)
 
-    def create_customer(self, stripe_authorization_token, user_email, plan_id, request):
+    def create_customer(self, stripe_authorization_token, user_email, plan_id, country, request):
         try:
             return self._billing.create(
                 authorization_token=stripe_authorization_token,
                 plan_id=plan_id,
                 email=user_email,
+                country=country,
             )
         except chargebee.PaymentError as e:
             # Always return 402 on card errors
@@ -185,12 +247,23 @@ class CreateSubscription(HandlerBase):
         stripe_authorization_token = request.args.get(b"stripeToken")[0]
         user_email = request.args.get(b"email")[0]
 
+        country_code = request.args.get(b"country-code", [None])[0]
+        if country_code is None:
+            country = NonEUCountry()
+        else:
+            country = EUCountry(country_code)
+
+        plan_id = request.args.get(b"plan-id", [self._plan_id])[0]
+        if plan_id not in {self._plan_id}:
+            return "Invalid `plan-id` given."
+
         try:
             # Invoke card charge by requesting subscription to recurring-payment plan.
             result = self.create_customer(
                 stripe_authorization_token,
                 user_email,
                 plan_id,
+                country,
                 request,
             )
         except RenderErrorDetailsForBrowser as e:
