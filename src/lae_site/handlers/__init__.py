@@ -72,7 +72,7 @@ def make_resource(
     stripe_publishable_api_key,
     plan_id,
     get_signup,
-    stripe,
+    billing,
     mailer,
     cross_domain,
 ):
@@ -90,7 +90,7 @@ def make_resource(
         CreateSubscription(
             get_signup,
             mailer,
-            stripe,
+            billing,
             cross_domain,
             plan_id,
         ),

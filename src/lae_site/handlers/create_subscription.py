@@ -73,7 +73,7 @@ class Mailer(object):
         )
 
 class CreateSubscription(HandlerBase):
-    def __init__(self, get_signup, mailer, stripe, cross_domain, stripe_plan_id):
+    def __init__(self, get_signup, mailer, billing, cross_domain, plan_id):
         """
         :param get_signup: A one-argument callable which returns an ``ISignup``
             which can sign up a new user for us.  The argument is the kind of
@@ -83,9 +83,9 @@ class CreateSubscription(HandlerBase):
         self._logger_helper(__name__)
         self._get_signup = get_signup
         self._mailer = mailer
-        self._stripe = stripe
+        self._billing = billing
         self._cross_domain = cross_domain
-        self._stripe_plan_id = stripe_plan_id
+        self._plan_id = plan_id
 
     # add the client domain where the form is, so we can submit cross-domain requests
     def addHeaders(self, request, cross_domain):
@@ -115,9 +115,9 @@ class CreateSubscription(HandlerBase):
 
     def create_customer(self, stripe_authorization_token, user_email, plan_id, request):
         try:
-            return self._stripe.create(
+            return self._billing.create(
                 authorization_token=stripe_authorization_token,
-                plan_id=self._stripe_plan_id,
+                plan_id=plan_id,
                 email=user_email,
             )
         except chargebee.PaymentError as e:
@@ -190,7 +190,7 @@ class CreateSubscription(HandlerBase):
             result = self.create_customer(
                 stripe_authorization_token,
                 user_email,
-                self._stripe_plan_id,
+                plan_id,
                 request,
             )
         except RenderErrorDetailsForBrowser as e:
