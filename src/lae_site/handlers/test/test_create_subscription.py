@@ -4,7 +4,7 @@ Tests for ``lae_site.create_subscription``.
 
 import attr
 
-from stripe import CardError
+from chargebee import PaymentError
 
 from testtools.matchers import Equals, Contains, HasLength
 
@@ -49,7 +49,6 @@ class TrivialSignup(object):
 class Customer(object):
     id = attr.ib()
     email = attr.ib()
-    subscriptions = attr.ib()
 
 
 
@@ -58,10 +57,11 @@ class Subscriptions(object):
     data = attr.ib()
 
 
+
 @attr.s
 class Subscription(object):
     id = attr.ib()
-    plan = attr.ib()
+    plan_id = attr.ib()
 
 
 
@@ -71,19 +71,34 @@ class Plan(object):
 
 
 @attr.s
-class PositiveStripe(object):
+class Result(object):
+    customer = attr.ib()
+    subscription = attr.ib()
+
+
+@attr.s
+class PositiveChargeBee(object):
     def create(self, authorization_token, plan_id, email):
-        return Customer(
-            "cus_abcdef",
-            email, Subscriptions([
-                Subscription("sub_123456", Plan(plan_id)),
-            ]),
+        return Result(
+            customer=Customer(
+                "cus_abcdef",
+                email,
+            ),
+            subscription=Subscription(
+                "sub_123456",
+                plan_id,
+            ),
         )
 
 
-class NegativeStripe(object):
+class NegativeChargeBee(object):
     def create(self, authorization_token, plan_id, email):
-        raise CardError("Stripe error", "Stripe param", "Stripe code")
+        raise PaymentError(
+            432, {
+                "message": "chargebee error",
+                "error_code": 432,
+            },
+        )
 
 
 @attr.s
@@ -115,13 +130,13 @@ class FullSignupTests(TestCase):
         """
         self.signup = TrivialSignup()
         self.mailer = MemoryMailer()
-        self.stripe = PositiveStripe()
+        self.billing = PositiveChargeBee()
         self.cross_domain = "http://localhost:5000/"
 
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
-            self.stripe,
+            self.billing,
             self.cross_domain,
             u"plan-id",
         )
@@ -145,13 +160,13 @@ class FullSignupTests(TestCase):
         """
         self.signup = TrivialSignup()
         self.mailer = MemoryMailer()
-        self.stripe = NegativeStripe()
+        self.billing = NegativeChargeBee()
         self.cross_domain = "http://localhost:5000/"
 
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
-            self.stripe,
+            self.billing,
             self.cross_domain,
             u"plan-id",
         )
@@ -164,6 +179,6 @@ class FullSignupTests(TestCase):
         body = self.successResultOf(readBody(response))
 
         self.expectThat(response.code, Equals(PAYMENT_REQUIRED))
-        self.expectThat(body, Contains("Stripe error"))
+        self.expectThat(body, Contains("chargebee error"))
         self.expectThat(self.mailer.emails, HasLength(1))
         self.expectThat(self.signup.signups, Equals(0))
