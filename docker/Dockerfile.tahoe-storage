@@ -1,7 +1,10 @@
 FROM leastauthority/tahoe-base
 
+COPY healthz.rpy /app/code/healthz.rpy
+
 RUN /app/env/bin/tahoe create-node /var/run/storageserver
 
 CMD \
-    /app/env/bin/python /app/configure-tahoe /var/run/storageserver < /app/config/storage.json \
+    /app/env/bin/python /app/configure-tahoe /var/run/storageserver < ${CONFIG_PATH} \
+    && twistd web --resource-script /app/code/healthz.rpy \
     && exec /app/env/bin/tahoe run /var/run/storageserver
