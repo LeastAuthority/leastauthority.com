@@ -250,6 +250,7 @@ def _deployment_template(model):
                                 u"failureThreshold": 1,
                                 u"initialDelaySeconds": 5,
                                 u"periodSeconds": 90,
+                                u"timeoutSeconds": 5,
                             },
 
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
