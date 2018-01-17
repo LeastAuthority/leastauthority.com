@@ -247,6 +247,7 @@ def _deployment_template(model):
                                     u"path": u"/",
                                     u"port": 9001,
                                 },
+                                u"failureThreshold": 1,
                                 u"initialDelaySeconds": 5,
                                 u"periodSeconds": 90,
                             },
