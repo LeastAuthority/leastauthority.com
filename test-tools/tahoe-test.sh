@@ -37,7 +37,7 @@ while :; do
 	break
     fi
     # systemd-resolved has a very aggressive cache.  Blow it away.
-    sudo systemd-resolve --flush-caches
+    sudo systemd-resolve --flush-caches || true
     sleep ${SLEEP_TIME}
     NEW_TIME=$((${SLEEP_TIME} + 1))
     if [ ${NEW_TIME} -le 15 ]; then
