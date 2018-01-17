@@ -97,6 +97,6 @@ resource = Healthz(
         for path
         # Allow globs in this one because we happen to have two of them to
         # monitor as this is being written.
-        in glob.glob(state_paths)
+        in glob(state_paths)
     ),
 )
