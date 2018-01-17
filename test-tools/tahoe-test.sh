@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash -ex
 
 TAHOE_ENV=$1
 shift
@@ -32,7 +32,7 @@ sed --regexp-extended --in-place=.bak -e 's/web.port = tcp:3456:/web.port = tcp:
 SLEEP_TIME=5
 sleep ${SLEEP_TIME}
 while :; do
-    CAP=$("${TAHOE}" -d "${TAHOE_NODE}" put "${PROBE_FILE}")
+    CAP=$("${TAHOE}" -d "${TAHOE_NODE}" put "${PROBE_FILE}" || true)
     if [ "${CAP}" != "" ]; then
 	break
     fi
