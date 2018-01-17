@@ -3,7 +3,7 @@
 TAHOE_ENV=$1
 shift
 
-FURL=$1
+WORMHOLE_CODE=$1
 shift
 
 PROBE_FILE=$(mktemp /tmp/probe-XXXXXXXXXXXX)
@@ -19,8 +19,12 @@ if [ ! -e "${TAHOE}" ]; then
     "${TAHOE_ENV}"/bin/pip install tahoe-lafs
 fi
 
-"${TAHOE}" create-client --introducer "${FURL}" "${TAHOE_NODE}"
-sed --regexp-extended --in-place=.bak -e 's/.*(shares\.[^ ]+).*/\1 = 1/' "${CFG}"
+"${TAHOE}" \
+    --wormhole-server "ws://wormhole.staging.leastauthority.com:4000/v1" \
+    --wormhole-invite-appid "tahoe-lafs.org/tahoe-lafs/v1" \
+    create-client \
+    --join "${WORMHOLE_CODE}" \
+    "${TAHOE_NODE}"
 sed --regexp-extended --in-place=.bak -e 's/web.port = tcp:3456:/web.port = tcp:0:/' "${CFG}"
 "${TAHOE}" start "${TAHOE_NODE}"
 
