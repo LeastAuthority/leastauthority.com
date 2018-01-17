@@ -91,7 +91,7 @@ config_path = environ["CONFIG_PATH"]
 state_paths = environ["STATE_PATHS"]
 
 # Create the resource (to be served with `twistd web --resource-script ...`).
-resource = Healthz(
+healthz = Healthz(
     [_ConfigHealth(config_path)] + list(
         _StateHealth(path)
         for path
@@ -100,3 +100,6 @@ resource = Healthz(
         in glob(state_paths)
     ),
 )
+
+resource = Resource()
+resource.putChild(b"", healthz)
