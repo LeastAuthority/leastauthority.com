@@ -97,7 +97,15 @@ def watch(kubectl, job):
             print(str(e))
             sleep(1)
         else:
-            break
+            # Check to see if the job succeeded.
+            retrieved_job_json = kubectl.check_output([
+                u"get", u"-o", u"json", u"jobs/{}".format(job.metadata.name),
+            ])
+            retrieved_job = loads(retrieved_job_json)
+            if retrieved_job[u"status"].get(u"failed") == 1:
+                raise SystemExit("Job failed")
+            elif retrieved_job[u"status"].get(u"succeeded") == 1:
+                break
 
 
 main(*argv[1:])
