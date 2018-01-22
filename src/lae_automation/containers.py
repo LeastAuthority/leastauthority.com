@@ -141,12 +141,6 @@ def _deployment_template(model):
         volumeName=u"introducer-config-volume",
         configItem=u"introducer.json",
     )
-    storageserver_liveness_sidecar = create_liveness_container(
-        model=model,
-        port=8081,
-        volumeName=u"storage-config-volume",
-        configItem=u"storage.json",
-    )
     return model.v1beta1.Deployment(
         metadata=_s4_customer_metadata(model),
         status=None,
@@ -187,7 +181,6 @@ def _deployment_template(model):
                     ],
                     u"containers": [
                         introducer_liveness_sidecar,
-                        storageserver_liveness_sidecar,
                         {
                             # The image is filled in at instantiation time.
                             u"name": u"introducer",
@@ -228,7 +221,38 @@ def _deployment_template(model):
                                 }
                             ],
                             u"ports": [],
-                            u"livenessProbe": create_liveness_probe(model, storageserver_liveness_sidecar),
+
+                            u"env": [
+                                # CONFIG_PATH tells healthz.rpy where to find
+                                # a config file to monitor.
+                                {u"name": u"CONFIG_PATH",
+                                 u"value": u"/app/config/storage.json",
+                                },
+                                # STATE_PATHS tells healthz.rpy where to find
+                                # state files (written by Tahoe-LAFS) to
+                                # monitor.  This globs to
+                                # accounting_crawler.state and
+                                # bucket_crawler.state.
+                                {u"name": u"STATE_PATHS",
+                                 u"value": u"/var/run/storageserver/storage/*_crawler.state",
+                                },
+                            ],
+
+                            # The storage server has a few different health
+                            # aspects.  So it has a custom in-container health
+                            # sidecar which we'll query.  Introducer will
+                            # probably move in this direction someday.
+                            u"livenessProbe": {
+                                u"httpGet": {
+                                    u"path": u"/",
+                                    u"port": 9001,
+                                },
+                                u"failureThreshold": 1,
+                                u"initialDelaySeconds": 5,
+                                u"periodSeconds": 90,
+                                u"timeoutSeconds": 5,
+                            },
+
                             # https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/
                             u"resources": {
                                 u"requests": {
@@ -292,7 +316,6 @@ def create_liveness_container(model, port, volumeName, configItem):
             },
         },
     })
-
 
 
 def create_liveness_probe(model, container):
