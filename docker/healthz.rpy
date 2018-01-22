@@ -1,11 +1,17 @@
 from __future__ import unicode_literals, print_function
 
 from time import time
+from datetime import timedelta
 from glob import glob
 from os import environ
 from os.path import getmtime
 
 from twisted.web.resource import Resource
+
+# The maximum distance into the past which will be considered "recent".  If a
+# state file hasn't been updated within this amount of time, something is
+# considered to have gone wrong.
+RECENT_INTERVAL = timedelta(seconds=60 * 60)
 
 
 class Healthz(Resource):
@@ -83,7 +89,7 @@ class _StateHealth(object):
         :return bool: ``True`` if the modification time is "recent", ``False``
             otherwise.
         """
-        return time() - getmtime(self._state_path) < 60 * 60
+        return time() - getmtime(self._state_path) < RECENT_INTERVAL.total_seconds()
 
 
 # Determine the paths we're meant to monitor.
