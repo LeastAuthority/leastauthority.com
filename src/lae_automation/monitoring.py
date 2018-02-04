@@ -104,7 +104,7 @@ def poll_for_connection(reactor, storage):
     if storage.is_connected():
         return connected(storage)
     print("...not connected...")
-    return deferLater(reactor, 3, poll_for_connection, storage)
+    return deferLater(reactor, 3, poll_for_connection, reactor, storage)
 
 
 def connected(storage):
