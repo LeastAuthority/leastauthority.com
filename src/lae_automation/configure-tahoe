@@ -18,6 +18,7 @@
 from errno import ENOENT, EEXIST
 from sys import argv, stdin
 from json import load
+from time import time
 
 from twisted.python.filepath import FilePath
 
@@ -184,6 +185,9 @@ def configure_storage(
     )
 
     storage.child(b"tahoe.cfg").setContent(tahoe_cfg)
+    storage.child(b"announcement-seqnum").setContent(
+        u"{}".format(int(time())).encode("ascii"),
+    )
 
 
 def configure_secrets(root, node_pem):
