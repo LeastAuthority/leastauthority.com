@@ -192,7 +192,7 @@ def configure_storage(
 
 def configure_secrets(root, node_pem):
     private = root.child(b"private")
-    makedir_if_missing(private, mode=0700)
+    makedir_if_missing(private, mode=0o700)
     if node_pem is not None:
         private.child(b"node.pem").setContent(node_pem)
 
