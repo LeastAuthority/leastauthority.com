@@ -97,7 +97,7 @@ def got_storage(reactor, done, parent, key_s, announcement):
 
 def triggered(reactor, done, storage):
     print("Retrieving storage reference...")
-    poll_for_connection(reactor, storage)
+    poll_for_connection(reactor, storage).chainDeferred(done)
 
 
 def poll_for_connection(reactor, storage):
