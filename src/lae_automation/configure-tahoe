@@ -71,7 +71,7 @@ tub.port = tcp:port=%(private_port_number)s
 # This gives a comma-separated list of ip:port pairs which will be
 # published as locations at which this storage node's Foolscap server
 # can be reached.
-tub.location = %(publichost)s:%(public_port_number)s,%(privatehost)s:%(private_port_number)s
+tub.location = %(publichost)s:%(public_port_number)s
 
 # This gives the furl of a Foolscap log gatherer where we can send our
 # logs.
