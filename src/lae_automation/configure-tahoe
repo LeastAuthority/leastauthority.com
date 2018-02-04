@@ -185,6 +185,41 @@ def configure_storage(
     )
 
     storage.child(b"tahoe.cfg").setContent(tahoe_cfg)
+
+    # This file contains the last sequence number used in an announcement to
+    # the configured introducer.  The sequence number is used to prevent
+    # replay attacks.  Subsequent announcements for the "same" storage server
+    # must use increasing sequence numbers.  A "normal" deployment uses this
+    # file as persistent storage of the last used sequence number to allow
+    # correct announcements across storage server restarts.  Our storage
+    # server deployment has no persistent filesystem storage for this kind of
+    # thing.  Thus, we must supply a suitable sequence number ourselves or a
+    # restart storage server container (as in the case of the storage server
+    # failing its health check) cannot announce itself to the introducer and
+    # clients can never communicate with it.
+    #
+    # It would be a significant effort to reliably capture the actual sequence
+    # number persisted to this file by Tahoe-LAFS so instead we make up a new,
+    # very-probably-larger-than-it-was number.  This does rely on clocks
+    # behaving well (if time goes backwards far enough during a storage server
+    # restart, the sequence number will appear to go down and the introducer
+    # will reject the resulting announcement).  We can probably rely on that.
+    # Also, a health check which starts at the introducer should be able to
+    # eventually detect this circumstance and restart the storage server
+    # container _again_ and the chances of time going backwards _again_ are
+    # fairly low.  This doesn't address the possibility of time erroneously
+    # going _forward_ for the duration of one storage server startup, however
+    # (after which, when the clock is reset to be "correct", the sequence
+    # number will be too small).
+    #
+    # Possibly a superior solution would be to not have the storage server
+    # container restart as the "same" storage server but instead claim a new
+    # identity, announcements from which are not subject to the same
+    # constraints.  This would slowly increase the number of storage server
+    # announcements resident in the introducer and could eventually cause
+    # problems... but hopefully our storage servers won't actually require
+    # restarting so often that this would become a practical concern.  TODO:
+    # Investigate this option.
     storage.child(b"announcement-seqnum").setContent(
         u"{}".format(int(time())).encode("ascii"),
     )
