@@ -5,10 +5,16 @@ from tempfile import mkstemp, mkdtemp
 from os import fdopen
 from json import dumps
 from subprocess import check_call
+from time import time
 
 from hypothesis import given, settings
 
-from testtools.matchers import Equals, AllMatch, MatchesListwise
+from testtools.matchers import (
+    Equals, AllMatch, MatchesListwise,
+    Not,
+    LessThan,
+    AfterPreprocessing,
+)
 
 from fixtures import Fixture
 
@@ -17,7 +23,7 @@ from twisted.python.filepath import FilePath
 from foolscap.furl import decode_furl, encode_furl
 
 from .testcase import TestBase
-from .matchers import hasContents, hasConfiguration
+from .matchers import hasContents, hasContentsMatching, hasConfiguration
 from .strategies import introducer_configuration, storage_configuration
 
 from lae_automation.server import marshal_tahoe_configuration
@@ -155,6 +161,12 @@ class ConfigureTahoeTests(TestBase):
             hasConfiguration({
                 ("client", "introducer.furl", internal_introducer_furl),
             }),
+        )
+        self.expectThat(
+            self.nodes.storage.child(b"announcement-seqnum"),
+            hasContentsMatching(
+                AfterPreprocessing(int, Not(LessThan(int(time())))),
+            ),
         )
 
 
