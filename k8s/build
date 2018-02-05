@@ -4,6 +4,7 @@ from sys import argv
 from time import sleep
 from subprocess import CalledProcessError, check_output, check_call
 from tempfile import NamedTemporaryFile
+from json import loads
 
 from twisted.python.filepath import FilePath
 
@@ -29,8 +30,20 @@ def equals(expected):
         return actual == expected
     return check
 
+class KubeControl(object):
+    def __init__(self, context):
+        self.context = context
+
+    def check_output(self, args):
+        return check_output([u"kubectl", u"--context", self.context] + args)
+
+    def kubectl_call(self, args):
+        return check_call([u"kubectl", u"--context", self.context] + args)
+
+
 def main(rev=None):
-    context_name = u"staging"
+    kubectl = KubeControl(context=u"staging")
+
     template = HERE.child("build-image-template.yaml")
     with template.open() as fObj:
         job = freeze(safe_load(fObj))
@@ -51,11 +64,20 @@ def main(rev=None):
         fObj.write(dumps(thaw(job)))
         fObj.flush()
 
-        print(check_output([u"kubectl", u"--context", context_name, u"create", u"-f", fObj.name]))
+        print(kubectl.check_output([u"create", u"-f", fObj.name]))
 
+    try:
+        watch(kubectl, job)
+    finally:
+        # Job cleanup is the responsibility of the job creator.  Do this
+        # if the job succeeded.  Leave it for debugging otherwise.
+        print(kubectl.check_output([u"delete", u"job", job.metadata.name]))
+
+
+def watch(kubectl, job):
     while True:
-        job_name = check_output([
-            u"kubectl", u"--context", context_name, u"get", u"pods",
+        job_name = kubectl.check_output([
+            u"get", u"pods",
             u"--show-all", u"--selector=job-name={}".format(job.metadata.name),
             u"--output=jsonpath={.items..metadata.name}",
         ]).decode("ascii").strip()
@@ -67,21 +89,23 @@ def main(rev=None):
 
     while True:
         try:
-            check_call([
-                u"kubectl", u"--context", context_name,
+            kubectl.check_call([
                 u"logs", u"--follow", u"--timestamps",
-                job_name,
+                u"jobs/{}".format(job.metadata.name),
             ])
         except CalledProcessError as e:
             print(str(e))
             sleep(1)
         else:
-            # Job cleanup is the responsibility of the job creator.  Do this
-            # if the job succeeded.  Leave it for debugging otherwise.
-            print(check_output([
-                u"kubectl", u"--context", context_name, u"delete", u"job", job.metadata.name,
-            ]))
-            break
+            # Check to see if the job succeeded.
+            retrieved_job_json = kubectl.check_output([
+                u"get", u"-o", u"json", u"jobs/{}".format(job.metadata.name),
+            ])
+            retrieved_job = loads(retrieved_job_json)
+            if retrieved_job[u"status"].get(u"failed") == 1:
+                raise SystemExit("Job failed")
+            elif retrieved_job[u"status"].get(u"succeeded") == 1:
+                break
 
 
 main(*argv[1:])
