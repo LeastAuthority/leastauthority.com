@@ -200,7 +200,7 @@ email = emails
 def swissnum():
     return strategies.binary(
         min_size=Tub.NAMEBITS / 8,
-        max_size=Tub.NAMEBITS/  8,
+        max_size=Tub.NAMEBITS / 8,
     ).map(
         lambda b: b32encode(b).rstrip("=").lower()
     )
