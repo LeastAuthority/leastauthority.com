@@ -8,10 +8,21 @@ from os.path import getmtime
 
 from twisted.web.resource import Resource
 
+from allmydata.storage.crawler import BucketCountingCrawler
+from allmydata.storage.accounting_crawler import AccountingCrawler
+
 # The maximum distance into the past which will be considered "recent".  If a
 # state file hasn't been updated within this amount of time, something is
 # considered to have gone wrong.
-RECENT_INTERVAL = timedelta(seconds=60 * 60)
+RECENT_INTERVAL = timedelta(
+    # Crawlers eventually reach the end of their data set and then begin again
+    # after a delay.  Allow whatever that delay is as a healthy period of
+    # inactivity - plus some slop because, you know, clocks.
+    seconds=1.5 * max(
+        BucketCountingCrawler.minimum_cycle_time,
+        AccountingCrawler.minimum_cycle_time,
+    ),
+)
 
 
 class Healthz(Resource):
