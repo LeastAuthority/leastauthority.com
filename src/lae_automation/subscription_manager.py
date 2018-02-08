@@ -26,7 +26,7 @@ from twisted.web.server import Site
 from twisted.internet import task as theCooperator
 from twisted.web.client import FileBodyProducer, readBody
 from twisted.python.usage import Options as _Options, UsageError
-from twisted.python.filepath import FilePath
+from twisted.python.filepath import IFilePath, FilePath
 from twisted.application.service import MultiService
 from twisted.application.internet import StreamServerEndpointService
 from twisted.internet.endpoints import serverFromString
@@ -220,7 +220,7 @@ class SubscriptionDatabase(object):
     )
 
     path = attr.ib(validator=my_validators.all(
-        validators.instance_of(FilePath),
+        validators.provides(IFilePath),
         my_validators.after(
             lambda i, a, v: v.basename(),
             validators.instance_of(unicode),

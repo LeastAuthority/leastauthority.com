@@ -32,6 +32,7 @@ from lae_util.testtools import TestCase
 
 from .strategies import subscription_id, subscription_details
 from .matchers import AttrsEquals, GoodEquals
+from .memorypath import MemoryPath
 
 
 def partial_subscription_details():
@@ -222,7 +223,9 @@ class SubscriptionManagerTestMixin(object):
 
 class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
     def get_client(self):
-        return self._get_client_for_path(FilePath(mkdtemp().decode("utf-8")))
+        root = MemoryPath(FilePath(u"/somewhere"))
+        root.makedirs()
+        return self._get_client_for_path(root)
 
 
     def _get_client_for_path(self, path):
