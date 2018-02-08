@@ -16,7 +16,10 @@ import attr
 from prometheus_client import REGISTRY
 
 from hypothesis import assume, given, settings
-from hypothesis.strategies import choices, data
+from hypothesis.strategies import (
+    data,
+    sampled_from,
+)
 from hypothesis.stateful import (
     RuleBasedStateMachine,
     rule,
@@ -325,12 +328,12 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             details=details,
         )
 
-    @rule(choose=choices())
+    @rule(data=data())
     @precondition(lambda self: self.deploy_config is not None)
-    def deactivate(self, choose):
+    def deactivate(self, data):
         identifiers = self.database.list_active_subscription_identifiers()
         assume(0 < len(identifiers))
-        subscription_id = choose(sorted(identifiers))
+        subscription_id = data.draw(sampled_from(sorted(identifiers)))
         Message.log(deactivating=subscription_id)
         self.database.deactivate_subscription(subscription_id)
 
