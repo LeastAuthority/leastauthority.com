@@ -1,5 +1,5 @@
 """
-Fluentd support for Eliot.
+Additional destination types for Eliot.
 """
 
 from sys import stdout

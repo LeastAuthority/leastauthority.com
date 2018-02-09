@@ -39,7 +39,7 @@ from lae_util import validators as my_validators
 from lae_util.fileutil import make_dirs
 from lae_util.memoryagent import MemoryAgent
 from lae_util.uncooperator import Uncooperator
-from lae_util.fluentd_destination import (
+from lae_util.eliot_destination import (
     opt_eliot_destination,
     eliot_logging_service,
 )
