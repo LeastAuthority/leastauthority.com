@@ -12,7 +12,7 @@ extra-source-files:
 
 # Metadata used when publishing your package
 synopsis:            "Manage S4 Signup Magic Wormholes"
-category:            "Operations""
+category:            "Operations"
 
 # to avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
