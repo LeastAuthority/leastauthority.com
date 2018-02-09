@@ -45,18 +45,6 @@ from lae_util.fluentd_destination import (
 )
 
 
-def create(path):
-    flags = (
-        # Create the subscription file
-        O_CREAT
-        # Fail if it already exists
-        | O_EXCL
-        # Open it for writing only
-        | O_WRONLY
-    )
-    return fdopen(os_open(path.path, flags), "w")
-
-
 class Search(Resource):
     """
     Handle requests relating to searches of the collection of subscriptions.
@@ -266,7 +254,7 @@ class SubscriptionDatabase(object):
 
 
     def _create(self, path, content):
-        with create(path) as subscription_file:
+        with path.create() as subscription_file:
             # XXX Crash here and we have inconsistent state on disk.
             # It would be better to write to a temporary file and then
             # renameat2(..., RENAME_NOREPLACE) but Python doesn't
