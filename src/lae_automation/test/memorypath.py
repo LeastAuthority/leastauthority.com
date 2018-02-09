@@ -1,3 +1,4 @@
+from io import BytesIO
 from errno import (
     ENOTDIR,
     ENOENT,
@@ -9,11 +10,20 @@ from zope.interface import implementer
 from twisted.python.filepath import IFilePath, FilePath
 
 DIRECTORY = "directory"
+NORMAL = "normal"
+
+
+
+class NoCloseBytesIO(BytesIO):
+    def close(self):
+        pass
+
 
 
 class _State(object):
-    def __init__(self, type):
+    def __init__(self, type, contents=None):
         self.type = type
+        self.contents = contents
 
 
 
@@ -24,7 +34,7 @@ class _PathState(object):
         }
 
 
-    def _stat(self, path):
+    def get(self, path):
         try:
             return self.paths[path]
         except KeyError:
@@ -46,7 +56,11 @@ class _PathState(object):
 
 
     def isdir(self, path):
-        return self._stat(path).type == DIRECTORY
+        return self.get(path).type == DIRECTORY
+
+
+    def children(self, path):
+        return list(p for p in self.paths if p.path.startswith(path.path + u"/"))
 
 
 
@@ -92,6 +106,10 @@ class MemoryPath(object):
         return MemoryPath(self._path.child(name), self._state)
 
 
+    def children(self):
+        return self._state.children(self)
+
+
     def exists(self):
         return self._state.exists(self)
 
@@ -119,3 +137,13 @@ class MemoryPath(object):
 
     def mkdir(self):
         self._state.add(self, _State(type=DIRECTORY))
+
+
+    def create(self):
+        contents = NoCloseBytesIO()
+        self._state.add(self, _State(type=NORMAL, contents=contents))
+        return contents
+
+
+    def getContent(self):
+        return self._state.get(self).contents.getvalue()
