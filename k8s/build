@@ -37,7 +37,7 @@ class KubeControl(object):
     def check_output(self, args):
         return check_output([u"kubectl", u"--context", self.context] + args)
 
-    def kubectl_call(self, args):
+    def check_call(self, args):
         return check_call([u"kubectl", u"--context", self.context] + args)
 
 
