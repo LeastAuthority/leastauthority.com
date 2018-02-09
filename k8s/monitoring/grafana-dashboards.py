@@ -295,12 +295,26 @@ def s4_customer_deployments(datasource):
                 label_replace(
                     s4_deployment_gauge{pod=~"subscription-converger-.*"},
                     "shortpod",
-                    "$1",
+                    "# Deploys ($1)",
                     "pod",
                     "subscription-converger-(.*)"
                 )
                 """,
                 refId="A",
+                legendFormat="{{shortpod}}",
+            ),
+            G.Target(
+                # As above.
+                expr="""
+                label_replace(
+                    s4_running_pod_gauge{pod=~"subscription-converger-.*"},
+                    "shortpod",
+                    "# Running ($1)",
+                    "pod",
+                    "subscription-converger-(.*)"
+                )
+                """,
+                refId="B",
                 legendFormat="{{shortpod}}",
             ),
         ],
