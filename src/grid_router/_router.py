@@ -41,7 +41,7 @@ from lae_util import (
 )
 
 from lae_util.service import AsynchronousService
-from lae_util.fluentd_destination import (
+from lae_util.eliot_destination import (
     eliot_logging_service,
     opt_eliot_destination,
 )

@@ -2,7 +2,7 @@
 # See LICENSE for details.
 
 """
-Tests for ``lae_util.fluentd_destination``.
+Tests for ``lae_util.eliot_destination``.
 """
 
 from __future__ import unicode_literals
@@ -28,7 +28,7 @@ from twisted.trial.unittest import TestCase as AsyncTestCase
 
 from lae_util.testtools import TestCase
 
-from ..fluentd_destination import (
+from ..eliot_destination import (
     FluentdDestination,
     _parse_destination_description,
     _EliotLogging,

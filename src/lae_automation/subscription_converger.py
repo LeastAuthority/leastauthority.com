@@ -43,7 +43,7 @@ from txaws.route53.model import (
 )
 
 from lae_util.service import AsynchronousService
-from lae_util.fluentd_destination import (
+from lae_util.eliot_destination import (
     opt_eliot_destination,
     eliot_logging_service,
 )
