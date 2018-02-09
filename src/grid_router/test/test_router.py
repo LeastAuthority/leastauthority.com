@@ -13,7 +13,10 @@ from testtools.matchers import (
 )
 
 from hypothesis import given, assume
-from hypothesis.strategies import choices
+from hypothesis.strategies import (
+    data,
+    sampled_from,
+)
 from hypothesis.stateful import RuleBasedStateMachine, rule, run_state_machine_as_test
 
 from twisted.python.log import msg
@@ -162,14 +165,14 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         })
 
 
-    @rule(choose=choices())
-    def remove_pod(self, choose):
+    @rule(data=data())
+    def remove_pod(self, data):
         """
         An existing customer grid pod goes away, as would happen if a user
         cancelled their subscription.
         """
         assume(0 < len(self.pods))
-        pod, values = choose(sorted(self.pods.items()))
+        pod, values = data.draw(sampled_from(sorted(self.pods.items())))
         _, storage_pem, _, intro_pem, _ = values
         del self.pods[pod]
         self.used_tubs.difference_update({
