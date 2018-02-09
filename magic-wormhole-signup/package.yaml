@@ -24,6 +24,9 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - spake2
+  - magic-wormhole
 
 executables:
   magic-wormhole-signup-exe:
@@ -35,7 +38,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - magic-wormhole-signup
-    - magic-wormhole
 
 tests:
   magic-wormhole-signup-test:
