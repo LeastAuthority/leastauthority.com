@@ -165,7 +165,13 @@ class ConfigureTahoeTests(TestBase):
         self.expectThat(
             self.nodes.storage.child(b"announcement-seqnum"),
             hasContentsMatching(
-                AfterPreprocessing(int, Not(LessThan(int(time())))),
+                # The second hand could click over between when the file is
+                # written and when this test code runs.  In fact, it could
+                # click over multiple times... But the only way to really fix
+                # that is to parameterize the clock and the structure of
+                # configure_tahoe makes that tricky.  So just suppose that one
+                # second is all the leeway we need to make this reliable.
+                AfterPreprocessing(int, Not(LessThan(int(time() - 1)))),
             ),
         )
 

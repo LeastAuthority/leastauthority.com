@@ -7,3 +7,7 @@
 import tempfile
 tempfile.tempdir = tempfile.mkdtemp()
 del tempfile
+
+from hypothesis import settings
+settings.register_profile("time-is-an-illusion", settings(deadline=None))
+settings.load_profile("time-is-an-illusion")
