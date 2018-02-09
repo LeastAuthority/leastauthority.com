@@ -34,4 +34,4 @@ install:
 
 # Run its test suite.
 script:
-  - "./test-tools/run-${ENV}"
+  - "./test-tools/run-${ENV} -j2"
