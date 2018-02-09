@@ -35,8 +35,7 @@ It provisions resources (such as Tahoe-LAFS nodes) for new subscriptions it find
 Each subscription has a large portion of dedicated resources:
 the Kubernetes cluster (and its compute, memory, and network components) is a shared resource but little else is.
 
-Logs from the different components are collected using Fluentd and stored for a short period on S3.
-Metrics are extracted from the log stream and aggregated in Prometheus.
+Metrics are computed within various deployed processes and collected by Prometheus.
 Grafana is configured to visualize metrics using Prometheus as its data source.
 
 Top-Down Components
