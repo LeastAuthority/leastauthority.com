@@ -35,6 +35,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - magic-wormhole-signup
+    - magic-wormhole
 
 tests:
   magic-wormhole-signup-test:
