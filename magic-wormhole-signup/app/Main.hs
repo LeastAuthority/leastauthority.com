@@ -2,7 +2,23 @@
 
 module Main where
 
-import Lib
+import Data.ByteString.Char8 (
+  pack
+  )
+
+import System.Environment (
+  getArgs
+  )
+
+import Lib (
+  invite
+  )
 
 main :: IO ()
-main = someFunc "ws://wormhole.staging.leastauthority.com:4000/v1" "moo"
+main = do
+  args <- getArgs
+  case args of
+    []                            -> putStrLn "Usage: schmoo <rendezvous url> <password>"
+    _:[]                          -> putStrLn "Usage: schmoo <rendezvous url> <password>"
+    rendezvous_string:password:[] ->
+      invite rendezvous_string $ pack password

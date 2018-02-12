@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( someFunc
+    ( invite
     ) where
 
 
@@ -91,8 +91,8 @@ instance ToJSON Invitation where
     , "nickname" .= nickname
     ]
 
-someFunc :: String-> BS.ByteString -> IO ()
-someFunc rendezvous_bytes password_bytes = do
+invite :: String-> BS.ByteString -> IO ()
+invite rendezvous_bytes password_bytes = do
   let rendezvous = parseWebSocketEndpoint rendezvous_bytes
   let appid = AppID "tahoe-lafs.org/tahoe-lafs/v1"
   let invitation = Invitation 2 2 3 "pb://foo" "some stuff"
@@ -100,15 +100,15 @@ someFunc rendezvous_bytes password_bytes = do
     Nothing       -> putStrLn "bad url"
     Just endpoint -> do
       side <- generateSide
-      runClient endpoint appid side (invite invitation password_bytes)
+      runClient endpoint appid side (invite' invitation password_bytes)
 
-invite :: Invitation -> BS.ByteString -> Session -> IO ()
-invite invitation password_bytes session = do
+
+invite' :: Invitation -> BS.ByteString -> Session -> IO ()
+invite' invitation password_bytes session = do
   nameplate <- allocate session
-  putStrLn "Nameplate:"
-  putStrLn $ show nameplate
   let (Nameplate nameplate_text) = nameplate
   let complete_password_bytes = BS.concat [encodeUtf8 nameplate_text, "-", password_bytes]
+  putStrLn $ show complete_password_bytes
   let password = makePassword complete_password_bytes
   mailbox <- claim session nameplate
   connection <- open session mailbox
@@ -118,12 +118,8 @@ invite invitation password_bytes session = do
 
 send :: PlainText -> EncryptedConnection  -> IO ()
 send message connection = do
-  putStrLn "send"
   let intro = PlainText $ LBS.toStrict $ encode $ ServerIntroduction $ ServerAbilities "server-v1"
-  putStrLn "Sending introduction"
   sendMessage connection intro
   client_intro <- atomically $ receiveMessage connection
   -- XXX Should check for a similar intro message to check for compat...
-  putStrLn "got client_intro.  Sending:"
-  putStrLn $ show message
   sendMessage connection message
