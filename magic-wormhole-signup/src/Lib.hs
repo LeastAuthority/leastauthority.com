@@ -4,6 +4,18 @@ module Lib
     ( someFunc
     ) where
 
+
+import qualified Data.Text as DT
+import Data.Text.Encoding (
+  encodeUtf8
+  )
+
+import Data.String (
+  String
+  )
+
+import qualified Data.ByteString as BS
+
 import GHC.Conc (
   atomically
   )
@@ -19,7 +31,9 @@ import MagicWormhole (
   , AppID(AppID)
   , Side(Side)
   , Session
+  , Nameplate(Nameplate)
   , PlainText(PlainText)
+  , generateSide
   , list
   , allocate
   , claim
@@ -37,25 +51,25 @@ import MagicWormhole.Internal.Rendezvous (
   , release
   )
 
-someFunc :: IO ()
-someFunc = do
-  let url = parseWebSocketEndpoint "ws://wormhole.staging.leastauthority.com:4000/v1"
-  let password = makePassword "inhabited-destiny"
+someFunc :: String-> BS.ByteString -> IO ()
+someFunc rendezvous_bytes password_bytes = do
+  let rendezvous = parseWebSocketEndpoint rendezvous_bytes
   let appid = AppID "tahoe-lafs.org/tahoe-lafs/v1"
-  let side = Side "server"
   let config = PlainText "{this should be some json, so sorry}"
-  case url of
+  case rendezvous of
     Nothing       -> putStrLn "bad url"
-    Just endpoint -> runClient endpoint appid side (invite config password)
+    Just endpoint -> do
+      side <- generateSide
+      runClient endpoint appid side (invite config password_bytes)
 
-invite :: PlainText -> Password -> Session -> IO ()
-invite config password session = do
-  ping session 3
-  nameplates <- list session
-  putStrLn $ show nameplates
+invite :: PlainText -> BS.ByteString -> Session -> IO ()
+invite config password_bytes session = do
   nameplate <- allocate session
   putStrLn "Nameplate:"
   putStrLn $ show nameplate
+  let (Nameplate nameplate_text) = nameplate
+  let complete_password_bytes = BS.concat [encodeUtf8 nameplate_text, "-", password_bytes]
+  let password = makePassword complete_password_bytes
   mailbox <- claim session nameplate
   connection <- open session mailbox
   withEncryptedConnection connection password (send config)

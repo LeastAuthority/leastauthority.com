@@ -25,6 +25,8 @@ dependencies:
 library:
   source-dirs: src
   dependencies:
+  - text
+  - bytestring
   - spake2
   - magic-wormhole
 
