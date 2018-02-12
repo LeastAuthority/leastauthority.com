@@ -27,6 +27,7 @@ library:
   dependencies:
   - text
   - bytestring
+  - aeson
   - spake2
   - magic-wormhole
 

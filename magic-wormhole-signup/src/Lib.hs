@@ -8,6 +8,7 @@ module Lib
 import qualified Data.Text as DT
 import Data.Text.Encoding (
   encodeUtf8
+  , decodeUtf8
   )
 
 import Data.String (
@@ -15,6 +16,15 @@ import Data.String (
   )
 
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as LBS
+
+import Data.Aeson (
+  FromJSON
+  , ToJSON(toJSON)
+  , object
+  , (.=)
+  , encode
+  )
 
 import GHC.Conc (
   atomically
@@ -51,19 +61,49 @@ import MagicWormhole.Internal.Rendezvous (
   , release
   )
 
+data ServerIntroduction = ServerIntroduction ServerAbilities
+data ServerAbilities = ServerAbilities ServerVersion
+type ServerVersion = DT.Text
+
+instance ToJSON ServerIntroduction where
+  toJSON (ServerIntroduction abilities) = object [
+    "abilities" .= abilities
+    ]
+
+instance ToJSON ServerAbilities where
+  toJSON (ServerAbilities version) = object [
+    version .= object [ ]
+    ]
+
+data Invitation = Invitation SharesHappy SharesNeeded SharesTotal Introducer Nickname
+type SharesHappy = Integer
+type SharesNeeded = Integer
+type SharesTotal = Integer
+type Introducer = DT.Text
+type Nickname = DT.Text
+
+instance ToJSON Invitation where
+  toJSON (Invitation happy needed total introducer nickname) = object [
+    "shares-happy" .= happy
+    , "shares-needed" .= needed
+    , "shares-total" .= total
+    , "introducer" .= introducer
+    , "nickname" .= nickname
+    ]
+
 someFunc :: String-> BS.ByteString -> IO ()
 someFunc rendezvous_bytes password_bytes = do
   let rendezvous = parseWebSocketEndpoint rendezvous_bytes
   let appid = AppID "tahoe-lafs.org/tahoe-lafs/v1"
-  let config = PlainText "{this should be some json, so sorry}"
+  let invitation = Invitation 2 2 3 "pb://foo" "some stuff"
   case rendezvous of
     Nothing       -> putStrLn "bad url"
     Just endpoint -> do
       side <- generateSide
-      runClient endpoint appid side (invite config password_bytes)
+      runClient endpoint appid side (invite invitation password_bytes)
 
-invite :: PlainText -> BS.ByteString -> Session -> IO ()
-invite config password_bytes session = do
+invite :: Invitation -> BS.ByteString -> Session -> IO ()
+invite invitation password_bytes session = do
   nameplate <- allocate session
   putStrLn "Nameplate:"
   putStrLn $ show nameplate
@@ -72,13 +112,18 @@ invite config password_bytes session = do
   let password = makePassword complete_password_bytes
   mailbox <- claim session nameplate
   connection <- open session mailbox
-  withEncryptedConnection connection password (send config)
+  let encoded = PlainText $ LBS.toStrict $ encode invitation
+  withEncryptedConnection connection password (send encoded)
 
 
 send :: PlainText -> EncryptedConnection  -> IO ()
-send config connection = do
-  let intro = PlainText "{\"abilities\": {\"server-v1\": {}}}"
+send message connection = do
+  putStrLn "send"
+  let intro = PlainText $ LBS.toStrict $ encode $ ServerIntroduction $ ServerAbilities "server-v1"
+  putStrLn "Sending introduction"
   sendMessage connection intro
   client_intro <- atomically $ receiveMessage connection
   -- XXX Should check for a similar intro message to check for compat...
-  sendMessage connection config
+  putStrLn "got client_intro.  Sending:"
+  putStrLn $ show message
+  sendMessage connection message
