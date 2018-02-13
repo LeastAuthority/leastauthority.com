@@ -18,7 +18,5 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    []                            -> putStrLn "Usage: schmoo <rendezvous url> <password>"
-    _:[]                          -> putStrLn "Usage: schmoo <rendezvous url> <password>"
-    rendezvous_string:password:[] ->
-      invite rendezvous_string $ pack password
+    rendezvous_string:password:[] -> invite rendezvous_string $ pack password
+    otherwise                     -> putStrLn "Usage: schmoo <rendezvous url> <password>"
