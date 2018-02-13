@@ -29,9 +29,23 @@ library:
   - bytestring
   - aeson
   - spake2
+  - http-client
+  - servant
+  - servant-client
   - magic-wormhole
 
 executables:
+  magic-wormhole-signup-demo:
+    main:                Main.hs
+    source-dirs:         demo
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - bytestring
+    - magic-wormhole-signup
+
   magic-wormhole-signup-exe:
     main:                Main.hs
     source-dirs:         app

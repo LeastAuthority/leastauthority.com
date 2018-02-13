@@ -10,13 +10,13 @@ import System.Environment (
   getArgs
   )
 
-import Converge (
-  showSubscriptions
+import Lib (
+  invite
   )
 
 main :: IO ()
 main = do
   args <- getArgs
   case args of
-    manager_url:[] -> showSubscriptions
-    otherwise      -> putStrLn "Usage: schmoo <manager url>"
+    rendezvous_string:password:[] -> invite rendezvous_string $ pack password
+    otherwise                     -> putStrLn "Usage: schmoo <rendezvous url> <password>"
