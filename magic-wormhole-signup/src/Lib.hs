@@ -1,9 +1,8 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( invite
-    ) where
-
+  ( invite
+  ) where
 
 import qualified Data.Text as DT
 import Data.Text.Encoding (
