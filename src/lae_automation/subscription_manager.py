@@ -232,7 +232,7 @@ class SubscriptionDatabase(object):
 
     def _subscription_state(self, subscription_id, details):
         return dict(
-            version=3,
+            version=4,
             details=dict(
                 active=True,
                 id=subscription_id,
@@ -249,6 +249,8 @@ class SubscriptionDatabase(object):
 
                 introducer_port_number=details.introducer_port_number,
                 storage_port_number=details.storage_port_number,
+
+                wormhole_invite_code=details.wormhole_invite_code,
             ),
         )
 
@@ -437,6 +439,14 @@ class SubscriptionDatabase(object):
         return attr.assoc(
             self._load_2(state),
             stripe_subscription_id=state["details"]["stripe_subscription_id"],
+        )
+
+    def _load_4(self, state):
+        # Version 4 added ``wormhole_invite_code`` to the state.  Everything else is
+        # the same so we can piggy-back on _load_3.
+        return attr.assoc(
+            self._load_3(state),
+            wormhole_invite_code=state["details"]["wormhole_invite_code"],
         )
 
     def list_all_subscription_identifiers(self):

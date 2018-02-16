@@ -144,6 +144,11 @@ class SubscriptionDetails(object):
         default=u"",
     )
 
+    wormhole_invite_code = attr.ib(
+        validator=validators.optional(validators.instance_of(unicode)),
+        default=None,
+    )
+
     @property
     def publichost(self):
         return self.oldsecrets["publichost"]

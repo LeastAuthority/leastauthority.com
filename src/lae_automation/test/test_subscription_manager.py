@@ -240,12 +240,15 @@ class SubscriptionManagerTests(SubscriptionManagerTestMixin, TestCase):
         subscription id.
         """
 
-        # Version 2 details don't have a separate stripe subscription id
-        # field.  We'll expect the upgrade process to populate it with a copy
-        # of the base subscription id field.
         details = attr.assoc(
             details,
+            # Version 2 details don't have a separate stripe subscription id
+            # field.  We'll expect the upgrade process to populate it with a
+            # copy of the base subscription id field.
             stripe_subscription_id=details.subscription_id,
+            # Version 2 details don't have a wormhole code.  We'll expect the
+            # upgrade process to populate it with None.
+            wormhole_invite_code=None,
         )
 
         def _marshal_oldsecrets(oldsecrets):

@@ -416,6 +416,15 @@ def two_distinct_ports():
     )
 
 
+def wormhole_codes():
+    return strategies.builds(
+        lambda nameplate, a, b: u"{}-{}-{}".format(nameplate, a, b),
+        strategies.integers(min_value=0),
+        strategies.sampled_from([u"foo", u"bar"]),
+        strategies.sampled_from([u"baz", u"quux"]),
+    )
+
+
 def subscription_details():
     return strategies.builds(
         lambda ports, **kw: model.SubscriptionDetails(
@@ -433,4 +442,8 @@ def subscription_details():
         subscription_id=subscription_id(),
         stripe_subscription_id=subscription_id(),
         ports=two_distinct_ports(),
+        wormhole_invite_code=strategies.one_of(
+            wormhole_codes(),
+            strategies.none(),
+        ),
     )
