@@ -40,5 +40,8 @@ def patch():
     from .twisted_8860 import detect, patch
     detect() and patch()
 
+    from .twisted_9378 import detect, patch
+    detect() and patch()
+
 patch()
 del patch
