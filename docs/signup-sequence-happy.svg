@@ -1,0 +1,140 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg viewBox="0 0 1050 1143" xmlns="http://www.w3.org/2000/svg" xmlns:inkspace="http://www.inkscape.org/namespaces/inkscape" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs id="defs_block">
+    <filter height="1.504" id="filter_blur" inkspace:collect="always" width="1.1575" x="-0.07875" y="-0.252">
+      <feGaussianBlur id="feGaussianBlur3780" inkspace:collect="always" stdDeviation="4.2" />
+    </filter>
+  </defs>
+  <title>blockdiag</title>
+  <desc>seqdiag {
+        "client" -&gt; "web server" [label="GET"];
+        "web server" -&gt; "subscription manager" [label="deploy"];
+        "web server" &lt;- "subscription manager" [label="pending: 'id'", rightnote="db: deployed"];
+
+// alternative: render this page and say we're making progress,
+// redirecting to a "get code now" page (would need session cookie)
+//        "client" &lt;- "web server" [label="doing stuff"];
+//        === Arbitrary time could pass (e.g. user finally downloads software and clicks 'ready for code' or something) ===
+//        "client" -&gt; "web server" [label="get code"];
+
+        "web server" -&gt; "subscription manager" [label="get code: 'id'"];
+        "subscription manager" -&gt; "wormhole invite agent" [label="GET /allocate", leftnote="db: wormhole requested"];
+        "subscription manager" &lt;- "wormhole invite agent" [label="OK: {code='1-foo-bar'}", leftnote="db: wormhole allocated"];
+        "web server" &lt;- "subscription manager" [label="got code: 1-foo-bar"];
+        "client" &lt;- "web server" [label="render code: 1-foo-bar", leftnote="Write down code!"];
+
+        === Client downloads GridSync ===
+
+        "gridsync" -&gt; "wormhole invite agent" [label="open wormhole: 1-foo-bar"];
+        "wormhole invite agent" -&gt; "subscription manager" [label="wormhole opened"];
+        "wormhole invite agent" &lt;- "subscription manager" [label="JSON: {introducer_furl=...}", leftnote="db: success"];
+        "gridsync" &lt;- "wormhole invite agent" [label="{introducer_furl=...}", rightnote="Provisioned!"];
+}</desc>
+  <rect fill="rgb(0,0,0)" height="980" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="8" x="153" y="141" />
+  <rect fill="rgb(0,0,0)" height="519" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="8" x="345" y="141" />
+  <rect fill="rgb(0,0,0)" height="67" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="8" x="537" y="208" />
+  <rect fill="rgb(0,0,0)" height="240" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="8" x="537" y="342" />
+  <rect fill="rgb(0,0,0)" height="80" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="8" x="537" y="902" />
+  <rect fill="rgb(0,0,0)" height="82" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="8" x="729" y="420" />
+  <rect fill="rgb(0,0,0)" height="240" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="8" x="729" y="822" />
+  <polygon fill="rgb(0,0,0)" points="557,267 637,267 645,275 645,284 557,284 557,267" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <polygon fill="rgb(0,0,0)" points="376,412 517,412 525,420 525,429 376,429 376,412" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <polygon fill="rgb(0,0,0)" points="382,495 517,495 525,503 525,510 382,510 382,495" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <polygon fill="rgb(0,0,0)" points="27,653 133,653 141,661 141,668 27,668 27,653" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <polygon fill="rgb(0,0,0)" points="442,975 517,975 525,983 525,990 442,990 442,975" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <polygon fill="rgb(0,0,0)" points="941,1055 1021,1055 1029,1063 1029,1070 941,1070 941,1055" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" />
+  <rect fill="rgb(0,0,0)" height="40" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="128" x="93" y="46" />
+  <rect fill="rgb(0,0,0)" height="40" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="128" x="285" y="46" />
+  <rect fill="rgb(0,0,0)" height="40" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="128" x="477" y="46" />
+  <rect fill="rgb(0,0,0)" height="40" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="128" x="669" y="46" />
+  <rect fill="rgb(0,0,0)" height="40" stroke="rgb(0,0,0)" style="filter:url(#filter_blur);opacity:0.7;fill-opacity:1" width="128" x="861" y="46" />
+  <path d="M 154 80 L 154 1131" fill="none" stroke="rgb(0,0,0)" stroke-dasharray="8 4" />
+  <rect fill="moccasin" height="980" stroke="rgb(0,0,0)" width="8" x="150" y="135" />
+  <path d="M 346 80 L 346 1131" fill="none" stroke="rgb(0,0,0)" stroke-dasharray="8 4" />
+  <rect fill="moccasin" height="519" stroke="rgb(0,0,0)" width="8" x="342" y="135" />
+  <path d="M 538 80 L 538 1131" fill="none" stroke="rgb(0,0,0)" stroke-dasharray="8 4" />
+  <rect fill="moccasin" height="67" stroke="rgb(0,0,0)" width="8" x="534" y="202" />
+  <rect fill="moccasin" height="240" stroke="rgb(0,0,0)" width="8" x="534" y="336" />
+  <rect fill="moccasin" height="80" stroke="rgb(0,0,0)" width="8" x="534" y="896" />
+  <path d="M 730 80 L 730 1131" fill="none" stroke="rgb(0,0,0)" stroke-dasharray="8 4" />
+  <rect fill="moccasin" height="82" stroke="rgb(0,0,0)" width="8" x="726" y="414" />
+  <rect fill="moccasin" height="240" stroke="rgb(0,0,0)" width="8" x="726" y="816" />
+  <path d="M 922 80 L 922 1131" fill="none" stroke="rgb(0,0,0)" stroke-dasharray="8 4" />
+  <rect fill="rgb(255,255,255)" height="40" stroke="rgb(0,0,0)" width="128" x="90" y="40" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="29" x="154" y="66">client</text>
+  <rect fill="rgb(255,255,255)" height="40" stroke="rgb(0,0,0)" width="128" x="282" y="40" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="58" x="346" y="66">web server</text>
+  <rect fill="rgb(255,255,255)" height="40" stroke="rgb(0,0,0)" width="128" x="474" y="40" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="111" x="538" y="67">subscription manager</text>
+  <rect fill="rgb(255,255,255)" height="40" stroke="rgb(0,0,0)" width="128" x="666" y="40" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="116" x="730" y="67">wormhole invite agent</text>
+  <rect fill="rgb(255,255,255)" height="40" stroke="rgb(0,0,0)" width="128" x="858" y="40" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="43" x="922" y="67">gridsync</text>
+  <path d="M 162 135 L 338 135" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="330,131 338,135 330,139" stroke="rgb(0,0,0)" />
+  <path d="M 354 202 L 530 202" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="522,198 530,202 522,206" stroke="rgb(0,0,0)" />
+  <path d="M 354 269 L 530 269" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="362,265 354,269 362,273" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(255,182,193)" points="554,261 634,261 642,269 642,278 554,278 554,261" stroke="rgb(0,0,0)" />
+  <path d="M 634 261 L 634 269" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 634 269 L 642 269" fill="none" stroke="rgb(0,0,0)" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="64" x="594" y="276">db: deployed</text>
+  <path d="M 354 336 L 530 336" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="522,332 530,336 522,340" stroke="rgb(0,0,0)" />
+  <path d="M 546 414 L 722 414" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="714,410 722,414 714,418" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(255,182,193)" points="373,406 514,406 522,414 522,423 373,423 373,406" stroke="rgb(0,0,0)" />
+  <path d="M 514 406 L 514 414" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 514 414 L 522 414" fill="none" stroke="rgb(0,0,0)" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="125" x="443" y="421">db: wormhole requested</text>
+  <path d="M 546 496 L 722 496" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="554,492 546,496 554,500" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(255,182,193)" points="379,489 514,489 522,497 522,504 379,504 379,489" stroke="rgb(0,0,0)" />
+  <path d="M 514 489 L 514 497" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 514 497 L 522 497" fill="none" stroke="rgb(0,0,0)" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="119" x="446" y="502">db: wormhole allocated</text>
+  <path d="M 354 576 L 530 576" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="362,572 354,576 362,580" stroke="rgb(0,0,0)" />
+  <path d="M 162 654 L 338 654" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="170,650 162,654 170,658" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(255,182,193)" points="24,647 130,647 138,655 138,662 24,662 24,647" stroke="rgb(0,0,0)" />
+  <path d="M 130 647 L 130 655" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 130 655 L 138 655" fill="none" stroke="rgb(0,0,0)" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="90" x="77" y="660">Write down code!</text>
+  <path d="M 738 816 L 914 816" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="746,812 738,816 746,820" stroke="rgb(0,0,0)" />
+  <path d="M 546 896 L 722 896" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="554,892 546,896 554,900" stroke="rgb(0,0,0)" />
+  <path d="M 546 976 L 722 976" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="714,972 722,976 714,980" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(255,182,193)" points="439,969 514,969 522,977 522,984 439,984 439,969" stroke="rgb(0,0,0)" />
+  <path d="M 514 969 L 514 977" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 514 977 L 522 977" fill="none" stroke="rgb(0,0,0)" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="59" x="476" y="982">db: success</text>
+  <path d="M 738 1056 L 914 1056" fill="none" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(0,0,0)" points="906,1052 914,1056 906,1060" stroke="rgb(0,0,0)" />
+  <polygon fill="rgb(255,182,193)" points="938,1049 1018,1049 1026,1057 1026,1064 938,1064 938,1049" stroke="rgb(0,0,0)" />
+  <path d="M 1018 1049 L 1018 1057" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 1018 1057 L 1026 1057" fill="none" stroke="rgb(0,0,0)" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="64" x="978" y="1062">Provisioned!</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="21" x="176" y="133">GET</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="33" x="374" y="200">deploy</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="61" x="499" y="267">pending: 'id'</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="66" x="391" y="334">get code: 'id'</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="71" x="585" y="412">GET /allocate</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="123" x="660" y="494">OK: {code='1-foo-bar'}</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="103" x="478" y="574">got code: 1-foo-bar</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="119" x="278" y="652">render code: 1-foo-bar</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="136" x="846" y="814">open wormhole: 1-foo-bar</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="89" x="677" y="894">wormhole opened</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="144" x="622" y="974">JSON: {introducer_furl=...}</text>
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="109" x="796" y="1054">{introducer_furl=...}</text>
+  <path d="M 66 736 L 460 736" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 66 740 L 460 740" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 616 736 L 1010 736" fill="none" stroke="rgb(0,0,0)" />
+  <path d="M 616 740 L 1010 740" fill="none" stroke="rgb(0,0,0)" />
+  <rect fill="rgb(208,208,208)" height="21" stroke="rgb(0,0,0)" width="156" x="460" y="728" />
+  <text fill="rgb(0,0,0)" font-family="sansserif" font-size="11" font-style="normal" font-weight="normal" text-anchor="middle" textLength="136" x="538" y="745">Client downloads GridSync</text>
+</svg>
