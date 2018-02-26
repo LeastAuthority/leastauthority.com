@@ -1,0 +1,24 @@
+seqdiag {
+        "client" -> "web server" [label="GET"];
+        "web server" -> "subscription manager" [label="deploy"];
+        "web server" <- "subscription manager" [label="pending: 'id'", rightnote="db: deployed"];
+
+// alternative: render this page and say we're making progress,
+// redirecting to a "get code now" page (would need session cookie)
+//        "client" <- "web server" [label="doing stuff"];
+//        === Arbitrary time could pass (e.g. user finally downloads software and clicks 'ready for code' or something) ===
+//        "client" -> "web server" [label="get code"];
+
+        "web server" -> "subscription manager" [label="get code: 'id'"];
+        "subscription manager" -> "wormhole invite agent" [label="GET /allocate", leftnote="db: wormhole requested"];
+        "subscription manager" <- "wormhole invite agent" [label="OK: {code='1-foo-bar'}", leftnote="db: wormhole allocated"];
+        "web server" <- "subscription manager" [label="got code: 1-foo-bar"];
+        "client" <- "web server" [label="render code: 1-foo-bar", leftnote="Write down code!"];
+
+        === Client downloads GridSync ===
+
+        "gridsync" -> "wormhole invite agent" [label="open wormhole: 1-foo-bar"];
+        "wormhole invite agent" -> "subscription manager" [label="wormhole opened"];
+        "wormhole invite agent" <- "subscription manager" [label="JSON: {introducer_furl=...}", leftnote="db: success"];
+        "gridsync" <- "wormhole invite agent" [label="{introducer_furl=...}", rightnote="Provisioned!"];
+}
