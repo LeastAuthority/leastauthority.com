@@ -18,8 +18,7 @@ from twisted.internet.task import Clock
 from foolscap.furl import decode_furl
 
 from lae_util.testtools import TestCase
-from lae_util.fileutil import make_dirs
-from lae_automation import model, signup
+from lae_automation import signup
 from lae_automation.signup import (
     get_provisioner,
     get_wormhole_signup,
