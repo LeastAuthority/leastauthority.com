@@ -21,7 +21,7 @@ fi
 
 "${TAHOE}" \
     --wormhole-server "ws://wormhole.staging.leastauthority.com:4000/v1" \
-    --wormhole-invite-appid "tahoe-lafs.org/tahoe-lafs/v1" \
+    --wormhole-invite-appid "tahoe-lafs.org/invite" \
     create-client \
     --join "${WORMHOLE_CODE}" \
     "${TAHOE_NODE}"

@@ -30,6 +30,9 @@ from .subscription_manager import Client, network_client
 
 SIGNUP_ICON_URL = u'https://s4.leastauthority.com/static/img/s4-wormhole-signup-icon.png'
 
+# This has to agree with anyone who wants to receive this code.
+APPID = u"tahoe-lafs.org/invite"
+
 
 def encode_id(ident):
     return b32encode(ident).rstrip("=").lower()
@@ -342,11 +345,7 @@ def _get_wormhole(reactor, wormhole, rendezvous_url):
     Make a new magic wormhole which will talk to the given rendezvous server.
     """
     return wormhole.create(
-        # This has to agree with anyone who wants to receive this code.  "v1"
-        # here versions application protocol that runs over wormhole to convey
-        # a configuration payload.  It does not version the configuration
-        # payload itself, which is a self-versioning JSON.
-        appid=u"tahoe-lafs.org/tahoe-lafs/v1",
+        appid=APPID,
         relay_url=rendezvous_url.asText(),
         reactor=reactor,
     )
