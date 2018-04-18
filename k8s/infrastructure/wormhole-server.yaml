@@ -118,10 +118,14 @@ spec:
       # introduced to their grid, someday.
       - name: 'wormhole-relay'
         # This image is hosted on Docker Hub.  I hope Kubernetes is good
-        # enough at retrying failed pulls to make this reliable.  We use the
-        # implicit latest tag because magic-wormhole is a moving target right
-        # now.  Hopefully it doesn't break.
-        image: 'magicwormhole/magic-wormhole'
+        # enough at retrying failed pulls to make this reliable.  We're
+        # currently pinned to 0.10.3 because that's the last version of this
+        # image that actually includes the magic-wormhole server.  We need to
+        # start building images for the new server project and switch to that.
+        #
+        # (Note this comment previously ended with "Hopefully it doesn't
+        # break."  It broke.)
+        image: 'magicwormhole/magic-wormhole:0.10.3'
         imagePullPolicy: 'Always'
         args:
         - '--rendezvous=tcp:4000'
