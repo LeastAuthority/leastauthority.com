@@ -135,8 +135,14 @@ spec:
 
         # Grafana must know its own hostname to successfully use an OAuth2
         # provider (to generate the correct callback URL).
+        - name: 'DOMAIN'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'domain'
+
         - name: 'GF_SERVER_ROOT_URL'
-          value: 'https://graphs.leastauthority.com/'
+          value: 'https://graphs.$(DOMAIN)/'
 
         # Turn on GitHub-backed OAuth2-based login.
         - name: 'GF_AUTH_GITHUB_ENABLED'
@@ -197,7 +203,7 @@ spec:
         image: 'quay.io/coreos/grafana-watcher:v0.0.8'
         args:
           - '--watch-dir=/var/grafana-dashboards'
-          - '--grafana-url=https://graphs.leastauthority.com/'
+          - '--grafana-url=https://graphs.$(DOMAIN)/'
         env:
 
         # First tell it how to gain admin access to Grafana.
@@ -211,6 +217,12 @@ spec:
             secretKeyRef:
               name: 's4'
               key: 'grafana-admin-password'
+
+        - name: 'DOMAIN'
+          valueFrom:
+            secretKeyRef:
+              name: 's4'
+              key: 'domain'
 
         volumeMounts:
         # Put the dashboard configuration volume into the place we told the
