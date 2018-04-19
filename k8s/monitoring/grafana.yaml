@@ -12,7 +12,7 @@ spec:
   type: 'LoadBalancer'
   ports:
   - name: 'web'
-    port: 80
+    port: 443
     targetPort: 3000
     protocol: 'TCP'
   selector:
@@ -32,7 +32,7 @@ spec:
   type: 'NodePort'
   ports:
   - name: 'web'
-    port: 80
+    port: 443
     targetPort: 3000
     protocol: 'TCP'
   selector:
@@ -70,6 +70,20 @@ spec:
         configMap:
           name: 'grafana-dashboards'
 
+      # Make the secret Grafana certificate material available.  See also
+      # GF_SERVER_... configuration items below.
+      - name: 'grafana-certificates'
+        secret:
+          # It would probably be nice to split grafana stuff out but it's
+          # easier to manage all the secrets as one big blob for now.
+          secretName: 's4'
+          defaultMode: 0444
+          items:
+          - key: 'graphs-fullchain.pem'
+            path: 'fullchain.pem'
+          - key: 'graphs-privkey.pem'
+            path: 'privkey.pem'
+
       containers:
       # The Grafana container runs Grafana!  Which does the fancy graphing.
       - name: 'grafana'
@@ -106,10 +120,23 @@ spec:
         - name: 'GF_AUTH_DISABLE_LOGIN_FORM'
           value: 'false'
 
+        # Publish the whole thing over HTTPS.
+        - name: 'GF_SERVER_PROTOCOL'
+          value: 'https'
+
+        # Point at the certificate (and chain) file as made available by the
+        # volume mount of the secrets items.
+        - name: 'GF_SERVER_CERT_FILE'
+          value: '/etc/grafana-certificates/fullchain.pem'
+
+        # Ditto for the key.
+        - name: 'GF_SERVER_CERT_KEY'
+          value: '/etc/grafana-certificates/privkey.pem'
+
         # Grafana must know its own hostname to successfully use an OAuth2
         # provider (to generate the correct callback URL).
         - name: 'GF_SERVER_ROOT_URL'
-          value: 'http://graphs.leastauthority.com/'
+          value: 'https://graphs.leastauthority.com/'
 
         # Turn on GitHub-backed OAuth2-based login.
         - name: 'GF_AUTH_GITHUB_ENABLED'
@@ -151,6 +178,8 @@ spec:
         volumeMounts:
         - name: 'grafana-storage'
           mountPath: '/var/grafana-storage'
+        - name: 'grafana-certificates'
+          mountPath: '/etc/grafana-certificates'
         ports:
         - name: 'web'
           containerPort: 3000
@@ -165,10 +194,10 @@ spec:
       # Grafana watcher is a side-car that looks for dashboard configuration
       # changes and reconfigures Grafana with them when they are detected.
       - name: 'grafana-watcher'
-        image: 'quay.io/coreos/grafana-watcher:v0.0.4'
+        image: 'quay.io/coreos/grafana-watcher:v0.0.8'
         args:
           - '--watch-dir=/var/grafana-dashboards'
-          - '--grafana-url=http://grafana-internal/'
+          - '--grafana-url=https://graphs.leastauthority.com/'
         env:
 
         # First tell it how to gain admin access to Grafana.

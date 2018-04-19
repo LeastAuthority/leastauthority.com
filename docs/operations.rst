@@ -189,6 +189,13 @@ The Kubernetes cluster is created and managed using kops_:
 
 Consult the kops documentation to learn more about its operation.
 
+Grafana
+-------
+
+Operational metrics are visualized using Grafana deployed in a Kubernetes pod.
+Grafana retrieves metrics from the on-cluster Prometheus deployment.
+Kubernetes configuration for Grafana is maintained in ``k8s/monitoring/``.
+
 Infrastructure Description
 ==========================
 
