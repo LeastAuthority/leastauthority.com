@@ -7,7 +7,7 @@
 module Lib
     ( listPlans
     , createPlan
-    , dummy
+    , createPlans
     ) where
 
 import Prelude hiding (id)
@@ -119,26 +119,25 @@ listPlans ::  Maybe String -> ClientM (ListResponse WrappedPlan)
 createPlan :: Maybe String -> Plan -> ClientM WrappedPlan
 listPlans :<|> createPlan = client api
 
-dummy :: IO ()
-dummy = do
+createPlans :: String -> String -> IO ()
+createPlans site apikey = do
   manager <- newManager tlsManagerSettings
-  let env = mkClientEnv manager (BaseUrl Https "leastauthority-test.chargebee.com" 443 "")
-  res <- runClientM (createPlans s4Plans) env
+  let env = mkClientEnv manager (BaseUrl Https (site ++ ".chargebee.com") 443 "")
+  res <- runClientM (createPlans' apikey s4Plans) env
   case res of
     Left err -> putStrLn $ "Error: " ++ show err
     Right plans -> putStrLn (toString (encodePretty plans))
 
 
 
-createPlans :: [Plan] -> ClientM [WrappedPlan]
-createPlans [] = return []
-createPlans (p:rest) = do
-  let apikey = "test_kkRVVKRINB7djiRFD7PgQ422Zx6wEcoH"
+createPlans' :: String -> [Plan] -> ClientM [WrappedPlan]
+createPlans' _ [] = return []
+createPlans' apikey (p:rest) = do
   let auth = apikey ++ ":"
   let encoded = unpack (encode (pack auth))
   let basicAuth = "Basic " ++ encoded
   plan <- createPlan (Just basicAuth) p
-  more <- createPlans rest
+  more <- createPlans' apikey rest
   return (plan:more)
 
 minimalS4Plan = minimalPlan {
