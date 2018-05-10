@@ -72,7 +72,10 @@ def _in_eu(code):
 
 @attr.s
 class EUCountry(object):
-    country_code = attr.ib(type=unicode, convert=_in_eu)
+    country_code = attr.ib(
+        validator=attr.validators.instance_of(unicode),
+        convert=_in_eu,
+    )
 
     def add(self, parameters):
         parameters["billing_address"] = {
