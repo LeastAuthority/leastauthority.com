@@ -103,8 +103,9 @@ class SiteForOptionsTests(TestCase):
         options.parseOptions([
             b"--chargebee-site-name", b"some-site",
             b"--chargebee-secret-api-key-path", chargebee_secret.path,
-            b"--stripe-publishable-api-key-path", stripe_publishable.path,
             b"--chargebee-plan-id", b"foo-bar",
+            b"--chargebee-gateway-account-id", b"gw_baz",
+            b"--stripe-publishable-api-key-path", stripe_publishable.path,
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",
