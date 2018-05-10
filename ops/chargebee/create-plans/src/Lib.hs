@@ -59,6 +59,7 @@ data Plan = Plan
   , period :: Maybe Int
   , period_unit :: Maybe String
   , setup_cost :: Maybe Int
+  , price :: Maybe Integer
   , currency_code :: String
   , billing_cycles :: Maybe Int
   , charge_model :: Maybe String
@@ -177,6 +178,7 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "month"
       , currency_code = "EUR"
+      , price = Just 995
       }
   , minimalS4Plan {
       id = "s4_250gb_yearly_eur"
@@ -184,6 +186,7 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "year"
       , currency_code = "EUR"
+      , price = Just 10800
       }
   , minimalS4Plan {
       id = "s4_250gb_monthly_usd"
@@ -191,6 +194,7 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "month"
       , currency_code = "USD"
+      , price = Just 995
       }
   , minimalS4Plan {
       id = "s4_250gb_yearly_usd"
@@ -198,6 +202,7 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "year"
       , currency_code = "USD"
+      , price = Just 10800
       }
   , minimalS4Plan {
       id = "s4_5tb_monthly_eur"
@@ -205,6 +210,7 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "month"
       , currency_code = "EUR"
+      , price = Just 2595
       }
   , minimalS4Plan {
       id = "s4_5tb_yearly_eur"
@@ -212,6 +218,7 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "year"
       , currency_code = "EUR"
+      , price = Just 29900
       }
   , minimalS4Plan {
       id = "s4_5tb_monthly_usd"
@@ -219,6 +226,7 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "month"
       , currency_code = "USD"
+      , price = Just 2595
       }
   , minimalS4Plan {
       id = "s4_5tb_yearly_usd"
@@ -226,5 +234,6 @@ s4Plans = [
       , period = Just 1
       , period_unit = Just "year"
       , currency_code = "USD"
+      , price = Just 29900
       }
   ]
