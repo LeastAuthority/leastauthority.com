@@ -12,6 +12,11 @@ module Lib
 
 import Prelude hiding (id)
 
+import Control.Monad.Error
+  (
+    catchError
+  , throwError
+  )
 import Data.ByteString.Lazy.UTF8 (toString)
 import Data.ByteString.Char8 (pack, unpack)
 import Data.ByteString.Base64 (encode)
@@ -23,13 +28,20 @@ import Network.Wai
 import Network.Wai.Handler.Warp
 import Web.FormUrlEncoded (ToForm)
 import Servant
-import Control.Monad.Except (ExceptT)
+import Network.HTTP.Types
+  (
+    Status(Status)
+  , badRequest400
+  )
+
 import Network.HTTP.Client (newManager, defaultManagerSettings)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
 import Servant.Client (
   BaseUrl(BaseUrl)
   , ClientM
   , Scheme(Https)
+  , ServantError(FailureResponse)
+  , GenResponse(Response)
   , mkClientEnv
   , runClientM
   , client
@@ -109,15 +121,18 @@ data ListResponse a = ListResponse
 
 $(deriveJSON defaultOptions ''ListResponse)
 
-type API = Header "Authorization" String :> "api" :> "v2" :> "plans" :> Get '[JSON] (ListResponse WrappedPlan)
-      :<|> Header "Authorization" String :> "api" :> "v2" :> "plans" :> ReqBody '[FormUrlEncoded] Plan :> Post '[JSON] WrappedPlan
+type API =
+  Header "Authorization" String :> "api" :> "v2" :> "plans" :> Get '[JSON] (ListResponse WrappedPlan)
+  :<|> Header "Authorization" String :> "api" :> "v2" :> "plans" :> ReqBody '[FormUrlEncoded] Plan :> Post '[JSON] WrappedPlan
+  :<|> Header "Authorization" String :> "api" :> "v2" :> "plans" :> Capture "id" String :> ReqBody '[FormUrlEncoded] Plan :> Post '[JSON] WrappedPlan
 
 api :: Proxy API
 api = Proxy
 
 listPlans ::  Maybe String -> ClientM (ListResponse WrappedPlan)
 createPlan :: Maybe String -> Plan -> ClientM WrappedPlan
-listPlans :<|> createPlan = client api
+updatePlan :: Maybe String -> String -> Plan -> ClientM WrappedPlan
+listPlans :<|> createPlan :<|> updatePlan = client api
 
 createPlans :: String -> String -> IO ()
 createPlans site apikey = do
@@ -129,6 +144,12 @@ createPlans site apikey = do
     Right plans -> putStrLn (toString (encodePretty plans))
 
 
+updateInsteadOfCreate :: String -> Plan -> ServantError -> ClientM WrappedPlan
+updateInsteadOfCreate basicAuth plan (FailureResponse (Response badRequest400 _ _ _)) =
+  updatePlan (Just basicAuth) (id plan) plan
+updateInsteadOfCreate _ _ e = throwError e
+
+
 
 createPlans' :: String -> [Plan] -> ClientM [WrappedPlan]
 createPlans' _ [] = return []
@@ -136,7 +157,7 @@ createPlans' apikey (p:rest) = do
   let auth = apikey ++ ":"
   let encoded = unpack (encode (pack auth))
   let basicAuth = "Basic " ++ encoded
-  plan <- createPlan (Just basicAuth) p
+  plan <- catchError (createPlan (Just basicAuth) p) (updateInsteadOfCreate basicAuth p)
   more <- createPlans' apikey rest
   return (plan:more)
 

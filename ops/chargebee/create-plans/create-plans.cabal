@@ -24,6 +24,7 @@ library
                      , base64-bytestring
                      , servant-server
                      , servant-client
+                     , http-types
                      , http-client
                      , http-client-tls
                      , http-api-data
