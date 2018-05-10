@@ -27,14 +27,23 @@ def hasLocationHint(host, port):
         Contains("{}:{}".format(host, port)),
     )
 
+
 def hasContents(contents):
     """
     Match a FilePath referring to a file containing exactly the given
     contents.
     """
+    return hasContentsMatching(Equals(contents))
+
+
+def hasContentsMatching(matcher):
+    """
+    Match a FilePath referring to a file the contents of which are matched by
+    the given matcher.
+    """
     def _readPath(path):
         return path.getContent()
-    return AfterPreprocessing(_readPath, Equals(contents))
+    return AfterPreprocessing(_readPath, matcher)
 
 
 def hasConfiguration(fields):

@@ -43,7 +43,7 @@ from txaws.route53.model import (
 )
 
 from lae_util.service import AsynchronousService
-from lae_util.fluentd_destination import (
+from lae_util.eliot_destination import (
     opt_eliot_destination,
     eliot_logging_service,
 )
@@ -384,6 +384,14 @@ _PODS = Gauge(
     u"Current S4 Subscription Pods",
 )
 
+_PODS_RUNNING = Gauge(
+    u"s4_running_pod_gauge",
+    u"Current S4 Subscription Pods in Running state",
+)
+
+
+def count(iterator):
+    return sum(1 for x in iterator)
 
 
 def get_customer_grid_pods(k8s, namespace):
@@ -392,8 +400,10 @@ def get_customer_grid_pods(k8s, namespace):
         d = DeferredContext(k8s.get_pods(_s4_selector(namespace)))
         def got_pods(pods):
             pods = list(pods)
-            action.add_success_fields(pod_count=len(pods))
+            running = count(pod for pod in pods if pod.status.phase == u"Running")
+            action.add_success_fields(pod_count=len(pods), pod_running_count=running)
             _PODS.set(len(pods))
+            _PODS_RUNNING.set(running)
             return pods
         d.addCallback(got_pods)
         return d.addActionFinish()

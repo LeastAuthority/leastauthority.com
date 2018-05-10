@@ -1,9 +1,9 @@
-#!/bin/bash -x
+#!/bin/bash -ex
 
 TAHOE_ENV=$1
 shift
 
-FURL=$1
+WORMHOLE_CODE=$1
 shift
 
 PROBE_FILE=$(mktemp /tmp/probe-XXXXXXXXXXXX)
@@ -19,8 +19,12 @@ if [ ! -e "${TAHOE}" ]; then
     "${TAHOE_ENV}"/bin/pip install tahoe-lafs
 fi
 
-"${TAHOE}" create-client --introducer "${FURL}" "${TAHOE_NODE}"
-sed --regexp-extended --in-place=.bak -e 's/.*(shares\.[^ ]+).*/\1 = 1/' "${CFG}"
+"${TAHOE}" \
+    --wormhole-server "ws://wormhole.staging.leastauthority.com:4000/v1" \
+    --wormhole-invite-appid "tahoe-lafs.org/invite" \
+    create-client \
+    --join "${WORMHOLE_CODE}" \
+    "${TAHOE_NODE}"
 sed --regexp-extended --in-place=.bak -e 's/web.port = tcp:3456:/web.port = tcp:0:/' "${CFG}"
 "${TAHOE}" start "${TAHOE_NODE}"
 
@@ -28,12 +32,12 @@ sed --regexp-extended --in-place=.bak -e 's/web.port = tcp:3456:/web.port = tcp:
 SLEEP_TIME=5
 sleep ${SLEEP_TIME}
 while :; do
-    CAP=$("${TAHOE}" -d "${TAHOE_NODE}" put "${PROBE_FILE}")
+    CAP=$("${TAHOE}" -d "${TAHOE_NODE}" put "${PROBE_FILE}" || true)
     if [ "${CAP}" != "" ]; then
 	break
     fi
     # systemd-resolved has a very aggressive cache.  Blow it away.
-    sudo systemd-resolve --flush-caches
+    sudo systemd-resolve --flush-caches || true
     sleep ${SLEEP_TIME}
     NEW_TIME=$((${SLEEP_TIME} + 1))
     if [ ${NEW_TIME} -le 15 ]; then

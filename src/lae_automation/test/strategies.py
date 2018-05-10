@@ -177,7 +177,7 @@ def domains():
 
     return strategies.builds(
         build_domain,
-        complete=idna_text(min_size=1, max_size=255),
+        complete=idna_text(min_size=1, average_size=12, max_size=255),
         random=strategies.randoms(),
     ).map(
         lambda parts: u".".join(parts)
@@ -200,7 +200,7 @@ email = emails
 def swissnum():
     return strategies.binary(
         min_size=Tub.NAMEBITS / 8,
-        max_size=Tub.NAMEBITS/  8,
+        max_size=Tub.NAMEBITS / 8,
     ).map(
         lambda b: b32encode(b).rstrip("=").lower()
     )

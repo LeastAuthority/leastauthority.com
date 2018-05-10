@@ -26,7 +26,7 @@ from twisted.web.server import Site
 from twisted.internet import task as theCooperator
 from twisted.web.client import FileBodyProducer, readBody
 from twisted.python.usage import Options as _Options, UsageError
-from twisted.python.filepath import FilePath
+from twisted.python.filepath import IFilePath, FilePath
 from twisted.application.service import MultiService
 from twisted.application.internet import StreamServerEndpointService
 from twisted.internet.endpoints import serverFromString
@@ -39,22 +39,10 @@ from lae_util import validators as my_validators
 from lae_util.fileutil import make_dirs
 from lae_util.memoryagent import MemoryAgent
 from lae_util.uncooperator import Uncooperator
-from lae_util.fluentd_destination import (
+from lae_util.eliot_destination import (
     opt_eliot_destination,
     eliot_logging_service,
 )
-
-
-def create(path):
-    flags = (
-        # Create the subscription file
-        O_CREAT
-        # Fail if it already exists
-        | O_EXCL
-        # Open it for writing only
-        | O_WRONLY
-    )
-    return fdopen(os_open(path.path, flags), "w")
 
 
 class Search(Resource):
@@ -220,7 +208,7 @@ class SubscriptionDatabase(object):
     )
 
     path = attr.ib(validator=my_validators.all(
-        validators.instance_of(FilePath),
+        validators.provides(IFilePath),
         my_validators.after(
             lambda i, a, v: v.basename(),
             validators.instance_of(unicode),
@@ -266,7 +254,7 @@ class SubscriptionDatabase(object):
 
 
     def _create(self, path, content):
-        with create(path) as subscription_file:
+        with path.create() as subscription_file:
             # XXX Crash here and we have inconsistent state on disk.
             # It would be better to write to a temporary file and then
             # renameat2(..., RENAME_NOREPLACE) but Python doesn't

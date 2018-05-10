@@ -19,8 +19,8 @@ from filepath import FilePath
 from lae_automation import __file__ as lae_package_location
 
 ROOT = FilePath(lae_package_location).parent().parent()
-STAGING = ROOT.child("k8s").child("secrets.staging.enc.yaml")
-PRODUCTION = ROOT.child("k8s").child("secrets.production.enc.yaml")
+STAGING = ROOT.sibling("k8s").child("secrets.staging.enc.yaml")
+PRODUCTION = ROOT.sibling("k8s").child("secrets.production.enc.yaml")
 
 
 class SecretsFileTests(TestCase):

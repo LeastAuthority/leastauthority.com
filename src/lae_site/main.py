@@ -24,7 +24,7 @@ from twisted.python.filepath import FilePath
 from wormhole import wormhole
 
 from lae_util import opt_metrics_port
-from lae_util.fluentd_destination import (
+from lae_util.eliot_destination import (
     opt_eliot_destination,
     eliot_logging_service,
 )

@@ -18,9 +18,9 @@ from twisted.internet.task import Clock
 from foolscap.furl import decode_furl
 
 from lae_util.testtools import TestCase
-from lae_util.fileutil import make_dirs
-from lae_automation import model, signup
+from lae_automation import signup
 from lae_automation.signup import (
+    APPID,
     get_provisioner,
     get_wormhole_signup,
     get_email_signup,
@@ -211,7 +211,7 @@ class ActivateTests(TestCase):
         wormhole_claim = self.successResultOf(d)
 
         wh = server.create(
-            u"tahoe-lafs.org/tahoe-lafs/v1",
+            APPID,
             u"ws://foo.invalid/",
             reactor,
         )

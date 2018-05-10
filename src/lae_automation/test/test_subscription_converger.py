@@ -16,10 +16,14 @@ import attr
 from prometheus_client import REGISTRY
 
 from hypothesis import assume, given, settings
-from hypothesis.strategies import choices, data
+from hypothesis.strategies import (
+    data,
+    sampled_from,
+)
 from hypothesis.stateful import (
     RuleBasedStateMachine,
     rule,
+    precondition,
     run_state_machine_as_test,
 )
 from pyrsistent import thaw, pmap, discard
@@ -215,14 +219,15 @@ def write_kubernetes_configuration(scratch, cert, key):
 
 
 class MakeServiceTests(TestCase):
-    def test_interface(self):
+    @settings(max_examples=1)
+    @given(node_pems())
+    def test_interface(self, cert_and_key):
         """
         ``makeService`` returns an object that provides ``IService``.
         """
         scratch = FilePath(self.mktemp())
         scratch.makedirs()
 
-        cert_and_key = node_pems().example()
         cert, key = pem.parse(cert_and_key)
 
         config = write_kubernetes_configuration(
@@ -252,6 +257,8 @@ class MakeServiceTests(TestCase):
 
 
 class SubscriptionConvergence(RuleBasedStateMachine):
+    deploy_config = None
+
     def __init__(self, case):
         super(SubscriptionConvergence, self).__init__()
 
@@ -271,8 +278,6 @@ class SubscriptionConvergence(RuleBasedStateMachine):
         self.has_replicaset = set()
         self.has_pod = set()
 
-        self.deploy_config = deployment_configuration().example()
-
         self.subscription_client = memory_client(self.database.path, self.domain)
         self.kubernetes = memory_kubernetes()
         self.kube_model = self.kubernetes.model
@@ -281,12 +286,6 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             access_key="access_key_id",
             secret_key="secret_access_key",
         )
-        route53 = self.aws_region.get_route53_client()
-        d = route53.create_hosted_zone(
-            caller_reference=u"opaque reference",
-            name=self.deploy_config.domain,
-        )
-        self.zone = self.case.successResultOf(d)
         self.action = start_action(action_type=u"convergence-test")
 
     def execute_step(self, step):
@@ -299,7 +298,19 @@ class SubscriptionConvergence(RuleBasedStateMachine):
     def teardown(self):
         self.action.finish()
 
+    @rule(deploy_config=deployment_configuration())
+    @precondition(lambda self: self.deploy_config is None)
+    def initialize_deployment_domain(self, deploy_config):
+        self.deploy_config = deploy_config
+        route53 = self.aws_region.get_route53_client()
+        d = route53.create_hosted_zone(
+            caller_reference=u"opaque reference",
+            name=self.deploy_config.domain,
+        )
+        self.zone = self.case.successResultOf(d)
+
     @rule(details=subscription_details().map(lambda d: attr.assoc(d, oldsecrets=None)))
+    @precondition(lambda self: self.deploy_config is not None)
     def activate(self, details):
         """
         Activate a new subscription in the subscription manager.
@@ -317,11 +328,12 @@ class SubscriptionConvergence(RuleBasedStateMachine):
             details=details,
         )
 
-    @rule(choose=choices())
-    def deactivate(self, choose):
+    @rule(data=data())
+    @precondition(lambda self: self.deploy_config is not None)
+    def deactivate(self, data):
         identifiers = self.database.list_active_subscription_identifiers()
         assume(0 < len(identifiers))
-        subscription_id = choose(sorted(identifiers))
+        subscription_id = data.draw(sampled_from(sorted(identifiers)))
         Message.log(deactivating=subscription_id)
         self.database.deactivate_subscription(subscription_id)
 
@@ -336,6 +348,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     @rule(tag=docker_image_tags())
+    @precondition(lambda self: self.deploy_config is not None)
     def change_tahoe_images(self, tag):
         """
         Change the Deployment configuration to require a different Docker image
@@ -350,6 +363,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     @rule(id=aws_access_key_id(), key=aws_secret_key())
+    @precondition(lambda self: self.deploy_config is not None)
     def change_access_key(self, id, key):
         """
         Change the ``DeploymentConfiguration`` to reference a diferent AWS key.
@@ -364,6 +378,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     @rule()
+    @precondition(lambda self: self.deploy_config is not None)
     def initialize_service_status(self):
         """
         Create a status for the S4 Customer Grid service.  The status does not yet
@@ -391,6 +406,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     @rule(data=data())
+    @precondition(lambda self: self.deploy_config is not None)
     def allocate_loadbalancer_ingress(self, data):
         """
         Complete the S4 Customer Grid service setup by updating its status to
@@ -421,6 +437,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     @rule()
+    @precondition(lambda self: self.deploy_config is not None)
     def create_replicasets(self):
         """
         Fabricate ReplicaSets which warrant existence and which Kubernetes would
@@ -445,6 +462,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     @rule(data=data())
+    @precondition(lambda self: self.deploy_config is not None)
     def create_pods(self, data):
         """
         Fabricate Pods which warrant existence and which Kubernetes would have
@@ -471,6 +489,7 @@ class SubscriptionConvergence(RuleBasedStateMachine):
 
 
     @rule()
+    @precondition(lambda self: self.deploy_config is not None)
     def converge(self):
         """
         Converge the cluster (Kubernetes, Route53, etc) configuration on
@@ -677,9 +696,9 @@ class SubscriptionConvergenceTests(TestCase):
         return SubscriptionConvergence(self)
 
 
-    @given(data())
     @settings(max_shrinks=0)
-    def test_service_creation(self, data):
+    @given(data(), deployment_configuration())
+    def test_service_creation(self, data, deploy_config):
         """
         After the Service is created and its LoadBalancer is allocated, the
         "infrastructure" Route53 state is created (eg the introducer domain
@@ -693,6 +712,7 @@ class SubscriptionConvergenceTests(TestCase):
         also led to many failed attempts to re-create the Service.
         """
         m = self._machine()
+        m.initialize_deployment_domain(deploy_config)
         m.converge()
         m.initialize_service_status()
         m.allocate_loadbalancer_ingress(data)
