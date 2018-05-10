@@ -66,6 +66,9 @@ class SiteOptions(Options):
         ("chargebee-plan-id", None, None,
          "The identifier of a ChargeBee plan to associate with new subscriptions.",
         ),
+        ("chargebee-gateway-account-id", None, None,
+         "The ChargeBee payment gateway through which payment has been processed.",
+        ),
 
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
         ("wormhole-result-path", None, None,
@@ -246,6 +249,7 @@ def site_for_options(reactor, options):
         ChargeBee(
             options["chargebee-secret-api-key-path"].getContent().strip(),
             options["chargebee-site-name"],
+            options["chargebee-gateway_account_id"],
         ),
         Mailer(),
         options["cross-domain"],

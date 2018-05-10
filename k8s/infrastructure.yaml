@@ -235,6 +235,7 @@ spec:
           - '--chargebee-site-name=$(CHARGEBEE_SITE_NAME)'
           - '--chargebee-secret-api-key-path=/app/k8s_secrets/chargebee.key'
           - '--chargebee-plan-id=$(CHARGEBEE_PLAN_ID)'
+          - '--chargebee-gateway-account-id=$(CHARGEBEE_GATEWAY_ACCOUNT_ID)'
 
           - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
 
@@ -260,6 +261,11 @@ spec:
               configMapKeyRef:
                 name: 's4'
                 key: 'chargebee-site-name'
+          - name: 'CHARGEBEE_GATEWAY_ACCOUNT_ID'
+            valueFrom:
+              configMapKeyRef:
+                name: 's4'
+                key: 'chargebee-gateway-account-id'
         ports:
         # We just happen to know these are the ports this container listens on.
         - containerPort: 8443

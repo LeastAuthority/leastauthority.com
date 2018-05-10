@@ -108,6 +108,7 @@ class ChargeBee(object):
 
     key = attr.ib()
     name = attr.ib()
+    gateway_account_id = attr.ib()
 
     def create(self, authorization_token, plan_id, email, country):
         subscription_parameters = {
@@ -118,6 +119,7 @@ class ChargeBee(object):
             "payment_method": {
                 "type": "card",
                 "tmp_token": authorization_token,
+                "gateway_account_id": self.gateway_account_id,
             },
         }
         subscription_parameters = country.add(subscription_parameters)
