@@ -18,16 +18,16 @@ _STATIC = FilePath(_lae_root).sibling("static")
 # Note the price here is descriptive for the user.  It does not control the
 # actual amount billed by the payment processor.
 _PRICE = {
-    ("250GB", "month"): "9.95",
-    ("250GB", "year"): "108",
-    ("5TB", "month"): "25.95",
-    ("5TB", "year"): "299",
+    ("250GB", "monthly"): "9.95",
+    ("250GB", "yearly"): "108",
+    ("5TB", "monthly"): "25.95",
+    ("5TB", "yearly"): "299",
 }
 
 _PLANS = list(
     (size, period, currency, _PRICE[size, period])
     for size in (u"250GB", u"5TB")
-    for period in (u"month", u"year")
+    for period in (u"monthly", u"yearly")
     for currency in (u"EUR", u"USD")
 )
 
