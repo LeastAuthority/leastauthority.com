@@ -61,7 +61,7 @@ class _ResourceWithHeaders(Resource):
 
 
 def _plan(**kw):
-    kw[u"id"] = u"s4_{size}_{period}_{currency}".format(**kw)
+    kw[u"id"] = u"s4_{size}_{period}_{currency}".format(**kw).lower()
     return kw
 
 
