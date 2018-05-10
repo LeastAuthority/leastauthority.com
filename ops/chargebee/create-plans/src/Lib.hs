@@ -236,4 +236,20 @@ s4Plans = [
       , currency_code = "USD"
       , price = Just 29900
       }
+  , minimalS4Plan {
+      id = "s4_250gb_complementary"
+      , name = "S4 250 GB Complementary"
+      , period = Just 1
+      , period_unit = Just "month"
+      , currency_code = "EUR"
+      , price = Nothing
+      }
+  , minimalS4Plan {
+      id = "S4_consumer_iteration_2_beta1_2014-05-27"
+      , name = "Simple Secure Storage Service (S4) 200GB"
+      , period = Just 1
+      , period_unit = Just "month"
+      , currency_code = "USD"
+      , price = Just 2500
+      }
   ]
