@@ -145,6 +145,7 @@ class SiteOptions(Options):
             "chargebee-secret-api-key-path",
             "chargebee-site-name",
             "chargebee-plan-id",
+            "chargebee-gateway-account-id",
             "subscription-manager",
             "site-logs-path",
             "wormhole-result-path",
@@ -249,7 +250,7 @@ def site_for_options(reactor, options):
         ChargeBee(
             options["chargebee-secret-api-key-path"].getContent().strip(),
             options["chargebee-site-name"],
-            options["chargebee-gateway_account_id"],
+            options["chargebee-gateway-account-id"],
         ),
         Mailer(),
         options["cross-domain"],
