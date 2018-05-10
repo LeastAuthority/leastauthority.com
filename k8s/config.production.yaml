@@ -4,4 +4,4 @@ metadata:
   name: 's4'
 data:
   chargebee-site-name: 'leastauthority'
-  chargebee-plan-id: 's4-us'
+  chargebee-plan-id: 'S4_consumer_iteration_2_beta1_2014-05-27'
