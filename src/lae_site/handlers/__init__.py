@@ -15,6 +15,22 @@ from lae_site import __file__ as _lae_root
 
 _STATIC = FilePath(_lae_root).sibling("static")
 
+# Note the price here is descriptive for the user.  It does not control the
+# actual amount billed by the payment processor.
+_PRICE = {
+    ("250GB", "month"): "9.95",
+    ("250GB", "year"): "108",
+    ("5TB", "month"): "25.95",
+    ("5TB", "year"): "299",
+}
+
+_PLANS = list(
+    (size, period, currency, _PRICE[size, period])
+    for size in (u"250GB", u"5TB")
+    for period in (u"month", u"year")
+    for currency in (u"EUR", u"USD")
+)
+
 
 class _ResourceWithHeaders(Resource):
     """
@@ -44,6 +60,11 @@ class _ResourceWithHeaders(Resource):
         return self._wrapped.render(request)
 
 
+def _plan(**kw):
+    kw[u"id"] = u"s4_{size}_{period}_{currency}".format(**kw)
+    return kw
+
+
 def configuration(stripe_publishable_api_key, cross_domain):
     """
     Create a ``Resource`` which serves up simple configuration used by
@@ -62,6 +83,11 @@ def configuration(stripe_publishable_api_key, cross_domain):
                 # JavaScript Stripe client API.
                 u"stripe-publishable-api-key": stripe_publishable_api_key,
                 u"cross-domain": cross_domain,
+                u"plans": list(
+                    _plan(size=size, period=period, currency=currency, price=price)
+                    for (size, period, currency, price)
+                    in _PLANS
+                ),
             }),
             b"application/json",
         )
