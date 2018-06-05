@@ -18,6 +18,8 @@ cat k8s/infrastructure.yaml | \
 sops -d k8s/secrets.staging.enc.yaml | \
     ${APPLY} -f -
 
+${APPLY} -f k8s/config.staging.yaml
+
 ${APPLY} -f k8s/infrastructure/wormhole-server.yaml
 
 cat k8s/monitoring/tahoe-lafs-transfer-rate.yaml | \
