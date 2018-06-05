@@ -12,6 +12,7 @@ setup(
         "console_scripts": [
             "cancel-subscription = lae_automation.opstools:cancel_subscription_main",
             "sync-subscriptions-to-stripe = lae_automation.opstools:sync_subscriptions_main",
+            "copy-subscriptions-to-account = lae_automation.opstools:copy_subscriptions_to_account",
         ],
     },
     dependency_links=[
