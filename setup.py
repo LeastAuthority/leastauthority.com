@@ -21,6 +21,7 @@ setup(
     install_requires=[
         "python-dateutil",
         "stripe",
+        "chargebee",
         "pem",
         "foolscap",
         "filepath",
