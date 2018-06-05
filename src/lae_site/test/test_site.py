@@ -94,16 +94,18 @@ class SiteForOptionsTests(TestCase):
     def test_stuff(self):
         p = FilePath(self.mktemp().decode("ascii"))
         p.makedirs()
-        stripe_secret = p.child(b"stripe-key.secret")
-        stripe_secret.setContent(b"foo")
+        chargebee_secret = p.child(b"chargebee-key.secret")
+        chargebee_secret.setContent(b"foo")
         stripe_publishable = p.child(b"stripe-key.publishable")
         stripe_publishable.setContent(b"bar")
 
         options = SiteOptions(MemoryReactor())
         options.parseOptions([
-            b"--stripe-secret-api-key-path", stripe_secret.path,
+            b"--chargebee-site-name", b"some-site",
+            b"--chargebee-secret-api-key-path", chargebee_secret.path,
+            b"--chargebee-plan-id", b"foo-bar",
+            b"--chargebee-gateway-account-id", b"gw_baz",
             b"--stripe-publishable-api-key-path", stripe_publishable.path,
-            b"--stripe-plan-id", b"foo-bar",
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",

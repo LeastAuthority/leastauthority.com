@@ -30,7 +30,7 @@ from lae_util.eliot_destination import (
 )
 
 from lae_site.handlers import make_resource, make_site, make_redirector_site
-from lae_site.handlers.create_subscription import Stripe, Mailer
+from lae_site.handlers.create_subscription import ChargeBee, Mailer
 
 from lae_automation.signup import (
     provision_subscription,
@@ -59,11 +59,17 @@ class SiteOptions(Options):
     ]
 
     optParameters = [
-        ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
-        ("stripe-plan-id", None, None,
-         "The identifier of a Stripe plan to associate with new subscriptions.",
+
+        ("chargebee-secret-api-key-path", None, None, "A path to a file containing a ChargeBee API key.", FilePath),
+        ("chargebee-site-name", None, None, "The name of the ChargeBee site owning the API key."),
+        ("chargebee-plan-id", None, None,
+         "The identifier of a ChargeBee plan to associate with new subscriptions.",
         ),
+        ("chargebee-gateway-account-id", None, None,
+         "The ChargeBee payment gateway through which payment has been processed.",
+        ),
+
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
         ("wormhole-result-path", None, None,
          "A path to a file to which wormhole interaction results will be written.",
@@ -138,9 +144,11 @@ class SiteOptions(Options):
 
     def postOptions(self):
         required_options = [
-            "stripe-secret-api-key-path",
             "stripe-publishable-api-key-path",
-            "stripe-plan-id",
+            "chargebee-secret-api-key-path",
+            "chargebee-site-name",
+            "chargebee-plan-id",
+            "chargebee-gateway-account-id",
             "subscription-manager",
             "site-logs-path",
             "wormhole-result-path",
@@ -240,9 +248,13 @@ def site_for_options(reactor, options):
 
     resource = make_resource(
         options["stripe-publishable-api-key-path"].getContent().strip(),
-        options["stripe-plan-id"],
+        options["chargebee-plan-id"],
         get_signup,
-        Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
+        ChargeBee(
+            options["chargebee-secret-api-key-path"].getContent().strip(),
+            options["chargebee-site-name"],
+            options["chargebee-gateway-account-id"],
+        ),
         Mailer(
             'support@leastauthority.com',
             options["signup-failure-address"]
