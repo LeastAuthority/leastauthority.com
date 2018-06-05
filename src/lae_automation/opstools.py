@@ -267,60 +267,111 @@ def _copy_subscriptions_to_account(source, destination):
     those in the former account.
     """
     source_customers = _list(stripe.Customer, api_key=source)
-    print("Found {} customers in {}...".format(len(source_customers), source))
+    raw_input("Found {} customers in {}...".format(len(source_customers), source))
+    destination_subscriptions = _list(stripe.Subscription, api_key=destination)
+    raw_input("Found {} subscriptions in {}...".format(len(destination_subscriptions), destination))
     for customer in source_customers:
-        _copy_customer_subscriptions(customer, destination)
+        _copy_customer_subscriptions(destination_subscriptions, customer, destination)
 
 
 
-def _copy_customer_subscriptions(customer, destination):
+def _copy_customer_subscriptions(destination_subscriptions, customer, destination):
     """
     Copy subscriptions belonging to ``customer`` to a Stripe account accessed
     via API key ``destination``.
     """
     for subscription in customer.subscriptions:
-        _copy_customer_subscription(customer, subscription, destination)
-        _terminate_customer_subscription(customer, subscription)
+        _copy_customer_subscription(destination_subscriptions, customer, subscription, destination)
+        _terminate_customer_subscription(customer, subscription, False)
 
 
+PLAN_MAPPING = {
+    "S4_2014_07_10_Complimentary_Service": "S4_comp",
+    "S4_consumer_iteration_2_beta1_2014-05-27": "S4_consumer_iteration_2_beta1_2014-05-27",
+}
 
-def _copy_customer_subscription(customer, subscription, destination):
+
+def _copy_customer_subscription(destination_subscriptions, customer, subscription, destination):
     """
     Copy one subscription belonging to ``customer`` to a Stripe account
     accessed via API key ``destination``.
     """
     trial_end = subscription.current_period_end
-    plans = list(
-        subscription_item["plan"]["id"]
+    desired_plans = {
+        PLAN_MAPPING[subscription_item["plan"]["id"]]
         for subscription_item
         in subscription["items"]["data"]
+    }
+    # Check to see if it was already copied by a previous run.
+    for dest_subscription in destination_subscriptions:
+        if dest_subscription["customer"] == customer.id:
+            observed_plans = {
+                item["plan"]["id"]
+                for item
+                in dest_subscription["items"]["data"]
+            }
+            if observed_plans != desired_plans:
+                raw_input(
+                    "Skewed subscription detected for {}!!!\n"
+                    "Desired plans: {}\n"
+                    "Observed plans: {}\n".format(
+                        customer.id,
+                        desired_plans,
+                        observed_plans
+
+                    ))
+                raise SystemExit(1)
+            if subscription["cancel_at_period_end"] and not dest_subscription["cancel_at_period_end"]:
+                raw_input("Marking already-migrated subscription as cancel-at-period-end to match source.")
+                _terminate_customer_subscription(customer, dest_subscription, True)
+                return
+
+            else:
+                raw_input("Already-migrated subscription detected for {}, skipping.".format(customer.id))
+                return
+
+    raw_input(
+        "Copying customer\n"
+        "Customer: {} {}\n"
+        "Subscription: {}\n"
+        "Trialing until: {}".format(
+            customer.id, customer.email,
+            subscription,
+            datetime.utcfromtimestamp(trial_end).isoformat(),
+        )
     )
-    print("Copying customer {} subscription {} (trialing until {}) with plans {}".format(
-        customer.id,
-        subscription.id,
-        datetime.utcfromtimestamp(trial_end).isoformat(),
-        plans,
-    ))
-    stripe.Subscription.create(
+    new_subscription = stripe.Subscription.create(
         api_key=destination,
         customer=customer.id,
         trial_end=trial_end,
         items=list(
             {"plan": plan}
             for plan
-            in plans
+            in desired_plans
         ),
     )
+    print("Copy: {}\n".format(new_subscription))
+    if subscription["status"] == "canceled":
+        raw_input("Subscription was cancelled, cancelling copy.")
+        _terminate_customer_subscription(customer, new_subscription, False)
+    elif subscription["cancel_at_period_end"]:
+        raw_input("Subscription was cancelled, cancelling copy.")
+        _terminate_customer_subscription(customer, new_subscription, True)
 
 
-
-def _terminate_customer_subscription(customer, subscription):
+def _terminate_customer_subscription(customer, subscription, at_period_end):
     """
     Terminate one subscription at the end of its current billing period.
     """
-    print("Terminating customer {} origin subscription {} at end of period ({}).".format(
+    raw_input("Terminating customer {} subscription {} {}.".format(
         customer.id,
         subscription.id,
-        datetime.utcfromtimestamp(subscription.current_period_end).isoformat(),
+        "at period end ({})".format(
+            datetime.utcfromtimestamp(
+                subscription.current_period_end,
+            ).isoformat(),
+        )
+        if at_period_end
+        else "now"
     ))
-    subscription.delete(at_period_end=True)
+    subscription.delete(at_period_end=at_period_end)
