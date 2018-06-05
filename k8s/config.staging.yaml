@@ -1,0 +1,11 @@
+apiVersion: 'v1'
+kind: 'ConfigMap'
+metadata:
+  name: 's4'
+data:
+  chargebee-site-name: 'leastauthority-test'
+  chargebee-plan-id: 'S4_consumer_iteration_2_beta1_2014-05-27'
+  # This must match a Stripe Payment Gateway configured in ChargeBee
+  # associated with the same Stripe account as the frontend is configured to
+  # use for payment processing.
+  chargebee-gateway-account-id: 'gw_B4eONuQrfSi2IZGq'
