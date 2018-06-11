@@ -2,13 +2,18 @@
 # See LICENSE for details.
 
 from base64 import b32encode
-from json import loads
+from json import loads, dumps
+from functools import partial
 
 import attr
 
 from hypothesis import given, assume
 
-from testtools.matchers import Equals, AfterPreprocessing
+from testtools.matchers import (
+    Equals,
+    AfterPreprocessing,
+    Contains,
+)
 
 from twisted.python.filepath import FilePath
 from twisted.python.url import URL
@@ -18,6 +23,7 @@ from twisted.internet.task import Clock
 from foolscap.furl import decode_furl
 
 from lae_util.testtools import TestCase
+from lae_site.handlers.web import env
 from lae_automation import signup
 from lae_automation.signup import (
     APPID,
@@ -239,6 +245,76 @@ class ActivateTests(TestCase):
             Equals(provisioned[0].external_introducer_furl),
         )
 
+
+class WormholeClaimTests(TestCase):
+    """
+    Tests for the wormhole-based ``IClaim`` implementation.
+    """
+    def setUp(self):
+        super(WormholeClaimTests, self).setUp()
+        self.env = env
+
+    def _provision_subscription(self, old_secrets, smclient, subscription):
+        return succeed(attr.assoc(
+            subscription,
+            oldsecrets=old_secrets,
+        ))
+
+    def _make_wormhole_claim(self, customer_email, customer_id, subscription_id, old_secrets):
+        plan_identifier = u"foobar"
+        reactor = Clock()
+        provisioner = get_provisioner(
+            reactor,
+            URL.fromText(u"http://subscription-manager/"),
+            partial(self._provision_subscription, old_secrets),
+        )
+        server = MemoryWormholeServer()
+        signup = get_wormhole_signup(
+            reactor,
+            provisioner,
+            server,
+            URL.fromText(u"ws://foo.invalid/"),
+            FilePath(self.mktemp()),
+        )
+        d = signup.signup(
+            customer_email,
+            customer_id,
+            subscription_id,
+            plan_identifier,
+        )
+        return self.successResultOf(d)
+
+    @given(
+        emails(), customer_id(), subscription_id(), old_secrets(),
+    )
+    def test_html(self, customer_email, customer_id, subscription_id, old_secrets):
+        wormhole_claim = self._make_wormhole_claim(
+            customer_email,
+            customer_id,
+            subscription_id,
+            old_secrets,
+        )
+        description = wormhole_claim.describe(self.env, u"text/html")
+        self.assertThat(
+            description,
+            Contains("<strong>1-persnickety-tardigrade</strong>"),
+        )
+
+    @given(
+        emails(), customer_id(), subscription_id(), old_secrets(),
+    )
+    def test_json(self, customer_email, customer_id, subscription_id, old_secrets):
+        wormhole_claim = self._make_wormhole_claim(
+            customer_email,
+            customer_id,
+            subscription_id,
+            old_secrets,
+        )
+        description = wormhole_claim.describe(self.env, u"application/json")
+        self.assertThat(
+            description,
+            Equals(dumps({"v1": {"claim": "1-persnickety-tardigrade"}})),
+        )
 
 
 class MemoryWormholeTests(TestCase):

@@ -51,7 +51,7 @@ class Mailer(object):
         )
 
 class CreateSubscription(HandlerBase):
-    def __init__(self, get_signup, mailer, stripe, cross_domain, stripe_plan_id):
+    def __init__(self, get_signup, mailer, stripe, cross_domain, stripe_plan_id, content_type):
         """
         :param get_signup: A one-argument callable which returns an ``ISignup``
             which can sign up a new user for us.  The argument is the kind of
@@ -64,6 +64,7 @@ class CreateSubscription(HandlerBase):
         self._stripe = stripe
         self._cross_domain = cross_domain
         self._stripe_plan_id = stripe_plan_id
+        self._content_type = content_type
 
     # add the client domain where the form is, so we can submit cross-domain requests
     def addHeaders(self, request, cross_domain):
@@ -182,13 +183,19 @@ class CreateSubscription(HandlerBase):
             subscription.id.decode("utf-8"),
             subscription.plan.id.decode("utf-8"),
         )
-        d.addCallback(signed_up, request)
+        d.addCallback(signed_up, request, self._content_type)
         d.addErrback(signup_failed, customer, self._mailer)
         return NOT_DONE_YET
 
-def signed_up(claim, request):
+def signed_up(claim, request, content_type):
     # Return 200 and text to be added to template on client
-    request.write(claim.describe(env).encode('utf-8'))
+    request.responseHeaders.setRawHeaders(
+        "content-type",
+        [content_type],
+    )
+    request.write(
+        claim.describe(env, content_type).encode('utf-8'),
+    )
     request.finish()
 
 def signup_failed(reason, customer, mailer):
