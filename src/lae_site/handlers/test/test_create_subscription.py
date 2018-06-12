@@ -88,20 +88,17 @@ class NegativeStripe(object):
 
 @attr.s
 class Mail(object):
-    from_addr = attr.ib()
-    to_addr = attr.ib()
     subject = attr.ib()
     headers = attr.ib()
-
 
 
 @attr.s
 class MemoryMailer(object):
     emails = attr.ib(default=attr.Factory(list))
 
-    def mail(self, from_addr, to_addr, subject, headers):
+    def mail(self, subject, headers):
         self.emails.append(Mail(
-            from_addr, to_addr, subject, headers,
+            subject, headers,
         ))
 
 
