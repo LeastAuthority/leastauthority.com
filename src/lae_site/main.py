@@ -81,6 +81,9 @@ class SiteOptions(Options):
         ("cross-domain", None, None, "The domain for allowing cross origin for the subscription form"
             "(useful for different environment switching)",
         ),
+        ("signup-failure-address", None, None,
+         "The email address to which to send notification of signup errors.",
+        )
     ]
 
     def __init__(self, reactor):
@@ -240,7 +243,14 @@ def site_for_options(reactor, options):
         options["stripe-plan-id"],
         get_signup,
         Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
-        Mailer(),
+        Mailer(
+            'support@leastauthority.com',
+            options["signup-failure-address"]
+            if options["signup-failure-address"] is not None
+            else "support-staging@leastauthority.com"
+            if "www-staging" in options["cross-domain"]
+            else "support@leastauthority.com"
+        ),
         options["cross-domain"],
     )
     site = make_site(resource, options["site-logs-path"])

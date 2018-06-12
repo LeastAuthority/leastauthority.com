@@ -40,10 +40,14 @@ class Stripe(object):
             email=email,
         )
 
+@attr.s
 class Mailer(object):
-    def mail(self, from_addr, to_addr, subject, headers):
+    from_addr = attr.ib()
+    to_addr = attr.ib()
+
+    def mail(self, subject, headers):
         return send_plain_email(
-            from_addr, to_addr, subject, headers,
+            self.from_addr, self.to_addr, subject, headers,
         )
 
 class CreateSubscription(HandlerBase):
@@ -80,8 +84,6 @@ class CreateSubscription(HandlerBase):
         else:
             body = trace_back
         self._mailer.mail(
-            'info@leastauthority.com',
-            'support@leastauthority.com',
             body,
             headers,
         )
@@ -196,8 +198,6 @@ def signup_failed(reason, customer, mailer):
     }
     logger.failure("Signup failed", reason)
     mailer.mail(
-        'info@leastauthority.com',
-        'support@leastauthority.com',
         "A sign-up failed for <%s>." % (customer.email,),
         headers,
     )

@@ -109,6 +109,7 @@ class SiteForOptionsTests(TestCase):
             b"--subscription-manager", b"http://127.0.0.1:8888/",
             b"--cross-domain", b"http://127.0.0.1:5000/",
             b"--wormhole-result-path", self.mktemp(),
+            b"--signup-failure-address", u"admin@example.invalid",
         ])
         site = site_for_options(MemoryReactor(), options)
         # XXX Very weak assertion...
