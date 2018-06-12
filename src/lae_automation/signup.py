@@ -469,6 +469,6 @@ class _WormholeClaim(object):
                 "claim": self.code,
             })
         elif content_type == u"application/json":
-            return json.dumps({u"v1": {u"claim": self.code}})
+            return json.dumps({u"v1": {u"success": self.code}})
         else:
             raise ValueError("Unrecognized content-type: {}".format(content_type))

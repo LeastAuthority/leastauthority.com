@@ -313,7 +313,7 @@ class WormholeClaimTests(TestCase):
         description = wormhole_claim.describe(self.env, u"application/json")
         self.assertThat(
             description,
-            Equals(dumps({"v1": {"claim": "1-persnickety-tardigrade"}})),
+            Equals(dumps({"v1": {"success": "1-persnickety-tardigrade"}})),
         )
 
 

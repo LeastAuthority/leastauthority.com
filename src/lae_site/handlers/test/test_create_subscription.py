@@ -39,7 +39,7 @@ class TrivialClaim(object):
         if content_type == "text/html":
             return "You subscribed."
         elif content_type == "application/json":
-            return dumps({"v1": "you subscribed."})
+            return dumps({"v1": {u"success": "you subscribed."}})
 
 
 
@@ -150,7 +150,7 @@ class FullSignupTests(TestCase):
         self.expectThat(response.code, Equals(OK))
         self.expectThat(
             body,
-            Equals(dumps({"v1": "you subscribed."})),
+            Equals(dumps({"v1": {"success": "you subscribed."}})),
         )
         self.expectThat(self.mailer.emails, Equals([]))
         self.expectThat(self.signup.signups, Equals(1))
@@ -190,7 +190,7 @@ class FullSignupTests(TestCase):
             NegativeStripe(),
             self.cross_domain,
             u"plan-id",
-            "text/html",
+            u"text/html",
         )
         root = Resource()
         root.putChild(b"", resource)
