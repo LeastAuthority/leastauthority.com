@@ -245,7 +245,11 @@ def site_for_options(reactor, options):
         Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
         Mailer(
             'support@leastauthority.com',
-            options["signup-failure-address"],
+            options["signup-failure-address"]
+            if options["signup-failure-address"] is not None
+            else "support-staging@leastauthority.com"
+            if "www-staging" in options["cross-domain"]
+            else "support@leastauthority.com"
         ),
         options["cross-domain"],
     )
