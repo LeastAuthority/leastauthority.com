@@ -1,4 +1,5 @@
 import traceback
+from json import dumps
 
 import attr
 
@@ -171,7 +172,10 @@ class CreateSubscription(HandlerBase):
                 request,
             )
         except RenderErrorDetailsForBrowser as e:
-            return e.details
+            if self._content_type == u"text/html":
+                return e.details
+            elif self._content_type == u"application/json":
+                return dumps({"v1": {"error": e.details}})
 
         # Initiate the provisioning service
         subscription = customer.subscriptions.data[0]

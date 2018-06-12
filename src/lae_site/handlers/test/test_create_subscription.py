@@ -205,3 +205,26 @@ class FullSignupTests(TestCase):
         self.expectThat(body, Contains("Stripe error"))
         self.expectThat(self.mailer.emails, HasLength(1))
         self.expectThat(self.signup.signups, Equals(0))
+
+    def test_json_render_signup_failure(self):
+        resource = CreateSubscription(
+            lambda style: self.signup,
+            self.mailer,
+            NegativeStripe(),
+            self.cross_domain,
+            u"plan-id",
+            u"application/json",
+        )
+        root = Resource()
+        root.putChild(b"", resource)
+
+        response = self._post(
+            root,
+            b"http://127.0.0.1/?stripeToken=abc&email=alice@example.invalid",
+        )
+        body = self.successResultOf(readBody(response))
+
+        self.expectThat(response.code, Equals(PAYMENT_REQUIRED))
+        self.expectThat(body, Equals(dumps({"v1": {"error": "Stripe error"}})))
+        self.expectThat(self.mailer.emails, HasLength(1))
+        self.expectThat(self.signup.signups, Equals(0))
