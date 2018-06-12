@@ -45,7 +45,7 @@ class Mailer(object):
     from_addr = attr.ib()
     to_addr = attr.ib()
 
-    def mail(self, from_addr, to_addr, subject, headers):
+    def mail(self, subject, headers):
         return send_plain_email(
             self.from_addr, self.to_addr, subject, headers,
         )
