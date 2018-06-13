@@ -1,0 +1,50 @@
+version: '3.1'
+
+secrets:
+  stripe-publishable.key:
+    file: ./stripe-publishable.key
+  chargebee.key:
+    file: ./chargebee.key
+
+services:
+  signup:
+    ports:
+      - "8000:8000/tcp"
+
+    image: 'leastauthority/s4-common:da46d96'
+    command:
+      - '/app/env/bin/python'
+      - '-u'
+      - '-m'
+      - 'lae_site.main'
+      - '--wormhole-result-path=/app/data/logs/wormhole-claims.jsons'
+      - "--secure-port=tcp:8000"
+      - '--insecure-port=tcp:8001'
+
+      - '--chargebee-site-name=leastauthority-test'
+      - '--chargebee-secret-api-key-path=/run/secrets/chargebee.key'
+      - '--chargebee-plan-id=S4_consumer_iteration_2_beta1_2014-05-27'
+      - '--chargebee-gateway-account-id=gw_B4eONuQrfSi2IZGq'
+
+      - '--stripe-publishable-api-key-path=/run/secrets/stripe-publishable.key'
+
+      - '--site-logs-path=/tmp/httpd.json'
+      - '--subscription-manager=http://manager/'
+      - '--metrics-port=tcp:9000'
+      - '--cross-domain=*'
+      - '--eliot-destination=file:/tmp/signup.json'
+    secrets:
+      - "stripe-publishable.key"
+      - "chargebee.key"
+
+  manager:
+    image: 'leastauthority/s4-common:da46d96'
+    command:
+      - '/app/env/bin/twist'
+      - '--log-format=text'
+      - 's4-subscription-manager'
+      - '--domain=localhost'
+      - '--bucket-name=foo'
+      - '--state-path=/tmp/subscriptions'
+      - '--listen-address=tcp:8000'
+      - '--eliot-destination=file:/tmp/manager.json'
