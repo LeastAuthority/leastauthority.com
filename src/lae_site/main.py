@@ -11,6 +11,8 @@ if __name__ == '__main__':
 
 import sys
 import logging
+from io import BytesIO
+from base64 import b64encode
 
 from twisted.python.log import startLogging
 from twisted.python.url import URL
@@ -20,6 +22,15 @@ from twisted.application.service import MultiService
 from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
+from twisted.python.components import proxyForInterface
+from twisted.web.resource import Resource
+from twisted.web.server import NOT_DONE_YET
+from twisted.web.http_headers import Headers
+from twisted.web.client import (
+    FileBodyProducer,
+    IAgent,
+    Agent,
+)
 
 from wormhole import wormhole
 
@@ -246,12 +257,15 @@ def site_for_options(reactor, options):
                 ),
             )
 
+    chargebee_secret_key = options[
+        "chargebee-secret-api-key-path"
+    ].getContent().strip()
     resource = make_resource(
         options["stripe-publishable-api-key-path"].getContent().strip(),
         options["chargebee-plan-id"],
         get_signup,
         ChargeBee(
-            options["chargebee-secret-api-key-path"].getContent().strip(),
+            chargebee_secret_key,
             options["chargebee-site-name"],
             options["chargebee-gateway-account-id"],
         ),
@@ -265,9 +279,90 @@ def site_for_options(reactor, options):
         ),
         options["cross-domain"],
     )
+
+    # Expose some ChargeBee APIs, too.  These cannot be queried by a browser
+    # directly so we proxy them here.
+    resource.putChild(
+        "chargebee",
+        create_chargebee_resources(
+            reactor,
+            options["chargebee-site-name"],
+            chargebee_secret_key,
+        ),
+    )
+
     site = make_site(resource, options["site-logs-path"])
     return site
 
+
+
+def create_chargebee_resources(reactor, site_name, secret_key):
+    chargebee = Resource()
+    estimates = Resource()
+    estimates.putChild(
+        "create_subscription",
+        ChargebeeCreateSubscription(
+            Agent(reactor),
+            site_name,
+            secret_key,
+        ),
+    )
+    chargebee.putChild("estimates", estimates)
+    return chargebee
+
+
+class AuthenticatingAgent(proxyForInterface(IAgent, "_agent")):
+    def __init__(self, agent, auth_header):
+        super(AuthenticatingAgent, self).__init__(agent)
+        self._auth_header = auth_header
+
+
+    def request(self, method, uri, headers=None, bodyProducer=None):
+        if headers is None:
+            headers = Headers()
+        headers.addRawHeader(*self._auth_header)
+        return super(AuthenticatingAgent, self).request(
+            method,
+            uri,
+            headers,
+            bodyProducer,
+        )
+
+
+class ChargebeeCreateSubscription(Resource):
+    def __init__(self, agent, site_name, secret_key):
+        authorization = b64encode(secret_key + ":")
+        self._agent = AuthenticatingAgent(
+            agent,
+            ("Authorization", "Basic {}".format(authorization)),
+        )
+        self._site_name = site_name
+        self._uri = URL(
+            u"https",
+            self._site_name + u".chargebee.com",
+            [u"api", u"v2", u"estimates", u"create_subscription"],
+        ).to_uri()
+
+
+    def render_POST(self, request):
+        body = FileBodyProducer(BytesIO(request.read()))
+        d = self._agent.request(
+            "GET",
+            self._uri,
+            request.requestHeaders,
+            body,
+        )
+        d.addCallback(self._proxy_response, request)
+        return NOT_DONE_YET
+
+    def _proxy_response(self, response, request):
+        request.responseHeaders = response.headers
+        request.setResponseCode(response.code, response.phrase)
+        d = readBody(response)
+        d.addCallback(request.write)
+        d.addErrback(err, "proxying estimates/create_subscription")
+        d.addCallback(lambda ign: request.finish())
+        return d
 
 
 def start_site(reactor, site, secure_ports, insecure_ports, redirect_to_port):
