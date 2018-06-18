@@ -14,7 +14,7 @@ import logging
 from io import BytesIO
 from base64 import b64encode
 
-from twisted.python.log import startLogging, err
+from twisted.python.log import startLogging, err, msg
 from twisted.python.url import URL
 from twisted.internet.endpoints import serverFromString
 from twisted.application.internet import StreamServerEndpointService
@@ -343,6 +343,7 @@ class ChargebeeCreateSubscription(Resource):
             self._site_name + u".chargebee.com",
             [u"api", u"v2", u"estimates", u"create_subscription"],
         ).to_uri().to_text().encode("ascii")
+        msg("Proxying to {}".format(self._uri))
 
 
     def render_POST(self, request):
