@@ -38,6 +38,9 @@ services:
       - "chargebee.key"
 
   manager:
+    ports:
+      - "9000:8000/tcp"
+
     image: 'leastauthority/s4-common:da46d96'
     command:
       - '/app/env/bin/twist'
