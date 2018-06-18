@@ -14,7 +14,7 @@ import logging
 from io import BytesIO
 from base64 import b64encode
 
-from twisted.python.log import startLogging
+from twisted.python.log import startLogging, err
 from twisted.python.url import URL
 from twisted.internet.endpoints import serverFromString
 from twisted.application.internet import StreamServerEndpointService
@@ -30,6 +30,7 @@ from twisted.web.client import (
     FileBodyProducer,
     IAgent,
     Agent,
+    readBody,
 )
 
 from wormhole import wormhole
@@ -341,11 +342,11 @@ class ChargebeeCreateSubscription(Resource):
             u"https",
             self._site_name + u".chargebee.com",
             [u"api", u"v2", u"estimates", u"create_subscription"],
-        ).to_uri()
+        ).to_uri().to_text()
 
 
     def render_POST(self, request):
-        body = FileBodyProducer(BytesIO(request.read()))
+        body = FileBodyProducer(BytesIO(request.content.read()))
         d = self._agent.request(
             "GET",
             self._uri,
