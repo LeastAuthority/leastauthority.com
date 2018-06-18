@@ -348,7 +348,7 @@ class ChargebeeCreateSubscription(Resource):
     def render_POST(self, request):
         body = FileBodyProducer(BytesIO(request.content.read()))
         d = self._agent.request(
-            "GET",
+            "POST",
             self._uri,
             request.requestHeaders,
             body,
