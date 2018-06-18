@@ -57,6 +57,10 @@ RUN apt-get --quiet update && apt-get --quiet install -y \
 # software.
 RUN virtualenv /app/env
 
+# Get the latest version of setuptools.  Some packages are not installable
+# with older versions.
+RUN /app/env/bin/pip install --upgrade setuptools
+
 # Get a newer version of pip.  The version (1.5.4) in the
 # python-virtualenv OS package has a bug that prevents it from
 # installing txAWS.
