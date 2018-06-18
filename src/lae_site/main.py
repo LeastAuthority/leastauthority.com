@@ -342,7 +342,7 @@ class ChargebeeCreateSubscription(Resource):
             u"https",
             self._site_name + u".chargebee.com",
             [u"api", u"v2", u"estimates", u"create_subscription"],
-        ).to_uri().to_text()
+        ).to_uri().to_text().encode("ascii")
 
 
     def render_POST(self, request):
