@@ -65,3 +65,7 @@ RUN /app/env/bin/pip install --upgrade setuptools
 # python-virtualenv OS package has a bug that prevents it from
 # installing txAWS.
 RUN /app/env/bin/pip install --upgrade pip
+
+# Also a TLS/SNI-capable install of urllib3 (which doesn't happen by default
+# ...)
+RUN /app/env/bin/pip install --upgrade urllib3[secure]
