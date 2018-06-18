@@ -342,15 +342,17 @@ class ChargebeeCreateSubscription(Resource):
             u"https",
             self._site_name + u".chargebee.com",
             [u"api", u"v2", u"estimates", u"create_subscription"],
-        ).to_uri().to_text().encode("ascii")
+        )
         msg("Proxying to {}".format(self._uri))
 
 
     def render_POST(self, request):
+        headers = request.requestHeaders.copy()
+        headers.setRawHeader("Host", self._uri.host)
         body = FileBodyProducer(BytesIO(request.content.read()))
         d = self._agent.request(
             "POST",
-            self._uri,
+            self._uri.to_uri().to_text().encode("ascii"),
             request.requestHeaders,
             body,
         )
