@@ -11,7 +11,7 @@ services:
     ports:
       - "8000:8000/tcp"
 
-    image: 'leastauthority/s4-common:da46d96'
+    image: 'leastauthority/s4-common:latest'
     command:
       - '/app/env/bin/python'
       - '-u'
@@ -41,7 +41,7 @@ services:
     ports:
       - "9000:8000/tcp"
 
-    image: 'leastauthority/s4-common:da46d96'
+    image: 'leastauthority/s4-common:latest'
     command:
       - '/app/env/bin/twist'
       - '--log-format=text'
