@@ -130,13 +130,11 @@ class FullSignupTests(TestCase):
         self.signup = TrivialSignup()
         self.mailer = MemoryMailer()
         self.billing = PositiveChargeBee()
-        self.cross_domain = "http://localhost:5000/"
 
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
             self.billing,
-            self.cross_domain,
             u"plan-id",
         )
         root = Resource()
@@ -160,13 +158,11 @@ class FullSignupTests(TestCase):
         self.signup = TrivialSignup()
         self.mailer = MemoryMailer()
         self.billing = NegativeChargeBee()
-        self.cross_domain = "http://localhost:5000/"
 
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
             self.billing,
-            self.cross_domain,
             u"plan-id",
         )
         root = Resource()

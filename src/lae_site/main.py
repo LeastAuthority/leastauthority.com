@@ -23,7 +23,7 @@ from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
 from twisted.python.components import proxyForInterface
-from twisted.web.resource import Resource
+from twisted.web.resource import IResource, Resource
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.http_headers import Headers
 from twisted.web.client import (
@@ -292,8 +292,34 @@ def site_for_options(reactor, options):
         ),
     )
 
-    site = make_site(resource, options["site-logs-path"])
+    def hook(request):
+        # add the client domain where the form is, so we can submit
+        # "cross-domain" requests (eg leastauthority.com to
+        # s4.leastauthority.com)
+        request.responseHeaders.setRawHeaders(
+            'Access-Control-Allow-Origin',
+            [options['cross-domain']],
+        )
+        return request
+
+    site = make_site(
+        # Set the CORS header on all resources on this site.
+        GetChildHook(hook, resource),
+        options["site-logs-path"],
+    )
     return site
+
+
+
+class GetChildHook(proxyForInterface(IResource)):
+    def __init__(self, hook, resource):
+        self._hook = hook
+        super(GetChildHook, self).__init__(resource)
+
+
+    def getChildWithDefault(self, name, request):
+        request = self._hook(request)
+        return super(GetChildHook, self).getChildWithDefault(name, request)
 
 
 

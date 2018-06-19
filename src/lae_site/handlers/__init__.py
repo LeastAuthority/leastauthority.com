@@ -117,7 +117,6 @@ def make_resource(
             get_signup,
             mailer,
             billing,
-            cross_domain,
             plan_id,
         ),
     )
