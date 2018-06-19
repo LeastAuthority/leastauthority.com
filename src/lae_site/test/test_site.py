@@ -13,12 +13,19 @@ from twisted.web.http_headers import Headers
 from twisted.python.filepath import FilePath
 from twisted.test.proto_helpers import MemoryReactor
 
+from treq.testing import RequestTraversalAgent
+
 from lae_site.handlers import (
     make_resource,
     make_site,
     _ResourceWithHeaders,
 )
-from lae_site.main import SiteOptions, site_for_options
+from lae_site.main import (
+    SiteOptions,
+    site_for_options,
+    ChargeBeeCreateSubscription,
+    access_control_allow_origins,
+)
 
 from lae_util.memoryagent import dummyRequest, asResponse, render
 from lae_util.testtools import TestCase
@@ -91,7 +98,13 @@ class SiteForOptionsTests(TestCase):
     """
     Tests for ``site_for_options``.
     """
-    def test_stuff(self):
+    origin = b"http://127.0.0.1:5000"
+
+    def setUp(self):
+        TestCase.setUp(self)
+        self.reactor = MemoryReactor()
+
+    def make_site(self):
         p = FilePath(self.mktemp().decode("ascii"))
         p.makedirs()
         chargebee_secret = p.child(b"chargebee-key.secret")
@@ -99,8 +112,9 @@ class SiteForOptionsTests(TestCase):
         stripe_publishable = p.child(b"stripe-key.publishable")
         stripe_publishable.setContent(b"bar")
 
-        options = SiteOptions(MemoryReactor())
+        options = SiteOptions(self.reactor)
         options.parseOptions([
+            b"--chargebee-domain", b"localhost",
             b"--chargebee-site-name", b"some-site",
             b"--chargebee-secret-api-key-path", chargebee_secret.path,
             b"--chargebee-plan-id", b"foo-bar",
@@ -109,10 +123,82 @@ class SiteForOptionsTests(TestCase):
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",
-            b"--cross-domain", b"http://127.0.0.1:5000/",
+            b"--cross-domain", self.origin,
             b"--wormhole-result-path", self.mktemp(),
             b"--signup-failure-address", u"admin@example.invalid",
         ])
-        site = site_for_options(MemoryReactor(), options)
+        return site_for_options(self.reactor, options)
+
+
+    def test_stuff(self):
+        site = self.make_site()
         # XXX Very weak assertion...
         self.assertThat(site, IsInstance(Site))
+
+
+    def _cors_test(self, method, uri):
+        site = self.make_site()
+        agent = RequestTraversalAgent(site.resource)
+
+        d = agent.request(method, uri)
+        response = self.successResultOf(d)
+        self.expectThat(
+            response.headers.getRawHeaders("Access-Control-Allow-Origin"),
+            Equals([self.origin]),
+        )
+
+
+    def test_cors_configuration(self):
+        self._cors_test(
+            b"GET",
+            b"http://127.0.0.1/configuration",
+        )
+
+
+class ChargeBeeCreateSubscriptionTests(TestCase):
+    origin = b"http://127.0.0.1:5000"
+
+    def test_cors_chargebee(self):
+        chargebee_create_subscription = Resource()
+        chargebee_estimates = Resource()
+        chargebee_estimates.putChild(
+            "create_subscription",
+            chargebee_create_subscription,
+        )
+        chargebee_v2 = Resource()
+        chargebee_v2.putChild(
+            "estimates",
+            chargebee_estimates,
+        )
+
+        chargebee_api = Resource()
+        chargebee_api.putChild(
+            "v2",
+            chargebee_v2,
+        )
+        chargebee_root = Resource()
+        chargebee_root.putChild(
+            "api",
+            chargebee_v2,
+        )
+
+        chargebee = ChargeBeeCreateSubscription(
+            RequestTraversalAgent(chargebee_root),
+            "example-test",
+            "foo",
+            "chargebee.com",
+        )
+        root = Resource()
+        root.putChild("create_subscription", chargebee)
+
+        agent = RequestTraversalAgent(
+            access_control_allow_origins([self.origin], root),
+        )
+        d = agent.request(
+            b"POST",
+            b"http://127.0.0.0.1/create_subscription")
+        response = self.successResultOf(d)
+        self.expectThat(
+            response.headers.getRawHeaders("Access-Control-Allow-Origin"),
+            Equals([self.origin]),
+        )

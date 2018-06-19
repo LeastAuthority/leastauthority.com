@@ -13,6 +13,7 @@ import sys
 import logging
 from io import BytesIO
 from base64 import b64encode
+from functools import partial
 
 from twisted.python.log import startLogging, err, msg
 from twisted.python.url import URL
@@ -73,6 +74,7 @@ class SiteOptions(Options):
     optParameters = [
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
 
+        ("chargebee-domain", None, "chargebee.com", "The ChargeBee API domain."),
         ("chargebee-secret-api-key-path", None, None, "A path to a file containing a ChargeBee API key.", FilePath),
         ("chargebee-site-name", None, None, "The name of the ChargeBee site owning the API key."),
         ("chargebee-plan-id", None, None,
@@ -289,25 +291,39 @@ def site_for_options(reactor, options):
             reactor,
             options["chargebee-site-name"],
             chargebee_secret_key,
+            options["chargebee-domain"],
         ),
     )
 
-    def hook(request):
-        # add the client domain where the form is, so we can submit
-        # "cross-domain" requests (eg leastauthority.com to
-        # s4.leastauthority.com)
-        request.responseHeaders.setRawHeaders(
-            'Access-Control-Allow-Origin',
-            [options['cross-domain']],
-        )
-        return request
-
     site = make_site(
         # Set the CORS header on all resources on this site.
-        GetChildHook(hook, resource),
+        access_control_allow_origins(
+            [options['cross-domain']],
+            resource,
+        ),
         options["site-logs-path"],
     )
     return site
+
+
+
+def access_control_allow_origins(origins, resource):
+    return GetChildHook(
+        partial(access_control_allow_origins_hook, origins),
+        resource,
+    )
+
+
+
+def access_control_allow_origins_hook(origins, request):
+    # add the client domain where the form is, so we can submit
+    # "cross-domain" requests (eg leastauthority.com to
+    # s4.leastauthority.com)
+    request.responseHeaders.setRawHeaders(
+        'Access-Control-Allow-Origin',
+        origins,
+    )
+    return request
 
 
 
@@ -323,15 +339,18 @@ class GetChildHook(proxyForInterface(IResource)):
 
 
 
-def create_chargebee_resources(reactor, site_name, secret_key):
+def create_chargebee_resources(
+        reactor, site_name, secret_key, chargebee_domain,
+):
     chargebee = Resource()
     estimates = Resource()
     estimates.putChild(
         "create_subscription",
-        ChargebeeCreateSubscription(
+        ChargeBeeCreateSubscription(
             Agent(reactor),
             site_name,
             secret_key,
+            chargebee_domain,
         ),
     )
     chargebee.putChild("estimates", estimates)
@@ -356,17 +375,18 @@ class AuthenticatingAgent(proxyForInterface(IAgent, "_agent")):
         )
 
 
-class ChargebeeCreateSubscription(Resource):
-    def __init__(self, agent, site_name, secret_key):
+class ChargeBeeCreateSubscription(Resource):
+    def __init__(self, agent, site_name, secret_key, chargebee_domain):
         authorization = b64encode(secret_key + ":")
         self._agent = AuthenticatingAgent(
             agent,
             ("Authorization", "Basic {}".format(authorization)),
         )
         self._site_name = site_name
+        self._chargebee_domain = chargebee_domain
         self._uri = URL(
             u"https",
-            self._site_name + u".chargebee.com",
+            u"{}.{}".format(self._site_name, self._chargebee_domain),
             [u"api", u"v2", u"estimates", u"create_subscription"],
         )
         msg("Proxying to {}".format(self._uri))
