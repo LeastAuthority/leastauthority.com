@@ -70,27 +70,20 @@ def configuration(stripe_publishable_api_key, cross_domain):
     Create a ``Resource`` which serves up simple configuration used by
     JavaScript on the website.
     """
-    return _ResourceWithHeaders(
-        # Allow the signup page, hosted on *cross_domain*, to even accept a
-        # response to a request for this resource.
-        Headers({
-            b"Access-Control-Allow-Origin": [cross_domain.encode("ascii")]
+    return Data(
+        dumps({
+            # Stripe publishable key identifies a Stripe account in API uses.
+            # It's safe to share and required by the JavaScript Stripe client
+            # API.
+            u"stripe-publishable-api-key": stripe_publishable_api_key,
+            u"cross-domain": cross_domain,
+            u"plans": list(
+                _plan(size=size, period=period, currency=currency, price=price)
+                for (size, period, currency, price)
+                in _PLANS
+            ),
         }),
-        Data(
-            dumps({
-                # Stripe publishable key identifies a Stripe account in
-                # API uses.  It's safe to share and required by the
-                # JavaScript Stripe client API.
-                u"stripe-publishable-api-key": stripe_publishable_api_key,
-                u"cross-domain": cross_domain,
-                u"plans": list(
-                    _plan(size=size, period=period, currency=currency, price=price)
-                    for (size, period, currency, price)
-                    in _PLANS
-                ),
-            }),
-            b"application/json",
-        )
+        b"application/json",
     )
 
 
