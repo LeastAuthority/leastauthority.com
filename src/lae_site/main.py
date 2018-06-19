@@ -386,7 +386,8 @@ class ChargebeeCreateSubscription(Resource):
         return NOT_DONE_YET
 
     def _proxy_response(self, response, request):
-        request.responseHeaders = response.headers
+        for k, vs in response.headers.getAllRawHeaders():
+            request.responseHeaders.setRawHeaders(k, vs)
         request.setResponseCode(response.code, response.phrase)
         d = readBody(response)
         d.addCallback(request.write)
