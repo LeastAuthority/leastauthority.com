@@ -353,7 +353,7 @@ class ChargebeeCreateSubscription(Resource):
         d = self._agent.request(
             "POST",
             self._uri.to_uri().to_text().encode("ascii"),
-            request.requestHeaders,
+            headers,
             body,
         )
         d.addCallback(self._proxy_response, request)
