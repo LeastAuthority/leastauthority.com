@@ -372,6 +372,13 @@ class ChargebeeCreateSubscription(Resource):
         msg("Proxying to {}".format(self._uri))
 
 
+    def render_OPTIONS(self, request):
+        request.responseHeaders.setRawHeaders(
+            "Access-Control-Allow-Methods",
+            ["POST"],
+        )
+        return ""
+
     def render_POST(self, request):
         headers = request.requestHeaders.copy()
         headers.setRawHeaders("Host", [self._uri.host])
