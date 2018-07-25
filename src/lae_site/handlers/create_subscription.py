@@ -1,4 +1,5 @@
 import traceback
+from json import dumps
 
 import attr
 
@@ -143,7 +144,7 @@ class Mailer(object):
         )
 
 class CreateSubscription(HandlerBase):
-    def __init__(self, get_signup, mailer, billing, plan_id):
+    def __init__(self, get_signup, mailer, billing, plan_id, cross_domain, content_type):
         """
         :param get_signup: A one-argument callable which returns an ``ISignup``
             which can sign up a new user for us.  The argument is the kind of
@@ -155,6 +156,8 @@ class CreateSubscription(HandlerBase):
         self._mailer = mailer
         self._billing = billing
         self._plan_id = plan_id
+        self._cross_domain = cross_domain
+        self._content_type = content_type
 
 
     # The following helper methods are all called directly or indirectly by render.
@@ -268,7 +271,10 @@ class CreateSubscription(HandlerBase):
                 request,
             )
         except RenderErrorDetailsForBrowser as e:
-            return e.details
+            if self._content_type == u"text/html":
+                return e.details
+            elif self._content_type == u"application/json":
+                return dumps({"v1": {"error": e.details}})
 
         # Initiate the provisioning service
         subscription = result.subscription
@@ -281,13 +287,19 @@ class CreateSubscription(HandlerBase):
             subscription.id.decode("utf-8"),
             subscription.plan_id.decode("utf-8"),
         )
-        d.addCallback(signed_up, request)
+        d.addCallback(signed_up, request, self._content_type)
         d.addErrback(signup_failed, customer, self._mailer)
         return NOT_DONE_YET
 
-def signed_up(claim, request):
+def signed_up(claim, request, content_type):
     # Return 200 and text to be added to template on client
-    request.write(claim.describe(env).encode('utf-8'))
+    request.responseHeaders.setRawHeaders(
+        "content-type",
+        [content_type],
+    )
+    request.write(
+        claim.describe(env, content_type).encode('utf-8'),
+    )
     request.finish()
 
 def signup_failed(reason, customer, mailer):

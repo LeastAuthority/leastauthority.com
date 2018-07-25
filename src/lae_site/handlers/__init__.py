@@ -111,12 +111,28 @@ def make_resource(
             mailer,
             billing,
             plan_id,
+            cross_domain,
+            u"text/html",
         ),
     )
     resource.putChild(
         "s4-subscription-form",
         JinjaHandler("s4-subscription-form.html"),
     )
+
+    v2 = Resource()
+    v2.putChild(
+        "create-subscription",
+        CreateSubscription(
+            get_signup,
+            mailer,
+            billing,
+            plan_id,
+            cross_domain,
+            u"application/json",
+        ),
+    )
+    resource.putChild("v2", v2)
 
     return resource
 
