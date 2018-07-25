@@ -9,3 +9,5 @@ data:
   # associated with the same Stripe account as the frontend is configured to
   # use for payment processing.
   chargebee-gateway-account-id: 'gw_...'
+
+  stripe-plan-id: 'S4_consumer_iteration_2_beta1_2014-05-27'
