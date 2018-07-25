@@ -1,0 +1,35 @@
+#!/bin/bash -e
+
+HEAD="$(git rev-parse HEAD)"
+master="$(git rev-parse master)"
+
+if [ "${HEAD}" != "${master}" ]; then
+    echo "Refusing to operate on non-master checkout."
+    exit 1
+fi
+
+git fetch origin master
+
+APPLY="kubectl --context production apply"
+REWRITE="python k8s/rewrite-objects.py --git-tag HEAD"
+
+./k8s/build
+
+sops -d k8s/secrets.production.enc.yaml | \
+    ${APPLY} -f -
+
+${APPLY} -f k8s/config.production.yaml
+
+cat k8s/infrastructure.yaml | \
+    ${REWRITE} | \
+    ${APPLY} -f -
+
+cat k8s/monitoring/tahoe-lafs-transfer-rate.yaml | \
+    ${REWRITE} | \
+    ${APPLY} -f -
+
+python k8s/monitoring/grafana-dashboards.py production | \
+    ${APPLY} -f -
+
+cat k8s/monitoring/grafana.yaml | \
+    ${APPLY} -f -
