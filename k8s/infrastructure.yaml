@@ -202,14 +202,13 @@ spec:
             path: 'key.pem'
           - key: 'smtp.password'
             path: 'smtp.password'
+          - key: 'stripe-private.key'
+            path: 'stripe-private.key'
+          - key: 'stripe-publishable.key'
+            path: 'stripe-publishable.key'
 
           - key: 'chargebee.key'
             path: 'chargebee.key'
-
-          - key: 'stripe-publishable.key'
-            path: 'stripe-publishable.key'
-          - key: 'stripe-private.key'
-            path: 'stripe-private.key'
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -234,14 +233,15 @@ spec:
           - '--insecure-port=tcp:8080'
           - '--redirect-to-port=$(S4_SERVICE_PORT_HTTPS_SERVER)'
 
+          - '--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key'
+          - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
+          - '--stripe-plan-id=$(STRIPE_PLAN_ID)'
+
           - '--chargebee-site-name=$(CHARGEBEE_SITE_NAME)'
           - '--chargebee-secret-api-key-path=/app/k8s_secrets/chargebee.key'
           - '--chargebee-plan-id=$(CHARGEBEE_PLAN_ID)'
           - '--chargebee-gateway-account-id=$(CHARGEBEE_GATEWAY_ACCOUNT_ID)'
 
-          - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
-          - '--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key'
-          - '--stripe-plan-id=$(STRIPE_PLAN_ID)'
 
           - '--site-logs-path=/app/log/httpd.json'
           - '--subscription-manager=http://subscription-manager/'
