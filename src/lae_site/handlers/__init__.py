@@ -93,12 +93,27 @@ def make_resource(
             stripe,
             cross_domain,
             stripe_plan_id,
+            u"text/html",
         ),
     )
     resource.putChild(
         "s4-subscription-form",
         JinjaHandler("s4-subscription-form.html"),
     )
+
+    v2 = Resource()
+    v2.putChild(
+        "create-subscription",
+        CreateSubscription(
+            get_signup,
+            mailer,
+            stripe,
+            cross_domain,
+            stripe_plan_id,
+            u"application/json",
+        ),
+    )
+    resource.putChild("v2", v2)
 
     return resource
 

@@ -94,13 +94,20 @@ class ISignup(Interface):
 
 
 class IClaim(Interface):
-    def describe(env):
+    def describe(env, content_type):
         """
         Explain the details of this claim in a way that can be rendered into a web
         page.
 
-        :return: XXX How do we put stuff in web pages?  Jinja2?
-            twisted.web.template?
+        :param env: A Jinja2 environment thingy I guess.  Soon to be removed
+            because we're going to stop generating HTML so we can stop using
+            Jinja2.
+
+        :param unicode content_type: A choice about the data format in which
+            the claim should be described.  For example, ``text/html`` or
+            ``application/json``.
+
+        :return unicode: Some content to be written as a response body.
         """
 
 
@@ -180,7 +187,7 @@ class _EmailSignup(object):
 
 @implementer(IClaim)
 class _EmailClaim(object):
-    def describe(self, env):
+    def describe(self, env, content_type):
         return env.get_template("email_activation.html").render({})
 
 
@@ -455,8 +462,13 @@ class _WormholeClaim(object):
     code = attr.ib(validator=validators.instance_of(unicode))
     expires = attr.ib()
 
-    def describe(self, env):
-        tmpl = env.get_template("gridsync_activation.html")
-        return tmpl.render({
-            "claim": self.code,
-        })
+    def describe(self, env, content_type):
+        if content_type == u"text/html":
+            tmpl = env.get_template("gridsync_activation.html")
+            return tmpl.render({
+                "claim": self.code,
+            })
+        elif content_type == u"application/json":
+            return json.dumps({u"v1": {u"success": self.code}})
+        else:
+            raise ValueError("Unrecognized content-type: {}".format(content_type))
