@@ -145,7 +145,7 @@ class Stripe(object):
     key = attr.ib()
     default_plan_id = attr.ib()
 
-    def create(self, authorization_token, plan_id, email):
+    def create(self, authorization_token, plan_id, email, country):
         customer = stripe.Customer.create(
             api_key=self.key,
             card=authorization_token,

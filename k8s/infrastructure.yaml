@@ -208,6 +208,8 @@ spec:
 
           - key: 'stripe-publishable.key'
             path: 'stripe-publishable.key'
+          - key: 'stripe-private.key'
+            path: 'stripe-private.key'
 
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
@@ -238,6 +240,8 @@ spec:
           - '--chargebee-gateway-account-id=$(CHARGEBEE_GATEWAY_ACCOUNT_ID)'
 
           - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
+          - '--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key'
+          - '--stripe-plan-id=$(STRIPE_PLAN_ID)'
 
           - '--site-logs-path=/app/log/httpd.json'
           - '--subscription-manager=http://subscription-manager/'
@@ -251,6 +255,11 @@ spec:
               secretKeyRef:
                 name: 's4'
                 key: 'cross-domain'
+          - name: 'STRIPE_PLAN_ID'
+            valueFrom:
+              configMapKeyRef:
+                name: 's4'
+                key: 'stripe-plan-id'
           - name: 'CHARGEBEE_PLAN_ID'
             valueFrom:
               configMapKeyRef:
