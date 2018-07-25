@@ -3,6 +3,7 @@ from json import dumps
 
 import attr
 
+import stripe
 import chargebee
 
 from twisted.logger import Logger
@@ -110,6 +111,7 @@ class ChargeBee(object):
     key = attr.ib()
     name = attr.ib()
     gateway_account_id = attr.ib()
+    default_plan_id = attr.ib()
 
     def create(self, authorization_token, plan_id, email, country):
         subscription_parameters = {
@@ -129,7 +131,43 @@ class ChargeBee(object):
         subscription = chargebee.Subscription.create(
             subscription_parameters,
         )
-        return subscription
+        return SubscriptionResult(
+            customer_email=subscription.customer.email.decode("utf-8"),
+            customer_id=subscription.customer.id.decode("utf-8"),
+            subscription_id=subscription.id.decode("utf-8"),
+            plan_id=subscription.plan_id.decode("utf-8"),
+        )
+
+
+
+@attr.s
+class Stripe(object):
+    key = attr.ib()
+    default_plan_id = attr.ib()
+
+    def create(self, authorization_token, plan_id, email):
+        customer = stripe.Customer.create(
+            api_key=self.key,
+            card=authorization_token,
+            plan=plan_id,
+            email=email,
+        )
+        subscription = customer.subscriptions.data[0]
+        return SubscriptionResult(
+            customer_email=customer.email.decode("utf-8"),
+            customer_id=customer.id.decode("utf-8"),
+            subscription_id=subscription.id.decode("utf-8"),
+            plan_id=subscription.plan.id.decode("utf-8"),
+        )
+
+
+
+@attr.s
+class SubscriptionResult(object):
+    customer_email = attr.ib()
+    customer_id = attr.ib()
+    subscription_id = attr.ib()
+    plan_id = attr.ib()
 
 
 
@@ -144,7 +182,7 @@ class Mailer(object):
         )
 
 class CreateSubscription(HandlerBase):
-    def __init__(self, get_signup, mailer, billing, plan_id, cross_domain, content_type):
+    def __init__(self, get_signup, mailer, billing, content_type):
         """
         :param get_signup: A one-argument callable which returns an ``ISignup``
             which can sign up a new user for us.  The argument is the kind of
@@ -155,8 +193,6 @@ class CreateSubscription(HandlerBase):
         self._get_signup = get_signup
         self._mailer = mailer
         self._billing = billing
-        self._plan_id = plan_id
-        self._cross_domain = cross_domain
         self._content_type = content_type
 
 
@@ -257,8 +293,8 @@ class CreateSubscription(HandlerBase):
         else:
             country = EUCountry(country_code)
 
-        plan_id = request.args.get(b"plan-id", [self._plan_id])[0]
-        if plan_id not in {self._plan_id}:
+        plan_id = request.args.get(b"plan-id", [self._billing.default_plan_id])[0]
+        if plan_id not in {self._billing.default_plan_id}:
             return "Invalid `plan-id` given."
 
         try:
@@ -277,18 +313,16 @@ class CreateSubscription(HandlerBase):
                 return dumps({"v1": {"error": e.details}})
 
         # Initiate the provisioning service
-        subscription = result.subscription
-        customer = result.customer
         style = s4_signup_style.decode("ascii")
         signup = self._get_signup(style)
         d = signup.signup(
-            customer.email.decode("utf-8"),
-            customer.id.decode("utf-8"),
-            subscription.id.decode("utf-8"),
-            subscription.plan_id.decode("utf-8"),
+            result.customer_email,
+            result.customer_id,
+            result.subscription_id,
+            result.plan_id,
         )
         d.addCallback(signed_up, request, self._content_type)
-        d.addErrback(signup_failed, customer, self._mailer)
+        d.addErrback(signup_failed, result, self._mailer)
         return NOT_DONE_YET
 
 def signed_up(claim, request, content_type):
@@ -302,13 +336,13 @@ def signed_up(claim, request, content_type):
     )
     request.finish()
 
-def signup_failed(reason, customer, mailer):
+def signup_failed(reason, result, mailer):
     headers = {
         "From": FROM_ADDRESS,
         "Subject": "Sign-up error",
     }
     logger.failure("Signup failed", reason)
     mailer.mail(
-        "A sign-up failed for <%s>." % (customer.email,),
+        "A sign-up failed for <%s>." % (result.customer_email,),
         headers,
     )

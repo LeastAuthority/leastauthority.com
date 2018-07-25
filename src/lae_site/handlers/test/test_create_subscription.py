@@ -25,6 +25,7 @@ from twisted.web.resource import Resource
 
 from lae_util.testtools import TestCase
 from lae_site.handlers.create_subscription import (
+    SubscriptionResult,
     CreateSubscription,
     EUCountry,
 )
@@ -82,32 +83,27 @@ class Plan(object):
     id = attr.ib()
 
 
-@attr.s
-class Result(object):
-    customer = attr.ib()
-    subscription = attr.ib()
-
 
 @attr.s
-class PositiveChargeBee(object):
+class PositiveBilling(object):
+    default_plan_id = u"foo-bar"
+
     def create(self, authorization_token, plan_id, country, email):
-        return Result(
-            customer=Customer(
-                "cus_abcdef",
-                email,
-            ),
-            subscription=Subscription(
-                "sub_123456",
-                plan_id,
-            ),
+        return SubscriptionResult(
+            customer_email=email,
+            customer_id="cus_abcdef",
+            subscription_id="sub_123456",
+            plan_id=plan_id,
         )
 
 
-class NegativeChargeBee(object):
+class NegativeBilling(object):
+    default_plan_id = u"foo-bar"
+
     def create(self, authorization_token, plan_id, country, email):
         raise PaymentError(
             432, {
-                "message": "chargebee error",
+                "message": "Billing error",
                 "error_code": 432,
             },
         )
@@ -156,7 +152,7 @@ class FullSignupTests(TestCase):
         super(FullSignupTests, self).setUp()
         self.signup = TrivialSignup()
         self.mailer = MemoryMailer()
-        self.billing = PositiveChargeBee()
+        self.billing = PositiveBilling()
 
     def _post(self, root, url):
         agent = RequestTraversalAgent(root)
@@ -169,7 +165,6 @@ class FullSignupTests(TestCase):
             lambda style: self.signup,
             self.mailer,
             self.billing,
-            u"plan-id",
             u"application/json",
         )
         root = Resource()
@@ -195,9 +190,7 @@ class FullSignupTests(TestCase):
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
-            self.stripe,
-            self.cross_domain,
-            u"plan-id",
+            self.billing,
             u"text/html",
         )
         root = Resource()
@@ -221,9 +214,7 @@ class FullSignupTests(TestCase):
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
-            NegativeChargebee(),
-            self.cross_domain,
-            u"plan-id",
+            NegativeBilling(),
             u"text/html",
         )
         root = Resource()
@@ -236,7 +227,7 @@ class FullSignupTests(TestCase):
         body = self.successResultOf(readBody(response))
 
         self.expectThat(response.code, Equals(PAYMENT_REQUIRED))
-        self.expectThat(body, Contains("chargebee error"))
+        self.expectThat(body, Contains("Billing error"))
         self.expectThat(self.mailer.emails, HasLength(1))
         self.expectThat(self.signup.signups, Equals(0))
 
@@ -245,9 +236,7 @@ class FullSignupTests(TestCase):
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
-            NegativeStripe(),
-            self.cross_domain,
-            u"plan-id",
+            NegativeBilling(),
             u"application/json",
         )
         root = Resource()
@@ -260,6 +249,6 @@ class FullSignupTests(TestCase):
         body = self.successResultOf(readBody(response))
 
         self.expectThat(response.code, Equals(PAYMENT_REQUIRED))
-        self.expectThat(body, Equals(dumps({"v1": {"error": "Stripe error"}})))
+        self.expectThat(body, Equals(dumps({"v1": {"error": "Billing error"}})))
         self.expectThat(self.mailer.emails, HasLength(1))
         self.expectThat(self.signup.signups, Equals(0))

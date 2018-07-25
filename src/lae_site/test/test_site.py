@@ -42,8 +42,8 @@ class MakeResourceTests(TestCase):
         cross_domain = u"http://localhost:5000/"
         resource = make_resource(
             u"stripe-publishable-api-key",
-            u"stripe-plan-id",
             lambda: None,
+            object(),
             object(),
             object(),
             cross_domain,
@@ -111,6 +111,8 @@ class SiteForOptionsTests(TestCase):
         chargebee_secret.setContent(b"foo")
         stripe_publishable = p.child(b"stripe-key.publishable")
         stripe_publishable.setContent(b"bar")
+        stripe_secret = p.child(b"stripe-key.secret")
+        stripe_secret.setContent(b"baz")
 
         options = SiteOptions(self.reactor)
         options.parseOptions([
@@ -120,6 +122,8 @@ class SiteForOptionsTests(TestCase):
             b"--chargebee-plan-id", b"foo-bar",
             b"--chargebee-gateway-account-id", b"gw_baz",
             b"--stripe-publishable-api-key-path", stripe_publishable.path,
+            b"--stripe-secret-api-key-path", stripe_secret.path,
+            b"--stripe-plan-id", b"bar-foo",
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",

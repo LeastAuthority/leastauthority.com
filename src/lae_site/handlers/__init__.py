@@ -89,9 +89,9 @@ def configuration(stripe_publishable_api_key, cross_domain):
 
 def make_resource(
     stripe_publishable_api_key,
-    plan_id,
     get_signup,
-    billing,
+    chargebee,
+    stripe,
     mailer,
     cross_domain,
 ):
@@ -104,14 +104,11 @@ def make_resource(
         'configuration',
         configuration(stripe_publishable_api_key, cross_domain),
     )
-    # add new path for AJAX POST
     resource.putChild('create-subscription',
         CreateSubscription(
             get_signup,
             mailer,
-            billing,
-            plan_id,
-            cross_domain,
+            stripe,
             u"text/html",
         ),
     )
@@ -126,9 +123,16 @@ def make_resource(
         CreateSubscription(
             get_signup,
             mailer,
-            billing,
-            plan_id,
-            cross_domain,
+            stripe,
+            u"application/json",
+        ),
+    )
+    v2.putChild(
+        "create-subscription-chargebee",
+        CreateSubscription(
+            get_signup,
+            mailer,
+            chargebee,
             u"application/json",
         ),
     )
