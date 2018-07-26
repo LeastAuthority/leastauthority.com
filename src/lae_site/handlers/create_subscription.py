@@ -3,7 +3,6 @@ from json import dumps
 
 import attr
 
-import stripe
 import chargebee
 
 from twisted.logger import Logger
@@ -14,6 +13,7 @@ from twisted.web.http import (
     BAD_REQUEST,
 )
 
+from lae_util import stripe
 from lae_util.send_email import send_plain_email, FROM_ADDRESS
 
 from lae_site.handlers.web import env
