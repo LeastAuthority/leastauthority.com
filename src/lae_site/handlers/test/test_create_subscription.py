@@ -61,31 +61,6 @@ class TrivialSignup(object):
 
 
 @attr.s
-class Customer(object):
-    id = attr.ib()
-    email = attr.ib()
-
-
-@attr.s
-class Subscriptions(object):
-    data = attr.ib()
-
-
-
-@attr.s
-class Subscription(object):
-    id = attr.ib()
-    plan_id = attr.ib()
-
-
-
-@attr.s
-class Plan(object):
-    id = attr.ib()
-
-
-
-@attr.s
 class PositiveBilling(object):
     default_plan_id = u"foo-bar"
 
