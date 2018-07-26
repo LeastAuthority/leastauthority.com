@@ -216,6 +216,11 @@ class CreateSubscription(HandlerBase):
         raise RenderErrorDetailsForBrowser(details)
 
     def create_customer(self, stripe_authorization_token, user_email, plan_id, country, request):
+        PaymentError = (chargebee.PaymentError, stripe.CardError)
+        OperationError = (chargebee.OperationFailedError, stripe.APIError)
+        RequestError = (chargebee.InvalidRequestError, stripe.InvalidRequestError)
+        AuthenticationError = (chargebee.APIError, stripe.AuthenticationError)
+
         try:
             return self._billing.create(
                 authorization_token=stripe_authorization_token,
@@ -223,7 +228,7 @@ class CreateSubscription(HandlerBase):
                 email=user_email,
                 country=country,
             )
-        except chargebee.PaymentError as e:
+        except PaymentError as e:
             # Always return 402 on card errors
             request.setResponseCode(PAYMENT_REQUIRED)
             # Errors we expect: https://stripe.com/docs/api#errors
@@ -237,7 +242,7 @@ class CreateSubscription(HandlerBase):
                 email_subject="Stripe Card error ({})".format(user_email),
                 notes=note,
             )
-        except chargebee.OperationFailedError as e:
+        except OperationError as e:
             # Should return the same as Authentication error
             request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
@@ -248,7 +253,7 @@ class CreateSubscription(HandlerBase):
                 ),
                 email_subject="Stripe API error ({})".format(user_email),
             )
-        except chargebee.InvalidRequestError as e:
+        except RequestError as e:
             # Return 422 - unusable entity error
             request.setResponseCode(422)
             self.handle_stripe_create_customer_errors(
@@ -261,7 +266,7 @@ class CreateSubscription(HandlerBase):
                 ),
                 email_subject="Stripe Invalid Request error ({})".format(user_email),
             )
-        except chargebee.APIError as e:
+        except AuthenticationError as e:
             request.setResponseCode(UNAUTHORIZED)
             self.handle_stripe_create_customer_errors(
                 traceback.format_exc(100), e,

@@ -7,6 +7,7 @@ from json import dumps
 import attr
 
 from chargebee import PaymentError
+from stripe import CardError
 
 from testtools.matchers import (
     Equals,
@@ -97,16 +98,26 @@ class PositiveBilling(object):
         )
 
 
-class NegativeBilling(object):
+
+class NegativeChargeBee(object):
     default_plan_id = u"foo-bar"
 
     def create(self, authorization_token, plan_id, country, email):
         raise PaymentError(
             432, {
-                "message": "Billing error",
+                "message": "ChargeBee error",
                 "error_code": 432,
             },
         )
+
+
+
+class NegativeStripe(object):
+    default_plan_id = u"quux"
+
+    def create(self, authorization_token, plan_id, country, email):
+        raise CardError("Stripe error", "Stripe param", "Stripe code")
+
 
 
 class EUCountryTests(TestCase):
@@ -207,14 +218,33 @@ class FullSignupTests(TestCase):
         self.expectThat(self.signup.signups, Equals(1))
 
 
-    def test_html_render_signup_failure(self):
+    def test_html_render_signup_failure_chargebee(self):
         """
-        No subscription resources are provisioned if the Stripe interaction fails.
+        No subscription resources are provisioned if the ChargeBee interaction
+        fails.
         """
+        return self._test_html_render_signup_failure(
+            NegativeChargeBee(),
+            "ChargeBee error",
+        )
+
+
+    def test_html_render_signup_failure_stripe(self):
+        """
+        No subscription resources are provisioned if the Stripe interaction
+        fails.
+        """
+        return self._test_html_render_signup_failure(
+            NegativeStripe(),
+            "Stripe error",
+        )
+
+
+    def _test_html_render_signup_failure(self, negative_billing, message):
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
-            NegativeBilling(),
+            negative_billing,
             u"text/html",
         )
         root = Resource()
@@ -227,16 +257,30 @@ class FullSignupTests(TestCase):
         body = self.successResultOf(readBody(response))
 
         self.expectThat(response.code, Equals(PAYMENT_REQUIRED))
-        self.expectThat(body, Contains("Billing error"))
+        self.expectThat(body, Contains(message))
         self.expectThat(self.mailer.emails, HasLength(1))
         self.expectThat(self.signup.signups, Equals(0))
 
 
-    def test_json_render_signup_failure(self):
+    def test_json_render_signup_failure_chargebee(self):
+        return self._test_json_render_signup_failure(
+            NegativeChargeBee(),
+            "ChargeBee error",
+        )
+
+
+    def test_json_render_signup_failure_stripe(self):
+        return self._test_json_render_signup_failure(
+            NegativeStripe(),
+            "Stripe error",
+        )
+
+
+    def _test_json_render_signup_failure(self, negative_billing, message):
         resource = CreateSubscription(
             lambda style: self.signup,
             self.mailer,
-            NegativeBilling(),
+            negative_billing,
             u"application/json",
         )
         root = Resource()
@@ -249,6 +293,6 @@ class FullSignupTests(TestCase):
         body = self.successResultOf(readBody(response))
 
         self.expectThat(response.code, Equals(PAYMENT_REQUIRED))
-        self.expectThat(body, Equals(dumps({"v1": {"error": "Billing error"}})))
+        self.expectThat(body, Equals(dumps({"v1": {"error": message}})))
         self.expectThat(self.mailer.emails, HasLength(1))
         self.expectThat(self.signup.signups, Equals(0))
