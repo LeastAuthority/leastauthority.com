@@ -29,6 +29,7 @@ from lae_site.handlers.create_subscription import (
     SubscriptionResult,
     CreateSubscription,
     EUCountry,
+    NonEUCountryError,
 )
 
 from treq.testing import RequestTraversalAgent
@@ -108,7 +109,7 @@ class EUCountryTests(TestCase):
     def test_invalid(self):
         self.expectThat(
             lambda: EUCountry(b"xx"),
-            raises(ValueError),
+            raises(NonEUCountryError),
         )
 
 

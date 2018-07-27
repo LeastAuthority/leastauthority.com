@@ -63,13 +63,22 @@ _EU_COUNTRIES = {
 }
 
 
+
+class NonEUCountryError(Exception):
+    """
+    An EU member country was required but a non-EU member country was
+    provided.
+    """
+
+
 def _in_eu(code):
+    if code is None:
+        raise ValueError("Country code may not be None")
     # http://publications.europa.eu/code/pdf/370000en.htm#pays
     code = code.decode("ascii").lower()
     if code in _EU_COUNTRIES:
         return code
-    raise ValueError("{} is not an EU country code".format(code))
-
+    raise NonEUCountryError(code)
 
 
 @attr.s
@@ -292,11 +301,17 @@ class CreateSubscription(HandlerBase):
         stripe_authorization_token = request.args.get(b"stripeToken")[0]
         user_email = request.args.get(b"email")[0]
 
-        country_code = request.args.get(b"country-code", [None])[0]
-        if country_code is None:
-            country = NonEUCountry()
+        country = NonEUCountry()
+        try:
+            # Two-byte country identifier - eg US or CN
+            country_code = request.args[b"country"][0]
+        except KeyError:
+            pass
         else:
-            country = EUCountry(country_code)
+            try:
+                country = EUCountry(country_code)
+            except NonEUCountryError:
+                pass
 
         plan_id = request.args.get(b"plan-id", [self._billing.default_plan_id])[0]
         if plan_id not in {self._billing.default_plan_id}:
