@@ -79,8 +79,15 @@ data Plan = Plan
   , status :: Maybe String
   } deriving (Generic, Eq, Show)
 
+no_value :: a
+no_value = error "no plan value supplied"
+
 minimalPlan = Plan
-  { invoice_name = Nothing
+  { id = no_value
+  , name = no_value
+  , price = no_value
+  , currency_code = no_value
+  , invoice_name = Nothing
   , description = Nothing
   , trial_period = Nothing
   , trial_period_unit = Nothing
