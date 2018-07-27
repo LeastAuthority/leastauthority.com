@@ -5,7 +5,6 @@ from twisted.web.server import Site
 from twisted.web.static import File, Data
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
-from twisted.web.http_headers import Headers
 from twisted.python.filepath import FilePath
 
 from lae_site.handlers.web import JinjaHandler
