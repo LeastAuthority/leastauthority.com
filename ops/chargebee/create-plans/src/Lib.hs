@@ -116,13 +116,13 @@ $(deriveJSON defaultOptions ''Plan)
 
 instance ToForm Plan
 
-data WrappedPlan = WrappedPlan
+newtype WrappedPlan = WrappedPlan
   { plan :: Plan
   } deriving (Generic, Eq, Show)
 
 $(deriveJSON defaultOptions ''WrappedPlan)
 
-data ListResponse a = ListResponse
+newtype ListResponse a = ListResponse
   { list :: [a]
   } deriving (Generic, Eq, Show)
 
