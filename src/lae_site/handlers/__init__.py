@@ -5,7 +5,6 @@ from twisted.web.server import Site
 from twisted.web.static import File, Data
 from twisted.web.util import redirectTo, Redirect
 from twisted.web.resource import Resource
-from twisted.web.http_headers import Headers
 from twisted.python.filepath import FilePath
 
 from lae_site.handlers.web import JinjaHandler
@@ -14,6 +13,22 @@ from lae_site.handlers.create_subscription import CreateSubscription
 from lae_site import __file__ as _lae_root
 
 _STATIC = FilePath(_lae_root).sibling("static")
+
+# Note the price here is descriptive for the user.  It does not control the
+# actual amount billed by the payment processor.
+_PRICE = {
+    ("250GB", "monthly"): "9.95",
+    ("250GB", "yearly"): "108",
+    ("5TB", "monthly"): "25.95",
+    ("5TB", "yearly"): "299",
+}
+
+_PLANS = list(
+    (size, period, currency, _PRICE[size, period])
+    for size in (u"250GB", u"5TB")
+    for period in (u"monthly", u"yearly")
+    for currency in (u"EUR", u"USD")
+)
 
 
 class _ResourceWithHeaders(Resource):
@@ -44,34 +59,37 @@ class _ResourceWithHeaders(Resource):
         return self._wrapped.render(request)
 
 
+def _plan(**kw):
+    kw[u"id"] = u"s4_{size}_{period}_{currency}".format(**kw).lower()
+    return kw
+
+
 def configuration(stripe_publishable_api_key, cross_domain):
     """
     Create a ``Resource`` which serves up simple configuration used by
     JavaScript on the website.
     """
-    return _ResourceWithHeaders(
-        # Allow the signup page, hosted on *cross_domain*, to even accept a
-        # response to a request for this resource.
-        Headers({
-            b"Access-Control-Allow-Origin": [cross_domain.encode("ascii")]
+    return Data(
+        dumps({
+            # Stripe publishable key identifies a Stripe account in API uses.
+            # It's safe to share and required by the JavaScript Stripe client
+            # API.
+            u"stripe-publishable-api-key": stripe_publishable_api_key,
+            u"cross-domain": cross_domain,
+            u"plans": list(
+                _plan(size=size, period=period, currency=currency, price=price)
+                for (size, period, currency, price)
+                in _PLANS
+            ),
         }),
-        Data(
-            dumps({
-                # Stripe publishable key identifies a Stripe account in
-                # API uses.  It's safe to share and required by the
-                # JavaScript Stripe client API.
-                u"stripe-publishable-api-key": stripe_publishable_api_key,
-                u"cross-domain": cross_domain,
-            }),
-            b"application/json",
-        )
+        b"application/json",
     )
 
 
 def make_resource(
     stripe_publishable_api_key,
-    stripe_plan_id,
     get_signup,
+    chargebee,
     stripe,
     mailer,
     cross_domain,
@@ -85,14 +103,11 @@ def make_resource(
         'configuration',
         configuration(stripe_publishable_api_key, cross_domain),
     )
-    # add new path for AJAX POST
     resource.putChild('create-subscription',
         CreateSubscription(
             get_signup,
             mailer,
             stripe,
-            cross_domain,
-            stripe_plan_id,
             u"text/html",
         ),
     )
@@ -108,8 +123,15 @@ def make_resource(
             get_signup,
             mailer,
             stripe,
-            cross_domain,
-            stripe_plan_id,
+            u"application/json",
+        ),
+    )
+    v2.putChild(
+        "create-subscription-chargebee",
+        CreateSubscription(
+            get_signup,
+            mailer,
+            chargebee,
             u"application/json",
         ),
     )

@@ -207,6 +207,9 @@ spec:
           - key: 'stripe-publishable.key'
             path: 'stripe-publishable.key'
 
+          - key: 'chargebee.key'
+            path: 'chargebee.key'
+
       # Read about containers at
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
@@ -229,9 +232,17 @@ spec:
               :extraCertChain=/app/k8s_secrets/chain.pem"
           - '--insecure-port=tcp:8080'
           - '--redirect-to-port=$(S4_SERVICE_PORT_HTTPS_SERVER)'
+
           - '--stripe-secret-api-key-path=/app/k8s_secrets/stripe-private.key'
           - '--stripe-publishable-api-key-path=/app/k8s_secrets/stripe-publishable.key'
           - '--stripe-plan-id=$(STRIPE_PLAN_ID)'
+
+          - '--chargebee-site-name=$(CHARGEBEE_SITE_NAME)'
+          - '--chargebee-secret-api-key-path=/app/k8s_secrets/chargebee.key'
+          - '--chargebee-plan-id=$(CHARGEBEE_PLAN_ID)'
+          - '--chargebee-gateway-account-id=$(CHARGEBEE_GATEWAY_ACCOUNT_ID)'
+
+
           - '--site-logs-path=/app/log/httpd.json'
           - '--subscription-manager=http://subscription-manager/'
           - '--metrics-port=tcp:9000'
@@ -246,9 +257,24 @@ spec:
                 key: 'cross-domain'
           - name: 'STRIPE_PLAN_ID'
             valueFrom:
-              secretKeyRef:
+              configMapKeyRef:
                 name: 's4'
                 key: 'stripe-plan-id'
+          - name: 'CHARGEBEE_PLAN_ID'
+            valueFrom:
+              configMapKeyRef:
+                name: 's4'
+                key: 'chargebee-plan-id'
+          - name: 'CHARGEBEE_SITE_NAME'
+            valueFrom:
+              configMapKeyRef:
+                name: 's4'
+                key: 'chargebee-site-name'
+          - name: 'CHARGEBEE_GATEWAY_ACCOUNT_ID'
+            valueFrom:
+              configMapKeyRef:
+                name: 's4'
+                key: 'chargebee-gateway-account-id'
         ports:
         # We just happen to know these are the ports this container listens on.
         - containerPort: 8443

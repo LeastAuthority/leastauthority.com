@@ -11,8 +11,11 @@ if __name__ == '__main__':
 
 import sys
 import logging
+from io import BytesIO
+from base64 import b64encode
+from functools import partial
 
-from twisted.python.log import startLogging
+from twisted.python.log import startLogging, err, msg
 from twisted.python.url import URL
 from twisted.internet.endpoints import serverFromString
 from twisted.application.internet import StreamServerEndpointService
@@ -20,6 +23,16 @@ from twisted.application.service import MultiService
 from twisted.internet.defer import Deferred
 from twisted.python.usage import UsageError, Options
 from twisted.python.filepath import FilePath
+from twisted.python.components import proxyForInterface
+from twisted.web.resource import IResource, Resource
+from twisted.web.server import NOT_DONE_YET
+from twisted.web.http_headers import Headers
+from twisted.web.client import (
+    FileBodyProducer,
+    IAgent,
+    Agent,
+    readBody,
+)
 
 from wormhole import wormhole
 
@@ -30,7 +43,7 @@ from lae_util.eliot_destination import (
 )
 
 from lae_site.handlers import make_resource, make_site, make_redirector_site
-from lae_site.handlers.create_subscription import Stripe, Mailer
+from lae_site.handlers.create_subscription import Stripe, ChargeBee, Mailer
 
 from lae_automation.signup import (
     provision_subscription,
@@ -59,11 +72,23 @@ class SiteOptions(Options):
     ]
 
     optParameters = [
-        ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
+        ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
         ("stripe-plan-id", None, None,
-         "The identifier of a Stripe plan to associate with new subscriptions.",
+         "The identifier of a Stripe subscription plan to associate with new subscriptions.",
         ),
+
+
+        ("chargebee-domain", None, "chargebee.com", "The ChargeBee API domain."),
+        ("chargebee-secret-api-key-path", None, None, "A path to a file containing a ChargeBee API key.", FilePath),
+        ("chargebee-site-name", None, None, "The name of the ChargeBee site owning the API key."),
+        ("chargebee-gateway-account-id", None, None,
+         "The ChargeBee payment gateway through which payment has been processed.",
+        ),
+        ("chargebee-plan-id", None, None,
+         "The identifier of a ChargeBee subscription plan to associate with new subscriptions.",
+        ),
+
         ("site-logs-path", None, None, "A path to a file to which HTTP logs for the site will be written.", FilePath),
         ("wormhole-result-path", None, None,
          "A path to a file to which wormhole interaction results will be written.",
@@ -138,9 +163,13 @@ class SiteOptions(Options):
 
     def postOptions(self):
         required_options = [
-            "stripe-secret-api-key-path",
             "stripe-publishable-api-key-path",
+            "stripe-secret-api-key-path",
             "stripe-plan-id",
+            "chargebee-secret-api-key-path",
+            "chargebee-site-name",
+            "chargebee-gateway-account-id",
+            "chargebee-plan-id",
             "subscription-manager",
             "site-logs-path",
             "wormhole-result-path",
@@ -238,11 +267,25 @@ def site_for_options(reactor, options):
                 ),
             )
 
+    chargebee_secret_key = options[
+        "chargebee-secret-api-key-path"
+    ].getContent().strip()
+    stripe_secret_key = options[
+        "stripe-secret-api-key-path"
+    ].getContent().strip()
     resource = make_resource(
         options["stripe-publishable-api-key-path"].getContent().strip(),
-        options["stripe-plan-id"],
         get_signup,
-        Stripe(options["stripe-secret-api-key-path"].getContent().strip()),
+        ChargeBee(
+            chargebee_secret_key,
+            options["chargebee-site-name"],
+            options["chargebee-gateway-account-id"],
+            options["chargebee-plan-id"],
+        ),
+        Stripe(
+            stripe_secret_key,
+            options["stripe-plan-id"],
+        ),
         Mailer(
             'support@leastauthority.com',
             options["signup-failure-address"]
@@ -253,9 +296,145 @@ def site_for_options(reactor, options):
         ),
         options["cross-domain"],
     )
-    site = make_site(resource, options["site-logs-path"])
+
+    # Expose some ChargeBee APIs, too.  These cannot be queried by a browser
+    # directly so we proxy them here.
+    resource.putChild(
+        "chargebee",
+        create_chargebee_resources(
+            reactor,
+            options["chargebee-site-name"],
+            chargebee_secret_key,
+            options["chargebee-domain"],
+        ),
+    )
+
+    site = make_site(
+        # Set the CORS header on all resources on this site.
+        access_control_allow_origins(
+            [options['cross-domain']],
+            resource,
+        ),
+        options["site-logs-path"],
+    )
     return site
 
+
+
+def access_control_allow_origins(origins, resource):
+    return GetChildHook(
+        partial(access_control_allow_origins_hook, origins),
+        resource,
+    )
+
+
+
+def access_control_allow_origins_hook(origins, request):
+    # add the client domain where the form is, so we can submit
+    # "cross-domain" requests (eg leastauthority.com to
+    # s4.leastauthority.com)
+    request.responseHeaders.setRawHeaders(
+        'Access-Control-Allow-Origin',
+        origins,
+    )
+    return request
+
+
+
+class GetChildHook(proxyForInterface(IResource)):
+    def __init__(self, hook, resource):
+        self._hook = hook
+        super(GetChildHook, self).__init__(resource)
+
+
+    def getChildWithDefault(self, name, request):
+        request = self._hook(request)
+        return super(GetChildHook, self).getChildWithDefault(name, request)
+
+
+
+def create_chargebee_resources(
+        reactor, site_name, secret_key, chargebee_domain,
+):
+    chargebee = Resource()
+    estimates = Resource()
+    estimates.putChild(
+        "create_subscription",
+        ChargeBeeCreateSubscription(
+            Agent(reactor),
+            site_name,
+            secret_key,
+            chargebee_domain,
+        ),
+    )
+    chargebee.putChild("estimates", estimates)
+    return chargebee
+
+
+class AuthenticatingAgent(proxyForInterface(IAgent, "_agent")):
+    def __init__(self, agent, auth_header):
+        super(AuthenticatingAgent, self).__init__(agent)
+        self._auth_header = auth_header
+
+
+    def request(self, method, uri, headers=None, bodyProducer=None):
+        if headers is None:
+            headers = Headers()
+        headers.addRawHeader(*self._auth_header)
+        return super(AuthenticatingAgent, self).request(
+            method,
+            uri,
+            headers,
+            bodyProducer,
+        )
+
+
+class ChargeBeeCreateSubscription(Resource):
+    def __init__(self, agent, site_name, secret_key, chargebee_domain):
+        authorization = b64encode(secret_key + ":")
+        self._agent = AuthenticatingAgent(
+            agent,
+            ("Authorization", "Basic {}".format(authorization)),
+        )
+        self._site_name = site_name
+        self._chargebee_domain = chargebee_domain
+        self._uri = URL(
+            u"https",
+            u"{}.{}".format(self._site_name, self._chargebee_domain),
+            [u"api", u"v2", u"estimates", u"create_subscription"],
+        )
+        msg("Proxying to {}".format(self._uri))
+
+
+    def render_OPTIONS(self, request):
+        request.responseHeaders.setRawHeaders(
+            "Access-Control-Allow-Methods",
+            ["POST"],
+        )
+        return ""
+
+    def render_POST(self, request):
+        headers = request.requestHeaders.copy()
+        headers.setRawHeaders("Host", [self._uri.host])
+        body = FileBodyProducer(BytesIO(request.content.read()))
+        d = self._agent.request(
+            "POST",
+            self._uri.to_uri().to_text().encode("ascii"),
+            headers,
+            body,
+        )
+        d.addCallback(self._proxy_response, request)
+        return NOT_DONE_YET
+
+    def _proxy_response(self, response, request):
+        for k, vs in response.headers.getAllRawHeaders():
+            request.responseHeaders.setRawHeaders(k, vs)
+        request.setResponseCode(response.code, response.phrase)
+        d = readBody(response)
+        d.addCallback(request.write)
+        d.addErrback(err, "proxying estimates/create_subscription")
+        d.addCallback(lambda ign: request.finish())
+        return d
 
 
 def start_site(reactor, site, secure_ports, insecure_ports, redirect_to_port):
