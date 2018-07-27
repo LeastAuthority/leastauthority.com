@@ -5,16 +5,17 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Lib
-    ( listPlans
-    , createPlan
-    , createPlans
-    ) where
+  ( listPlans
+  , createPlan
+  , createPlans
+  ) where
 
-import Prelude hiding (id)
+import Prelude hiding
+  ( id
+  )
 
 import Control.Monad.Error
-  (
-    catchError
+  ( catchError
   , throwError
   )
 import Data.ByteString.Lazy.UTF8 (toString)
@@ -29,15 +30,14 @@ import Network.Wai.Handler.Warp
 import Web.FormUrlEncoded (ToForm)
 import Servant
 import Network.HTTP.Types
-  (
-    Status(Status)
+  ( Status(Status)
   , badRequest400
   )
 
 import Network.HTTP.Client (newManager, defaultManagerSettings)
 import Network.HTTP.Client.TLS (tlsManagerSettings)
-import Servant.Client (
-  BaseUrl(BaseUrl)
+import Servant.Client
+  ( BaseUrl(BaseUrl)
   , ClientM
   , Scheme(Https)
   , ServantError(FailureResponse)
@@ -80,8 +80,7 @@ data Plan = Plan
   } deriving (Generic, Eq, Show)
 
 minimalPlan = Plan
-  {
-    invoice_name = Nothing
+  { invoice_name = Nothing
   , description = Nothing
   , trial_period = Nothing
   , trial_period_unit = Nothing
@@ -162,8 +161,8 @@ createPlans' apikey (p:rest) = do
   more <- createPlans' apikey rest
   return (plan:more)
 
-minimalS4Plan = minimalPlan {
-  trial_period = Just 1
+minimalS4Plan = minimalPlan
+  { trial_period = Just 1
   , trial_period_unit = Just "month"
   , charge_model = Just "flat_fee"
   , taxable = Just True
@@ -171,8 +170,8 @@ minimalS4Plan = minimalPlan {
   }
 
 s4Plans :: [Plan]
-s4Plans = [
-  minimalS4Plan {
+s4Plans =
+  [ minimalS4Plan {
       id = "s4_250gb_monthly_eur"
       , name = "S4 250 GB (monthly EUR)"
       , period = Just 1
