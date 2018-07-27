@@ -7,6 +7,18 @@ Create Chargebee Product Plans for S4.
 
 Plans to create are defined by `s4Plans` in `src/Lib.hs`.
 
+# Currencies
+
+ChargeBee does not offer an API for configuring currencies.
+Therefore, currencies must be configured manually.
+To configure currencies:
+
+1. Log in to ChargeBee as a "Full Access" user.
+2. Visit `Settings -> Billing -> Currencies`
+3. Select the desired "Base Currency".
+4. If prompted to enable multicurrency, do so.
+5. Add as many additional currencies as desired.
+
 # Payment Gateway
 
 ChargeBee does not offer an API for configuring payment gateways.
