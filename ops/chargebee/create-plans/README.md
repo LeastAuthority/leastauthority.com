@@ -21,6 +21,11 @@ To configure currencies:
 
 `create-plan-exe` will fail if it is run before all of the currencies it references are enabled.
 
+# Taxes
+
+ChargeBee does not offer an API for configuring taxes.
+Therefore, taxes must be configured manually.
+
 # Payment Gateway
 
 ChargeBee does not offer an API for configuring payment gateways.
