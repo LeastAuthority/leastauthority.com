@@ -19,6 +19,8 @@ To configure currencies:
 4. If prompted to enable multicurrency, do so.
 5. Add as many additional currencies as desired.
 
+`create-plan-exe` will fail if it is run before all of the currencies it references are enabled.
+
 # Payment Gateway
 
 ChargeBee does not offer an API for configuring payment gateways.
