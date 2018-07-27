@@ -14,7 +14,7 @@ import Prelude hiding
   ( id
   )
 
-import Control.Monad.Error
+import Control.Monad.Except
   ( catchError
   , throwError
   )
