@@ -143,8 +143,8 @@ class ChargeBee(object):
         return SubscriptionResult(
             customer_email=subscription.customer.email.decode("utf-8"),
             customer_id=subscription.customer.id.decode("utf-8"),
-            subscription_id=subscription.id.decode("utf-8"),
-            plan_id=subscription.plan_id.decode("utf-8"),
+            subscription_id=subscription.subscription.id.decode("utf-8"),
+            plan_id=subscription.subscription.plan_id.decode("utf-8"),
         )
 
 
