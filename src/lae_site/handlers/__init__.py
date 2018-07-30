@@ -90,7 +90,6 @@ def make_resource(
     stripe_publishable_api_key,
     get_signup,
     chargebee,
-    stripe,
     mailer,
     cross_domain,
 ):
@@ -103,14 +102,6 @@ def make_resource(
         'configuration',
         configuration(stripe_publishable_api_key, cross_domain),
     )
-    resource.putChild('create-subscription',
-        CreateSubscription(
-            get_signup,
-            mailer,
-            stripe,
-            u"text/html",
-        ),
-    )
     resource.putChild(
         "s4-subscription-form",
         JinjaHandler("s4-subscription-form.html"),
@@ -119,15 +110,6 @@ def make_resource(
     v2 = Resource()
     v2.putChild(
         "create-subscription",
-        CreateSubscription(
-            get_signup,
-            mailer,
-            stripe,
-            u"application/json",
-        ),
-    )
-    v2.putChild(
-        "create-subscription-chargebee",
         CreateSubscription(
             get_signup,
             mailer,

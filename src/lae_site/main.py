@@ -43,7 +43,7 @@ from lae_util.eliot_destination import (
 )
 
 from lae_site.handlers import make_resource, make_site, make_redirector_site
-from lae_site.handlers.create_subscription import Stripe, ChargeBee, Mailer
+from lae_site.handlers.create_subscription import ChargeBee, Mailer
 
 from lae_automation.signup import (
     provision_subscription,
@@ -73,11 +73,6 @@ class SiteOptions(Options):
 
     optParameters = [
         ("stripe-publishable-api-key-path", None, None, "A path to a file containing a publishable Stripe API key.", FilePath),
-        ("stripe-secret-api-key-path", None, None, "A path to a file containing a Stripe API key.", FilePath),
-        ("stripe-plan-id", None, None,
-         "The identifier of a Stripe subscription plan to associate with new subscriptions.",
-        ),
-
 
         ("chargebee-domain", None, "chargebee.com", "The ChargeBee API domain."),
         ("chargebee-secret-api-key-path", None, None, "A path to a file containing a ChargeBee API key.", FilePath),
@@ -164,8 +159,6 @@ class SiteOptions(Options):
     def postOptions(self):
         required_options = [
             "stripe-publishable-api-key-path",
-            "stripe-secret-api-key-path",
-            "stripe-plan-id",
             "chargebee-secret-api-key-path",
             "chargebee-site-name",
             "chargebee-gateway-account-id",
@@ -270,9 +263,6 @@ def site_for_options(reactor, options):
     chargebee_secret_key = options[
         "chargebee-secret-api-key-path"
     ].getContent().strip()
-    stripe_secret_key = options[
-        "stripe-secret-api-key-path"
-    ].getContent().strip()
     resource = make_resource(
         options["stripe-publishable-api-key-path"].getContent().strip(),
         get_signup,
@@ -281,10 +271,6 @@ def site_for_options(reactor, options):
             options["chargebee-site-name"],
             options["chargebee-gateway-account-id"],
             options["chargebee-plan-id"],
-        ),
-        Stripe(
-            stripe_secret_key,
-            options["stripe-plan-id"],
         ),
         Mailer(
             'support@leastauthority.com',
