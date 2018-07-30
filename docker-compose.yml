@@ -8,6 +8,10 @@ secrets:
 
 services:
   signup:
+    build:
+      context: "./"
+      dockerfile: "Dockerfile.s4-common"
+
     ports:
       - "8000:8000/tcp"
 
