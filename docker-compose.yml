@@ -1,10 +1,24 @@
+#
+# Here is a configuration file for Docker Compose which will run the signup
+# server and the subscription manager.  This should be enough infrastructure
+# to perform signups using a local deployment of the web frontend (not covered
+# here).  It's /not/ enough to actually have service provisioned because all
+# of that functionality is heavily intertwined with Kubernetes.  Look at the
+# Minikube documentation if you want that.
+#
+# See the `secrets` section for some manual setup this compose configuration
+# requires.
+#
 version: '3.1'
-
 secrets:
   stripe-publishable.key:
-    file: ./stripe-publishable.key
+    # Hand populate this file from secrets.staging.enc.yaml's
+    # `stripe-publishable.key` entry.
+    file: "./stripe-publishable.key"
   chargebee.key:
-    file: ./chargebee.key
+    # Hand populate this file from secrets.staging.enc.yaml's
+    # `chargebee.key` entry.
+    file: "./chargebee.key"
 
 services:
   signup:
