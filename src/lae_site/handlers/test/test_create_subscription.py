@@ -101,10 +101,15 @@ class EUCountryTests(TestCase):
     Tests for ``EUCountry``.
     """
     def test_valid(self):
+        """
+        A valid (even lowercase) EU-member country code can be used to construct
+        an `EUCountry` instance.
+        """
         self.expectThat(
             EUCountry(b"be").country_code,
-            Equals(b"be"),
+            Equals(b"BE"),
         )
+
 
     def test_invalid(self):
         self.expectThat(

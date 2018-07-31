@@ -71,14 +71,16 @@ class NonEUCountryError(Exception):
     """
 
 
+
 def _in_eu(code):
     if code is None:
         raise ValueError("Country code may not be None")
     # http://publications.europa.eu/code/pdf/370000en.htm#pays
     code = code.decode("ascii").lower()
     if code in _EU_COUNTRIES:
-        return code
+        return code.upper()
     raise NonEUCountryError(code)
+
 
 
 @attr.s
