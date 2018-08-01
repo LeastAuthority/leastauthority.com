@@ -45,7 +45,6 @@ class MakeResourceTests(TestCase):
             lambda: None,
             object(),
             object(),
-            object(),
             cross_domain,
         )
         verifyObject(IResource, resource)
@@ -122,8 +121,6 @@ class SiteForOptionsTests(TestCase):
             b"--chargebee-plan-id", b"foo-bar",
             b"--chargebee-gateway-account-id", b"gw_baz",
             b"--stripe-publishable-api-key-path", stripe_publishable.path,
-            b"--stripe-secret-api-key-path", stripe_secret.path,
-            b"--stripe-plan-id", b"bar-foo",
             b"--site-logs-path", b"httpd.log",
             b"--secure-port", b"tcp:0",
             b"--subscription-manager", b"http://127.0.0.1:8888/",

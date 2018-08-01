@@ -71,14 +71,16 @@ class NonEUCountryError(Exception):
     """
 
 
+
 def _in_eu(code):
     if code is None:
         raise ValueError("Country code may not be None")
     # http://publications.europa.eu/code/pdf/370000en.htm#pays
     code = code.decode("ascii").lower()
     if code in _EU_COUNTRIES:
-        return code
+        return code.upper()
     raise NonEUCountryError(code)
+
 
 
 @attr.s
@@ -143,8 +145,8 @@ class ChargeBee(object):
         return SubscriptionResult(
             customer_email=subscription.customer.email.decode("utf-8"),
             customer_id=subscription.customer.id.decode("utf-8"),
-            subscription_id=subscription.id.decode("utf-8"),
-            plan_id=subscription.plan_id.decode("utf-8"),
+            subscription_id=subscription.subscription.id.decode("utf-8"),
+            plan_id=subscription.subscription.plan_id.decode("utf-8"),
         )
 
 
