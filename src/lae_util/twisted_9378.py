@@ -1,4 +1,9 @@
+from twisted.python.reflect import namedAny
+
 def detect():
+    # On some versions of Twisted, must import twisted.trial.unittest first or
+    # this import always fails.
+    namedAny("twisted.trial.unittest")
     try:
         from twisted.trial._dist.workerreporter import WorkerReporter
     except ImportError:
