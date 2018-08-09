@@ -3,7 +3,7 @@
 # See LICENSE for details.
 
 repo="leastauthority"
-microservices="s4-common tahoe-introducer tahoe-storage foolscap-gatherer"
+microservices="s4-common"
 
 # Build the images.
 ./leastauthority.com/docker/build.sh
