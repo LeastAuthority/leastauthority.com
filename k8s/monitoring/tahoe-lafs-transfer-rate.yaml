@@ -43,7 +43,7 @@ spec:
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
       - name: 'transfer-rate-monitor'
-        image: 'leastauthority/s4-common:2.0'
+        image: 'leastauthority/s4-common:GIT-HEAD'
         imagePullPolicy: 'Always'
         command:
         - '/bin/sh'

@@ -3,6 +3,3 @@ graft src/lae_site/templates
 
 # Other static content for the website.  Stylesheets, images, and more.
 graft src/lae_site/static
-
-# Helper for starting tahoe-lafs with configuration from our system.
-include src/lae_automation/configure-tahoe

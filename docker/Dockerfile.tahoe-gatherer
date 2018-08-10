@@ -1,8 +1,0 @@
-FROM leastauthority/tahoe-base
-
-VOLUME /data
-
-CMD \
-    /app/env/bin/flogtool create-gatherer --location "${LAE_GATHERER_HINT}" /data \
-    && cd /data \
-    && /app/env/bin/twistd -ny gatherer.tac

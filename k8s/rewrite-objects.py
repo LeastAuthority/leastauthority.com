@@ -89,9 +89,9 @@ pvcs = k8s_resource_filter(u"PersistentVolumeClaim")
 pvs = k8s_resource_filter(u"PersistentVolume")
 
 
-def has_tag():
+def has_tag(tag):
     def has_tag_predicate(value):
-        return u":" in value
+        return tag in value.split(u":", 1)[1:]
     return has_tag_predicate
 
 
@@ -99,29 +99,16 @@ def rewrite_tags(docs, rev):
     def specified_tag(image):
         return u":".join((image.rsplit(u":", 1)[0], rev))
 
-    def maybe_change_image(env):
-        if env[u"name"].endswith(u"_IMAGE"):
-            image = env[u"value"]
-            if owned_by(u"leastauthority")(image):
-                return env.set(u"value", specified_tag(image))
-        return env
-
     return docs.transform(
         [deployments, u"spec", u"template", u"spec", u"containers", ny, u"image"],
         if_(
             and_(
-                owned_by("leastauthority"),
-                # Give us an out from this rewriting.  If no tag is specified
-                # at all, leave it alone.  Sad hack.  Need to do better.
-                has_tag(),
+                owned_by(u"leastauthority"),
+                # Only rewrite the tag of images that ask for it.
+                has_tag(u"GIT-HEAD"),
             ),
             specified_tag,
         ),
-
-        # There are also a couple environment variables that have an image
-        # name in them.
-        [deployments, u"spec", u"template", u"spec", u"containers", ny, u"env", ny],
-        maybe_change_image,
     )
 
 

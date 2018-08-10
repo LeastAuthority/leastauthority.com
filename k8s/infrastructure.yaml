@@ -216,7 +216,7 @@ spec:
       # This is the web server.  It serves the subscription signup web
       # interface.
       - name: 'web'
-        image: 'leastauthority/s4-common:2.0'
+        image: 'leastauthority/s4-common:GIT-HEAD'
         imagePullPolicy: 'Always'
         command:
           - '/app/env/bin/python'
@@ -334,7 +334,7 @@ spec:
       # http://kubernetes.io/docs/user-guide/production-pods/
       containers:
       - name: 'foolscap-log-gatherer'
-        image: 'leastauthority/foolscap-gatherer:2.0'
+        image: 'leastauthority/auto-foolscap-gatherer:release-0.0.0'
         imagePullPolicy: 'Always'
         env:
         - name: 'LAE_GATHERER_HINT'
@@ -398,7 +398,7 @@ spec:
       # connections to it and it figures out which pod services the
       # subscription the connection is related to.
       - name: 'grid-router'
-        image: 'leastauthority/s4-common:2.0'
+        image: 'leastauthority/s4-common:GIT-HEAD'
         imagePullPolicy: 'Always'
         command:
           - '/app/env/bin/twist'
@@ -477,7 +477,7 @@ spec:
       # Here is the subscription converger.  It talks to the subscription
       # manager and Kubernetes and keeps them synchronized.
       - name: 'subscription-converger'
-        image: 'leastauthority/s4-common:2.0'
+        image: 'leastauthority/s4-common:GIT-HEAD'
         imagePullPolicy: 'Always'
         command:
           - '/app/env/bin/twist'
@@ -488,19 +488,23 @@ spec:
           - '--aws-access-key-id-path=/app/k8s_secrets/aws.id'
           - '--aws-secret-access-key-path=/app/k8s_secrets/aws.key'
           - '--introducer-image=$(TAHOE_LAFS_INTRODUCER_IMAGE)'
-          - '--storageserver-image=$(TAHOE_LAFS_STORAGESERVER_IMAGE)'
+          - '--storageserver-image=$(TAHOE_LAFS_STORAGE_IMAGE)'
           - '--endpoint=http://subscription-manager/'
           - '--k8s-service-account'
           - '--eliot-destination=file:/app/log/convergence.json'
           - '--log-gatherer-furl=$(LOG_GATHERER_FURL)'
         workingDir: '/app/run'
         env:
-          # These two env vars can be rewritten (with the correct tag) by
-          # k8s/rewrite-objects.py
           - name: 'TAHOE_LAFS_INTRODUCER_IMAGE'
-            value: 'leastauthority/tahoe-introducer'
-          - name: 'TAHOE_LAFS_STORAGESERVER_IMAGE'
-            value: 'leastauthority/tahoe-storage'
+            valueFrom:
+              configMapKeyRef:
+                name: 's4'
+                key: 'tahoe-introducer-image'
+          - name: 'TAHOE_LAFS_STORAGE_IMAGE'
+            valueFrom:
+              configMapKeyRef:
+                name: 's4'
+                key: 'tahoe-storage-image'
 
           - name: 'S4_DOMAIN'
             valueFrom:
@@ -569,7 +573,7 @@ spec:
       # Here is the subscription manager.  It contains the canonical (local)
       # state for our subscriptions (Stripe is _really_ canonical... TODO!)
       - name: 'subscription-manager'
-        image: 'leastauthority/s4-common:2.0'
+        image: 'leastauthority/s4-common:GIT-HEAD'
         imagePullPolicy: 'Always'
         command:
           - '/app/env/bin/twist'
