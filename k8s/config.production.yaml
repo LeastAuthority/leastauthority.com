@@ -11,3 +11,6 @@ data:
   chargebee-gateway-account-id: 'gw_2smoc9C8Qz9QjPL1CT'
 
   stripe-plan-id: 'S4_consumer_iteration_2_beta1_2014-05-27'
+
+  tahoe-introducer-image: 'leastauthority/auto-tahoe-introducer'
+  tahoe-storage-image: 'leastauthority/auto-tahoe-storage'
