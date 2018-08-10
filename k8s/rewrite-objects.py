@@ -89,9 +89,9 @@ pvcs = k8s_resource_filter(u"PersistentVolumeClaim")
 pvs = k8s_resource_filter(u"PersistentVolume")
 
 
-def has_tag():
+def has_tag(tag):
     def has_tag_predicate(value):
-        return u":" in value
+        return tag in value.split(u":", 1)[1:]
     return has_tag_predicate
 
 
@@ -103,10 +103,9 @@ def rewrite_tags(docs, rev):
         [deployments, u"spec", u"template", u"spec", u"containers", ny, u"image"],
         if_(
             and_(
-                owned_by("leastauthority"),
-                # Give us an out from this rewriting.  If no tag is specified
-                # at all, leave it alone.  Sad hack.  Need to do better.
-                has_tag(),
+                owned_by(u"leastauthority"),
+                # Only rewrite the tag of images that ask for it.
+                has_tag(u"GIT-HEAD"),
             ),
             specified_tag,
         ),
