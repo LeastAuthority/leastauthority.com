@@ -14,6 +14,7 @@ from sys import argv
 from os import environ
 
 import stripe
+import chargebee
 
 from twisted.internet.error import ConnectionRefusedError
 from twisted.internet.protocol import ProcessProtocol
@@ -363,7 +364,7 @@ def _terminate_customer_subscription(customer, subscription, at_period_end):
     """
     Terminate one subscription at the end of its current billing period.
     """
-    raw_input("Terminating customer {} subscription {} {}.".format(
+    print("Terminating customer {} subscription {} {}.".format(
         customer.id,
         subscription.id,
         "at period end ({})".format(
@@ -375,3 +376,107 @@ def _terminate_customer_subscription(customer, subscription, at_period_end):
         else "now"
     ))
     subscription.delete(at_period_end=at_period_end)
+    with open("terminate.log", "a") as f:
+        f.write("{},{},{}\n".format(customer.id, subscription.id, at_period_end))
+
+
+def move_stripe_subscriptions_to_chargebee():
+    _move_stripe_subscriptions_to_chargebee(*argv[1:4])
+
+
+def _move_stripe_subscriptions_to_chargebee(stripe_key, chargebee_key, chargebee_site):
+    chargebee.configure(chargebee_key, chargebee_site)
+
+    print("Listing Stripe customers...")
+    stripe_customers = _list(stripe.Customer, api_key=stripe_key)
+    print("Done.")
+    _move_customer_subscriptions_to_chargebee(stripe_customers)
+
+
+def _move_customer_subscriptions_to_chargebee(stripe_customers):
+    for stripe_customer in stripe_customers:
+        if not stripe_customer.email:
+            print("Empty email for customer {}, not processing.".format(stripe_customer.id))
+            with open("empty-emails.log", "a") as f:
+                f.write("{}\n".format(stripe_customer.id))
+            continue
+        print("Copying Stripe customer to Chargebee: {} ...".format(stripe_customer.email))
+        try:
+            chargebee_customer = _copy_customer_to_chargebee(stripe_customer)
+        except Exception as e:
+            print("Copying Stripe customer {} failed:".format(stripe_customer.id))
+            print(e)
+            with open("customer-copy-errors.log", "a") as f:
+                f.write("{},{}\n".format(stripe_customer.id, str(e)))
+            continue
+
+        print("Done.  Chargebee customer {}".format(chargebee_customer.id))
+        with open("customer-copies.log", "a") as f:
+            f.write("{},{}\n".format(stripe_customer.id, chargebee_customer.id))
+        for stripe_subscription in stripe_customer.subscriptions:
+            print("Moving Stripe subscriptions to Chargebee...")
+            _move_customer_subscription_to_chargebee(stripe_customer, stripe_subscription, chargebee_customer)
+            print("Done")
+
+
+def _copy_customer_to_chargebee(stripe_customer):
+    # Find an existing customer with a matching email if we can
+    entries = chargebee.Customer.list({
+        "email[is]": stripe_customer.email,
+    })
+    for entry in entries:
+        print("Using existing customer")
+        return entry.customer
+    print("Creating new customer")
+    result = chargebee.Customer.create({
+        "email": stripe_customer.email,
+    })
+    return result.customer
+
+
+PLAN_MAP = {
+    "S4_comp": "s4_250gb_complementary",
+    "plan_DR6FlcWNrX0eXs": "s4_250gb_complementary",
+}
+
+def _move_customer_subscription_to_chargebee(stripe_customer, stripe_subscription, chargebee_customer):
+    plan_id = PLAN_MAP.get(
+        stripe_subscription.plan.id,
+        stripe_subscription.plan.id,
+    )
+    staging_stripe_gateway = "gw_B4eONuQrfSi2IZGq"
+    production_stripe_gateway = "gw_2smoc9C8Qz9QjPL1CT"
+
+    trial_end = stripe_subscription.current_period_end
+    if stripe_customer.sources.data:
+        print("Customer has payment sources: {}".format(stripe_customer.email))
+        result = chargebee.Customer.update_payment_method(
+            chargebee_customer.id, {
+                "payment_method": {
+                    "type": "card",
+                    "gateway_account_id": production_stripe_gateway,
+                    "reference_id": "{}/{}".format(stripe_customer.id, stripe_customer.sources.data[0].id),
+                },
+            },
+        )
+        payment_source_id = result.customer.primary_payment_source_id
+    else:
+        print("Customer has no payment sources: {}".format(stripe_customer.email))
+        payment_source_id = None
+
+    with open("payment-sources.log", "a") as f:
+        f.write("{},{},{}\n".format(stripe_customer.id, chargebee_customer.id, payment_source_id))
+    print("Creating Chargebee subscription for customer {} ...".format(chargebee_customer.id))
+    result = chargebee.Subscription.create_for_customer(
+        chargebee_customer.id, {
+            "plan_id": plan_id,
+            "trial_end": trial_end,
+            "payment_source_id": payment_source_id,
+        },
+    )
+    with open("moved-subscriptions.log", "a") as f:
+        f.write("{},{},{},{},{},{},{}\n".format(stripe_customer.id, stripe_subscription.id, stripe_subscription.plan.id, chargebee_customer.id, result.subscription.id, plan_id, stripe_customer.email))
+
+    print("Terminating Stripe subscription for {}: {}".format(stripe_customer.email, stripe_subscription.id))
+    _terminate_customer_subscription(stripe_customer, stripe_subscription, False)
+    raw_input("Done")
