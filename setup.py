@@ -13,6 +13,7 @@ setup(
             "cancel-subscription = lae_automation.opstools:cancel_subscription_main",
             "sync-subscriptions-to-stripe = lae_automation.opstools:sync_subscriptions_main",
             "copy-subscriptions-to-account = lae_automation.opstools:copy_subscriptions_to_account",
+            "move-stripe-subscriptions-to-chargebee = lae_automation.opstools:move_stripe_subscriptions_to_chargebee",
         ],
     },
     dependency_links=[
