@@ -3,7 +3,7 @@
 TAHOE_ENV=$1
 shift
 
-WORMHOLE_CODE=$1
+INTRODUCER=$1
 shift
 
 PROBE_FILE=$(mktemp /tmp/probe-XXXXXXXXXXXX)
@@ -15,15 +15,16 @@ TAHOE="${TAHOE_ENV}/bin/tahoe"
 CFG="${TAHOE_NODE}/tahoe.cfg"
 
 if [ ! -e "${TAHOE}" ]; then
-    virtualenv "${TAHOE_ENV}"
+    virtualenv --python=python2 "${TAHOE_ENV}"
     "${TAHOE_ENV}"/bin/pip install tahoe-lafs
 fi
 
 "${TAHOE}" \
-    --wormhole-server "ws://wormhole.staging.leastauthority.com:4000/v1" \
-    --wormhole-invite-appid "tahoe-lafs.org/invite" \
     create-client \
-    --join "${WORMHOLE_CODE}" \
+    --introducer "${INTRODUCER}" \
+    --shares-needed=1 \
+    --shares-happy=1 \
+    --shares-total=1 \
     "${TAHOE_NODE}"
 sed --regexp-extended --in-place=.bak -e 's/web.port = tcp:3456:/web.port = tcp:0:/' "${CFG}"
 "${TAHOE}" start "${TAHOE_NODE}"
