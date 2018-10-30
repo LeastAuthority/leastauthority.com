@@ -4,7 +4,7 @@ extras==1.0.0
 fixtures==3.0.0
 funcsigs==1.0.2
 grafanalib==0.5.3
-hypothesis==3.81.0
+hypothesis==3.82.1
 jsonpickle==1.0
 linecache2==1.0.0
 mock==2.0.0
