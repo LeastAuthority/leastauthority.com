@@ -37,11 +37,7 @@ from ._prometheus import (
 from .service import AsynchronousService
 
 def patch():
-    from .twisted_8860 import detect, patch
-    detect() and patch()
-
-    from .twisted_9378 import detect, patch
-    detect() and patch()
+    pass
 
 patch()
 del patch
