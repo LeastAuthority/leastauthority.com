@@ -62,7 +62,7 @@ txAWS==0.4.0
 txkube==0.3.0
 txtorcon==0.19.3
 tzlocal==1.4
-urllib3==1.22
+urllib3==1.24.1
 venusian==1.1.0
 Werkzeug==0.12.2
 zbase32==1.1.5
