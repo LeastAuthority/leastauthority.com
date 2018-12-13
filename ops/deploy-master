@@ -21,7 +21,6 @@ sops -d k8s/secrets.production.enc.yaml | \
 ${APPLY} -f k8s/config.production.yaml
 
 cat k8s/infrastructure/wormhole-server.yaml | \
-    ${REWRITE} | \
     ${APPLY} -f -
 
 cat k8s/infrastructure.yaml | \
