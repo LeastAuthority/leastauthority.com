@@ -12,5 +12,5 @@ data:
 
   stripe-plan-id: 'S4_consumer_iteration_2_beta1_2014-05-27'
 
-  tahoe-introducer-image: 'leastauthority/auto-tahoe-introducer'
-  tahoe-storage-image: 'leastauthority/auto-tahoe-storage'
+  tahoe-introducer-image: 'leastauthority/auto-tahoe-introducer:release-0.0.0'
+  tahoe-storage-image: 'leastauthority/auto-tahoe-storage:release-0.0.0'
