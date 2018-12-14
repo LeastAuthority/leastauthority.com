@@ -52,6 +52,9 @@ def select(collection, selector):
     return filter(selector.match, collection.items)
 
 
+def _core(model, kind):
+    return model.spec.pclass_for_definition(u"io.k8s.api.core." + kind)
+
 
 @attr.s(frozen=True)
 class KubeClient(object):
@@ -71,7 +74,8 @@ class KubeClient(object):
         return self.k8s.list(kind).addCallback(select, selector)
 
     def get_configmaps(self, selector=NullSelector()):
-        return self.select(self.k8s.model.v1.ConfigMap, selector)
+        ConfigMap = _core(self.k8s.model, u"v1.ConfigMap")
+        return self.select(ConfigMap, selector)
 
     def get_services(self, selector=NullSelector()):
         return self.select(self.k8s.model.v1.Service, selector)
