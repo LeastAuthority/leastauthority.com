@@ -661,11 +661,16 @@ metadata:
     provider: 'LeastAuthority'
     app: 's4'
     component: 'Infrastructure'
-  annotations:
-    # This enables dynamic provisioning of the volume.  See
-    # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
-    volume.beta.kubernetes.io/storage-class: 'normal'
 spec:
+  selector:
+    # Get exactly the volume we want.  It has our subscription data!
+    matchLabels:
+      data-for: "subscription-manager"
+
+  # Disable dynamic provisioning.  The volume we expect to bind already exists
+  # and has data on it we need for proper operation.
+  storageClassName: ""
+
   accessModes:
     - 'ReadWriteOnce'
   resources:
@@ -705,6 +710,36 @@ spec:
   resources:
     requests:
       storage: '1G'
+---
+# Read about PersistentVolumes at
+# http://kubernetes.io/docs/user-guide/persistent-volumes/
+kind: 'PersistentVolume'
+apiVersion: 'v1'
+metadata:
+  name: 'infrastructure-subscription-manager-pv'
+  labels:
+    provider: 'LeastAuthority'
+    app: 's4'
+    component: 'Infrastructure'
+    # Make this volume identifiable by the PVC.
+    data-for: 'subscription-manager'
+spec:
+  capacity:
+    storage: '1G'
+  # Don't delete the underlying EBS volume when the claim is released!  The
+  # data is supposed to be *persistent*!
+  persistentVolumeReclaimPolicy: 'Retain'
+  accessModes:
+    # One node can mount this read-write.
+    - 'ReadWriteOnce'
+  awsElasticBlockStore:
+    # Read about EBS volumes at
+    # http://kubernetes.io/docs/user-guide/volumes/#awselasticblockstore
+    #
+    # Create this volume manually with a command like:
+    #   aws ec2 create-volume --availability-zone us-east-1b --size 1
+    volumeID: 'vol-0ed5c65ce7a791e40'
+    fsType: 'ext4'
 ---
 # Read about PersistentVolumes at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
