@@ -160,11 +160,10 @@ metadata:
     provider: 'LeastAuthority'
     app: 's4'
     component: 'Infrastructure'
-  annotations:
-    # This enables dynamic provisioning of the volume.  See
-    # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
-    volume.beta.kubernetes.io/storage-class: 'normal'
 spec:
+  # This enables dynamic provisioning of the volume.  See
+  # http://kubernetes.io/docs/user-guide/persistent-volumes/#dynamic
+  storageClassName: "normal"
   accessModes:
     - 'ReadWriteOnce'
   resources:
