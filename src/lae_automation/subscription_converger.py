@@ -677,6 +677,7 @@ class _ChangeableConfigMaps(PClass):
         return actual_configmap.data != expected_configmap.data
 
 
+
 def _converge_configmaps(actual, deploy_config, subscriptions, k8s, aws):
     changes = _compute_changes(
         actual.subscriptions,

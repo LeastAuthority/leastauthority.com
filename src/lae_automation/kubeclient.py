@@ -52,6 +52,7 @@ def select(collection, selector):
     return filter(selector.match, collection.items)
 
 
+
 @attr.s(frozen=True)
 class KubeClient(object):
     k8s = attr.ib(validator=attr.validators.provides(IKubernetesClient))
