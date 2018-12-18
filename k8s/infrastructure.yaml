@@ -425,6 +425,61 @@ spec:
             cpu: '100m'
             memory: '200Mi'
 ---
+# Read about ServiceAccounts at
+# https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/
+#
+# This account is for the subscription convergence pod which needs to query,
+# create, and destroy a number of different resource types to achieve
+# convergence.
+kind: 'ServiceAccount'
+apiVersion: 'v1'
+metadata:
+  name: 'subscription-converger'
+---
+# Read about ClusterRoles at
+# https://kubernetes.io/docs/reference/access-authn-authz/rbac/#role-and-clusterrole
+#
+# This ClusterRole grants necessary authorizations to the ServiceAccount for
+# the subscription convergence agent.
+kind: 'ClusterRole'
+apiVersion: 'rbac.authorization.k8s.io/v1'
+metadata:
+  name: 'subscription-converger'
+rules:
+- apiGroups:
+    # magical empty string represents the core api group.
+    # pods, services, configmaps are in the core api group.
+    - ""
+    # for deployments
+    - "extensions"
+    # for replicasets
+    - "apps"
+  resources:
+    - "services"
+    - "configmaps"
+    - "deployments"
+    - "replicasets"
+    - "pods"
+  verbs:
+    - "list"
+    - "get"
+    - "create"
+    - "delete"
+---
+# Read about ClusterRoleBindings at
+# https://kubernetes.io/docs/reference/access-authn-authz/rbac/#rolebinding-and-clusterrolebinding
+kind: 'ClusterRoleBinding'
+apiVersion: 'rbac.authorization.k8s.io/v1'
+metadata:
+  name: 'read-convergeable-cluster-state'
+subjects:
+- kind: 'User'
+  name: 'system:serviceaccount:default:subscription-converger'
+roleRef:
+  kind: 'ClusterRole'
+  name: 'subscription-converger'
+  apiGroup: 'rbac.authorization.k8s.io'
+---
 # Read about deployments at
 # http://kubernetes.io/docs/user-guide/deployments/
 kind: 'Deployment'
@@ -453,6 +508,10 @@ spec:
         component: 'Infrastructure'
         version: '2'
     spec:
+      # Get a service account with the necessary authorization to make the
+      # Kubernetes queries we require (configmaps, deployments, etc) for
+      # convergence.
+      serviceAccountName: 'subscription-converger'
       volumes:
       - name: 'convergence-secrets'
         secret:
