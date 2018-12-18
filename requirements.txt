@@ -59,7 +59,7 @@ treq==17.8.0
 Twisted==17.5.0
 txaio==2.8.2
 txAWS==0.4.0
--e git://github.com/LeastAuthority/txkube.git@c5ed2761fdb3c75ed93b6c6a08be4c3b208d14b0#egg=txkube
+-e git://github.com/LeastAuthority/txkube.git@a7e555d#egg=txkube
 txtorcon==0.19.3
 tzlocal==1.4
 urllib3==1.24.1
