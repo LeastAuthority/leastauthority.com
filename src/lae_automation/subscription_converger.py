@@ -677,10 +677,6 @@ class _ChangeableConfigMaps(PClass):
         return actual_configmap.data != expected_configmap.data
 
 
-def _core(model, kind):
-    return model.spec.pclass_for_definition(u"io.k8s.api.core." + kind)
-
-
 def _converge_configmaps(actual, deploy_config, subscriptions, k8s, aws):
     changes = _compute_changes(
         actual.subscriptions,
@@ -691,8 +687,7 @@ def _converge_configmaps(actual, deploy_config, subscriptions, k8s, aws):
         ),
     )
     def delete(sid):
-        ConfigMap = _core(k8s.k8s.model, u"v1.ConfigMap")
-        return k8s.delete(ConfigMap(
+        return k8s.delete(k8s.k8s.model.v1.ConfigMap(
             metadata=dict(
                 namespace=deploy_config.kubernetes_namespace,
                 name=configmap_name(sid),
