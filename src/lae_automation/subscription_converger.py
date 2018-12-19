@@ -764,7 +764,7 @@ def _converge_route53_customer(actual, config, subscriptions, k8s, aws):
     Message.log(
         event=u"convergence-service:route53-customer",
         create=list(subscription.subscription_id for subscription in changes.create),
-        delete=changes.delete,
+        delete=list(changes.delete),
     )
     return deletes + creates
 
