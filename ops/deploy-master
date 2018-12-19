@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-PRODUCTION="useast1.production1-11.leastauthority.com"
+CONTEXT="$1"
 
 HEAD="$(git rev-parse HEAD)"
 master="$(git rev-parse master)"
@@ -12,7 +12,7 @@ fi
 
 git fetch origin master
 
-APPLY="kubectl --context ${PRODUCTION} apply"
+APPLY="kubectl --context ${CONTEXT} apply"
 REWRITE="python k8s/rewrite-objects.py --git-tag HEAD"
 
 ./k8s/build
@@ -33,7 +33,7 @@ cat k8s/monitoring/tahoe-lafs-transfer-rate.yaml | \
     ${REWRITE} | \
     ${APPLY} -f -
 
-python k8s/monitoring/grafana-dashboards.py ${PRODUCTION} | \
+python k8s/monitoring/grafana-dashboards.py ${CONTEXT} | \
     ${APPLY} -f -
 
 cat k8s/monitoring/grafana.yaml | \
