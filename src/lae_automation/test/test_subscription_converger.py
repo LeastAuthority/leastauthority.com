@@ -786,7 +786,7 @@ class ConvergenceLoopMetricsTests(TestCase):
         service.startService()
         reactor.advance(interval)
         last_completed = next(iter(list(
-            metric.samples[-1][-1]
+            metric.samples[-1].value
             for metric
             in REGISTRY.collect()
             if metric.name == u"s4_last_convergence_succeeded"
