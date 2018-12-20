@@ -58,7 +58,7 @@ tqdm==4.15.0
 treq==17.8.0
 Twisted==17.5.0
 txaio==2.8.2
-txAWS==0.4.0
+-e git://github.com/twisted/txaws.git@5c3317376cd47e536625027e38c3b37840175ce0#egg=txAWS
 -e git://github.com/LeastAuthority/txkube.git@a7e555d#egg=txkube
 txtorcon==0.19.3
 tzlocal==1.4
