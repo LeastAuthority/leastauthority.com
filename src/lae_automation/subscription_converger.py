@@ -760,6 +760,12 @@ def _converge_route53_customer(actual, config, subscriptions, k8s, aws):
         return create_route53_rrsets(route53, actual.zone.zone, [subscription])
     deletes = list(partial(delete, sid) for sid in changes.delete)
     creates = list(partial(create, s) for s in changes.create)
+
+    Message.log(
+        event=u"convergence-service:route53-customer",
+        create=list(subscription.subscription_id for subscription in changes.create),
+        delete=list(changes.delete),
+    )
     return deletes + creates
 
 
