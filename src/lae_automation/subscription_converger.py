@@ -913,40 +913,48 @@ def _load_all_rrsets(route53, zone_identifier, name=None, type=None, accum=None)
     Load all rrsets for a given zone, collecting multiple pages of results if
     necessary.
     """
-    if accum is None:
-        accum = {}
-    d = route53.list_resource_record_sets(
-        zone_id=zone_identifier,
-        # Make sure we know how many results to expect.  This is the default
-        # and maximum allowed item limit, though.
-        maxitems=100,
-        # Start the page at the rrset identified by these two values.
-        name=name,
-        type=type,
-    )
-    def got_some_rrsets(rrsets):
-        accum.update(rrsets)
-        if len(rrsets) < 100:
-            # Fewer results than we asked for means we must be on the last
-            # page.
-            return accum
-
-        # Otherwise, ask for the next page.  We do this slightly wrong, using
-        # max(rrsets) as the starting key because txaws does not give us
-        # access to the correct values from the response -
-        # NextRecordIdentifier and NextRecordType.  This just means we'll load
-        # one duplicate item on each page.  They all go into the dict so it
-        # doesn't affect correctness.
-        maxkey = max(rrsets)
-        return _load_all_rrsets(
-            route53,
-            zone_identifier,
-            name=maxkey.label,
-            type=maxkey.type,
-            accum=accum,
+    a = start_action(event=u"load-all-rrsets")
+    with a.context():
+        if accum is None:
+            accum = {}
+        d = DeferredContext(
+            route53.list_resource_record_sets(
+                zone_id=zone_identifier,
+                # Make sure we know how many results to expect.  This is the
+                # default and maximum allowed item limit, though.
+                maxitems=100,
+                # Start the page at the rrset identified by these two values.
+                name=name,
+                type=type,
+            ),
         )
-    d.addCallback(got_some_rrsets)
-    return d
+        def got_some_rrsets(rrsets):
+            accum.update(rrsets)
+            if len(rrsets) < 100:
+                # Fewer results than we asked for means we must be on the last
+                # page.
+                return accum
+
+            # Otherwise, ask for the next page.  We do this slightly wrong, using
+            # max(rrsets) as the starting key because txaws does not give us
+            # access to the correct values from the response -
+            # NextRecordIdentifier and NextRecordType.  This just means we'll load
+            # one duplicate item on each page.  They all go into the dict so it
+            # doesn't affect correctness.
+            maxkey = max(rrsets)
+            # Make sure we also preserve the Eliot context for callbacks of
+            # this next Deferred.
+            return DeferredContext(
+                _load_all_rrsets(
+                    route53,
+                    zone_identifier,
+                    name=maxkey.label,
+                    type=maxkey.type,
+                    accum=accum,
+                ),
+            )
+        d.addCallback(got_some_rrsets)
+        return d.addActionFinish()
 
 
 
