@@ -71,9 +71,7 @@ class GridRouterStateMachine(RuleBasedStateMachine):
         self.clock = Clock()
         self.reactor = FakeReactor(self.network, self.clock)
         self.kubernetes = memory_kubernetes()
-        self.client = self.case.successResultOf(
-            self.kubernetes.versioned_client()
-        )
+        self.client = self.kubernetes.client()
         self.model = self.client.model
 
         self.deploy_config = NullDeploymentConfiguration()
