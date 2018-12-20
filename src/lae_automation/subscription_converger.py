@@ -679,6 +679,11 @@ class _ChangeableConfigMaps(PClass):
 
 
 def _converge_configmaps(actual, deploy_config, subscriptions, k8s, aws):
+    Message.log(
+        event=u"convergence-service:configmaps:key-notification",
+        key_id=deploy_config.s3_access_key_id,
+        secret_key_hash=sha256(deploy_config.s3_secret_key).hexdigest().decode("ascii"),
+    )
     changes = _compute_changes(
         actual.subscriptions,
         _ChangeableConfigMaps(
