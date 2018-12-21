@@ -14,6 +14,7 @@ setup(
             "sync-subscriptions-to-stripe = lae_automation.opstools:sync_subscriptions_main",
             "copy-subscriptions-to-account = lae_automation.opstools:copy_subscriptions_to_account",
             "move-stripe-subscriptions-to-chargebee = lae_automation.opstools:move_stripe_subscriptions_to_chargebee",
+            "reinvite-customer = lae_automation.opstools:reinvite_customer",
         ],
     },
     dependency_links=[

@@ -24,9 +24,12 @@ from twisted.internet.defer import (
     succeed,
 )
 from twisted.internet.task import react, deferLater
-from twisted.web.client import ResponseNeverReceived, Agent
+from twisted.web.client import ResponseNeverReceived, Agent, readBody
 
-from txkube import network_kubernetes_from_context
+from txkube import (
+    KubernetesError,
+    network_kubernetes_from_context,
+)
 
 from lae_automation.subscription_manager import (
     UnexpectedResponseCode,
@@ -62,9 +65,9 @@ def _with_subscription_manager(reactor, k8s_context, f):
     pointing a ``network_client`` at it.
     """
     print("Tunnelling to subscription manager...")
-    subscription_manager_pod = yield _get_subscription_manager_pod(
+    subscription_manager_pod = (yield _get_subscription_manager_pod(
         reactor, k8s_context,
-    )
+    )).metadata.name
 
     # Use kubectl for the port-forward since txkube does not yet support that
     # API.
@@ -99,22 +102,31 @@ def _with_subscription_manager(reactor, k8s_context, f):
         forwarder.signalProcess(b"TERM")
 
 
+@inlineCallbacks
+def _get_subscription_id(subscription_manager_client, email_or_subscription_id):
+    if "@" not in email_or_subscription_id:
+        returnValue(email_or_subscription_id)
+
+    email = email_or_subscription_id
+    found = []
+    subscriptions = yield subscription_manager_client.list()
+    for subscription in subscriptions:
+        if email == subscription.customer_email:
+            found.append(subscription.subscription_id)
+    if len(found) == 0:
+        raise Exception("Could not find subscription with matching email")
+    elif len(found) > 1:
+        raise Exception(
+            "Found {} subscriptions with matching email".format(len(found)),
+        )
+    else:
+        returnValue(found[0])
+
 
 @inlineCallbacks
 def _cancel_one_subscription(email_or_subscription_id, subscription_manager_client):
     print("Searching for subscription with matching email...")
-    if "@" in email_or_subscription_id:
-        email = email_or_subscription_id
-        subscription_id = yield _get_subscription_id(subscription_manager_client, email)
-    elif email_or_subscription_id.startswith("sub_"):
-        subscription_id = email_or_subscription_id
-    else:
-        raise Exception(
-            "Strange subscription identifier ({}): need an email or subscription id".format(
-                email_or_subscription_id,
-            ),
-        )
-
+    subscription_id = yield _get_subscription_id(subscription_manager_client, email_or_subscription_id)
     yield _cancel_one_subscription_by_id(subscription_id, subscription_manager_client)
 
 
@@ -134,9 +146,8 @@ def _get_subscription_manager_pod(reactor, k8s_context):
     podlist = yield k8s_client.list(k8s_client.model.v1.Pod)
     for pod in podlist.items:
         if _is_subscription_manager_pod(pod):
-            returnValue(pod.metadata.name)
+            returnValue(pod)
     raise Exception("Could not find subscription manager")
-
 
 
 def _is_subscription_manager_pod(pod):
@@ -148,25 +159,6 @@ def _is_subscription_manager_pod(pod):
     ) == (
         "LeastAuthority", "subscription-manager", "Infrastructure",
     )
-
-
-
-@inlineCallbacks
-def _get_subscription_id(subscription_manager_client, email):
-    found = []
-    subscriptions = yield subscription_manager_client.list()
-    for subscription in subscriptions:
-        if email == subscription.customer_email:
-            found.append(subscription.subscription_id)
-    if len(found) == 0:
-        raise Exception("Could not find subscription with matching email")
-    elif len(found) > 1:
-        raise Exception(
-            "Found {} subscriptions with matching email".format(len(found)),
-        )
-    else:
-        returnValue(found[0])
-
 
 
 
@@ -480,3 +472,139 @@ def _move_customer_subscription_to_chargebee(stripe_customer, stripe_subscriptio
     print("Terminating Stripe subscription for {}: {}".format(stripe_customer.email, stripe_subscription.id))
     _terminate_customer_subscription(stripe_customer, stripe_subscription, False)
     raw_input("Done")
+
+
+def reinvite_customer():
+    k8s_context = argv[1].decode("utf-8")
+    email_or_subscription_id = argv[2].decode("utf-8")
+    react(
+        lambda reactor: _with_subscription_manager(
+            reactor,
+            k8s_context,
+            partial(
+                _reinvite_customer,
+                reactor=reactor,
+                k8s_context=k8s_context,
+                email_or_subscription_id=email_or_subscription_id,
+            ),
+        ),
+    )
+
+@inlineCallbacks
+def _reinvite_customer(subscription_manager_client, reactor, k8s_context, email_or_subscription_id):
+    # Try to create a new re-invite pod for the given subscription.
+    # If this fails because one already exists, proceed.
+    # Look at the re-invite pod to extract the wormhole code and spit it out.
+    kubernetes = network_kubernetes_from_context(reactor, k8s_context)
+    client = yield kubernetes.versioned_client()
+    subscription_id = yield _get_subscription_id(subscription_manager_client, email_or_subscription_id)
+    try:
+        yield _create_reinvite_pod(reactor, k8s_context, subscription_id, client)
+    except KubernetesError as e:
+        if e.code != 409:
+            # If it is anything other than "pod already exists", propagate it.
+            raise
+
+    invite_code = yield _get_invite_code(subscription_id, reactor, client)
+    print("Invite code: {}".format(invite_code))
+
+
+@inlineCallbacks
+def _create_reinvite_pod(reactor, k8s_context, subscription_id, client):
+    subscription_manager_pod = yield _get_subscription_manager_pod(
+        reactor, k8s_context,
+    )
+    image = subscription_manager_pod.spec.containers[0].image
+
+    v1 = client.model.v1
+    yield client.create(v1.Pod(
+        metadata=v1.ObjectMeta(
+            namespace=u"default",
+            name=_reinvite_pod_name(subscription_id),
+        ),
+        spec=v1.PodSpec(
+            containers=[v1.Container(
+                name=_reinvite_pod_name(subscription_id),
+                image=image,
+                args=[u"/app/env/bin/python", u"-c", REINVITE_CODE, subscription_id],
+            )],
+        ),
+    ))
+
+REINVITE_CODE = u"""
+from lae_automation.opstools import _reinvite_server
+_reinvite_server()
+"""
+
+def _reinvite_server():
+    react(_reinvite_server2, argv[1])
+
+
+@inlineCallbacks
+def _reinvite_server2(reactor, subscription_id):
+    provisioner = None
+    subscription_manager_client = network_client(
+        u"http://subscription-mananger/",
+        Agent(reactor),
+    )
+    details = yield subscription_manager_client.get(subscription_id)
+    from lae_automation.signup import get_wormhole_signup
+    from wormhole import wormhole
+    from hyperlink import URL
+    from twisted.python.filepath import FilePath
+    from tempfile import mktemp
+    results_path = FilePath(mktemp())
+    rendezvous_url = URL.fromText(u"ws://wormhole:4000/v1")
+    signup = get_wormhole_signup(
+        reactor,
+        provisioner,
+        wormhole,
+        rendezvous_url,
+        results_path,
+    )
+    wormhole_code = yield signup._details_to_wormhole_code(details)
+    print("invite-code: {}".format(wormhole_code))
+    while not (results_path.exists() and results_path.getsize()):
+        yield deferLater(reactor, 30.0, lambda: None)
+
+
+@inlineCallbacks
+def _get_invite_code(subscription_id, reactor, client):
+    which = client.model.v1.Pod(
+        metadata=client.model.v1.ObjectMeta(
+            namespace=u"default",
+            name=_reinvite_pod_name(subscription_id),
+        ),
+    )
+    while True:
+        pod = yield client.get(which)
+        if pod.status.phase == u"Running":
+            break
+        yield deferLater(reactor, 1.0, lambda: None)
+
+
+    log = yield pod_log(client, u"default", _reinvite_pod_name(subscription_id))
+    invite_code_line = list(line for line in log.splitlines() if "invite-code:" in line)[0]
+    invite_code = invite_code_line.split("invite-code:")[1].split()[0]
+    returnValue(invite_code)
+
+
+def _reinvite_pod_name(subscription_id):
+    return u"reinvite-{}".format(subscription_id.encode("base64").lower().strip().strip(u"="))
+
+
+def pod_log(client, pod_namespace, pod_name):
+    url = client.kubernetes.base_url.child(
+        u"api",
+        u"v1",
+        u"namespaces",
+        pod_namespace,
+        u"pods",
+        pod_name,
+        u"log",
+    )
+    print("Getting {}".format(url))
+    d = client._get(url)
+    d.addCallback(readBody)
+    d.addCallback(print)
+    return d
