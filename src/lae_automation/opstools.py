@@ -511,18 +511,21 @@ def _reinvite_customer(subscription_manager_client, reactor, k8s_context, email_
 
 @inlineCallbacks
 def _create_reinvite_pod(reactor, k8s_context, subscription_id, client):
+    print("Determining reinvite image...")
     subscription_manager_pod = yield _get_subscription_manager_pod(
         reactor, k8s_context,
     )
     image = subscription_manager_pod.spec.containers[0].image
 
     v1 = client.model.v1
-    yield client.create(v1.Pod(
+    print("Creating reinvite pod...")
+    creating = yield client.create(v1.Pod(
         metadata=v1.ObjectMeta(
             namespace=u"default",
             name=_reinvite_pod_name(subscription_id),
         ),
         spec=v1.PodSpec(
+            restartPolicy=u"OnFailure",
             containers=[v1.Container(
                 name=_reinvite_pod_name(subscription_id),
                 image=image,
@@ -530,6 +533,7 @@ def _create_reinvite_pod(reactor, k8s_context, subscription_id, client):
             )],
         ),
     ))
+    print(creating)
 
 REINVITE_CODE = u"""
 from lae_automation.opstools import _reinvite_server
