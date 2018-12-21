@@ -568,7 +568,7 @@ def _reinvite_server2(reactor, subscription_id):
         results_path,
     )
     wormhole_code = yield signup._details_to_wormhole_code(details)
-    print("invite-code: {}".format(wormhole_code))
+    print("invite-code: {}".format(wormhole_code), flush=True)
     while not (results_path.exists() and results_path.getsize()):
         yield deferLater(reactor, 30.0, lambda: None)
 
