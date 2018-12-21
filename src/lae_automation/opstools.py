@@ -580,14 +580,27 @@ def _get_invite_code(subscription_id, reactor, client):
             name=_reinvite_pod_name(subscription_id),
         ),
     )
+    print("Waiting for running pod...")
     while True:
         pod = yield client.get(which)
         if pod.status.phase == u"Running":
             break
+        if pod.status.phase == u"Failed":
+            break
+        print("...Pod status is {}".format(pod.status.phase))
         yield deferLater(reactor, 1.0, lambda: None)
 
 
-    log = yield pod_log(client, u"default", _reinvite_pod_name(subscription_id))
+    print("Waiting for complete log...")
+    while True:
+        log = yield pod_log(client, u"default", _reinvite_pod_name(subscription_id))
+        if "invite-code:" in log:
+            break
+        pod = yield client.get(which)
+        if pod.status.phase != u"Running":
+            break
+        yield deferLater(reactor, 1.0, lambda: None)
+
     invite_code_line = list(line for line in log.splitlines() if "invite-code:" in line)[0]
     invite_code = invite_code_line.split("invite-code:")[1].split()[0]
     returnValue(invite_code)
