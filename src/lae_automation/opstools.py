@@ -595,6 +595,7 @@ def _get_invite_code(subscription_id, reactor, client):
     print("Waiting for complete log...")
     while True:
         log = yield pod_log(client, u"default", _reinvite_pod_name(subscription_id))
+        print("Log: {}".format(log))
         if "invite-code:" in log:
             break
         pod = yield client.get(which)
@@ -624,5 +625,4 @@ def pod_log(client, pod_namespace, pod_name):
     print("Getting {}".format(url))
     d = client._get(url)
     d.addCallback(readBody)
-    d.addCallback(print)
     return d
