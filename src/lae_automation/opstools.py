@@ -541,7 +541,7 @@ _reinvite_server()
 """
 
 def _reinvite_server():
-    react(_reinvite_server2, argv[1])
+    react(_reinvite_server2, argv[1:])
 
 
 @inlineCallbacks
