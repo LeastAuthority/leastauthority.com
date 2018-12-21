@@ -567,8 +567,8 @@ def _reinvite_server2(reactor, subscription_id):
         rendezvous_url,
         results_path,
     )
-    wormhole_code = yield signup._details_to_wormhole_code(details)
-    print("invite-code: {}".format(wormhole_code))
+    wormhole_claim = yield signup._details_to_wormhole_code(details)
+    print("invite-code: {}".format(wormhole_claim.code))
     # Make sure it appears in the log.
     stdout.flush()
     while not (results_path.exists() and results_path.getsize()):
