@@ -10,7 +10,7 @@ from __future__ import unicode_literals, print_function
 
 from datetime import datetime
 from functools import partial
-from sys import argv
+from sys import argv, stdout
 from os import environ
 
 import stripe
@@ -568,7 +568,9 @@ def _reinvite_server2(reactor, subscription_id):
         results_path,
     )
     wormhole_code = yield signup._details_to_wormhole_code(details)
-    print("invite-code: {}".format(wormhole_code), flush=True)
+    print("invite-code: {}".format(wormhole_code))
+    # Make sure it appears in the log.
+    stdout.flush()
     while not (results_path.exists() and results_path.getsize()):
         yield deferLater(reactor, 30.0, lambda: None)
 
