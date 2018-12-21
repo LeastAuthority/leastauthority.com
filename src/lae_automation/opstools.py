@@ -548,7 +548,7 @@ def _reinvite_server():
 def _reinvite_server2(reactor, subscription_id):
     provisioner = None
     subscription_manager_client = network_client(
-        u"http://subscription-mananger/",
+        b"http://subscription-mananger/",
         Agent(reactor),
     )
     details = yield subscription_manager_client.get(subscription_id)
