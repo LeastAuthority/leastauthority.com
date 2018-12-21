@@ -549,7 +549,7 @@ def _reinvite_server2(reactor, subscription_id):
     provisioner = None
     subscription_id = subscription_id.decode("utf-8")
     subscription_manager_client = network_client(
-        b"http://subscription-mananger/",
+        b"http://subscription-manager/",
         Agent(reactor),
     )
     details = yield subscription_manager_client.get(subscription_id)
