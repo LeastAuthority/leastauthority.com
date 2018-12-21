@@ -547,6 +547,7 @@ def _reinvite_server():
 @inlineCallbacks
 def _reinvite_server2(reactor, subscription_id):
     provisioner = None
+    subscription_id = subscription_id.decode("utf-8")
     subscription_manager_client = network_client(
         b"http://subscription-mananger/",
         Agent(reactor),
