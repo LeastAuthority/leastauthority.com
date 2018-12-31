@@ -51,7 +51,7 @@ for profile in "leastauthority-staging" "leastauthority-infrastructure"; do
     lets_encrypt "${profile}"
 done
 
-refresh_website "www-staging.leastauthority.com" "secrets.staging.enc.yaml"
+refresh_website "s4.staging.leastauthority.com" "secrets.staging.enc.yaml"
 refresh_graphs "graphs.staging.leastauthority.com" "secrets.staging.enc.yaml"
 
 # Production website certificate is still from Gandi.
