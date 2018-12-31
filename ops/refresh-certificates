@@ -54,5 +54,5 @@ done
 refresh_website "s4.staging.leastauthority.com" "secrets.staging.enc.yaml"
 refresh_graphs "graphs.staging.leastauthority.com" "secrets.staging.enc.yaml"
 
-# Production website certificate is still from Gandi.
+refresh_website "s4.leastauthority.com" "secrets.production.enc.yaml"
 refresh_graphs "graphs.leastauthority.com" "secrets.production.enc.yaml"
