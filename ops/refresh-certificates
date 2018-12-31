@@ -42,7 +42,7 @@ function refresh_graphs() {
     config_path=$2
 
     KEY="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/privkey.pem | base64 --wrap=0)"
-    FULLCHAIN="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/chain.pem | base64 --wrap=0)"
+    FULLCHAIN="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/fullchain.pem | base64 --wrap=0)"
     sops --set '["data"]["graphs-privkey.pem"] "'"${KEY}"'"' k8s/"${config_path}"
     sops --set '["data"]["graphs-fullchain.pem"] "'"${FULLCHAIN}"'"' k8s/"${config_path}"
 }
