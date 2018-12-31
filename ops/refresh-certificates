@@ -1,0 +1,58 @@
+#!/bin/bash
+
+set -e
+set -o pipefail
+
+if [ -z "${LETSENCRYPT}" ]; then
+    echo "Tell me where Let's Encrypt data is stored w/ LETSENCRYPT env var."
+    exit 1
+fi
+
+function lets_encrypt() {
+    profile=$1
+
+    docker \
+	run \
+	-it \
+	--rm \
+	--name certbot \
+	-v "${HOME}/.aws:/aws" \
+	-e AWS_CONFIG_FILE=/aws/config \
+	-e AWS_SHARED_CREDENTIALS_FILE=/aws/credentials \
+	-e AWS_PROFILE="${profile}" \
+	-v "${LETSENCRYPT}/etc:/etc/letsencrypt" \
+	-v "${LETSENCRYPT}/varlib:/var/lib/letsencrypt" \
+	certbot/dns-route53 renew
+}
+
+function refresh_website() {
+    cert_dir=$1
+    config_path=$2
+
+    KEY="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/privkey.pem | base64 --wrap=0)"
+    CERT="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/cert.pem | base64 --wrap=0)"
+    CHAIN="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/chain.pem | base64 --wrap=0)"
+    sops --set '["data"]["website-key.pem"] "'"${KEY}"'"' k8s/"${config_path}"
+    sops --set '["data"]["website-cert.pem"] "'"${CERT}"'"' k8s/"${config_path}"
+    sops --set '["data"]["website-chain.pem"] "'"${CHAIN}"'"' k8s/"${config_path}"
+}
+
+function refresh_graphs() {
+    cert_dir=$1
+    config_path=$2
+
+    KEY="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/privkey.pem | base64 --wrap=0)"
+    FULLCHAIN="$(cat ${LETSENCRYPT}/etc/live/${cert_dir}/chain.pem | base64 --wrap=0)"
+    sops --set '["data"]["graphs-privkey.pem"] "'"${KEY}"'"' k8s/"${config_path}"
+    sops --set '["data"]["graphs-fullchain.pem"] "'"${FULLCHAIN}"'"' k8s/"${config_path}"
+}
+
+for profile in "leastauthority-staging" "leastauthority-infrastructure"; do
+    lets_encrypt "${profile}"
+done
+
+refresh_website "www-staging.leastauthority.com" "secrets.staging.enc.yaml"
+refresh_graphs "graphs.staging.leastauthority.com" "secrets.staging.enc.yaml"
+
+# Production website certificate is still from Gandi.
+refresh_graphs "graphs.leastauthority.com" "secrets.production.enc.yaml"
