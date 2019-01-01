@@ -2,6 +2,10 @@
 
 CONTEXT="$1"
 
+if [ -z "${CONTEXT}" ]; then
+    CONTEXT="production"
+fi
+
 HEAD="$(git rev-parse HEAD)"
 master="$(git rev-parse master)"
 
