@@ -326,40 +326,44 @@ There are some problems with this approach.
 Deploy LeastAuthority.com (From Scratch)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-LeastAuthority.com comprises two Kubernetes services and three persistent volumes.
-The services::
+LeastAuthority.com comprises a number of Kubernetes resources.
+The service resources::
 
-  #. A private Docker registry which hosts the secrets-containing infrastructure images.
   #. The signup server which exposes web-based signup to potential subscribers.
+  #. The magic wormhole server which supports the secure signup process.
+  #. The customer grid router which exposes Tahoe-LAFS servers to subscribers.
+  #. The Grafana server which exposes visualizations of metrics for the service to administrators.
 
-The volumes must be provisioned manually.
-Make sure they are in the same availability zone as the cluster
+The volume resources::
+
+  #. The subscription manager volume holding all user subscription details.
+  #. The magic wormhole volume holding state about open wormholes.
+
+The subscription manager volume must be provisioned manually.
+Make sure it is in the same availability zone as the cluster
 (as defined in the ``kops create cluster`` command when it was created).
-Create a volume for the Docker registry.
-Make it around ten times the size of the site's infrastructure image [#volumesize]::
+The subscription manager will request a 1GB volume so make it at least that large
+(making it much larger doesn't make much sense).
 
-  aws ec2 create-volume --availability-zone us-east-1c --size 8
+::
 
-Take note of the ``VolumeId`` of the created volume.
-Edit ``k8s/registry.yaml``.
-Put the ``VolumeId`` into the ``volumeID`` field of the ``leastauthority-tweaks-kube-registry-pv`` resource.
-If you pick a different volume size, also update the ``storage`` field to match.
+  aws ec2 create-volume --availability-zone us-east-1c --size 1
 
-Repeat this procedure to create volumes for the web server.
-The web server writes human-readable logs and signup information to its volume.
-One GiB is most likely sufficient.
-Put the ``VolumeId`` value for this volume into ``infrastructure.yaml`` in the ``infrastructure-web-pv`` resource.
+Take note of the ``VolumeId`` of the created volume and tag the volume::
 
-You can now deploy the registry and web server::
+  aws ec2 create-tags --resources <VolumeId> --tags \
+    Key=data-for,Value=subscription-manager
+    Key=KubernetesCluster,Value=useast1.staging.leastauthority.com
 
-  kubectl create -f "k8s/"
+The IAM roles created for the cluster may include restrictions on which volumes may be used by the cluster.
+For example it may require they have a certain tag.
+If the volume cannot be attached then refer to the IAM role configuration to find additional tags to create.
 
 .. note::
    This also creates an "image building" deployment which is not necessary for production operation but is helpful later in the setup process.
    You can skip creating this by identifying the registry and infrastructure configurations specifically, rather than the entire ``k8s`` directory.
 
-After the infrastructure resources are configured on the cluster, it's time to configure their credentials.
-The infrastructure resources need things like a private key and x509 certificate, an AWS API keys, etc.
+The LeastAuthority.com infrastructure also requires credentials (private keys, certificates, API keys, etc) to operate.
 These are exposed via Kubernetes "secrets" resources.
 To create these resources, get a checkout of the ``secret_config`` repository.
 Then, run the ``k8s/create-secrets`` script it contains.
@@ -368,61 +372,32 @@ To deploy production secrets, override this setting with ``--namespace default``
 
 .. _build-docker-images:
 
-The next step is to build the Docker images for the site.
-You can do this locally or you can use the k8s cluster to do it.
+The next step is to deploy the configuration to the cluster.
 
-Locally
+Staging
 -------
 
-Use the build script in your ``leastauthority.com`` checkout to build the Docker images using your local Docker daemon::
+To update the staging deployment::
 
-  docker/build.sh
+  ./ops/stage-current-HEAD
 
-Then set up a proxy to the private Docker registry.
-First, find the name of the registry's pod::
+This will update the staging deployment with whatever code HEAD refers to in your local git checkout.
+Note that this revision must also have been pushed to GitHub or the update will fail.
 
-  x=($(kubectl --namespace leastauthority-tweaks -o json get pods | jq -r .items[0].metadata.name))
-  name=${x[0]}
-  port=${x[1]}
+Production
+----------
 
-Then forward the port (stays in the foreground)::
+To update the production deployment::
 
-  kubectl port-forward $name $port
+  ./ops/deploy-master
 
-Then tag the images so they can be pushed to the registry::
-
-  docker tag leastauthority.com/web 127.0.0.1:$port/leastauthority/web
-
-You can also put a tag in these tags (no joke).
-Read more about image tags in the official Docker documentation.
-
-*Then* push the images::
-
-  docker push 127.0.0.1:$port/leastauthority/web
-
-If you gave them a special tag, be sure to push that tag.
-You are now done with the forwarded port and can kill ``kubectl``.
-
-Using K8S
----------
-
-Use the build script in your ``leastauthority.com`` checkout to build the Docker images in a pod running on a Kubernetes cluster::
-
-  export K8S_POD=$(kubectl -o json get pods -l run=image-building | jq -r '.items[0].metadata.name')
-  export GIT_BRANCH=master
-  k8s/build.sh
-
-This will run steps similar to those for the local build described above but it will run them in a container on the k8s cluster.
-You can build images for a different git branch by changing the value of ``GIT_BRANCH``.
-The current ``HEAD`` revision of the branch as found on GitHub is what is built into the image.
+This will update the production deployment with whatever code ``master@HEAD`` refers to in your local git checkout
+(which also must be checked out when you run the command).
+Note that this revision must also have been pushed to GitHub or the update will fail.
 
 Check for Success
 -----------------
 
-After building the images locally or on k8s, you're almost done.
-Most likely, Kubernetes tried to start things up already and failed because the images were missing.
-This is okay.
-It will keep trying until things succeed (now that you've pushed the images).
 You can monitor the progress via the dashboard web interface or::
 
   kubectl get pods --selector provider=LeastAuthority
@@ -444,13 +419,8 @@ Update Version of leastauthority.com
 
 .. _update-lae:
 
-`Build new Docker images for the new version of leastauthority.com<build-docker-images>`_.
-Edit the infrastructure deployment file, ``k8s/infrastructure.yaml``.
-Change the Docker image used by the containers to reference the tag of the newly built images
-(commit, PR, merge, etc).
-Use ``kubectl`` to apply the changes and begin a rolling update to deploy them::
-
-  kubectl apply -f k8s/infrastructure.yaml
+Once you've made changes you want to deploy,
+you can re-run either the command for updating staging or production.
 
 Monitor Status of the Service
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -506,10 +476,3 @@ Until it is, the Stripe subscription and AWS resources must be adjusted directly
 .. _AWS Route53: https://aws.amazon.com/route53/
 
 .. [#awsconf] The ``AWS_PROFILE`` environment variable may be helpful in this.
-.. [#volumesize]
-   The images are around 500MiB.
-   There are two of them but they share most of their storage.
-   For upgrades, it will be beneficial to have two different versions of the images in the registry at the same time.
-   Different versions of the images will probably also share most of their storage.
-   Ten times the image seems like it should be plenty without being wasteful.
-   It can always be made larger later.
