@@ -1,56 +1,71 @@
-version: '2'
-services:
+#
+# Here is a configuration file for Docker Compose which will run the signup
+# server and the subscription manager.  This should be enough infrastructure
+# to perform signups using a local deployment of the web frontend (not covered
+# here).  It's /not/ enough to actually have service provisioned because all
+# of that functionality is heavily intertwined with Kubernetes.  Look at the
+# Minikube documentation if you want that.
+#
+# See the `secrets` section for some manual setup this compose configuration
+# requires.
+#
+version: '3.1'
+secrets:
+  stripe-publishable.key:
+    # Hand populate this file from secrets.staging.enc.yaml's
+    # `stripe-publishable.key` entry.
+    file: "./stripe-publishable.key"
+  chargebee.key:
+    # Hand populate this file from secrets.staging.enc.yaml's
+    # `chargebee.key` entry.
+    file: "./chargebee.key"
 
-  # The leastauthority.com website, including handling of the signup forms.
-  web:
-    # See build.sh
-    image: 'leastauthority.com/web'
+services:
+  signup:
+    build:
+      context: "./"
+      dockerfile: "./docker/Dockerfile.s4-common"
 
     ports:
-      # The web server in the container listens for HTTPS on 8443.
-      # Publish that to the world on the standard HTTPS port.
-      - '443:8443'
+      - "8000:8000/tcp"
 
-    volumes:
+    image: 'leastauthority/s4-common:latest'
+    command:
+      - '/app/env/bin/python'
+      - '-u'
+      - '-m'
+      - 'lae_site.main'
+      - '--wormhole-result-path=/app/data/logs/wormhole-claims.jsons'
+      - "--secure-port=tcp:8000"
+      - '--insecure-port=tcp:8001'
 
-      # The web server generates a lot of random output right now.
-      # Subscription logs, server logs, etc.  Give it a safe place to
-      # dump all of that data.
-      - 'web-data:/app/data'
+      - '--chargebee-site-name=leastauthority-test'
+      - '--chargebee-secret-api-key-path=/run/secrets/chargebee.key'
+      - '--chargebee-plan-id=S4_consumer_iteration_2_beta1_2014-05-27'
+      - '--chargebee-gateway-account-id=gw_B4eONuQrfSi2IZGq'
 
-      # This is unfortunate.  It's here just so we can get the signup
-      # furl generated at flappserver startup time.  The web server
-      # reads the signup.furl file that the flapp server writes into
-      # this volume.
-      - 'flapp-data:/app/flapp-data'
+      - '--stripe-publishable-api-key-path=/run/secrets/stripe-publishable.key'
 
-    depends_on:
+      - '--site-logs-path=/tmp/httpd.json'
+      - '--subscription-manager=http://manager/'
+      - '--metrics-port=tcp:9000'
+      - '--cross-domain=*'
+      - '--eliot-destination=file:/tmp/signup.json'
+    secrets:
+      - "stripe-publishable.key"
+      - "chargebee.key"
 
-      # Start the flapp server first so the signup.furl is written.
-      # This is subject to startup race-conditions since Docker has no
-      # idea when signup.furl is written: it only knows that it has
-      # _started_ the flapp container.  Experiments suggest the flapp
-      # server typically wins.  Ideally some alternate mechanism could
-      # be used to convey the signup furl between processes (in other
-      # words, fix the application to not use the filesystem for RPC).
-        - "flapp"
+  manager:
+    ports:
+      - "9000:8000/tcp"
 
-  # The flapp service which handles the hard work of signups.
-  flapp:
-    # See build.sh
-    image: 'leastauthority.com/flapp'
-
-    volumes:
-
-      # The flapp server also generates a lot of random output right
-      # now.  Here is a place for it to write it.
-      - 'flapp-data:/app/data'
-
-# Define the volume names referenced above.  All this says is that
-# someone else created the volumes already, probably with "docker
-# volume create ...".
-volumes:
-  web-data:
-    external: true
-  flapp-data:
-    external: true
+    image: 'leastauthority/s4-common:latest'
+    command:
+      - '/app/env/bin/twist'
+      - '--log-format=text'
+      - 's4-subscription-manager'
+      - '--domain=localhost'
+      - '--bucket-name=foo'
+      - '--state-path=/tmp/subscriptions'
+      - '--listen-address=tcp:8000'
+      - '--eliot-destination=file:/tmp/manager.json'

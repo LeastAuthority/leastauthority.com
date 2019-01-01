@@ -181,9 +181,6 @@ spec:
       - name: 'web-data'
         persistentVolumeClaim:
           claimName: 'infrastructure-web-pvc'
-      - name: 'flapp-data'
-        persistentVolumeClaim:
-          claimName: 'infrastructure-flapp-pvc'
       - name: 'logs'
         emptyDir:
 
@@ -283,8 +280,6 @@ spec:
         # wants to use for interesting, persistent state.
         - mountPath: '/app/data'
           name: 'web-data'
-        - mountPath: '/app/flapp-data'
-          name: 'flapp-data'
         - name: 'web-secrets'
           mountPath: '/app/k8s_secrets'
           readOnly: true
@@ -798,23 +793,6 @@ spec:
     requests:
       storage: '1G'
 ---
-# Read about PersistentVolumeClaims at
-# http://kubernetes.io/docs/user-guide/persistent-volumes/
-kind: 'PersistentVolumeClaim'
-apiVersion: 'v1'
-metadata:
-  name: 'infrastructure-flapp-pvc'
-  labels:
-    provider: 'LeastAuthority'
-    app: 's4'
-    component: 'Infrastructure'
-spec:
-  accessModes:
-    - 'ReadWriteOnce'
-  resources:
-    requests:
-      storage: '1G'
----
 # Read about PersistentVolumes at
 # http://kubernetes.io/docs/user-guide/persistent-volumes/
 kind: 'PersistentVolume'
@@ -868,26 +846,4 @@ spec:
     # Create this volume manually with a command like:
     #   aws ec2 create-volume --availability-zone us-east-1b --size 1
     volumeID: 'vol-0e80ac26be3edd63f'
-    fsType: 'ext4'
----
-# Read about PersistentVolumes at
-# http://kubernetes.io/docs/user-guide/persistent-volumes/
-kind: 'PersistentVolume'
-apiVersion: 'v1'
-metadata:
-  name: 'infrastructure-flapp-pv'
-  labels:
-    provider: 'LeastAuthority'
-    app: 's4'
-    component: 'Infrastructure'
-spec:
-  capacity:
-    storage: '1G'
-  accessModes:
-    # One node can mount this read-write.
-    - 'ReadWriteOnce'
-  awsElasticBlockStore:
-    # Create this volume manually with a command like:
-    #   aws ec2 create-volume --availability-zone us-east-1b --size 1
-    volumeID: 'vol-01b01d11a6b17e2de'
     fsType: 'ext4'
