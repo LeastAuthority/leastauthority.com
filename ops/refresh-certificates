@@ -10,6 +10,7 @@ fi
 
 function lets_encrypt() {
     profile=$1
+    domain=$2
 
     docker \
 	run \
@@ -22,7 +23,10 @@ function lets_encrypt() {
 	-e AWS_PROFILE="${profile}" \
 	-v "${LETSENCRYPT}/etc:/etc/letsencrypt" \
 	-v "${LETSENCRYPT}/varlib:/var/lib/letsencrypt" \
-	certbot/dns-route53 renew
+	certbot/dns-route53 \
+	certonly \
+	--dns-route53 \
+	-d "${domain}"
 }
 
 function refresh_website() {
@@ -47,12 +51,12 @@ function refresh_graphs() {
     sops --set '["data"]["graphs-fullchain.pem"] "'"${FULLCHAIN}"'"' k8s/"${config_path}"
 }
 
-for profile in "leastauthority-staging" "leastauthority-infrastructure"; do
-    lets_encrypt "${profile}"
-done
-
+lets_encrypt "leastauthority-staging" "s4.staging.leastauthority.com"
+lets_encrypt "leastauthority-staging" "graphs.staging.leastauthority.com"
 refresh_website "s4.staging.leastauthority.com" "secrets.staging.enc.yaml"
 refresh_graphs "graphs.staging.leastauthority.com" "secrets.staging.enc.yaml"
 
+lets_encrypt "leastauthority-infrastructure" "s4.leastauthority.com"
+lets_encrypt "leastauthority-infrastructure" "graphs.leastauthority.com"
 refresh_website "s4.leastauthority.com" "secrets.production.enc.yaml"
 refresh_graphs "graphs.leastauthority.com" "secrets.production.enc.yaml"
