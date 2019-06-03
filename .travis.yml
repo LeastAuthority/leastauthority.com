@@ -24,6 +24,7 @@ matrix:
     # This builder will run our test suite directly.
     - env: ENV="testing"
       language: "python"
+      python: "2.7"
       # Cache ~/.cache/pip
       # https://docs.travis-ci.com/user/caching/#pip-cache
       cache: "pip"
