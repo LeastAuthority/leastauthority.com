@@ -15,3 +15,4 @@ traceback2==1.4.0
 unittest2==1.1.0
 txkube[dev]==0.2.0
 eliot-tree==17.1.0
+pytest==4.5.0
