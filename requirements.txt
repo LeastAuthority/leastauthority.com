@@ -22,7 +22,7 @@ hyperlink==17.3.1
 idna==2.6
 incremental==17.5.0
 ipaddress==1.0.18
-Jinja2==2.9.6
+Jinja2==2.10.1
 klein==17.2.0
 lxml==3.8.0
 magic-wormhole==0.10.3
@@ -62,7 +62,7 @@ txaio==2.8.2
 -e git://github.com/LeastAuthority/txkube.git@a7e555d#egg=txkube
 txtorcon==0.19.3
 tzlocal==1.4
-urllib3==1.24.1
+urllib3==1.24.2
 venusian==1.1.0
 Werkzeug==0.12.2
 zbase32==1.1.5
