@@ -15,6 +15,7 @@ eliot==1.1.0
 enum34==1.1.6
 filepath==0.1
 foolscap==0.12.7
+grafanalib==0.3.0
 hkdf==0.0.3
 httplib2==0.10.3
 humanize==0.5.1
