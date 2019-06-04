@@ -4,6 +4,7 @@
 
 from sys import argv, stdin, stdout
 from subprocess import check_output
+from operator import not_
 
 from yaml import safe_load_all, safe_dump_all
 
@@ -121,6 +122,11 @@ def stub_all_volumes(docs):
         return {u"name": volume[u"name"], u"emptyDir": {}}
 
     return docs.transform(
+        # Put in a default empty list so we don't get a default empty dict
+        # instead.
+        [deployments, u"spec", u"template", u"spec", u"volumes"],
+        if_(not_, lambda ignored: freeze([])),
+
         [deployments, u"spec", u"template", u"spec", u"volumes", ny],
         if_(persistent_volume_claim, to_empty_dir),
 
@@ -131,4 +137,6 @@ def stub_all_volumes(docs):
         discard,
     )
 
-main(argv)
+
+if __name__ == '__main__':
+    main(argv)
