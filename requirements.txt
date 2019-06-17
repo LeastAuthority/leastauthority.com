@@ -3,6 +3,7 @@ asn1crypto==0.22.0
 attrs==17.4.0
 autobahn==17.9.2
 Automat==0.6.0
+bcrypt==3.0.0
 certifi==2017.7.27.1
 cffi==1.10.0
 characteristic==14.3.0
@@ -10,7 +11,7 @@ chardet==3.0.4
 chargebee==2.4.3
 click==6.7
 constantly==15.1.0
-cryptography==2.3.1
+cryptography==2.5
 eliot==1.1.0
 enum34==1.1.6
 filepath==0.1
@@ -48,7 +49,7 @@ PyYAML==5.1
 requests==2.20.0
 requests-oauthlib==0.8.0
 rsa==3.4.2
-service-identity==17.0.0
+service-identity==18.1.0
 setuptools==36.4.0
 simplejson==3.11.1
 six==1.10.0
