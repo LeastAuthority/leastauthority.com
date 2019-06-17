@@ -57,7 +57,7 @@ stripe==1.65.0
 tahoe-lafs==1.13.0
 tqdm==4.15.0
 treq==17.8.0
-Twisted==17.5.0
+Twisted==19.2.1
 txaio==2.8.2
 -e git://github.com/twisted/txaws.git@5c3317376cd47e536625027e38c3b37840175ce0#egg=txAWS
 -e git://github.com/LeastAuthority/txkube.git@a7e555d#egg=txkube
