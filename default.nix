@@ -20,8 +20,11 @@ in
       pkgs.libxslt
       # required for k8s management, directly and via our tools
       pkgs.kubectl
+      pkgs.kops
       # required for secrets management
       pkgs.sops
+      # Useful for inspecting AWS state
+      pkgs.awscli
     ];
     # ValueError: ZIP does not support timestamps before 1980
     SOURCE_DATE_EPOCH = 1559322353;
