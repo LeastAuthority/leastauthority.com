@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -e
+set -ex
 set -o pipefail
 
 if [ -z "${LETSENCRYPT}" ]; then
@@ -12,21 +12,14 @@ function lets_encrypt() {
     profile=$1
     domain=$2
 
-    docker \
-	run \
-	-it \
-	--rm \
-	--name certbot \
-	-v "${HOME}/.aws:/aws" \
-	-e AWS_CONFIG_FILE=/aws/config \
-	-e AWS_SHARED_CREDENTIALS_FILE=/aws/credentials \
-	-e AWS_PROFILE="${profile}" \
-	-v "${LETSENCRYPT}/etc:/etc/letsencrypt" \
-	-v "${LETSENCRYPT}/varlib:/var/lib/letsencrypt" \
-	certbot/dns-route53 \
-	certonly \
-	--dns-route53 \
-	-d "${domain}"
+    AWS_PROFILE="${profile}" \
+	       certbot \
+	       certonly \
+	       --config-dir "${LETSENCRYPT}"/etc \
+	       --logs-dir "${LETSENCRYPT}"/logs \
+	       --work-dir "${LETSENCRYPT}"/work \
+	       --dns-route53 \
+	       -d "${domain}"
 }
 
 function refresh_website() {

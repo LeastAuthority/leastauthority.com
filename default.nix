@@ -12,6 +12,9 @@ let
       shellpath (builtins.filter isyaml (listdir root));
 in
   { pkgs ? import <nixpkgs> { } }:
+  let
+    certbot-dns-route53 = pkgs.python3Packages.callPackage ./certbot-dns-route53.nix { };
+  in
   pkgs.stdenv.mkDerivation rec {
     name = "leastauthority-s4";
     buildInputs = [
@@ -22,6 +25,10 @@ in
       pkgs.kubectl
       # required for secrets management
       pkgs.sops
+      # Necessary for refreshing certificates
+      (pkgs.certbot.overrideAttrs (old: {
+        propagatedBuildInputs = old.propagatedBuildInputs ++ [ certbot-dns-route53 ];
+      }))
     ];
     # ValueError: ZIP does not support timestamps before 1980
     SOURCE_DATE_EPOCH = 1559322353;
