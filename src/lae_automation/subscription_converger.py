@@ -929,10 +929,13 @@ def _load_all_rrsets(route53, zone_identifier, name=None, type=None, accum=None)
             ),
         )
         def got_some_rrsets(rrsets):
+            before_update = len(rrsets)
             accum.update(rrsets)
-            if len(rrsets) < 100:
+            after_update = len(rrsets)
+            if len(rrsets) < 100 or before_update == after_update:
                 # Fewer results than we asked for means we must be on the last
-                # page.
+                # page.  Also if everything we got we already had, we're not
+                # making progress so we should stop.
                 return accum
 
             # Otherwise, ask for the next page.  We do this slightly wrong, using
