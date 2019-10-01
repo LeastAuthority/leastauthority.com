@@ -944,15 +944,14 @@ def _load_all_rrsets(route53, zone_identifier, name=None, type=None, accum=None)
             maxkey = max(rrsets)
             # Make sure we also preserve the Eliot context for callbacks of
             # this next Deferred.
-            with start_action(action_type="load-next-page").context():
-                d = DeferredContext(_load_all_rrsets(
-                    route53,
-                    zone_identifier,
-                    name=maxkey.label,
-                    type=maxkey.type,
-                    accum=accum,
-                ))
-                return d.addActionFinish()
+            d = DeferredContext(_load_all_rrsets(
+                route53,
+                zone_identifier,
+                name=maxkey.label,
+                type=maxkey.type,
+                accum=accum,
+            ))
+            return d.addActionFinish()
         d.addCallback(got_some_rrsets)
         return d.addActionFinish()
 
