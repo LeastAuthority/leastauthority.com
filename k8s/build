@@ -42,7 +42,7 @@ class KubeControl(object):
 
 
 def main(rev=None):
-    kubectl = KubeControl(context=u"staging")
+    kubectl = KubeControl(context=u"production")
 
     template = HERE.child("build-image-template.yaml")
     with template.open() as fObj:
