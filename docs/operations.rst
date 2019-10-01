@@ -249,7 +249,7 @@ Then create the configuration, stored in that bucket, for a brand new cluster::
 
   kops create cluster \
       --zones us-east-1c \
-      --name useast1.staging.leastauthority.com \
+      --name useast1.production1-11.leastauthority.com \
       --cloud aws \
       --dns-zone staging.leastauthority.com \
       --ssh-public-key key.pub
@@ -266,13 +266,13 @@ The next step is to customize the cluster configuration.
 For example, customize the size of the master or the number of workers (set ``${EDITOR}``!)::
 
   kops edit ig \
-      --name useast1.staging.leastauthority.com master-us-east-1c
+      --name useast1.production1-11.leastauthority.com master-us-east-1c
   kops edit ig \
-      --name useast1.staging.leastauthority.com nodes
+      --name useast1.production1-11.leastauthority.com nodes
 
 Once satisfied with the configuration, deploy it::
 
-  kops update cluster useast1.staging.leastauthority.com --yes
+  kops update cluster useast1.production1-11.leastauthority.com --yes
 
 The command completes before the cluster has settled.
 Monitor the status with ``kubectl``::
@@ -353,7 +353,7 @@ Take note of the ``VolumeId`` of the created volume and tag the volume::
 
   aws ec2 create-tags --resources <VolumeId> --tags \
     Key=data-for,Value=subscription-manager
-    Key=KubernetesCluster,Value=useast1.staging.leastauthority.com
+    Key=KubernetesCluster,Value=useast1.production1-11.leastauthority.com
 
 The IAM roles created for the cluster may include restrictions on which volumes may be used by the cluster.
 For example it may require they have a certain tag.
@@ -444,11 +444,11 @@ The cluster's ``nodes`` configuration defines a minimum and maximum number of wo
 You can change these values::
 
   kops edit ig \
-      --name useast1.staging.leastauthority.com nodes
+      --name useast1.production1-11.leastauthority.com nodes
 
 And then deploy the change::
 
-  kops update cluster useast1.staging.leastauthority.com --yes
+  kops update cluster useast1.production1-11.leastauthority.com --yes
 
 It is up to the Kubernetes scheduler to re-balance load on the cluster.
 
