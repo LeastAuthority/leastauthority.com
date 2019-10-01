@@ -8,6 +8,9 @@ with ``setup.py``-defined entrypoints.
 
 from __future__ import unicode_literals, print_function
 
+import attr
+
+from pprint import pprint
 from datetime import datetime
 from functools import partial
 from sys import argv, stdout
@@ -172,27 +175,46 @@ def sync_subscriptions_main():
 
 
 
-def sync_subscriptions(reactor, k8s_context, api_key):
+def sync_subscriptions(reactor, k8s_context, chargebee_site, chargebee_key):
+    chargebee.configure(chargebee_key, chargebee_site)
+
     return _with_subscription_manager(
         reactor, k8s_context,
-        partial(_sync_subscriptions, reactor, api_key),
+        partial(_sync_subscriptions, reactor),
     )
 
 
 
 @inlineCallbacks
-def _sync_subscriptions(reactor, api_key, subscription_manager_client):
-    stripe_subscriptions = yield _get_active_stripe_subscriptions(reactor, api_key)
+def _sync_subscriptions(reactor, subscription_manager_client):
+    billing_subscriptions = yield _get_active_billing_subscriptions(reactor)
+    billing_subscription_ids = list(
+        subscription.id
+        for subscription
+        in billing_subscriptions
+    )
+    billing_emails = yield _get_active_billing_emails(reactor, billing_subscriptions)
     k8s_subscriptions = yield subscription_manager_client.list()
 
     for k8s_subscription in k8s_subscriptions:
-        if k8s_subscription.subscription_id in stripe_subscriptions:
+        if k8s_subscription.subscription_id in billing_subscription_ids:
+            print("Found {} active, leaving it.".format(k8s_subscription.subscription_id))
             continue
 
-        yield _cancel_one_subscription_by_id(
-            k8s_subscription.customer_email,
-            subscription_manager_client,
-        )
+        # There was no matching subscription id.  What about email address?
+        if k8s_subscription.customer_email in billing_emails:
+            print("Found {} active, leaving it.".format(k8s_subscription.customer_email))
+            continue
+
+        pprint(attr.asdict(k8s_subscription))
+        if raw_input("Found {} inactive ({}), delete it?".format(
+                k8s_subscription.subscription_id,
+                k8s_subscription.customer_email
+        )) == "y":
+            yield _cancel_one_subscription_by_id(
+                k8s_subscription.subscription_id,
+                subscription_manager_client,
+            )
 
 
 
@@ -217,33 +239,66 @@ def _list(collection, api_key, **kwargs):
             return all_items
 
 
-def _get_active_stripe_subscriptions(reactor, api_key):
+
+def _chargebee_list(chargebee_type):
+    results = []
+    params = {
+        "limit": 97,
+    }
+    while True:
+        new_results = chargebee_type.list(params)
+        results.extend(new_results)
+        print("Got {} new results".format(len(new_results)))
+        if new_results.next_offset is None:
+            return results
+        params["offset"] = new_results.next_offset
+
+
+
+def _get_active_billing_subscriptions(reactor):
     """
-    Get the Stripe subscriptions for which we should have S4 provisioned
+    Get the billing-system subscriptions for which we should have S4
+    provisioned state.
+
+    https://apidocs.chargebee.com/docs/api/subscriptions#list_subscriptions
+
+    :return Deferred[list[chargebee.Subscription]]: A list of the
+        billing-system subscriptions for all active subscriptions in the
+        billing system.
+    """
+    result = _chargebee_list(chargebee.Subscription)
+    return succeed(list(
+        item.subscription
+        for item
+        in result
+    ))
+
+
+
+def _get_active_billing_emails(reactor, active_billing_subscriptions):
+    """
+    Get the billing-system emails for which we should have S4 provisioned
     state.
 
-    https://stripe.com/docs/subscriptions/lifecycle#states
+    This is a hack because I screwed up subscription ids in the migration to
+    chargebee, somehow, I think.
+
+    https://apidocs.chargebee.com/docs/api/customers#retrieve_a_customer
+
+    :return list[unicode]: A list of email addresses associated with active
+        billing-system subscriptions.
     """
-    # Subscriptions in the trial period are considered active.
-    trialinglist = _list(stripe.Subscription, api_key=api_key, status="trialing")
-
-    # Subscriptions that are past the trial period and have paid their most
-    # recent invoice are considered active.
-    activelist =  _list(stripe.Subscription, api_key=api_key, status="active")
-
-    # Subscriptions which have failed an initial billing attempt are also
-    # considered active because a subsequent billing attempt will still be
-    # made (automatically) and may succeed.
-    pastduelist = _list(stripe.Subscription, api_key=api_key, status="past_due")
-
-    # canceled and unpaid subscriptions are not considered active.  They must
-    # be returned to some other state in order to be allowed resources in our
-    # system.
-
+    active_customer_ids = list(
+        subscription.customer_id
+        for subscription
+        in active_billing_subscriptions
+    )
+    result = _chargebee_list(chargebee.Customer)
     return succeed(list(
-        subscr.id
-        for subscr
-        in trialinglist + activelist + pastduelist
+        item.customer.email
+        for item
+        in result
+        if item.customer.id in active_customer_ids
     ))
 
 
