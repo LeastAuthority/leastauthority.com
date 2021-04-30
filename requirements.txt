@@ -48,7 +48,7 @@ pyutil==2.0.0
 PyYAML==5.1
 requests==2.20.0
 requests-oauthlib==0.8.0
-rsa==3.4.2
+rsa==4.7
 service-identity==18.1.0
 setuptools==36.4.0
 simplejson==3.11.1
