@@ -64,7 +64,7 @@ txaio==2.8.2
 -e git://github.com/LeastAuthority/txkube.git@a7e555d#egg=txkube
 txtorcon==0.19.3
 tzlocal==1.4
-urllib3==1.24.2
+urllib3==1.26.5
 venusian==1.1.0
 Werkzeug==0.12.2
 zbase32==1.1.5
