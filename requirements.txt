@@ -4,7 +4,7 @@ attrs==17.4.0
 autobahn==17.9.2
 Automat==0.6.0
 bcrypt==3.0.0
-certifi==2017.7.27.1
+certifi==2022.12.7
 cffi==1.10.0
 characteristic==14.3.0
 chardet==3.0.4
