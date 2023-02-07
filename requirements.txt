@@ -11,7 +11,7 @@ chardet==3.0.4
 chargebee==2.4.3
 click==6.7
 constantly==15.1.0
-cryptography==2.5
+cryptography==39.0.1
 eliot==1.1.0
 enum34==1.1.6
 filepath==0.1
